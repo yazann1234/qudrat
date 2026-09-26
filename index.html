@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -34,7 +35,6 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 ::-webkit-scrollbar-thumb:hover{background:var(--primary);background-clip:content-box}
 input,textarea,select,button{font-family:inherit}
 
-/* ================= شاشة الترحيب ================= */
 #welcome{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;
   background:radial-gradient(900px 600px at 20% 20%,rgba(var(--primary-rgb),.35),transparent 60%),radial-gradient(800px 700px at 85% 80%,rgba(139,92,246,.3),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 45%,#080d22 100%);padding:16px}
 #welcome.exit{animation:wOut .9s cubic-bezier(.7,0,.3,1) forwards}
@@ -76,7 +76,6 @@ input,textarea,select,button{font-family:inherit}
 @keyframes glowPulse{0%,100%{box-shadow:0 14px 40px rgba(var(--primary-rgb),.5),inset 0 1px 0 rgba(255,255,255,.35)}50%{box-shadow:0 18px 55px rgba(139,92,246,.75),inset 0 1px 0 rgba(255,255,255,.35)}}
 .w-foot{margin-top:16px;font-size:.74rem;color:rgba(255,255,255,.42);animation:up .8s .75s cubic-bezier(.2,.8,.2,1) both}
 
-/* ================= شاشة الدخول ================= */
 #auth{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;
   background:radial-gradient(1000px 700px at 15% 15%,rgba(var(--primary-rgb),.3),transparent 60%),radial-gradient(900px 700px at 85% 85%,rgba(139,92,246,.25),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 50%,#080d22 100%);overflow:auto}
 #auth.open{display:flex}
@@ -119,7 +118,6 @@ input,textarea,select,button{font-family:inherit}
 .auth-back{position:absolute;top:18px;right:18px;font-size:.76rem;color:rgba(255,255,255,.6);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-family:inherit;font-weight:700;padding:7px 12px;border-radius:9px;transition:.2s;display:inline-flex;align-items:center;gap:6px;z-index:10}
 .auth-back:hover{background:rgba(255,255,255,.13);color:#fff}
 
-/* ================= التطبيق ================= */
 #app{display:none;height:100vh;width:100%}
 #app.open{display:flex;animation:appIn .55s cubic-bezier(.2,.85,.2,1)}
 @keyframes appIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
@@ -181,7 +179,6 @@ input,textarea,select,button{font-family:inherit}
 .sw-status{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:10px 20px;border-radius:100px;font-size:.86rem;font-weight:800;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);position:relative;z-index:2}
 .sw-status.ok{background:rgba(34,197,94,.15);color:var(--success)}
 
-/* فلتر التصنيفات */
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .filter-chip{font-family:inherit;font-size:.78rem;font-weight:700;padding:8px 15px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:.22s}
 .filter-chip:hover{border-color:var(--primary);color:var(--primary)}
@@ -258,7 +255,6 @@ input,textarea,select,button{font-family:inherit}
 .card-basic{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:var(--shadow-sm)}
 .card-basic h3{font-size:1rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:9px}
 .card-basic h3 i{color:var(--primary)}
-/* هدف اليوم */
 .goal-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
 .goal-ring{position:relative;width:130px;height:130px;flex-shrink:0;display:grid;place-items:center}
 .goal-ring .gv{position:absolute;text-align:center}
@@ -335,7 +331,6 @@ input,textarea,select,button{font-family:inherit}
 .range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .range-row input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);height:6px}
 
-/* ================= المزايا ================= */
 .feat-hero{background:linear-gradient(120deg,var(--primary) 0%,var(--primary-2) 55%,#a855f7 100%);border-radius:22px;padding:36px 42px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(var(--primary-rgb),.45)}
 .feat-hero::before{content:"";position:absolute;top:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
 .feat-hero::after{content:"";position:absolute;bottom:-100px;right:15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
@@ -359,7 +354,6 @@ input,textarea,select,button{font-family:inherit}
 .feat-new h3{font-size:.96rem;font-weight:800;margin-bottom:8px;position:relative;z-index:2}
 .feat-new p{font-size:.8rem;color:var(--muted);line-height:1.85;position:relative;z-index:2}
 
-/* ================= الأدمن ================= */
 .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
 .admin-stat{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .admin-stat::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;border-radius:100px;background:var(--sc,var(--primary))}
@@ -424,7 +418,6 @@ input,textarea,select,button{font-family:inherit}
 .checkbox-row span i{color:var(--accent);margin-left:4px}
 .form-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
 
-/* ================= القارئ ================= */
 #reader{position:fixed;inset:0;z-index:500;display:none;background:rgba(8,12,26,.9);backdrop-filter:blur(12px);padding:14px;align-items:center;justify-content:center}
 #reader.open{display:flex;animation:fadeIn .3s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -489,7 +482,6 @@ input,textarea,select,button{font-family:inherit}
 .reader-fab{position:absolute;bottom:18px;left:18px;z-index:20;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 10px 26px rgba(var(--primary-rgb),.5);display:grid;place-items:center}
 .reader-fab.top{display:none}
 
-/* ================= عناصر عامة ================= */
 #shield{position:fixed;inset:0;z-index:9998;display:none;background:rgba(6,10,22,.96);backdrop-filter:blur(20px);align-items:center;justify-content:center;text-align:center;padding:30px;color:#fff}
 #shield.on{display:flex;animation:fadeIn .25s}
 .shield-in{max-width:480px}
@@ -513,9 +505,7 @@ input,textarea,select,button{font-family:inherit}
 .modal-box h3 i{color:var(--primary)}
 .modal-box p{font-size:.86rem;color:var(--muted);line-height:1.9;margin-bottom:18px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 
-/* ================= استجابة الشاشات ================= */
 @media (max-width:1200px){
   .hero-big-in{grid-template-columns:1fr;padding:28px 26px;gap:20px}
   .hero-right{display:flex;justify-content:center}
@@ -600,16 +590,10 @@ input,textarea,select,button{font-family:inherit}
   .stats-row{grid-template-columns:1fr 1fr}
   .nav-btn span:not(.ic){font-size:.55rem}
 }
-@media (hover:none){
-  .file-card:hover{transform:none}
-  .feat-new:hover{transform:none}
-}
-@media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
 </style>
 </head>
 <body>
 
-<!-- ================= شاشة الترحيب ================= -->
 <div id="welcome">
   <div class="blob b1"></div>
   <div class="blob b2"></div>
@@ -629,22 +613,20 @@ input,textarea,select,button{font-family:inherit}
     <h1>العباقرة للقدرات</h1>
     <p class="w-sub">
       منصتك الذكية للاستعداد لاختبار القدرات. أنشئ حسابك، اقرأ ملفات PDF
-      بقارئ متطور، وتابع تقدمك تلقائياً حتى تصل إلى القمة.
+      بقارئ متطور، وتابع تقدمك تلقائياً من أي جهاز.
     </p>
     <div class="w-chips">
-      <div class="chip" style="animation-delay:.4s"><i class="fas fa-user-shield"></i> حساب آمن</div>
-      <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
-      <div class="chip" style="animation-delay:.5s"><i class="fas fa-magnifying-glass-plus"></i> تكبير وتمرير سلس</div>
-      <div class="chip" style="animation-delay:.55s"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
-      <div class="chip" style="animation-delay:.6s"><i class="fas fa-bullseye"></i> هدف يومي</div>
-      <div class="chip" style="animation-delay:.65s"><i class="fas fa-palette"></i> ثيمات</div>
+      <div class="chip"><i class="fas fa-cloud"></i> مزامنة سحابية</div>
+      <div class="chip"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
+      <div class="chip"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
+      <div class="chip"><i class="fas fa-bullseye"></i> هدف يومي</div>
+      <div class="chip"><i class="fas fa-palette"></i> ثيمات</div>
     </div>
     <button class="w-btn" id="enterBtn">ابدأ رحلتك <i class="fas fa-arrow-left"></i></button>
     <div class="w-foot">اضغط للدخول أو إنشاء حساب جديد</div>
   </div>
 </div>
 
-<!-- ================= شاشة الدخول ================= -->
 <div id="auth">
   <button class="auth-back" id="authBack"><i class="fas fa-arrow-right"></i> رجوع</button>
   <div class="auth-container">
@@ -671,7 +653,7 @@ input,textarea,select,button{font-family:inherit}
         <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="regPass" placeholder="كلمة المرور (6+ أحرف)" autocomplete="new-password"></div>
         <div class="auth-msg" id="regMsg"></div>
         <button class="auth-btn" id="regBtn"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
-        <div class="auth-hint">بعد التسجيل، حسابك ينتظر موافقة الأدمن</div>
+        <div class="auth-hint">بعد التسجيل، يظهر طلبك في لوحة الأدمن للموافقة عليه</div>
       </div>
       <div class="auth-form" id="form-admin">
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="adminEmail" placeholder="بريد الأدمن" autocomplete="email"></div>
@@ -682,26 +664,20 @@ input,textarea,select,button{font-family:inherit}
       </div>
     </div>
     <div class="auth-image-side">
-      <img src="https://i.postimg.cc/QC5j08sx/Gemini-Generated-Image-6qwolu6qwolu6qwo-removebg-preview.png" alt="تسجيل الدخول الآمن">
+      <img src="https://i.postimg.cc/QC5j08sx/Gemini-Generated-Image-6qwolu6qwolu6qwo-removebg-preview.png" alt="تسجيل الدخول">
       <div class="auth-image-text">
         <h3>ابدأ رحلتك التعليمية</h3>
-        <p>انضم إلى آلاف الطلاب الذين حققوا التفوق مع منصة العباقرة</p>
-        <ul class="features-list">
-          <li><i class="fas fa-check"></i> قارئ PDF بتكبير وتنقّل سريع</li>
-          <li><i class="fas fa-check"></i> تتبع تلقائي لتقدمك في كل ملف</li>
-          <li><i class="fas fa-check"></i> هدف يومي وسلسلة أيام وشارات تحفيزية</li>
-        </ul>
+        <p>بياناتك وتقدمك محفوظان سحابياً وتستطيع المذاكرة من أي جهاز تريده.</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= التطبيق ================= -->
 <div id="app">
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-logo"><i class="fas fa-brain"></i></div>
-      <div class="brand-txt"><h2>العباقرة للقدرات</h2><p>رحلتك نحو التميز</p></div>
+      <div class="brand-txt"><h2>العباقرة للقدرات</h2><p>سحابي ومتزامن</p></div>
     </div>
     <div class="user-card" id="userCard">
       <div class="user-avatar" id="userAvatar">؟</div>
@@ -729,12 +705,12 @@ input,textarea,select,button{font-family:inherit}
     <div class="topbar">
       <div><h1 id="pageTitle">الرئيسية</h1><p id="pageSub">أهلاً بك مجدداً</p></div>
       <div class="top-actions">
-        <div class="search-box"><i class="fas fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="ابحث في الملفات... (Ctrl+K)"></div>
+        <div class="search-box"><i class="fas fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="ابحث في الملفات..."></div>
         <button class="icon-btn" id="themeBtn" title="تبديل المظهر"><i class="fas fa-moon"></i></button>
       </div>
     </div>
 
-    <!-- ========== الرئيسية ========== -->
+    <!-- الرئيسية -->
     <section class="view active" id="view-home">
       <div id="homeSubBanner"></div>
       <div class="hero-big">
@@ -743,7 +719,7 @@ input,textarea,select,button{font-family:inherit}
           <div class="hero-left">
             <div class="tag" id="greetTag"><i class="fas fa-fire"></i> استمر، أنت تبلي بلاءً حسناً</div>
             <h2 id="heroTitle">كل صفحة تقرأها اليوم، هي <em>درجة ترتفع بها</em> غداً</h2>
-            <p>افتح أي ملف PDF وسيتابع النظام تقدمك تلقائياً مع كل صفحة تمرّ عليها.</p>
+            <p>جميع ملفاتك وإنجازاتك محفوظة في السحاب ومتاحة من أي شاشة.</p>
             <div class="hero-cta">
               <button class="btn-hero primary" onclick="go('files')"><i class="fas fa-book-open"></i> ابدأ المذاكرة</button>
               <button class="btn-hero ghost" onclick="go('progress')"><i class="fas fa-chart-line"></i> شاهد تقدمك</button>
@@ -806,7 +782,7 @@ input,textarea,select,button{font-family:inherit}
         </div>
         <div class="timer-side">
           <h3 id="timerHead">اعمل بتركيز كامل</h3>
-          <p id="timerDesc">اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت بشكل ملحوظ.</p>
+          <p id="timerDesc">اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت.</p>
           <div class="timer-btns">
             <button class="btn btn-primary" id="timerStart"><i class="fas fa-play"></i> ابدأ الجلسة</button>
             <button class="btn btn-ghost" id="timerReset"><i class="fas fa-rotate"></i> إعادة</button>
@@ -839,12 +815,12 @@ input,textarea,select,button{font-family:inherit}
           <h3><i class="fas fa-note-sticky"></i> ملاحظاتي السريعة
             <button class="btn btn-ghost btn-sm" id="notesExport" style="margin-right:auto"><i class="fas fa-download"></i> تصدير</button>
           </h3>
-          <textarea class="notes-area" id="notesArea" placeholder="اكتب هنا أي فكرة أو قاعدة تريد تذكرها..."></textarea>
+          <textarea class="notes-area" id="notesArea" placeholder="اكتب هنا أي فكرة أو ملاحظة دراسية..."></textarea>
         </div>
       </div>
     </section>
 
-    <!-- ========== الملفات ========== -->
+    <!-- الملفات -->
     <section class="view" id="view-files">
       <div id="filesSubBanner"></div>
       <div class="sec-title"><i class="fas fa-folder-open" style="color:var(--primary)"></i> مكتبة الملفات</div>
@@ -865,13 +841,13 @@ input,textarea,select,button{font-family:inherit}
       <div class="files-grid" id="filesGrid"></div>
     </section>
 
-    <!-- ========== إنجازي ========== -->
+    <!-- إنجازي -->
     <section class="view" id="view-progress">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
         <div class="hero-big-in" style="grid-template-columns:1fr">
           <div class="hero-left">
-            <div class="tag"><i class="fas fa-chart-pie"></i> تقرير الأداء</div>
+            <div class="tag"><i class="fas fa-chart-pie"></i> تقرير الأداء الموحد</div>
             <h2>أنت على الطريق الصحيح</h2>
             <p id="progMsg">ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.</p>
             <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px">
@@ -901,14 +877,14 @@ input,textarea,select,button{font-family:inherit}
       <div class="badges-row" id="badgesAll"></div>
     </section>
 
-    <!-- ========== المزايا ========== -->
+    <!-- المزايا -->
     <section class="view" id="view-features">
       <div class="feat-hero">
         <div class="feat-hero-in">
           <div class="feat-hero-txt">
-            <div class="tag"><i class="fas fa-wand-magic-sparkles"></i> كل ما تحتاجه في منصة واحدة</div>
-            <h2 id="featHeroTitle">مزايا احترافية صُمّمت لتُحسّن رحلتك الدراسية</h2>
-            <p>من قارئ PDF المتقدم إلى المؤقت الدراسي والهدف اليومي وسلسلة الأيام، كل شيء هنا ليبقيك مركزاً ومتحفزاً.</p>
+            <div class="tag"><i class="fas fa-wand-magic-sparkles"></i> سحابي بالكامل</div>
+            <h2 id="featHeroTitle">مزايا متطورة مع مزامنة Supabase السحابية</h2>
+            <p>لا قيود على جهاز واحد بعد اليوم؛ افتح حسابك من جوالك، حاسبك أو جهازك اللوحي وتابع دراستك فوراً.</p>
           </div>
           <div class="feat-hero-count"><b id="featCount">0</b><span>ميزة أساسية</span></div>
         </div>
@@ -916,20 +892,19 @@ input,textarea,select,button{font-family:inherit}
       <div class="feat-grid-new" id="featGrid"></div>
     </section>
 
-    <!-- ========== الإعدادات ========== -->
+    <!-- الإعدادات -->
     <section class="view" id="view-settings">
       <div class="sec-title"><i class="fas fa-gear" style="color:var(--primary)"></i> الإعدادات</div>
       <div class="set-grid">
-
         <div class="set-card">
           <h3><i class="fas fa-palette"></i> الثيمات</h3>
-          <p>اختر اللون الذي يريح عينيك ويمنحك الطاقة للمذاكرة.</p>
+          <p>اختر اللون المفضل لديك للمنصة.</p>
           <div class="themes-grid" id="themesGrid"></div>
         </div>
 
         <div class="set-card">
           <h3><i class="fas fa-circle-half-stroke"></i> المظهر</h3>
-          <p>بدّل بين الوضع الفاتح والداكن أو اتركه تلقائياً حسب جهازك.</p>
+          <p>بدّل بين الوضع الفاتح والداكن.</p>
           <div class="set-row">
             <div class="lbl">وضع العرض<small>فاتح / داكن / تلقائي</small></div>
             <div class="seg" id="modeSeg">
@@ -946,14 +921,14 @@ input,textarea,select,button{font-family:inherit}
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">تقليل الحركات<small>لأجهزة أضعف أو لمن يفضل ذلك</small></div>
+            <div class="lbl">تقليل الحركات<small>لأداء أكثر سلاسة</small></div>
             <label class="switch"><input type="checkbox" id="setAnim"><span class="slider-sw"></span></label>
           </div>
         </div>
 
         <div class="set-card">
           <h3><i class="fas fa-book-open-reader"></i> القارئ</h3>
-          <p>خصّص تجربة القراءة داخل قارئ PDF.</p>
+          <p>خصائص القارئ والتصفح.</p>
           <div class="set-row">
             <div class="lbl">خلفية القارئ<small>فاتح / سيبيا / داكن</small></div>
             <div class="seg" id="readThemeSeg">
@@ -967,65 +942,26 @@ input,textarea,select,button{font-family:inherit}
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">إظهار أرقام الصفحات<small>والعلامة المائية</small></div>
+            <div class="lbl">إظهار أرقام الصفحات</div>
             <label class="switch"><input type="checkbox" id="setMarks"><span class="slider-sw"></span></label>
           </div>
           <div class="set-row">
-            <div class="lbl">الحجم الافتراضي<small>عند فتح أي ملف</small></div>
-            <div class="seg" id="zoomSeg">
-              <button data-z="1">ملء العرض</button><button data-z="1.25">125%</button><button data-z="1.5">150%</button>
-            </div>
-          </div>
-          <div class="set-row">
-            <div class="lbl">استئناف آخر موضع<small>افتح الملف عند آخر صفحة وصلت إليها</small></div>
+            <div class="lbl">استئناف آخر موضع<small>افتح الملف عند آخر صفحة توقفت عندها</small></div>
             <label class="switch"><input type="checkbox" id="setResume"><span class="slider-sw"></span></label>
           </div>
         </div>
 
         <div class="set-card">
-          <h3><i class="fas fa-stopwatch"></i> المؤقت الدراسي</h3>
-          <p>اضبط مدة جلسة التركيز والراحات.</p>
-          <div class="set-row">
-            <div class="lbl">مدة جلسة التركيز<small>بالدقائق</small></div>
-            <div class="seg" id="focusSeg">
-              <button data-m="15">15</button><button data-m="25">25</button>
-              <button data-m="40">40</button><button data-m="50">50</button>
-            </div>
-          </div>
-          <div class="set-row">
-            <div class="lbl">مدة الراحة القصيرة<small>بالدقائق</small></div>
-            <div class="seg" id="breakSeg">
-              <button data-m="5">5</button><button data-m="10">10</button>
-            </div>
-          </div>
-          <div class="set-row">
-            <div class="lbl">مدة الراحة الطويلة<small>بعد ٤ جلسات</small></div>
-            <div class="seg" id="longSeg">
-              <button data-m="15">15</button><button data-m="20">20</button><button data-m="30">30</button>
-            </div>
-          </div>
-          <div class="set-row">
-            <div class="lbl">بدء تلقائي للجلسة التالية</div>
-            <label class="switch"><input type="checkbox" id="setAuto"><span class="slider-sw"></span></label>
-          </div>
-          <div class="set-row">
-            <div class="lbl">تنبيه صوتي<small>عند نهاية الجلسة</small></div>
-            <label class="switch"><input type="checkbox" id="setSound"><span class="slider-sw"></span></label>
-          </div>
-        </div>
-
-        <div class="set-card">
           <h3><i class="fas fa-bullseye"></i> الأهداف اليومية</h3>
-          <p>حدّد أهدافاً واقعية وتابع تحقيقها كل يوم.</p>
           <div class="set-row">
-            <div class="lbl">هدف الصفحات<small>عدد الصفحات في اليوم</small></div>
+            <div class="lbl">هدف الصفحات</div>
             <div class="range-row" style="flex:1">
               <input type="range" id="goalPagesRange" min="2" max="100" step="1">
               <b id="goalPagesVal" style="color:var(--primary);min-width:42px;text-align:center">10</b>
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">هدف الدقائق<small>دقائق المذاكرة في اليوم</small></div>
+            <div class="lbl">هدف الدقائق</div>
             <div class="range-row" style="flex:1">
               <input type="range" id="goalMinRange" min="5" max="300" step="5">
               <b id="goalMinVal" style="color:var(--primary);min-width:52px;text-align:center">30</b>
@@ -1034,52 +970,17 @@ input,textarea,select,button{font-family:inherit}
         </div>
 
         <div class="set-card">
-          <h3><i class="fas fa-database"></i> بياناتك</h3>
-          <p>تقدمك محفوظ في حسابك. يمكنك أخذ نسخة احتياطية أو تصفير التقدم.</p>
-          <div class="set-row">
-            <div class="lbl">تصدير نسخة احتياطية<small>تحميل ملف JSON بتقدمك</small></div>
-            <button class="btn btn-ghost btn-sm" id="exportBtn"><i class="fas fa-download"></i> تصدير</button>
-          </div>
-          <div class="set-row">
-            <div class="lbl">استيراد نسخة<small>استرجاع تقدمك من ملف</small></div>
-            <button class="btn btn-ghost btn-sm" id="importBtn"><i class="fas fa-upload"></i> استيراد</button>
-            <input type="file" id="importFile" accept=".json,application/json" hidden>
-          </div>
-          <div class="set-row">
-            <div class="lbl">تصفير التقدم<small>يبقى الحساب وتُمسح النسب والشارات</small></div>
-            <button class="btn btn-danger btn-sm" id="resetProgressBtn"><i class="fas fa-rotate-left"></i> تصفير</button>
-          </div>
-        </div>
-
-        <div class="set-card">
           <h3><i class="fas fa-user"></i> حسابك</h3>
-          <p>معلومات حسابك الحالي على المنصة.</p>
           <div class="set-row"><div class="lbl">الاسم</div><b id="setName" style="color:var(--primary)">—</b></div>
           <div class="set-row"><div class="lbl">البريد</div><b id="setEmail" style="color:var(--primary);font-size:.8rem">—</b></div>
           <div class="set-row"><div class="lbl">حالة الاشتراك</div><b id="setSub" style="font-size:.8rem">—</b></div>
-          <div class="set-row">
-            <div class="lbl">تغيير كلمة المرور<small>حماية إضافية لحسابك</small></div>
-            <button class="btn btn-ghost btn-sm" id="changePassBtn"><i class="fas fa-key"></i> تغيير</button>
-          </div>
         </div>
-
-        <div class="set-card">
-          <h3><i class="fas fa-keyboard"></i> اختصارات لوحة المفاتيح</h3>
-          <p>استخدم هذه الاختصارات للتنقل بسرعة.</p>
-          <div class="set-row"><div class="lbl">فتح البحث</div><b style="color:var(--primary);direction:ltr">Ctrl + K</b></div>
-          <div class="set-row"><div class="lbl">الرئيسية / الملفات / إنجازي</div><b style="color:var(--primary);direction:ltr">1 / 2 / 3</b></div>
-          <div class="set-row"><div class="lbl">المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">4 / 5</b></div>
-          <div class="set-row"><div class="lbl">القارئ: تكبير / تصغير</div><b style="color:var(--primary);direction:ltr">+ / -</b></div>
-          <div class="set-row"><div class="lbl">القارئ: صفحة تالية / سابقة</div><b style="color:var(--primary);direction:ltr">← / →</b></div>
-          <div class="set-row"><div class="lbl">إغلاق النافذة</div><b style="color:var(--primary);direction:ltr">Esc</b></div>
-        </div>
-
       </div>
     </section>
 
-    <!-- ========== لوحة الأدمن ========== -->
+    <!-- لوحة الأدمن -->
     <section class="view" id="view-admin">
-      <div class="sec-title"><i class="fas fa-shield-halved" style="color:var(--accent)"></i> لوحة تحكم الأدمن</div>
+      <div class="sec-title"><i class="fas fa-shield-halved" style="color:var(--accent)"></i> لوحة تحكم الأدمن (سحابية)</div>
       <div class="admin-stats">
         <div class="admin-stat" style="--sc:var(--primary)"><h3 id="adUsers">0</h3><p>إجمالي المستخدمين</p></div>
         <div class="admin-stat" style="--sc:#f7b32b"><h3 id="adPending">0</h3><p>طلبات قيد الانتظار</p></div>
@@ -1088,10 +989,9 @@ input,textarea,select,button{font-family:inherit}
         <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adImportant">0</h3><p>ملفات مميزة</p></div>
       </div>
       <div class="admin-tabs">
-        <button class="on" data-panel="users"><i class="fas fa-users"></i> المستخدمون</button>
-        <button data-panel="files"><i class="fas fa-folder"></i> الملفات</button>
-        <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
-        <button data-panel="tools"><i class="fas fa-toolbox"></i> أدوات</button>
+        <button class="on" data-panel="users"><i class="fas fa-users"></i> المستخدمون والطلبات</button>
+        <button data-panel="files"><i class="fas fa-folder"></i> الملفات المرفوعة</button>
+        <button data-panel="add"><i class="fas fa-plus"></i> رفع ملف PDF سحابي</button>
       </div>
 
       <div class="admin-panel on" id="panel-users">
@@ -1102,11 +1002,10 @@ input,textarea,select,button{font-family:inherit}
           </div>
           <select class="sort-select" id="userFilter">
             <option value="all">كل الحالات</option>
-            <option value="pending">قيد الانتظار</option>
+            <option value="pending">قيد الانتظار فقط</option>
             <option value="sub">مشترك</option>
             <option value="off">غير مشترك</option>
           </select>
-          <button class="btn btn-ghost btn-sm" id="addUserBtn"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
         </div>
         <div class="users-table" id="usersTable"></div>
       </div>
@@ -1117,18 +1016,18 @@ input,textarea,select,button{font-family:inherit}
 
       <div class="admin-panel" id="panel-add">
         <div class="card-basic">
-          <h3><i class="fas fa-cloud-arrow-up"></i> رفع ملف PDF جديد</h3>
-          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">ارفع ملف PDF من جهازك ليظهر مباشرة في قسم الملفات لجميع الطلاب المشتركين.</p>
+          <h3><i class="fas fa-cloud-arrow-up"></i> رفع ملف PDF إلى السحاب (Supabase)</h3>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px">يتم رفع الملف إلى Supabase Storage ليصبح متاحاً لجميع الأجهزة تلقائياً.</p>
           <div class="upload-zone" id="uploadZone">
             <div class="uz-icon"><i class="fas fa-file-pdf"></i></div>
             <h4>اسحب ملف PDF هنا أو اضغط للاختيار</h4>
-            <p>الحد الأقصى 100 ميجابايت</p>
+            <p>الحد الأقصى 50 ميجابايت</p>
             <input type="file" id="afPdfInput" accept="application/pdf,.pdf">
             <div id="uzFileInfo"></div>
           </div>
           <div class="form-group">
             <label>عنوان الملف *</label>
-            <input type="text" id="afTitle" placeholder="مثال: أساسيات الهندسة">
+            <input type="text" id="afTitle" placeholder="مثال: أساسيات الهندسة للقدرات">
           </div>
           <div class="form-group">
             <label>التصنيف *</label>
@@ -1139,43 +1038,15 @@ input,textarea,select,button{font-family:inherit}
           </div>
           <div class="form-group">
             <label>وصف مختصر</label>
-            <textarea id="afDesc" placeholder="وصف قصير يظهر في بطاقة الملف..."></textarea>
+            <textarea id="afDesc" placeholder="وصف قصير للمحتوى..."></textarea>
           </div>
           <label class="checkbox-row">
             <input type="checkbox" id="afImportant">
-            <span><i class="fas fa-star"></i> تمييز كملف مهم — سيظهر بنجمة مميزة</span>
+            <span><i class="fas fa-star"></i> تمييز كملف مهم (نجمة ذهبية)</span>
           </label>
           <div class="form-actions">
-            <button class="btn btn-primary" id="saveFileBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الملف</button>
+            <button class="btn btn-primary" id="saveFileBtn" style="flex:1;padding:14px"><i class="fas fa-cloud-arrow-up"></i> رفع وتثبيت الملف في السحاب</button>
             <button class="btn btn-ghost" id="clearFileBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="admin-panel" id="panel-tools">
-        <div class="set-grid">
-          <div class="set-card">
-            <h3><i class="fas fa-database"></i> نسخة احتياطية للمنصة</h3>
-            <p>تصدير كل المستخدمين والملفات (بيانات وصفية) في ملف واحد.</p>
-            <div class="form-actions">
-              <button class="btn btn-ghost" id="adExport"><i class="fas fa-download"></i> تصدير المنصة</button>
-              <button class="btn btn-ghost" id="adImportBtn"><i class="fas fa-upload"></i> استيراد المنصة</button>
-              <input type="file" id="adImportFile" accept=".json" hidden>
-            </div>
-          </div>
-          <div class="set-card">
-            <h3><i class="fas fa-key"></i> كلمة مرور الأدمن</h3>
-            <p>غيّر كلمة مرور حساب الأدمن الحالي.</p>
-            <div class="form-group">
-              <label>كلمة المرور الجديدة</label>
-              <input type="password" id="adNewPass" placeholder="6 أحرف على الأقل">
-            </div>
-            <button class="btn btn-primary" id="adSavePass"><i class="fas fa-floppy-disk"></i> حفظ</button>
-          </div>
-          <div class="set-card">
-            <h3><i class="fas fa-triangle-exclamation"></i> منطقة الخطر</h3>
-            <p>إعادة ضبط المنصة بالكامل. لا يمكن التراجع عن هذه العملية.</p>
-            <button class="btn btn-danger" id="adReset"><i class="fas fa-trash"></i> إعادة ضبط شاملة</button>
           </div>
         </div>
       </div>
@@ -1183,7 +1054,7 @@ input,textarea,select,button{font-family:inherit}
   </main>
 </div>
 
-<!-- ================= القارئ ================= -->
+<!-- القارئ -->
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
@@ -1213,7 +1084,7 @@ input,textarea,select,button{font-family:inherit}
       <button class="tbtn" id="rdZoomIn" title="تكبير"><i class="fas fa-magnifying-glass-plus"></i></button>
       <button class="tbtn" id="rdFit" title="ملء العرض"><i class="fas fa-arrows-left-right"></i></button>
       <span class="tsep"></span>
-      <button class="tbtn" id="rdSnap" title="وضع الصفحة الواحدة"><i class="fas fa-scroll"></i> <span>مستمر</span></button>
+      <button class="tbtn" id="rdSnap" title="وضع التصفح"><i class="fas fa-scroll"></i> <span>مستمر</span></button>
     </div>
 
     <div class="reader-progress-bar"><i id="rdBarTop"></i></div>
@@ -1224,7 +1095,7 @@ input,textarea,select,button{font-family:inherit}
         <div class="pdf-stage" id="rdStage"></div>
         <div class="pdf-loading" id="rdLoading">
           <i class="fas fa-spinner fa-spin"></i>
-          <p id="rdLoadingTxt">جاري تحميل الملف...</p>
+          <p id="rdLoadingTxt">جاري تحميل الملف السحابي...</p>
           <div class="pl-bar"><i id="rdLoadingBar"></i></div>
         </div>
         <button class="reader-fab" id="rdTop" title="أعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
@@ -1244,18 +1115,14 @@ input,textarea,select,button{font-family:inherit}
   </div>
 </div>
 
-<!-- ================= حماية ================= -->
 <div id="shield">
   <div class="shield-in">
     <div class="sh-ic"><i class="fas fa-shield-halved"></i></div>
     <h2>تم إيقاف العرض مؤقتاً</h2>
-    <p>رصدنا محاولة لفتح أدوات المطوّر أو الوصول للمحتوى بطرق غير مصرّح بها.
-       <br>المحتوى محمي بحقوق الملكية الفكرية لمنصة <b>العباقرة للقدرات</b>.
-       <br><br>أغلق أدوات المطوّر وسيُستأنف العرض تلقائياً.</p>
+    <p>المحتوى محمي بحقوق الملكية الفكرية لمنصة <b>العباقرة للقدرات</b>.</p>
   </div>
 </div>
 
-<!-- ================= نافذة عامة ================= -->
 <div class="modal" id="modal">
   <div class="modal-box">
     <h3 id="modalTitle"><i class="fas fa-circle-info"></i> <span>عنوان</span></h3>
@@ -1270,11 +1137,13 @@ input,textarea,select,button{font-family:inherit}
 
 <div id="toast"></div>
 
+<!-- إعدادات وقاعدة بيانات SUPABASE -->
 <script>
-/* ============================================================
-   0) أدوات مساعدة
-============================================================ */
-const $  = s => document.querySelector(s);
+const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 if (window.pdfjsLib) {
@@ -1331,7 +1200,7 @@ async function sha256(str){
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }catch(e){ return 'plain:' + str; }
 }
-/* نافذة تأكيد/معلومات عامة */
+
 function openModal({title, text, bodyHTML, okText, cancelText, onOk, danger}){
   const m = $('#modal');
   $('#modalTitle').innerHTML = `<i class="fas ${danger?'fa-triangle-exclamation':'fa-circle-info'}"></i> <span>${escapeHtml(title||'')}</span>`;
@@ -1353,110 +1222,47 @@ function confirmBox(title, text, onOk, danger){
 }
 
 /* ============================================================
-   1) التخزين (IndexedDB + localStorage)
+   قاعدة البيانات السحابية (Supabase Sync)
 ============================================================ */
-const IDB = {
-  db: null,
-  async open(){
-    if(this.db) return this.db;
-    if(!window.indexedDB) throw new Error('IndexedDB غير مدعوم');
-    this.db = await new Promise((res, rej) => {
-      const req = indexedDB.open('abdqaqra_pdfs', 1);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if(!db.objectStoreNames.contains('pdfs')) db.createObjectStore('pdfs');
-      };
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
-    });
-    return this.db;
-  },
-  async put(key, val){
-    const db = await this.open();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('pdfs', 'readwrite');
-      tx.objectStore('pdfs').put(val, key);
-      tx.oncomplete = () => res();
-      tx.onerror = () => rej(tx.error);
-      tx.onabort = () => rej(tx.error);
-    });
-  },
-  async get(key){
-    const db = await this.open();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('pdfs', 'readonly');
-      const req = tx.objectStore('pdfs').get(key);
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
-    });
-  },
-  async del(key){
-    const db = await this.open();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('pdfs', 'readwrite');
-      tx.objectStore('pdfs').delete(key);
-      tx.oncomplete = () => res();
-      tx.onerror = () => rej(tx.error);
-    });
-  },
-  async clear(){
-    const db = await this.open();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('pdfs', 'readwrite');
-      tx.objectStore('pdfs').clear();
-      tx.oncomplete = () => res();
-      tx.onerror = () => rej(tx.error);
-    });
-  },
-  async keys(){
-    const db = await this.open();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('pdfs', 'readonly');
-      const req = tx.objectStore('pdfs').getAllKeys();
-      req.onsuccess = () => res(req.result || []);
-      req.onerror = () => rej(req.error);
-    });
-  }
-};
+let DB = { users:[], files:[] };
+const SESSION_KEY = 'abdq_cloud_session';
 
-const DB_KEY = 'abdq_db_v4';
-const SESSION_KEY = 'abdq_session';
-const UD_KEY = 'abdq_user_';
-
-let DB = { users:[], files:[], initialized:false };
-
-function safeSet(key, val){
-  try{ localStorage.setItem(key, val); return true; }
-  catch(e){ toast('تعذّر الحفظ — مساحة التخزين ممتلئة', 'err'); return false; }
-}
-function loadDB(){
+async function fetchCloudData(){
   try{
-    const raw = localStorage.getItem(DB_KEY);
-    if(raw) DB = JSON.parse(raw);
-  }catch(e){ DB = { users:[], files:[], initialized:false }; }
-  if(!DB || !Array.isArray(DB.users)) DB = { users:[], files:[], initialized:false };
-  if(!Array.isArray(DB.files)) DB.files = [];
-  if(!DB.initialized) seedDB();
-  // ترقية: دعم قاعدة بيانات النسخة القديمة
-  try{
-    if(!DB.users.length){
-      const old = localStorage.getItem('abdq_db_v3');
-      if(old){
-        const o = JSON.parse(old);
-        if(o && Array.isArray(o.users)){ DB.users = o.users; DB.files = o.files || []; saveDB(); }
-      }
+    const { data: usersData, error: uErr } = await supabase.from('users').select('*');
+    if(!uErr && usersData) {
+      DB.users = usersData.map(u => ({
+        id: u.id, name: u.name, email: u.email,
+        passHash: u.password_hash, subscribed: u.subscribed,
+        isAdmin: u.is_admin, requestedAt: u.requested_at, createdAt: u.created_at
+      }));
     }
-  }catch(e){}
-}
-function saveDB(){ safeSet(DB_KEY, JSON.stringify(DB)); }
-function seedDB(){
-  DB.users = [{
-    id:'admin_' + Date.now(), name:'مدير المنصة', email:'admin@abdqaqra.com',
-    password:'admin1234', subscribed:true, isAdmin:true, requestedAt:null, createdAt:Date.now()
-  }];
-  DB.files = [];
-  DB.initialized = true;
-  saveDB();
+    const { data: filesData, error: fErr } = await supabase.from('files').select('*');
+    if(!fErr && filesData) {
+      DB.files = filesData.map(f => ({
+        id: f.id, title: f.title, cat: f.cat, desc: f.desc,
+        important: f.important, icon: f.icon, color: f.color,
+        pageCount: f.page_count, storagePath: f.storage_path, createdAt: f.created_at
+      }));
+    }
+    // التأكد من وجود حساب الأدمن الافتراضي سحابياً
+    if(!DB.users.some(u => u.isAdmin)){
+      const adminPassHash = await sha256('admin1234');
+      const adminObj = {
+        id: 'admin_root', name: 'مدير المنصة', email: 'admin@abdqaqra.com',
+        password_hash: adminPassHash, subscribed: true, is_admin: true,
+        requested_at: null, created_at: Date.now()
+      };
+      await supabase.from('users').upsert([adminObj]);
+      DB.users.push({
+        id: adminObj.id, name: adminObj.name, email: adminObj.email,
+        passHash: adminPassHash, subscribed: true, isAdmin: true,
+        requestedAt: null, createdAt: adminObj.created_at
+      });
+    }
+  }catch(e){
+    console.error("Cloud fetch error:", e);
+  }
 }
 
 let currentUserObj = null;
@@ -1473,41 +1279,34 @@ function defaultUD(){
 }
 let userData = defaultUD();
 
-function resetUD(){ userData = defaultUD(); }
-function loadUD(uid){
-  resetUD();
-  let raw = null;
-  try{ raw = localStorage.getItem(UD_KEY + uid); }catch(e){}
-  if(raw){
-    try{
-      const d = JSON.parse(raw);
-      if(d && typeof d === 'object'){
-        Object.assign(userData, d);
-        // ترقية: dark القديم -> darkMode
-        if(d.darkMode === undefined) userData.darkMode = d.dark ? 'dark' : 'light';
-        if(!userData.log || typeof userData.log !== 'object') userData.log = {};
-        if(!Array.isArray(userData.favs)) userData.favs = [];
-        if(!Array.isArray(userData.tasks)) userData.tasks = [];
-        if(!Array.isArray(userData.badges)) userData.badges = [];
-        if(!Array.isArray(userData.opened)) userData.opened = [];
-        if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
-      }
-    }catch(e){ resetUD(); }
+async function loadUD(uid){
+  userData = defaultUD();
+  try{
+    const { data, error } = await supabase.from('user_data').select('data').eq('user_id', uid).maybeSingle();
+    if(data && data.data){
+      Object.assign(userData, data.data);
+    }
+  }catch(e){
+    console.warn("Could not load cloud user data:", e);
   }
 }
+
+let saveUDDebounce = null;
 function saveUD(){
   if(!currentUserObj) return;
-  safeSet(UD_KEY + currentUserObj.id, JSON.stringify(userData));
-}
-function currentUser(){
-  let id = null;
-  try{ id = localStorage.getItem(SESSION_KEY); }catch(e){}
-  if(!id) return null;
-  return DB.users.find(u => u.id === id) || null;
+  clearTimeout(saveUDDebounce);
+  saveUDDebounce = setTimeout(async () => {
+    try{
+      await supabase.from('user_data').upsert({
+        user_id: currentUserObj.id,
+        data: userData
+      });
+    }catch(e){ console.error("Cloud save failed:", e); }
+  }, 500);
 }
 
 /* ============================================================
-   2) الثيمات والمظهر
+   الثيمات والمظهر
 ============================================================ */
 const THEMES = [
   { id:'purple',  name:'بنفسجي', c1:'#5b6cff', c2:'#8b5cf6', rgb:'91,108,255' },
@@ -1524,15 +1323,13 @@ const ICONS = [
   { i:'fa-square-root-variable', c:'#f7b32b' }, { i:'fa-book-open', c:'#22c55e' },
   { i:'fa-pen-fancy', c:'#ef4444' }, { i:'fa-shapes', c:'#0ea5e9' },
   { i:'fa-ruler-combined', c:'#ec4899' }, { i:'fa-infinity', c:'#14b8a6' },
-  { i:'fa-language', c:'#f97316' }, { i:'fa-spell-check', c:'#a855f7' },
-  { i:'fa-list-check', c:'#06b6d4' }, { i:'fa-graduation-cap', c:'#dc2626' }
+  { i:'fa-language', c:'#f97316' }, { i:'fa-spell-check', c:'#a855f7' }
 ];
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 
-const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 function isDark(){
   if(userData.darkMode === 'dark') return true;
-  if(userData.darkMode === 'auto') return !!(darkQuery && darkQuery.matches);
+  if(userData.darkMode === 'auto') return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   return false;
 }
 function applyTheme(){
@@ -1553,8 +1350,6 @@ function applyTheme(){
   document.body.classList.toggle('no-anim', !!userData.reduceMotion);
   const tb = $('#themeBtn');
   if(tb) tb.innerHTML = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-  const mc = document.querySelector('meta[name="theme-color"]');
-  if(mc) mc.setAttribute('content', dark ? '#070c19' : '#eef1fa');
   drawTimerDial();
   renderHomeStats();
   renderThemesGrid();
@@ -1579,7 +1374,6 @@ function renderThemesGrid(){
 }
 function syncSettingsUI(){
   const q = id => document.getElementById(id);
-  if(q('setDark')) q('setDark').checked = false;
   const modeSeg = q('modeSeg');
   if(modeSeg) modeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === userData.darkMode));
   const fontSeg = q('fontSeg');
@@ -1588,27 +1382,12 @@ function syncSettingsUI(){
   if(readSeg) readSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === userData.readTheme));
   const snapSeg = q('snapSeg');
   if(snapSeg) snapSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === '1') === !!userData.snap));
-  const zoomSeg = q('zoomSeg');
-  if(zoomSeg) zoomSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.z) === (userData.defaultZoom||1)));
-  const focusSeg = q('focusSeg');
-  if(focusSeg) focusSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.focus||25)));
-  const brkSeg = q('breakSeg');
-  if(brkSeg) brkSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.brk||5)));
-  const longSeg = q('longSeg');
-  if(longSeg) longSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.longBrk||15)));
   const sa = q('setAnim'); if(sa) sa.checked = !!userData.reduceMotion;
   const sm = q('setMarks'); if(sm) sm.checked = !!userData.showMarks;
   const sr = q('setResume'); if(sr) sr.checked = !!userData.autoResume;
-  const sAuto = q('setAuto'); if(sAuto) sAuto.checked = !!userData.autoStart;
-  const sSound = q('setSound'); if(sSound) sSound.checked = !!userData.sound;
   const gp = q('goalPagesRange'); if(gp){ gp.value = userData.goalPages; q('goalPagesVal').textContent = userData.goalPages; }
   const gm = q('goalMinRange'); if(gm){ gm.value = userData.goalMinutes; q('goalMinVal').textContent = userData.goalMinutes; }
   const gt = q('goalTarget'); if(gt) gt.textContent = userData.goalPages;
-}
-if(darkQuery){
-  const handler = () => { if(userData.darkMode === 'auto') applyTheme(); };
-  if(darkQuery.addEventListener) darkQuery.addEventListener('change', handler);
-  else if(darkQuery.addListener) darkQuery.addListener(handler);
 }
 $('#themeBtn').addEventListener('click', () => {
   userData.darkMode = isDark() ? 'light' : 'dark';
@@ -1617,15 +1396,15 @@ $('#themeBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   3) التنقل العام
+   التنقل
 ============================================================ */
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
-  files:['الملفات','مكتبتك التعليمية الكاملة'],
+  files:['الملفات','مكتبتك التعليمية السحابية المحدثة'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
   features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
-  admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
+  admin:['لوحة الأدمن','إدارة سحابية للمستخدمين والملفات']
 };
 function go(view){
   $$('.view').forEach(v => v.classList.remove('active'));
@@ -1643,7 +1422,7 @@ function go(view){
 $$('.nav-btn').forEach(btn => btn.addEventListener('click', () => go(btn.dataset.view)));
 
 /* ============================================================
-   4) الإحصاءات والشارات
+   الإحصاءات والشارات
 ============================================================ */
 function getPct(id){ const p = userData.progress[id]; if(!p) return 0; return typeof p === 'object' ? (p.pct || 0) : p; }
 function getMaxPage(id){ const p = userData.progress[id]; if(!p || typeof p !== 'object') return 0; return p.maxPage || 0; }
@@ -1660,32 +1439,23 @@ function isPending(){ return currentUserObj && !currentUserObj.isAdmin && !curre
 function todayLog(){
   const k = dayKey();
   if(!userData.log[k]) userData.log[k] = { min:0, pages:0, sessions:0 };
-  const e = userData.log[k];
-  if(typeof e.min !== 'number') e.min = 0;
-  if(typeof e.pages !== 'number') e.pages = 0;
-  if(typeof e.sessions !== 'number') e.sessions = 0;
-  return e;
+  return userData.log[k];
 }
 function addPagesToday(n){
   if(!n) return;
-  const e = todayLog();
-  e.pages += n;
+  todayLog().pages += n;
   saveUD();
 }
 function addMinutesToday(n){
   if(!n) return;
-  const e = todayLog();
-  e.min += n;
+  todayLog().min += n;
   userData.minutes += n;
   saveUD();
 }
 function computeStreak(){
   let streak = 0;
   const d = new Date();
-  const todayHas = (() => {
-    const e = userData.log[dayKey(d)];
-    return e && (e.min >= 1 || e.pages > 0);
-  })();
+  const todayHas = (() => { const e = userData.log[dayKey(d)]; return e && (e.min >= 1 || e.pages > 0); })();
   if(!todayHas) d.setDate(d.getDate() - 1);
   for(let i = 0; i < 400; i++){
     const e = userData.log[dayKey(d)];
@@ -1708,18 +1478,11 @@ function last7Days(){
 }
 
 const BADGES = [
-  { id:'first',   i:'fa-seedling',      t:'البداية الموفقة',  d:'فتحت أول ملف' },
-  { id:'pages10', i:'fa-book-open',     t:'قارئ نشيط',        d:'قرأت 10 صفحات' },
-  { id:'pages100',i:'fa-book-bookmark', t:'قارئ متمكن',       d:'قرأت 100 صفحة' },
-  { id:'half',    i:'fa-fire',          t:'في منتصف الطريق',  d:'أنجزت ملفاً بنسبة 50%+' },
-  { id:'done1',   i:'fa-star',          t:'إنجاز كامل',       d:'أكملت ملفاً بنسبة 100%' },
-  { id:'three',   i:'fa-trophy',        t:'مثابر',            d:'3 ملفات بمعدل 50%+' },
-  { id:'all',     i:'fa-crown',         t:'عبقري القدرات',    d:'أكملت جميع الملفات' },
-  { id:'focus1',  i:'fa-hourglass-end', t:'مركّز',            d:'أتممت جلسة تركيز كاملة' },
-  { id:'focus10', i:'fa-brain',         t:'عقل منظم',         d:'10 جلسات تركيز' },
-  { id:'streak3', i:'fa-fire-flame-curved', t:'ثلاثة أيام',   d:'3 أيام مذاكرة متواصلة' },
-  { id:'streak7', i:'fa-fire-flame-simple', t:'أسبوع كامل',   d:'7 أيام مذاكرة متواصلة' },
-  { id:'goal',    i:'fa-bullseye',      t:'هدف محقق',         d:'حققت هدف اليوم كاملاً' }
+  { id:'first', i:'fa-seedling', t:'البداية الموفقة', d:'فتحت أول ملف' },
+  { id:'pages10', i:'fa-book-open', t:'قارئ نشيط', d:'قرأت 10 صفحات' },
+  { id:'pages100', i:'fa-book-bookmark', t:'قارئ متمكن', d:'قرأت 100 صفحة' },
+  { id:'done1', i:'fa-star', t:'إنجاز كامل', d:'أكملت ملفاً بنسبة 100%' },
+  { id:'streak3', i:'fa-fire', t:'ثلاثة أيام', d:'3 أيام مذاكرة متواصلة' }
 ];
 function checkBadges(){
   const add = id => {
@@ -1728,21 +1491,11 @@ function checkBadges(){
     const b = BADGES.find(x => x.id === id);
     if(b) toast(`حصلت على شارة «${b.t}»`, 'ok');
   };
-  const vals = DB.files.map(f => getPct(f.id));
   if(userData.opened.length) add('first');
   if(totalPagesRead() >= 10) add('pages10');
   if(totalPagesRead() >= 100) add('pages100');
-  if(vals.some(v => v >= 50)) add('half');
-  if(vals.some(v => v >= 100)) add('done1');
-  if(vals.filter(v => v >= 50).length >= 3) add('three');
-  if(vals.length && vals.every(v => v >= 100)) add('all');
-  if(userData.sessions >= 1) add('focus1');
-  if(userData.sessions >= 10) add('focus10');
-  const st = computeStreak();
-  if(st >= 3) add('streak3');
-  if(st >= 7) add('streak7');
-  const t = todayLog();
-  if(userData.goalPages && t.pages >= userData.goalPages) add('goal');
+  if(DB.files.some(f => getPct(f.id) >= 100)) add('done1');
+  if(computeStreak() >= 3) add('streak3');
   saveUD();
 }
 function renderBadges(){
@@ -1756,7 +1509,7 @@ function renderBadges(){
 }
 
 /* ============================================================
-   5) البطاقات والملفات
+   الملفات والبطاقات
 ============================================================ */
 function fileCard(f){
   const pct = getPct(f.id);
@@ -1795,19 +1548,14 @@ let fileSort = 'new';
 function renderFiles(){
   const q = ($('#searchInput') ? $('#searchInput').value : '').trim().toLowerCase();
   let list = DB.files.slice();
-  if(q) list = list.filter(f =>
-    (f.title||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q) || (f.desc||'').toLowerCase().includes(q));
+  if(q) list = list.filter(f => (f.title||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q));
   if(fileFilter === 'fav') list = list.filter(f => userData.favs.includes(f.id));
   else if(fileFilter !== 'all') list = list.filter(f => f.cat === fileFilter);
-  if(fileSort === 'new') list.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-  else if(fileSort === 'old') list.sort((a,b)=> (a.createdAt||0) - (b.createdAt||0));
-  else if(fileSort === 'alpha') list.sort((a,b)=> String(a.title).localeCompare(String(b.title), 'ar'));
-  else if(fileSort === 'progress') list.sort((a,b)=> getPct(b.id) - getPct(a.id));
 
   const grid = $('#filesGrid');
   if(!grid) return;
   if(!list.length){
-    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>${q || fileFilter !== 'all' ? 'لا توجد نتائج مطابقة' : 'لا توجد ملفات بعد'}</h3><p>${q || fileFilter !== 'all' ? 'جرّب تغيير البحث أو التصنيف' : 'سيتم رفع الملفات من لوحة الأدمن'}</p></div></div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات متوفرة</h3><p>تأكد من قيام الأدمن برفع الملفات سحابياً</p></div></div>`;
   } else {
     grid.innerHTML = list.map(fileCard).join('');
   }
@@ -1819,8 +1567,7 @@ function renderRecent(){
   const recent = userData.opened.slice(0, 4).map(id => DB.files.find(f => f.id === id)).filter(Boolean);
   const list = recent.length ? recent : DB.files.slice(0, 4);
   const box = $('#recentFiles');
-  if(box) box.innerHTML = list.length ? list.map(fileCard).join('') :
-    '<div style="grid-column:1/-1"><div class="admin-empty" style="padding:40px 20px"><div class="em-ic"><i class="fas fa-folder-open"></i></div><h3>لا توجد ملفات بعد</h3><p>سيتم رفع الملفات من لوحة الأدمن</p></div></div>';
+  if(box) box.innerHTML = list.length ? list.map(fileCard).join('') : '<div style="grid-column:1/-1"><p style="text-align:center;color:var(--muted)">لا توجد ملفات بعد</p></div>';
 }
 function renderSubBanners(){
   const bannerHTML = !isSubscribed() ? (() => {
@@ -1828,23 +1575,23 @@ function renderSubBanners(){
       return `<div class="subscribe-wall">
         <div class="sw-icon"><i class="fas fa-hourglass-half"></i></div>
         <h3>طلبك قيد المراجعة</h3>
-        <p>تم إرسال طلب اشتراكك بنجاح. سيتم تفعيل حسابك من قبل الأدمن قريباً لتتمكن من الوصول إلى جميع الملفات.</p>
-        <div class="sw-status"><i class="fas fa-clock"></i> بانتظار الموافقة</div>
+        <p>تم إرسال طلب اشتراكك إلى لوحة الأدمن. سيتم تفعيل حسابك قريباً لتتمكن من الوصول لجميع الملفات من أي جهاز.</p>
+        <div class="sw-status"><i class="fas fa-clock"></i> بانتظار موافقة الأدمن</div>
       </div>`;
     }
     return `<div class="subscribe-wall">
       <div class="sw-icon"><i class="fas fa-lock"></i></div>
-      <h3>حسابك بحاجة إلى اشتراك</h3>
-      <p>لتصفّح الملفات ومتابعة تقدمك، يجب تفعيل اشتراكك من قبل الأدمن.</p>
-      <div class="sw-status"><i class="fas fa-ban"></i> الوصول غير متاح</div>
+      <h3>حسابك بحاجة إلى تفعيل</h3>
+      <p>لتصفّح الملفات ومتابعة دراستك، يجب تفعيل حسابك من قبل الأدمن.</p>
+      <div class="sw-status"><i class="fas fa-ban"></i> غير مفعّل</div>
     </div>`;
   })() : '';
   const hb = $('#homeSubBanner'); if(hb) hb.innerHTML = bannerHTML;
   const fb = $('#filesSubBanner'); if(fb) fb.innerHTML = bannerHTML;
 }
 window.showLockMessage = () => {
-  if(isPending()) toast('طلبك قيد المراجعة من قبل الأدمن', 'warn');
-  else toast('تحتاج اشتراكاً مفعّلاً للوصول للملفات', 'warn');
+  if(isPending()) toast('طلبك بانتظار موافقة الأدمن', 'warn');
+  else toast('تحتاج تفعيل حسابك أولاً للوصول للملفات', 'warn');
 };
 window.toggleFav = (id, ev) => {
   if(ev){ ev.stopPropagation(); ev.preventDefault(); }
@@ -1855,24 +1602,17 @@ window.toggleFav = (id, ev) => {
 };
 
 /* ============================================================
-   6) قارئ PDF المتقدم (تحميل كسول + تكبير + تنقل)
+   قارئ PDF السحابي
 ============================================================ */
 const RS = {
   doc:null, file:null, numPages:0, dims:[], offsets:[],
   zoom:1, baseWidth:800, token:0, current:1,
-  rendered:new Set(), rendering:new Set(), inView:new Set(),
-  pageEls:[], observer:null, restoring:false, clockId:null
+  pageEls:[], observer:null, restoring:false
 };
-let currentFile = null;
-
 const rdBody = $('#rdBody');
 
 function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
-function pageHeight(i){
-  const d = RS.dims[i];
-  if(!d) return 600;
-  return Math.round(d.h * (pageWidth() / d.w));
-}
+function pageHeight(i){ const d = RS.dims[i]; return d ? Math.round(d.h * (pageWidth() / d.w)) : 600; }
 function showLoading(txt, pct){
   const l = $('#rdLoading');
   if(!l) return;
@@ -1883,518 +1623,170 @@ function showLoading(txt, pct){
 function hideLoading(){ const l = $('#rdLoading'); if(l) l.style.display = 'none'; }
 
 async function openFile(id){
-  if(!currentUserObj) return;
-  if(!isSubscribed()){ showLockMessage(); return; }
+  if(!currentUserObj || !isSubscribed()){ showLockMessage(); return; }
   const f = DB.files.find(x => x.id === id);
   if(!f) return;
 
-  currentFile = f;
   RS.file = f;
   userData.opened = [id, ...userData.opened.filter(x => x !== id)].slice(0, 14);
   saveUD();
 
-  $('#rdIcon').innerHTML = `<i class="fas ${f.icon}" style="color:${f.color}"></i>`;
-  $('#rdIcon').style.background = `color-mix(in srgb, ${f.color} 16%, transparent)`;
   $('#rdTitle').textContent = f.title;
-  $('#rdMeta').textContent = `PDF • ${f.cat}${f.important ? ' • مهم' : ''}`;
-  updateFavBtn();
-  updateBookmarkBtn();
+  $('#rdMeta').textContent = `PDF • ${f.cat}`;
   $('#reader').classList.add('open');
   document.body.style.overflow = 'hidden';
-  applyReaderTheme();
-  applySnapClass();
 
   RS.token++;
   const token = RS.token;
-  teardownReader(false);
-  showLoading('جاري تحميل الملف...', 5);
-  $('#rdStage').innerHTML = '';
+  showLoading('جاري تنزيل الملف من السحاب...', 20);
 
   try{
-    let blob = await IDB.get(id);
-    if(!blob){
-      // ملف قديم غير مخزّن (نسخة سابقة)
-      throw new Error('الملف غير موجود في التخزين المحلي');
-    }
+    // الحصول على الرابط السحابي المباشر من Supabase Storage
+    const { data: publicUrlData } = supabase.storage.from('pdfs').getPublicUrl(f.storagePath || `${f.id}.pdf`);
+    const pdfUrl = publicUrlData.publicUrl;
+
+    const doc = await pdfjsLib.getDocument({ url: pdfUrl, disableAutoFetch:true }).promise;
     if(token !== RS.token) return;
-    const ab = await blob.arrayBuffer();
-    if(token !== RS.token) return;
-    const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true }).promise;
-    if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
 
     RS.doc = doc;
     RS.numPages = doc.numPages;
-    if(f.pageCount !== RS.numPages){ f.pageCount = RS.numPages; saveDB(); }
-    $('#rdMeta').textContent = `PDF • ${f.cat} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
     $('#rdPagesTotal').textContent = RS.numPages;
     $('#rdPageInput').max = RS.numPages;
 
-    showLoading('جاري تجهيز الصفحات...', 15);
     RS.dims = new Array(RS.numPages);
-    const batch = 12;
-    for(let i = 0; i < RS.numPages; i += batch){
-      if(token !== RS.token) return;
-      const nums = [];
-      for(let j = i; j < Math.min(i + batch, RS.numPages); j++) nums.push(j + 1);
-      const pages = await Promise.all(nums.map(n => doc.getPage(n).catch(()=>null)));
-      pages.forEach((p, k) => {
-        const idx = i + k;
-        if(p){
-          const vp = p.getViewport({ scale: 1 });
-          RS.dims[idx] = { w: vp.width, h: vp.height };
-          try{ p.cleanup(); }catch(e){}
-        } else {
-          RS.dims[idx] = { w: 612, h: 792 };
-        }
-      });
-      showLoading('جاري تجهيز الصفحات...', 15 + Math.round((i / RS.numPages) * 60));
+    for(let i=0; i<RS.numPages; i++){
+      const p = await doc.getPage(i+1).catch(()=>null);
+      if(p){
+        const vp = p.getViewport({ scale: 1 });
+        RS.dims[i] = { w: vp.width, h: vp.height };
+        p.cleanup();
+      } else {
+        RS.dims[i] = { w: 612, h: 792 };
+      }
     }
 
-    if(token !== RS.token) return;
     buildPages();
     hideLoading();
-
-    // استئناف الموضع
-    const prog = userData.progress[id];
-    let startPage = 1;
-    if(userData.autoResume && prog && typeof prog === 'object'){
-      if(prog.bookmark) startPage = prog.bookmark;
-      else if(prog.lastPage) startPage = prog.lastPage;
-    }
-    startPage = Math.max(1, Math.min(startPage, RS.numPages));
-    RS.current = startPage;
-    $('#rdPageInput').value = startPage;
-    renderThumbs();
-    if(startPage > 1){
-      RS.restoring = true;
-      scrollToPage(startPage, false);
-      setTimeout(()=>{ RS.restoring = false; }, 500);
-    }
+    scrollToPage(1, false);
     updateReaderUI();
-
-    if(!userData.badges.includes('first')){
-      userData.badges.push('first'); saveUD();
-      setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700);
-      renderBadges();
-    }
-    startReadClock();
-    refreshAll();
+    checkBadges();
   }catch(err){
     console.error(err);
     hideLoading();
-    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex">
-      <i class="fas fa-circle-exclamation" style="color:var(--danger)"></i>
-      <p>تعذّر تحميل الملف</p>
-      <small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small>
-    </div>`;
-    toast('تعذّر تحميل الملف — تأكد من رفعه مجدداً', 'err');
+    toast('تعذّر فتح الملف من السحاب، تأكد من اتصال الإنترنت', 'err');
   }
 }
 window.openFile = openFile;
 
-function teardownReader(closeUI){
-  try{ if(RS.observer){ RS.observer.disconnect(); RS.observer = null; } }catch(e){}
-  RS.rendered.clear();
-  RS.rendering.clear();
-  RS.inView.clear();
-  RS.pageEls = [];
-  RS.offsets = [];
-  stopReadClock();
-  if(closeUI){
-    if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
-    RS.doc = null;
-    RS.file = null;
-    RS.numPages = 0;
-    RS.dims = [];
-    currentFile = null;
-  }
-}
 function buildPages(){
   const stage = $('#rdStage');
   stage.innerHTML = '';
   RS.pageEls = [];
   stage.style.width = pageWidth() + 'px';
 
-  const frag = document.createDocumentFragment();
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
     el.className = 'pdf-page';
     el.dataset.page = String(i + 1);
     el.style.width = pageWidth() + 'px';
     el.style.height = pageHeight(i) + 'px';
-    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div>
-      <div class="pg-inner"></div>
-      <div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
-    frag.appendChild(el);
+    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div>`;
+    stage.appendChild(el);
     RS.pageEls.push(el);
   }
-  stage.appendChild(frag);
+  RS.offsets = RS.pageEls.map(el => el.offsetTop);
 
+  if(RS.observer) RS.observer.disconnect();
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
-      if(en.isIntersecting){
-        RS.inView.add(idx);
-        renderPage(idx);
-      } else {
-        RS.inView.delete(idx);
-      }
+      if(en.isIntersecting) renderPage(idx);
     });
-  }, { root: rdBody, rootMargin: '800px 0px' });
+  }, { root: rdBody, rootMargin: '400px 0px' });
 
   RS.pageEls.forEach(el => RS.observer.observe(el));
-  computeOffsets();
-  applyMarksVisibility();
 }
-function computeOffsets(){
-  RS.offsets = RS.pageEls.map(el => el.offsetTop);
-}
+
 async function renderPage(num){
   const holder = RS.pageEls[num - 1];
-  if(!holder || holder.dataset.done === '1') return;
-  if(RS.rendering.has(num)) return;
-  if(!RS.doc) return;
-  const token = RS.token;
-  RS.rendering.add(num);
+  if(!holder || holder.dataset.done === '1' || !RS.doc) return;
   try{
     const page = await RS.doc.getPage(num);
-    if(token !== RS.token) return;
     const d = RS.dims[num - 1] || { w: 612, h: 792 };
-    const cssW = pageWidth();
-    const scale = cssW / d.w;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const vp = page.getViewport({ scale: scale * dpr });
+    const vp = page.getViewport({ scale: (pageWidth() / d.w) * Math.min(window.devicePixelRatio||1, 2) });
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.floor(vp.width));
-    canvas.height = Math.max(1, Math.floor(vp.height));
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    const ctx = canvas.getContext('2d', { alpha:false });
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.width = '100%'; canvas.style.height = '100%';
+    const ctx = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
-    if(token !== RS.token) return;
     const inner = holder.querySelector('.pg-inner');
     if(inner){ inner.innerHTML = ''; inner.appendChild(canvas); }
     holder.dataset.done = '1';
-    try{ page.cleanup(); }catch(e){}
-  }catch(e){
-    console.warn('render page error', num, e);
-  }finally{
-    RS.rendering.delete(num);
-  }
+    page.cleanup();
+  }catch(e){}
 }
-function cleanupFarPages(){
-  const cur = RS.current;
-  RS.pageEls.forEach((el, i) => {
-    const n = i + 1;
-    if(Math.abs(n - cur) <= 5) return;
-    if(RS.inView.has(n)) return;
-    if(el.dataset.done === '1'){
-      const inner = el.querySelector('.pg-inner');
-      if(inner) inner.innerHTML = '';
-      el.dataset.done = '0';
-      RS.rendered.delete(n);
-    }
-  });
-}
-function rebuildPageSizes(){
-  RS.pageEls.forEach((el, i) => {
-    el.style.width = pageWidth() + 'px';
-    el.style.height = pageHeight(i) + 'px';
-    if(el.dataset.done === '1'){
-      const inner = el.querySelector('.pg-inner');
-      if(inner) inner.innerHTML = '';
-      el.dataset.done = '0';
-      RS.rendered.delete(i + 1);
-    }
-  });
-  const stage = $('#rdStage');
-  if(stage) stage.style.width = pageWidth() + 'px';
-  computeOffsets();
-  // إعادة رسم المرئي
-  RS.pageEls.forEach((el, i) => {
-    const n = i + 1;
-    if(RS.inView.has(n)) renderPage(n);
-  });
-}
+
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
   const el = RS.pageEls[num - 1];
   if(!el) return;
-  const top = el.offsetTop - 8;
-  try{
-    rdBody.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
-  }catch(e){ rdBody.scrollTop = top; }
+  rdBody.scrollTo({ top: el.offsetTop - 8, behavior: smooth ? 'smooth' : 'auto' });
   RS.current = num;
   $('#rdPageInput').value = num;
   updateReaderUI();
-  highlightThumb(num);
 }
-function pageFromScroll(){
-  const st = rdBody.scrollTop + 60;
-  let page = 1;
-  const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
-  for(let i = 0; i < offs.length; i++){
-    if(offs[i] <= st) page = i + 1; else break;
-  }
-  return page;
-}
+
 function updateReaderUI(){
   if(!RS.file || !RS.numPages) return;
   const pct = Math.max(getPct(RS.file.id), Math.round((RS.current / RS.numPages) * 100));
   $('#rdPctTxt').textContent = pct + '%';
   $('#rdPageInfo').textContent = `الصفحة ${RS.current} من ${RS.numPages}`;
   $('#rdBarTop').style.width = pct + '%';
-  const btn = $('#rdComplete');
-  if(pct >= 100){
-    btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف';
-    btn.classList.add('achieved');
-  } else {
-    btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف';
-    btn.classList.remove('achieved');
-  }
-  const fab = $('#rdTop');
-  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
 }
-let scrollTick = null;
-rdBody.addEventListener('scroll', () => {
-  if(!RS.doc){ updateReaderUI(); return; }
-  const fab = $('#rdTop');
-  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
-  if(scrollTick) return;
-  scrollTick = requestAnimationFrame(() => {
-    scrollTick = null;
-    handleReaderScroll();
-  });
-}, { passive:true });
 
-function handleReaderScroll(){
-  if(!RS.doc || !RS.file || !RS.numPages) return;
-  const page = pageFromScroll();
+rdBody.addEventListener('scroll', () => {
+  if(!RS.doc || !RS.pageEls.length) return;
+  const st = rdBody.scrollTop + 60;
+  let page = 1;
+  for(let i = 0; i < RS.offsets.length; i++){
+    if(RS.offsets[i] <= st) page = i + 1; else break;
+  }
   if(page !== RS.current){
     RS.current = page;
     $('#rdPageInput').value = page;
-    highlightThumb(page);
+    const pct = Math.round((page / RS.numPages) * 100);
+    const oldPct = getPct(RS.file.id);
+    const newPct = Math.max(oldPct, pct);
+    userData.progress[RS.file.id] = { pct: newPct, maxPage: Math.max(getMaxPage(RS.file.id), page), lastPage: page, at: Date.now() };
+    saveUD();
+    updateReaderUI();
+    renderHomeStats();
   }
-  const oldPct = getPct(RS.file.id);
-  const oldMax = getMaxPage(RS.file.id);
-  const pct = Math.round((page / RS.numPages) * 100);
-  const newPct = Math.max(oldPct, pct);
-  const newMax = Math.max(oldMax, page);
-
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  userData.progress[RS.file.id] = Object.assign({}, prev, {
-    pct: newPct, maxPage: newMax, lastPage: page, at: Date.now()
-  });
-  if(newMax > oldMax) addPagesToday(newMax - oldMax);
-  else saveUD();
-
-  updateReaderUI();
-  updateSidebar();
-  renderHomeStats();
-  if(newPct >= 100 && oldPct < 100) toast('أكملت الملف بالكامل!', 'ok');
-  checkBadges();
-  if(!RS.restoring) cleanupFarPages();
-}
-
-function updateFavBtn(){
-  const b = $('#rdFav');
-  if(!b || !RS.file) return;
-  const on = userData.favs.includes(RS.file.id);
-  b.classList.toggle('on', on);
-  b.innerHTML = `<i class="${on ? 'fas' : 'far'} fa-star"></i>`;
-}
-function updateBookmarkBtn(){
-  const b = $('#rdBookmark');
-  if(!b || !RS.file) return;
-  const p = userData.progress[RS.file.id];
-  const has = p && typeof p === 'object' && p.bookmark;
-  b.classList.toggle('on', !!has);
-  b.innerHTML = `<i class="${has ? 'fas' : 'far'} fa-bookmark"></i>`;
-}
-function applyReaderTheme(){
-  const body = $('#rdBody');
-  if(!body) return;
-  body.classList.remove('read-light','read-sepia','read-dark');
-  body.classList.add('read-' + (userData.readTheme || 'light'));
-  applyMarksVisibility();
-}
-function applySnapClass(){
-  const body = $('#rdBody');
-  if(!body) return;
-  body.classList.toggle('snap', !!userData.snap);
-  const btn = $('#rdSnap');
-  if(btn) btn.innerHTML = `<i class="fas fa-scroll"></i> <span>${userData.snap ? 'صفحة واحدة' : 'مستمر'}</span>`;
-}
-function applyMarksVisibility(){
-  const body = $('#rdBody');
-  if(!body) return;
-  body.classList.toggle('hide-marks', !userData.showMarks);
-}
-function renderThumbs(){
-  const box = $('#rdThumbs');
-  if(!box) return;
-  if(!RS.numPages){ box.innerHTML = ''; return; }
-  let html = '';
-  for(let i = 1; i <= RS.numPages; i++){
-    html += `<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
-  }
-  box.innerHTML = html;
-  box.querySelectorAll('.thumb-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      scrollToPage(parseInt(b.dataset.p, 10), true);
-      if(window.innerWidth <= 720) box.classList.remove('open');
-    });
-  });
-}
-function highlightThumb(n){
-  const box = $('#rdThumbs');
-  if(!box) return;
-  box.querySelectorAll('.thumb-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.p,10) === n));
-}
-
-/* ساعة القراءة — تُضاف تلقائياً للدقائق */
-function startReadClock(){
-  stopReadClock();
-  RS.clockId = setInterval(() => {
-    if(document.hidden) return;
-    if(!$('#reader').classList.contains('open')) return;
-    addMinutesToday(0.5);
-  }, 30000);
-}
-function stopReadClock(){
-  if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; }
-}
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden){ saveUD(); }
-});
+}, { passive: true });
 
 function closeReader(){
-  if(!$('#reader').classList.contains('open')) return;
-  RS.token++;
-  const id = RS.file ? RS.file.id : null;
-  const page = RS.current;
-  if(id && page){
-    const prev = (userData.progress[id] && typeof userData.progress[id] === 'object') ? userData.progress[id] : {};
-    userData.progress[id] = Object.assign({}, prev, { lastPage: page, at: Date.now() });
-    saveUD();
-  }
-  teardownReader(true);
   $('#reader').classList.remove('open');
   document.body.style.overflow = '';
+  if(RS.doc){ RS.doc.destroy(); RS.doc = null; }
   $('#rdStage').innerHTML = '';
-  $('#rdThumbs').innerHTML = '';
-  $('#rdThumbs').classList.remove('open');
-  hideLoading();
   renderFiles();
-  renderBadges();
-  renderRecent();
-  updateSidebar();
-  checkBadges();
+  renderHomeStats();
 }
-
-/* أحداث القارئ */
 $('#rdClose').addEventListener('click', closeReader);
-$('#reader').addEventListener('click', e => { if(e.target.id === 'reader') closeReader(); });
 $('#rdPrev').addEventListener('click', () => scrollToPage(RS.current - 1, true));
 $('#rdNext').addEventListener('click', () => scrollToPage(RS.current + 1, true));
-$('#rdPageInput').addEventListener('change', e => {
-  const v = parseInt(e.target.value, 10);
-  if(!isNaN(v)) scrollToPage(v, true);
-});
-$('#rdZoomIn').addEventListener('click', () => setZoom(RS.zoom + 0.15));
-$('#rdZoomOut').addEventListener('click', () => setZoom(RS.zoom - 0.15));
-$('#rdFit').addEventListener('click', () => setZoom(1));
-$('#rdTop').addEventListener('click', () => {
-  if(!RS.numPages) return;
-  if(RS.current <= 1) rdBody.scrollTo({ top:0, behavior:'smooth' });
-  else scrollToPage(1, true);
-});
-$('#rdSnap').addEventListener('click', () => {
-  userData.snap = !userData.snap;
-  saveUD(); applySnapClass(); syncSettingsUI();
-  toast(userData.snap ? 'وضع الصفحة الواحدة مُفعّل' : 'وضع التمرير المستمر مُفعّل', 'ok');
-});
-$('#rdThumbsBtn').addEventListener('click', () => {
-  const box = $('#rdThumbs');
-  box.classList.toggle('open');
-  $('#rdThumbsBtn').classList.toggle('on', box.classList.contains('open'));
-  if(box.classList.contains('open')) highlightThumb(RS.current);
-});
-$('#rdFav').addEventListener('click', () => {
-  if(!RS.file) return;
-  const i = userData.favs.indexOf(RS.file.id);
-  if(i > -1) userData.favs.splice(i,1); else userData.favs.push(RS.file.id);
-  saveUD(); updateFavBtn();
-  toast(i > -1 ? 'أُزيل من المفضلة' : 'أُضيف إلى المفضلة', 'ok');
-});
-$('#rdBookmark').addEventListener('click', () => {
-  if(!RS.file) return;
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  if(prev.bookmark){
-    delete prev.bookmark;
-    toast('تم حذف العلامة المرجعية', 'warn');
-  } else {
-    prev.bookmark = RS.current;
-    toast(`تم حفظ علامة عند الصفحة ${RS.current}`, 'ok');
-  }
-  userData.progress[RS.file.id] = prev;
-  saveUD(); updateBookmarkBtn();
-});
-$('#rdRestart').addEventListener('click', () => { if(RS.numPages) scrollToPage(1, true); });
+$('#rdPageInput').addEventListener('change', e => scrollToPage(parseInt(e.target.value, 10), true));
 $('#rdComplete').addEventListener('click', () => {
   if(!RS.file) return;
-  const total = RS.numPages || RS.file.pageCount || 1;
-  const oldPct = getPct(RS.file.id);
-  const oldMax = getMaxPage(RS.file.id);
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  userData.progress[RS.file.id] = Object.assign({}, prev, { pct:100, maxPage:total, lastPage:total, at:Date.now() });
-  if(total > oldMax) addPagesToday(total - oldMax); else saveUD();
-  RS.current = total;
+  userData.progress[RS.file.id] = { pct: 100, maxPage: RS.numPages, lastPage: RS.numPages, at: Date.now() };
+  saveUD();
   updateReaderUI();
-  refreshAll(); checkBadges(); renderBadges();
-  if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
+  refreshAll();
+  toast('أحسنت! أتممت هذا الملف', 'ok');
 });
-function setZoom(z){
-  if(!RS.numPages) return;
-  z = Math.max(0.4, Math.min(3, Math.round(z * 100) / 100));
-  if(z === RS.zoom){ updateZoomLabel(); return; }
-  RS.zoom = z;
-  const cur = RS.current;
-  rebuildPageSizes();
-  updateZoomLabel();
-  scrollToPage(cur, false);
-  // إعادة الرسم بعد استقرار الأبعاد
-  setTimeout(() => {
-    RS.pageEls.forEach((el, i) => {
-      const n = i + 1;
-      if(RS.inView.has(n)) renderPage(n);
-    });
-  }, 60);
-}
-function updateZoomLabel(){
-  const el = $('#rdZoomVal');
-  if(el) el.textContent = Math.round(RS.zoom * 100) + '%';
-}
-let resizeTimer = null;
-window.addEventListener('resize', () => {
-  if(!$('#reader').classList.contains('open') || !RS.numPages) return;
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    const cur = RS.current;
-    computeBaseWidth();
-    rebuildPageSizes();
-    scrollToPage(cur, false);
-    updateZoomLabel();
-  }, 250);
-});
-function computeBaseWidth(){
-  const avail = rdBody.clientWidth - 30;
-  const maxW = 980;
-  RS.baseWidth = Math.max(220, Math.min(maxW, avail));
-}
 
 /* ============================================================
-   7) الرئيسية: إحصاءات + هدف + أسبوع
+   الرئيسية والمؤقت
 ============================================================ */
 function renderHomeStats(){
   const avg = overallProgress();
@@ -2406,1130 +1798,423 @@ function renderHomeStats(){
   const sp = $('#sidePct'); if(sp) sp.textContent = avg + '%';
   const sb = $('#sideBar'); if(sb) sb.style.width = avg + '%';
 
-  // هدف اليوم
   const t = todayLog();
   const goal = Math.max(1, userData.goalPages || 10);
-  const gp = Math.min(100, Math.round((t.pages / goal) * 100));
-  const gr = $('#goalRing');
-  if(gr){
-    const old = gr.querySelector('svg');
-    if(old) old.remove();
-    gr.insertAdjacentHTML('afterbegin', ringSVG(gp, 130, 12, 'var(--primary)', 'var(--primary-2)'));
-  }
   setTxt('goalToday', t.pages);
   setTxt('goalTarget', goal);
-  const gm = $('#goalMsg');
-  if(gm){
-    if(t.pages === 0) gm.textContent = 'لم تبدأ القراءة اليوم. افتح ملفاً وابدأ الآن!';
-    else if(t.pages < goal) gm.textContent = `أحسنت! بقي ${goal - t.pages} صفحة لتحقيق هدف اليوم.`;
-    else gm.textContent = '🎉 رائع! لقد حققت هدف اليوم بالكامل.';
-  }
-  // السلسلة
-  const st = computeStreak();
-  setTxt('streakNum', st);
-  renderWeekChart('#weekChart', 100);
-  renderWeekChart('#weekChartBig', 150);
-  setTxt('tmSessions', t.sessions || 0);
-  setTxt('tmMinutes', Math.round(t.min));
+  setTxt('streakNum', computeStreak());
 }
-function renderWeekChart(sel, height){
-  const box = document.querySelector(sel);
-  if(!box) return;
-  const days = last7Days();
-  const max = Math.max(10, ...days.map(d => d.min));
-  const names = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-  box.innerHTML = days.map(d => {
-    const h = Math.max(4, Math.round((d.min / max) * (height - 22)));
-    return `<div class="week-bar" title="${d.min} دقيقة">
-      <i style="height:${h}px"></i>
-      <span>${names[d.date.getDay()]}</span>
-    </div>`;
-  }).join('');
-}
-function ringSVG(pct, size, stroke, colorA, colorB, bg){
-  const uid = 'g' + Math.random().toString(36).slice(2, 9);
+
+function ringSVG(pct, size, stroke, colorA, colorB){
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const off = c - (Math.max(0, Math.min(100, pct)) / 100) * c;
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
-    <defs><linearGradient id="${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${colorA}"/><stop offset="100%" stop-color="${colorB}"/>
-    </linearGradient></defs>
-    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${bg || 'var(--border)'}" stroke-width="${stroke}"/>
-    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#${uid})" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${colorA}" stroke-width="${stroke}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
   </svg>`;
 }
-function updateSidebar(){ renderHomeStats(); }
 
-function renderProgress(){
-  const avg = overallProgress();
-  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-  setTxt('progPctBig', avg + '%');
-  setTxt('progDoneBig', completedCount() + '/' + DB.files.length);
-  setTxt('progPagesBig', totalPagesRead());
-  setTxt('progMinBig', Math.round(userData.minutes));
-  const msgs = ['ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.','بداية جيدة! استمر في التقدم خطوة بخطوة.','أنت في منتصف الطريق تقريباً، لا تتوقف الآن!','أداء ممتاز! اقتربت من إتمام كل الملفات.','مذهل! أكملت جميع الملفات، أنت عبقري القدرات'];
-  const idx = avg === 0 ? 0 : avg < 30 ? 1 : avg < 65 ? 2 : avg < 100 ? 3 : 4;
-  const pm = $('#progMsg'); if(pm) pm.textContent = msgs[idx];
-
-  const days = last7Days();
-  const best = days.reduce((a,b)=> b.min > a.min ? b : a, days[0]);
-  setTxt('bestDay', best && best.min ? best.min + ' دقيقة' : '—');
-  setTxt('totalMinutes', Math.round(userData.minutes));
-  setTxt('totalSessions', userData.sessions);
-
-  const pl = $('#progressList');
-  if(!pl) return;
-  if(!DB.files.length){
-    pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>';
-    return;
-  }
-  pl.innerHTML = DB.files.map(f => {
-    const p = getPct(f.id);
-    const mp = getMaxPage(f.id);
-    const total = f.pageCount || '?';
-    const curPage = mp > 0 ? Math.min(mp, total) : 0;
-    return `<div style="padding:16px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-        <i class="fas ${f.icon}" style="font-size:1.2rem;color:${f.color}"></i>
-        <b style="font-size:.9rem;flex:1;min-width:120px">${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.8rem"></i>' : ''}</b>
-        <span style="font-size:.74rem;color:var(--muted);font-weight:700">${curPage}/${total} صفحة</span>
-        <span style="font-size:.86rem;font-weight:900;color:${f.color}">${p}%</span>
-      </div>
-      <div class="bar"><i style="width:${p}%;background:linear-gradient(90deg,${f.color},${f.color}aa)"></i></div>
-    </div>`;
-  }).join('') + `<div style="padding-top:18px;display:flex;gap:20px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);font-weight:700">
-    <span><i class="fas fa-book" style="color:var(--primary)"></i> ملفات مكتملة: <b style="color:var(--primary)">${completedCount()}</b></span>
-    <span><i class="fas fa-file-lines" style="color:var(--primary)"></i> صفحات مقروءة: <b style="color:var(--primary)">${totalPagesRead()}</b></span>
-    <span><i class="fas fa-stopwatch" style="color:var(--primary)"></i> دقائق المذاكرة: <b style="color:var(--primary)">${Math.round(userData.minutes)}</b></span>
-    <span><i class="fas fa-bullseye" style="color:var(--primary)"></i> جلسات التركيز: <b style="color:var(--primary)">${userData.sessions}</b></span>
-  </div>`;
-}
-
-/* ============================================================
-   8) المزايا
-============================================================ */
-const FEATURES = [
-  { i:'fa-user-shield',      t:'حساب شخصي آمن',        d:'كل مستخدم له حسابه الخاص وتقدمه المستقل مع تشفير كلمة المرور.', c:'#ef4444' },
-  { i:'fa-file-pdf',         t:'ملفات PDF حقيقية',     d:'رفع ملفات PDF من الجهاز وعرضها داخل المنصة.', c:'#dc2626' },
-  { i:'fa-bolt',             t:'قارئ فائق السرعة',      d:'تحميل كسول للصفحات: يفتح الملفات الكبيرة فوراً دون تعليق.', c:'#f59e0b' },
-  { i:'fa-magnifying-glass-plus', t:'تكبير وتصغير',    d:'تحكم كامل في حجم الصفحة مع ملء تلقائي للعرض.', c:'#0ea5e9' },
-  { i:'fa-list-ul',          t:'قائمة الصفحات',        d:'انتقل لأي صفحة بسرعة من قائمة جانبية منظمة.', c:'#6366f1' },
-  { i:'fa-bookmark',         t:'علامة مرجعية',         d:'احفظ موضعك المفضل وارجع إليه في أي وقت.', c:'#a855f7' },
-  { i:'fa-circle-half-stroke',t:'أوضاع قراءة مريحة',   d:'خلفيات فاتح وسيبيا وداكن لتقليل إجهاد العين.', c:'#14b8a6' },
-  { i:'fa-scroll',           t:'تمرير مستمر أو صفحة واحدة', d:'اختر طريقة التصفح الأنسب لك مع التثبيت التلقائي.', c:'#ec4899' },
-  { i:'fa-chart-simple',     t:'تتبع إنجاز تلقائي',     d:'النظام يحسب إنجازك من الصفحة التي وصلت إليها.', c:'#5b6cff' },
-  { i:'fa-star',             t:'ملفات مميزة',          d:'إبراز الملفات المهمة بنجمة ليراها الطالب فوراً.', c:'#f7b32b' },
-  { i:'fa-heart',            t:'المفضلة',              d:'ثبّت ملفاتك المفضلة وارجع لها بضغطة واحدة.', c:'#e11d48' },
-  { i:'fa-medal',            t:'شارات تحفيزية',        d:'12 شارة مختلفة تكسبها عند تحقيق إنجازات دراسية.', c:'#22c55e' },
-  { i:'fa-fire',             t:'سلسلة الأيام',          d:'تابع أيامك المتواصلة وحافظ على استمراريتك.', c:'#f97316' },
-  { i:'fa-crosshairs',       t:'هدف يومي',             d:'حدّد عدد صفحات ودقائق يومية وتابع تحقيقها.', c:'#8b5cf6' },
-  { i:'fa-stopwatch',        t:'مؤقت بومودورو',        d:'جلسات تركيز وراحات قصيرة وطويلة قابلة للتخصيص.', c:'#06b6d4' },
-  { i:'fa-chart-column',     t:'تقارير أسبوعية',       d:'رسم بياني لدقائق مذاكرتك خلال آخر ٧ أيام.', c:'#0891b2' },
-  { i:'fa-palette',          t:'ثيمات متعددة',         d:'8 ألوان + وضع ليلي تلقائي لتخصيص تجربتك.', c:'#db2777' },
-  { i:'fa-shield-halved',    t:'لوحة أدمن كاملة',      d:'إدارة المستخدمين والاشتراكات والملفات بسهولة.', c:'#14b8a6' },
-  { i:'fa-user-check',       t:'نظام موافقات ذكي',     d:'الطلاب الجدد ينتظرون موافقة الأدمن لتفعيل حسابهم.', c:'#f59e0b' },
-  { i:'fa-note-sticky',      t:'ملاحظاتي الخاصة',      d:'مساحة لكتابة القواعد مع حفظ فوري وتصدير.', c:'#f97316' },
-  { i:'fa-list-check',       t:'قائمة المهام',         d:'نظّم مهامك الدراسية وأنجزها واحداً تلو الآخر.', c:'#6366f1' },
-  { i:'fa-magnifying-glass', t:'بحث وفلترة فورية',     d:'ابحث بالاسم أو التصنيف مع ترتيب ذكي للنتائج.', c:'#a855f7' },
-  { i:'fa-cloud-arrow-up',   t:'رفع ملفات سهل',        d:'اسحب ملف PDF وأفلته لإضافته فوراً للمكتبة.', c:'#06b6d4' },
-  { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب يعمل بسلاسة على الجوال والتابلت.', c:'#22c55e' }
-];
-function renderFeatures(){
-  const grid = $('#featGrid');
-  if(!grid) return;
-  grid.innerHTML = FEATURES.map((f, i) => `
-    <div class="feat-new" style="--fc:${f.c}">
-      <span class="num-badge">${String(i+1).padStart(2,'0')}</span>
-      <div class="fi"><i class="fas ${f.i}"></i></div>
-      <h3>${f.t}</h3>
-      <p>${f.d}</p>
-    </div>`).join('');
-  const fc = $('#featCount'); if(fc) fc.textContent = FEATURES.length;
-  const ft = $('#featHeroTitle');
-  if(ft) ft.textContent = `${FEATURES.length} ميزة احترافية صُمّمت لتُحسّن رحلتك الدراسية`;
-}
-
-/* ============================================================
-   9) المهام والملاحظات
-============================================================ */
-function renderTasks(){
-  const box = $('#taskList');
-  if(!box) return;
-  if(!userData.tasks.length){
-    box.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem">لا توجد مهام بعد</div>`;
-    return;
-  }
-  box.innerHTML = userData.tasks.map((t, i) => `
-    <div class="task-item ${t.done ? 'done' : ''}">
-      <div class="t-check" onclick="toggleTask(${i})">${t.done ? '<i class="fas fa-check"></i>' : ''}</div>
-      <span class="t-txt">${escapeHtml(t.text)}</span>
-      <button class="t-del" onclick="delTask(${i})"><i class="fas fa-trash"></i></button>
-    </div>`).join('');
-}
-window.toggleTask = i => { if(userData.tasks[i]){ userData.tasks[i].done = !userData.tasks[i].done; saveUD(); renderTasks(); } };
-window.delTask = i => { userData.tasks.splice(i, 1); saveUD(); renderTasks(); };
-function addTask(){
-  const inp = $('#taskInput');
-  if(!inp) return;
-  const v = inp.value.trim();
-  if(!v) return;
-  userData.tasks.unshift({ text: v, done:false });
-  inp.value = '';
-  saveUD(); renderTasks();
-}
-$('#taskAdd').addEventListener('click', addTask);
-$('#taskInput').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
-
-const notesArea = $('#notesArea');
-let notesTimer = null;
-notesArea.addEventListener('input', () => {
-  clearTimeout(notesTimer);
-  notesTimer = setTimeout(() => { userData.notes = notesArea.value; saveUD(); }, 400);
-});
-$('#notesExport').addEventListener('click', () => {
-  if(!userData.notes.trim()){ toast('لا توجد ملاحظات للتصدير', 'warn'); return; }
-  const blob = new Blob([userData.notes], { type:'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ملاحظاتي-العباقرة.txt';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('تم تصدير الملاحظات', 'ok');
-});
-
-/* ============================================================
-   10) المؤقت (بدون انحراف زمني)
-============================================================ */
-const TIMER = { running:false, mode:'focus', endAt:0, remain:0, int:null, doneCount:0 };
-function timerTotalSec(mode){
-  if(mode === 'focus') return (userData.focus || 25) * 60;
-  if(mode === 'long') return (userData.longBrk || 15) * 60;
-  return (userData.brk || 5) * 60;
-}
+const TIMER = { running:false, mode:'focus', remain:1500, int:null };
 function drawTimerDial(){
   const holder = $('#timerDial');
   if(!holder) return;
-  const total = timerTotalSec(TIMER.mode);
-  const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
-  const pct = total ? ((total - remain) / total) * 100 : 0;
   const old = holder.querySelector('svg');
   if(old) old.remove();
-  const colA = TIMER.mode === 'focus' ? 'var(--primary)' : '#22c55e';
-  const colB = TIMER.mode === 'focus' ? 'var(--primary-2)' : '#4ade80';
-  holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 150, 12, colA, colB));
+  const total = (userData.focus || 25) * 60;
+  const pct = ((total - TIMER.remain) / total) * 100;
+  holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 150, 12, 'var(--primary)', 'var(--primary-2)'));
 }
-function updateTimerUI(){
-  const total = timerTotalSec(TIMER.mode);
-  const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
-  const tt = $('#timerText'); if(tt) tt.textContent = fmtTime(remain);
-  const tl = $('#timerLabel');
-  if(tl) tl.textContent = TIMER.mode === 'focus' ? 'جلسة تركيز' : (TIMER.mode === 'long' ? 'راحة طويلة' : 'راحة قصيرة');
-  const th = $('#timerHead');
-  if(th) th.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل' : 'وقت الراحة — استرخِ قليلاً';
-  const td = $('#timerDesc');
-  if(td) td.textContent = TIMER.mode === 'focus'
-    ? 'اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت بشكل ملحوظ.'
-    : 'خذ نفساً عميقاً، تحرّك قليلاً، واشرب ماءً. الراحة جزء من الإنتاجية.';
-  const ts = $('#timerStart');
-  if(ts) ts.innerHTML = TIMER.running ? '<i class="fas fa-pause"></i> إيقاف مؤقت' : '<i class="fas fa-play"></i> ' + (TIMER.remain < total ? 'استئناف' : 'ابدأ الجلسة');
-  const tm = $('#timerMode');
-  if(tm) tm.innerHTML = TIMER.mode === 'focus'
-    ? `<i class="fas fa-mug-hot"></i> راحة ${userData.brk || 5}د`
-    : `<i class="fas fa-bullseye"></i> تركيز ${userData.focus || 25}د`;
-  drawTimerDial();
-}
-function startTimer(){
+$('#timerStart').addEventListener('click', () => {
   if(TIMER.running){
-    TIMER.remain = Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000));
-    clearInterval(TIMER.int); TIMER.int = null;
+    clearInterval(TIMER.int);
     TIMER.running = false;
-    updateTimerUI();
-    return;
-  }
-  if(TIMER.remain <= 0) TIMER.remain = timerTotalSec(TIMER.mode);
-  TIMER.endAt = Date.now() + TIMER.remain * 1000;
-  TIMER.running = true;
-  clearInterval(TIMER.int);
-  TIMER.int = setInterval(timerTick, 250);
-  updateTimerUI();
-}
-function timerTick(){
-  if(!TIMER.running) return;
-  const remain = Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000));
-  TIMER.remain = remain;
-  updateTimerUI();
-  if(remain <= 0) finishTimer();
-}
-function finishTimer(){
-  clearInterval(TIMER.int); TIMER.int = null;
-  TIMER.running = false;
-  beep();
-  if(TIMER.mode === 'focus'){
-    TIMER.doneCount++;
-    userData.sessions++;
-    addMinutesToday(userData.focus || 25);
-    todayLog().sessions = (todayLog().sessions || 0) + 1;
-    userData.badges.includes('focus1') || userData.badges.push('focus1');
-    saveUD();
-    renderHomeStats(); renderBadges(); checkBadges();
-    toast('أحسنت! أكملت جلسة تركيز كاملة', 'ok');
-    const useLong = TIMER.doneCount % 4 === 0;
-    TIMER.mode = useLong ? 'long' : 'break';
+    $('#timerStart').innerHTML = '<i class="fas fa-play"></i> استئناف';
   } else {
-    toast('انتهت الراحة، لنعد للتركيز!', 'warn');
-    TIMER.mode = 'focus';
+    TIMER.running = true;
+    $('#timerStart').innerHTML = '<i class="fas fa-pause"></i> إيقاف';
+    TIMER.int = setInterval(() => {
+      TIMER.remain--;
+      $('#timerText').textContent = fmtTime(TIMER.remain);
+      drawTimerDial();
+      if(TIMER.remain <= 0){
+        clearInterval(TIMER.int);
+        TIMER.running = false;
+        beep();
+        addMinutesToday(userData.focus || 25);
+        toast('انتهت جلسة التركيز بنجاح', 'ok');
+      }
+    }, 1000);
   }
-  TIMER.remain = timerTotalSec(TIMER.mode);
-  updateTimerUI();
-  if(userData.autoStart){
-    setTimeout(() => { if(!TIMER.running) startTimer(); }, 900);
-  }
-}
-$('#timerStart').addEventListener('click', startTimer);
-$('#timerReset').addEventListener('click', () => {
-  clearInterval(TIMER.int); TIMER.int = null;
-  TIMER.running = false;
-  TIMER.remain = timerTotalSec(TIMER.mode);
-  updateTimerUI();
-});
-$('#timerMode').addEventListener('click', () => {
-  clearInterval(TIMER.int); TIMER.int = null;
-  TIMER.running = false;
-  TIMER.mode = TIMER.mode === 'focus' ? 'break' : 'focus';
-  TIMER.remain = timerTotalSec(TIMER.mode);
-  updateTimerUI();
 });
 
 /* ============================================================
-   11) الإعدادات — ربط العناصر
+   المصادقة السحابية (دخول من أي جهاز)
 ============================================================ */
-const segHandler = (sel, cb) => {
-  const box = document.querySelector(sel);
-  if(!box) return;
-  box.querySelectorAll('button').forEach(b => {
-    b.addEventListener('click', () => {
-      box.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      cb(b);
-    });
-  });
-};
-segHandler('#modeSeg', b => { userData.darkMode = b.dataset.m; saveUD(); applyTheme(); });
-segHandler('#fontSeg', b => { userData.font = parseFloat(b.dataset.f); saveUD(); applyTheme(); });
-segHandler('#readThemeSeg', b => { userData.readTheme = b.dataset.r; saveUD(); applyReaderTheme(); });
-segHandler('#snapSeg', b => { userData.snap = b.dataset.s === '1'; saveUD(); applySnapClass(); });
-segHandler('#zoomSeg', b => { userData.defaultZoom = parseFloat(b.dataset.z); saveUD(); });
-segHandler('#focusSeg', b => {
-  userData.focus = parseInt(b.dataset.m, 10); saveUD();
-  if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); updateTimerUI(); }
-  updateTimerUI();
-});
-segHandler('#breakSeg', b => {
-  userData.brk = parseInt(b.dataset.m, 10); saveUD();
-  if(!TIMER.running && TIMER.mode === 'break'){ TIMER.remain = timerTotalSec('break'); }
-  updateTimerUI();
-});
-segHandler('#longSeg', b => {
-  userData.longBrk = parseInt(b.dataset.m, 10); saveUD();
-  if(!TIMER.running && TIMER.mode === 'long'){ TIMER.remain = timerTotalSec('long'); }
-  updateTimerUI();
-});
-$('#setAnim').addEventListener('change', e => { userData.reduceMotion = e.target.checked; saveUD(); applyTheme(); });
-$('#setMarks').addEventListener('change', e => { userData.showMarks = e.target.checked; saveUD(); applyMarksVisibility(); });
-$('#setResume').addEventListener('change', e => { userData.autoResume = e.target.checked; saveUD(); });
-$('#setAuto').addEventListener('change', e => { userData.autoStart = e.target.checked; saveUD(); });
-$('#setSound').addEventListener('change', e => { userData.sound = e.target.checked; saveUD(); });
-$('#goalPagesRange').addEventListener('input', e => {
-  userData.goalPages = parseInt(e.target.value, 10) || 10;
-  $('#goalPagesVal').textContent = userData.goalPages;
-  $('#goalTarget').textContent = userData.goalPages;
-  saveUD(); renderHomeStats(); checkBadges();
-});
-$('#goalMinRange').addEventListener('input', e => {
-  userData.goalMinutes = parseInt(e.target.value, 10) || 30;
-  $('#goalMinVal').textContent = userData.goalMinutes;
-  saveUD();
-});
-
-/* فلترة الملفات */
-$$('.filter-chip').forEach(b => {
-  b.addEventListener('click', () => {
-    $$('.filter-chip').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    fileFilter = b.dataset.cat;
-    renderFiles();
-  });
-});
-$('#sortSelect').addEventListener('change', e => { fileSort = e.target.value; renderFiles(); });
-$('#searchInput').addEventListener('input', () => { go('files'); renderFiles(); });
-
-/* تصدير/استيراد بيانات المستخدم */
-$('#exportBtn').addEventListener('click', () => {
-  const data = Object.assign({}, userData, { exportedAt: new Date().toISOString(), user: currentUserObj ? currentUserObj.name : '' });
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'abdqaqra-backup.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('تم تصدير نسختك الاحتياطية', 'ok');
-});
-$('#importBtn').addEventListener('click', () => $('#importFile').click());
-$('#importFile').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try{
-      const d = JSON.parse(ev.target.result);
-      Object.keys(d).forEach(k => { if(k !== 'exportedAt' && k !== 'user') userData[k] = d[k]; });
-      if(!userData.log || typeof userData.log !== 'object') userData.log = {};
-      saveUD();
-      notesArea.value = userData.notes || '';
-      refreshAll(); renderTasks(); renderBadges(); renderProgress(); applyTheme(); applyReaderTheme(); applySnapClass();
-      toast('تم استيراد البيانات بنجاح', 'ok');
-    }catch(err){ toast('الملف غير صالح', 'warn'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-$('#resetProgressBtn').addEventListener('click', () => {
-  confirmBox('تصفير التقدم', 'سيتم مسح كل نسب الإنجاز والشارات والدقائق. هل أنت متأكد؟', () => {
-    userData.progress = {};
-    userData.badges = [];
-    userData.opened = [];
-    userData.minutes = 0;
-    userData.sessions = 0;
-    userData.log = {};
-    saveUD();
-    refreshAll(); renderBadges(); renderProgress();
-    toast('تم تصفير التقدم', 'ok');
-  }, true);
-});
-$('#changePassBtn').addEventListener('click', () => {
-  openModal({
-    title:'تغيير كلمة المرور',
-    text:'أدخل كلمة المرور الحالية والجديدة.',
-    bodyHTML:`<div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="mpOld" placeholder="••••••"></div>
-              <div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="mpNew" placeholder="6 أحرف على الأقل"></div>
-              <div class="form-group"><label>تأكيد كلمة المرور الجديدة</label><input type="password" id="mpNew2" placeholder="••••••"></div>`,
-    okText:'حفظ',
-    onOk: async () => {
-      const oldP = document.getElementById('mpOld').value;
-      const n1 = document.getElementById('mpNew').value;
-      const n2 = document.getElementById('mpNew2').value;
-      if(!await checkPass(currentUserObj, oldP)){ toast('كلمة المرور الحالية غير صحيحة', 'err'); return; }
-      if(!n1 || n1.length < 6){ toast('كلمة المرور الجديدة قصيرة', 'err'); return; }
-      if(n1 !== n2){ toast('كلمتا المرور غير متطابقتين', 'err'); return; }
-      currentUserObj.passHash = await sha256(n1);
-      delete currentUserObj.password;
-      saveDB();
-      toast('تم تغيير كلمة المرور', 'ok');
-    }
-  });
-});
-
-/* ============================================================
-   12) المصادقة
-============================================================ */
-async function checkPass(user, pass){
-  if(!user) return false;
-  if(user.passHash) return user.passHash === await sha256(pass);
-  if(typeof user.password === 'string'){
-    if(user.password === pass){
-      user.passHash = await sha256(pass);
-      delete user.password;
-      saveDB();
-      return true;
-    }
-    return false;
-  }
-  return false;
-}
 function showAuth(){ $('#auth').classList.add('open'); }
 function hideAuth(){ $('#auth').classList.remove('open'); }
-function showAuthForm(tab){
-  $$('.auth-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $$('.auth-form').forEach(f => f.classList.remove('on'));
-  const el = document.getElementById('form-' + tab);
-  if(el) el.classList.add('on');
-  ['loginMsg','regMsg','adminMsg'].forEach(id => {
-    const m = document.getElementById(id);
-    if(m){ m.className = 'auth-msg'; m.textContent = ''; }
-  });
-}
 function showMsg(elId, text, type='err'){
   const el = document.getElementById(elId);
   if(!el) return;
   el.innerHTML = `<i class="fas ${type === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${escapeHtml(text)}`;
   el.className = 'auth-msg ' + type;
 }
-$$('.auth-tabs button').forEach(b => b.addEventListener('click', () => showAuthForm(b.dataset.tab)));
-$('#authBack').addEventListener('click', () => {
-  hideAuth();
-  const w = $('#welcome');
-  w.style.display = 'flex';
-  w.classList.remove('exit');
-});
+
 $('#regBtn').addEventListener('click', async () => {
-  const btn = $('#regBtn');
   const name = $('#regName').value.trim();
   const email = $('#regEmail').value.trim().toLowerCase();
   const pass = $('#regPass').value;
-  if(!name || name.length < 2){ showMsg('regMsg','أدخل اسماً صحيحاً (حرفان على الأقل)'); return; }
-  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg','أدخل بريداً إلكترونياً صحيحاً'); return; }
+  if(!name || name.length < 2){ showMsg('regMsg','أدخل اسماً صحيحاً'); return; }
+  if(!email || !email.includes('@')){ showMsg('regMsg','أدخل بريداً إلكترونياً صحيحاً'); return; }
   if(!pass || pass.length < 6){ showMsg('regMsg','كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
-  if(DB.users.find(u => u.email === email)){ showMsg('regMsg','هذا البريد مسجّل مسبقاً'); return; }
+
+  const btn = $('#regBtn');
   btn.disabled = true;
-  const user = {
-    id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-    name, email,
-    passHash: await sha256(pass),
-    subscribed: false, requestedAt: Date.now(), isAdmin: false, createdAt: Date.now()
-  };
-  btn.disabled = false;
-  DB.users.push(user);
-  saveDB();
-  showMsg('regMsg','تم إنشاء حسابك، جاري الدخول...', 'ok');
-  setTimeout(() => {
-    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
-    enterApp();
-  }, 600);
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء سحابياً...';
+
+  try{
+    const passHash = await sha256(pass);
+    const userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+
+    // تسجيل الحساب في Supabase مباشرة ليظهر لجميع الأجهزة وللأدمن
+    const { error } = await supabase.from('users').insert([{
+      id: userId,
+      name: name,
+      email: email,
+      password_hash: passHash,
+      subscribed: false,
+      is_admin: false,
+      requested_at: Date.now(),
+      created_at: Date.now()
+    }]);
+
+    if(error){
+      showMsg('regMsg', error.message.includes('unique') ? 'هذا البريد مسجّل مسبقاً' : 'حدث خطأ أثناء التسجيل السحابي');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب';
+      return;
+    }
+
+    showMsg('regMsg','تم إنشاء حسابك السحابي! في انتظار قبول الأدمن', 'ok');
+    localStorage.setItem(SESSION_KEY, userId);
+    await fetchCloudData();
+    setTimeout(() => enterApp(), 1000);
+  }catch(err){
+    showMsg('regMsg', 'تعذر الاتصال بقاعدة البيانات');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب';
+  }
 });
+
 $('#loginBtn').addEventListener('click', async () => {
-  const btn = $('#loginBtn');
   const email = $('#loginEmail').value.trim().toLowerCase();
   const pass = $('#loginPass').value;
-  if(!email || !pass){ showMsg('loginMsg','أدخل البريد وكلمة المرور'); return; }
-  const user = DB.users.find(u => u.email === email);
-  if(!user){ showMsg('loginMsg','البريد أو كلمة المرور غير صحيحة'); return; }
-  if(user.isAdmin){ showMsg('loginMsg','هذا حساب أدمن — استخدم تبويب الأدمن'); return; }
+  if(!email || !pass){ showMsg('loginMsg','يرجى إدخال البريد وكلمة المرور'); return; }
+
+  const btn = $('#loginBtn');
   btn.disabled = true;
-  const ok = await checkPass(user, pass);
-  btn.disabled = false;
-  if(!ok){ showMsg('loginMsg','البريد أو كلمة المرور غير صحيحة'); return; }
-  showMsg('loginMsg','تم تسجيل الدخول', 'ok');
-  setTimeout(() => {
-    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
-    enterApp();
-  }, 400);
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق السحابي...';
+
+  try{
+    const passHash = await sha256(pass);
+    const { data: user, error } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+
+    if(error || !user || user.password_hash !== passHash){
+      showMsg('loginMsg','بيانات الدخول غير صحيحة');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> تسجيل الدخول';
+      return;
+    }
+
+    localStorage.setItem(SESSION_KEY, user.id);
+    await fetchCloudData();
+    showMsg('loginMsg','تم تسجيل الدخول بنجاح', 'ok');
+    setTimeout(() => enterApp(), 600);
+  }catch(err){
+    showMsg('loginMsg','خطأ في الاتصال بالخادم');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> تسجيل الدخول';
+  }
 });
+
 $('#adminBtn').addEventListener('click', async () => {
-  const btn = $('#adminBtn');
   const email = $('#adminEmail').value.trim().toLowerCase();
   const pass = $('#adminPass').value;
-  const user = DB.users.find(u => u.email === email && u.isAdmin);
-  if(!user){ showMsg('adminMsg','بيانات الأدمن غير صحيحة'); return; }
+
+  const btn = $('#adminBtn');
   btn.disabled = true;
-  const ok = await checkPass(user, pass);
-  btn.disabled = false;
-  if(!ok){ showMsg('adminMsg','بيانات الأدمن غير صحيحة'); return; }
-  showMsg('adminMsg','مرحباً بك أيها المدير', 'ok');
-  setTimeout(() => {
-    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
-    enterApp();
-  }, 400);
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> التحقق من صلاحيات الأدمن...';
+
+  try{
+    const passHash = await sha256(pass);
+    const { data: user, error } = await supabase.from('users').select('*').eq('email', email).eq('is_admin', true).maybeSingle();
+
+    if(error || !user || user.password_hash !== passHash){
+      showMsg('adminMsg','بيانات الأدمن غير صحيحة');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-shield-halved"></i> دخول لوحة التحكم';
+      return;
+    }
+
+    localStorage.setItem(SESSION_KEY, user.id);
+    await fetchCloudData();
+    showMsg('adminMsg','مرحباً بك أيها الأدمن', 'ok');
+    setTimeout(() => enterApp(), 600);
+  }catch(err){
+    showMsg('adminMsg','خطأ في الاتصال');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-shield-halved"></i> دخول لوحة التحكم';
+  }
+});
+
+$$('.auth-tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    $$('.auth-tabs button').forEach(x => x.classList.remove('on'));
+    $$('.auth-form').forEach(f => f.classList.remove('on'));
+    b.classList.add('on');
+    const f = document.getElementById('form-' + b.dataset.tab);
+    if(f) f.classList.add('on');
+  });
 });
 
 /* ============================================================
-   13) الدخول للتطبيق
+   تشغيل التطبيق
 ============================================================ */
-function enterApp(){
+async function enterApp(){
   hideAuth();
   $('#welcome').style.display = 'none';
-  currentUserObj = currentUser();
+
+  const uid = localStorage.getItem(SESSION_KEY);
+  if(!uid){ showAuth(); return; }
+
+  currentUserObj = DB.users.find(u => u.id === uid);
   if(!currentUserObj){
-    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    await fetchCloudData();
+    currentUserObj = DB.users.find(u => u.id === uid);
+  }
+
+  if(!currentUserObj){
+    localStorage.removeItem(SESSION_KEY);
     showAuth();
     return;
   }
-  loadUD(currentUserObj.id);
-  applyTheme();
-  applyUserUI();
-  $('#app').classList.add('open');
-  $('#mainScroll').scrollTop = 0;
-  go('home');
-  refreshAll();
-  renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
-  notesArea.value = userData.notes || '';
-  TIMER.mode = 'focus';
-  TIMER.remain = timerTotalSec('focus');
-  updateTimerUI();
-  applyReaderTheme();
-  applySnapClass();
-  syncSettingsUI();
-  setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 500);
-}
-function applyUserUI(){
-  if(!currentUserObj) return;
-  const nm = currentUserObj.name || '—';
-  $('#userAvatar').textContent = nm.trim().charAt(0);
-  let badgeHTML = '';
-  if(currentUserObj.isAdmin){
-    badgeHTML = ' <span class="sub-badge"><i class="fas fa-shield-halved"></i> أدمن</span>';
-  } else if(currentUserObj.subscribed){
-    badgeHTML = ' <span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
-  } else if(currentUserObj.requestedAt){
-    badgeHTML = ' <span class="sub-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
-  }
-  $('#userName').innerHTML = escapeHtml(nm) + badgeHTML;
+
+  await loadUD(currentUserObj.id);
+
+  // إعداد بيانات واجهة المستخدم
+  $('#userAvatar').textContent = (currentUserObj.name||'؟').charAt(0);
+  $('#userName').textContent = currentUserObj.name;
   $('#userEmail').textContent = currentUserObj.email;
   $('#setName').textContent = currentUserObj.name;
   $('#setEmail').textContent = currentUserObj.email;
-  $('#setSub').innerHTML = currentUserObj.subscribed
-    ? '<span style="color:var(--success)"><i class="fas fa-circle-check"></i> مشترك</span>'
-    : currentUserObj.requestedAt
-      ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
-      : '<span style="color:var(--muted)"><i class="fas fa-ban"></i> غير مشترك</span>';
+  $('#setSub').textContent = currentUserObj.subscribed ? 'مشترك مفعّل' : 'قيد المراجعة';
   $('#adminNav').style.display = currentUserObj.isAdmin ? 'flex' : 'none';
+
+  applyTheme();
+  $('#app').classList.add('open');
+  go('home');
+  refreshAll();
+  renderBadges();
+  renderFiles();
 }
+
+function refreshAll(){
+  renderFiles();
+  renderHomeStats();
+}
+
 $('#logoutBtn').addEventListener('click', () => {
-  confirmBox('تسجيل الخروج', 'هل تريد تسجيل الخروج من حسابك؟', () => {
-    saveUD();
-    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  confirmBox('تسجيل الخروج', 'هل تريد تسجيل الخروج؟', () => {
+    localStorage.removeItem(SESSION_KEY);
     currentUserObj = null;
-    closeReader();
     $('#app').classList.remove('open');
-    const w = $('#welcome');
-    w.style.display = 'flex';
-    w.classList.remove('exit');
-    ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = '';
-    });
-    ['loginMsg','adminMsg'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el){ el.className = 'auth-msg'; el.textContent = ''; }
-    });
-    showAuthForm('login');
-    showAuth();
+    $('#welcome').style.display = 'flex';
+    $('#welcome').classList.remove('exit');
   });
 });
 
 /* ============================================================
-   14) لوحة الأدمن
+   لوحة الأدمن السحابية
 ============================================================ */
 function renderAdmin(){
   if(!currentUserObj || !currentUserObj.isAdmin) return;
-  const nonAdmins = DB.users.filter(u => !u.isAdmin);
-  const setTxt = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-  setTxt('adUsers', nonAdmins.length);
-  setTxt('adPending', nonAdmins.filter(u => u.requestedAt && !u.subscribed).length);
-  setTxt('adSubscribed', nonAdmins.filter(u => u.subscribed).length);
-  setTxt('adFiles', DB.files.length);
-  setTxt('adImportant', DB.files.filter(f => f.important).length);
+  const users = DB.users.filter(u => !u.isAdmin);
+  $('#adUsers').textContent = users.length;
+  $('#adPending').textContent = users.filter(u => u.requestedAt && !u.subscribed).length;
+  $('#adSubscribed').textContent = users.filter(u => u.subscribed).length;
+  $('#adFiles').textContent = DB.files.length;
+  $('#adImportant').textContent = DB.files.filter(f => f.important).length;
   renderUsersTable();
   renderAdminFiles();
 }
+
 function renderUsersTable(){
   const box = $('#usersTable');
   if(!box) return;
-  const q = ($('#userSearch') ? $('#userSearch').value : '').trim().toLowerCase();
-  const filter = $('#userFilter') ? $('#userFilter').value : 'all';
-  let list = DB.users.filter(u => !u.isAdmin);
-  if(q) list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
-  if(filter === 'pending') list = list.filter(u => u.requestedAt && !u.subscribed);
-  else if(filter === 'sub') list = list.filter(u => u.subscribed);
-  else if(filter === 'off') list = list.filter(u => !u.subscribed);
-  list.sort((a,b) => {
-    const ap = (a.requestedAt && !a.subscribed) ? 0 : 1;
-    const bp = (b.requestedAt && !b.subscribed) ? 0 : 1;
-    return ap - bp || (b.createdAt || 0) - (a.createdAt || 0);
-  });
-
+  const list = DB.users.filter(u => !u.isAdmin);
   if(!list.length){
-    box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>سيظهر هنا كل من يسجّل حساباً جديداً</p></div>';
+    box.innerHTML = '<div class="admin-empty"><p>لا يوجد مستخدمون بعد</p></div>';
     return;
   }
   box.innerHTML = `
     <div class="thead">
-      <div>المستخدم</div><div>البريد الإلكتروني</div><div>الحالة</div><div style="text-align:left">إجراءات</div>
+      <div>المستخدم</div><div>البريد</div><div>الحالة</div><div style="text-align:left">إجراء</div>
     </div>
-    ${list.map(u => {
-      let statusBadge;
-      if(u.subscribed) statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
-      else if(u.requestedAt) statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> طلب معلّق</span>';
-      else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> غير مشترك</span>';
-      const progressCount = Object.keys(loadUserProgressKeys(u.id)).length;
-      return `<div class="trow">
+    ${list.map(u => `
+      <div class="trow">
         <div class="user-cell">
-          <div class="av">${escapeHtml((u.name||'؟').trim().charAt(0))}</div>
-          <div class="info">
-            <b>${escapeHtml(u.name)}</b>
-            <small>${new Date(u.createdAt).toLocaleDateString('ar-SA')} • ${progressCount} ملف نشط</small>
-          </div>
+          <div class="av">${escapeHtml(u.name.charAt(0))}</div>
+          <div class="info"><b>${escapeHtml(u.name)}</b></div>
         </div>
         <div class="email-cell">${escapeHtml(u.email)}</div>
-        <div class="status-cell">${statusBadge}</div>
-        <div class="actions-cell">
-          <button class="btn ${u.subscribed ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleSub('${u.id}')">
-            ${u.subscribed ? '<i class="fas fa-ban"></i> إلغاء' : '<i class="fas fa-check"></i> تفعيل'}
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="resetUserProgress('${u.id}')" title="تصفير تقدم المستخدم"><i class="fas fa-rotate-left"></i></button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        <div class="status-cell">
+          ${u.subscribed ? '<span class="status-badge on">مشترك</span>' : '<span class="status-badge pending">طلب معلق</span>'}
         </div>
-      </div>`;
-    }).join('')}
+        <div class="actions-cell">
+          <button class="btn ${u.subscribed ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleSubCloud('${u.id}',${!u.subscribed})">
+            ${u.subscribed ? 'إلغاء التفعيل' : 'قبول واشتراك'}
+          </button>
+        </div>
+      </div>
+    `).join('')}
   `;
 }
-function loadUserProgressKeys(uid){
+
+window.toggleSubCloud = async (uid, newStatus) => {
   try{
-    const raw = localStorage.getItem(UD_KEY + uid);
-    if(!raw) return {};
-    const d = JSON.parse(raw);
-    return (d && d.progress) ? d.progress : {};
-  }catch(e){ return {}; }
-}
-window.toggleSub = id => {
-  const u = DB.users.find(x => x.id === id);
-  if(!u) return;
-  u.subscribed = !u.subscribed;
-  saveDB(); renderAdmin();
-  toast(u.subscribed ? 'تم تفعيل الاشتراك' : 'تم إلغاء الاشتراك', u.subscribed ? 'ok' : 'warn');
-};
-window.resetUserProgress = id => {
-  const u = DB.users.find(x => x.id === id);
-  if(!u) return;
-  confirmBox('تصفير تقدم المستخدم', `سيتم مسح تقدم «${escapeHtml(u.name)}» بالكامل.`, () => {
-    try{ localStorage.removeItem(UD_KEY + id); }catch(e){}
-    renderAdmin();
-    toast('تم تصفير تقدم المستخدم', 'ok');
-  }, true);
-};
-window.deleteUser = id => {
-  const u = DB.users.find(x => x.id === id);
-  if(!u) return;
-  confirmBox('حذف الحساب', `حذف حساب «${escapeHtml(u.name)}» بكل بياناته؟ لا يمكن التراجع.`, () => {
-    DB.users = DB.users.filter(x => x.id !== id);
-    saveDB();
-    try{ localStorage.removeItem(UD_KEY + id); }catch(e){}
-    let ses = null;
-    try{ ses = localStorage.getItem(SESSION_KEY); }catch(e){}
-    if(ses === id) try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
-    renderAdmin();
-    toast('تم حذف الحساب بكل بياناته', 'ok');
-  }, true);
-};
-$('#userSearch').addEventListener('input', renderUsersTable);
-$('#userFilter').addEventListener('change', renderUsersTable);
-$('#addUserBtn').addEventListener('click', () => {
-  openModal({
-    title:'إضافة مستخدم يدوياً',
-    text:'أضف مستخدماً مشتركاً مباشرة دون انتظار الموافقة.',
-    bodyHTML:`<div class="form-group"><label>الاسم</label><input type="text" id="nuName" placeholder="الاسم الكامل"></div>
-              <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="nuEmail" placeholder="name@example.com"></div>
-              <div class="form-group"><label>كلمة المرور</label><input type="password" id="nuPass" placeholder="6 أحرف على الأقل"></div>
-              <label class="checkbox-row"><input type="checkbox" id="nuSub" checked><span>تفعيل الاشتراك فوراً</span></label>`,
-    okText:'إضافة',
-    onOk: async () => {
-      const name = document.getElementById('nuName').value.trim();
-      const email = document.getElementById('nuEmail').value.trim().toLowerCase();
-      const pass = document.getElementById('nuPass').value;
-      const sub = document.getElementById('nuSub').checked;
-      if(!name || name.length < 2){ toast('اسم غير صالح', 'err'); return; }
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صالح', 'err'); return; }
-      if(!pass || pass.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
-      if(DB.users.find(u => u.email === email)){ toast('البريد مسجّل مسبقاً', 'err'); return; }
-      DB.users.push({
-        id:'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
-        name, email, passHash: await sha256(pass),
-        subscribed: sub, requestedAt: sub ? null : Date.now(),
-        isAdmin:false, createdAt: Date.now()
-      });
-      saveDB(); renderAdmin();
-      toast('تمت إضافة المستخدم', 'ok');
+    const { error } = await supabase.from('users').update({ subscribed: newStatus }).eq('id', uid);
+    if(!error){
+      const u = DB.users.find(x => x.id === uid);
+      if(u) u.subscribed = newStatus;
+      renderAdmin();
+      toast(newStatus ? 'تم تفعيل الحساب' : 'تم إلغاء الاشتراك', 'ok');
     }
-  });
-});
+  }catch(e){ toast('تعذر تحديث الحالة سحابياً', 'err'); }
+};
 
 function renderAdminFiles(){
   const box = $('#adminFilesGrid');
   if(!box) return;
-  if(!DB.files.length){
-    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3><p>اذهب لتبويب «إضافة ملف» لرفع أول ملف PDF</p></div>';
-    return;
-  }
   box.innerHTML = DB.files.map(f => `
-    <div class="admin-file-card ${f.important ? 'important' : ''}" style="--fc:${f.color}">
+    <div class="admin-file-card" style="--fc:${f.color}">
       <div class="afc-head">
         <div class="ic"><i class="fas ${f.icon}"></i></div>
-        <div style="flex:1;min-width:0">
-          <h4>${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
-          <small>${escapeHtml(f.cat)} • ${f.pageCount || '?'} صفحة</small>
-        </div>
-      </div>
-      <div class="afc-meta">
-        <span>${f.important ? '<i class="fas fa-star" style="color:var(--accent)"></i> مهم' : 'ملف عادي'}</span>
-        <span>${new Date(f.createdAt || Date.now()).toLocaleDateString('ar-SA')}</span>
+        <div><h4>${escapeHtml(f.title)}</h4><small>${f.cat}</small></div>
       </div>
       <div class="afc-actions">
-        <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="editFile('${f.id}')"><i class="fas fa-pen"></i> تعديل</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}')"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFileCloud('${f.id}')"><i class="fas fa-trash"></i> حذف</button>
       </div>
     </div>
   `).join('');
 }
-window.toggleImportant = id => {
-  const f = DB.files.find(x => x.id === id);
-  if(!f) return;
-  f.important = !f.important;
-  saveDB(); renderAdmin(); renderFiles();
-  toast(f.important ? 'أصبح الملف مميزاً' : 'تم إزالة النجمة', 'ok');
-};
-window.deleteFile = id => {
-  const f = DB.files.find(x => x.id === id);
-  if(!f) return;
-  confirmBox('حذف الملف', `حذف الملف «${escapeHtml(f.title)}»؟ سيتم حذف تقدم المستخدمين المرتبط به.`, async () => {
-    try{ await IDB.del(id); }catch(e){}
-    DB.files = DB.files.filter(x => x.id !== id);
-    // تنظيف تقدم المستخدمين
-    DB.users.forEach(u => {
-      try{
-        const raw = localStorage.getItem(UD_KEY + u.id);
-        if(!raw) return;
-        const d = JSON.parse(raw);
-        if(d && d.progress && d.progress[id]){
-          delete d.progress[id];
-          if(Array.isArray(d.opened)) d.opened = d.opened.filter(x => x !== id);
-          if(Array.isArray(d.favs)) d.favs = d.favs.filter(x => x !== id);
-          localStorage.setItem(UD_KEY + u.id, JSON.stringify(d));
-        }
-      }catch(e){}
-    });
-    saveDB();
-    renderAdmin(); renderFiles(); refreshAll();
-    toast('تم حذف الملف', 'ok');
+
+window.deleteFileCloud = async (fid) => {
+  confirmBox('حذف الملف السحابي', 'هل تريد حذف الملف نهائياً من السحاب؟', async () => {
+    try{
+      await supabase.from('files').delete().eq('id', fid);
+      await supabase.storage.from('pdfs').remove([`${fid}.pdf`]);
+      DB.files = DB.files.filter(x => x.id !== fid);
+      renderAdmin();
+      renderFiles();
+      toast('تم حذف الملف السحابي بنجاح', 'ok');
+    }catch(e){ toast('تعذر حذف الملف', 'err'); }
   }, true);
 };
-window.editFile = id => {
-  const f = DB.files.find(x => x.id === id);
-  if(!f) return;
-  go('admin');
-  $$('.admin-tabs button').forEach(b => b.classList.remove('on'));
-  $$('.admin-panel').forEach(p => p.classList.remove('on'));
-  const tab = document.querySelector('.admin-tabs button[data-panel="add"]');
-  if(tab) tab.classList.add('on');
-  $('#panel-add').classList.add('on');
-  $('#afTitle').value = f.title;
-  $('#afCat').value = f.cat;
-  $('#afDesc').value = f.desc || '';
-  $('#afImportant').checked = !!f.important;
-  editingFileId = id;
-  currentPdfBlob = null;
-  $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-circle-info"></i> لتغيير ملف PDF نفسه، احذف الملف وأنشئ واحداً جديداً</div>`;
-  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ التعديلات';
-};
-let editingFileId = null;
-let currentPdfBlob = null;
 
-const uploadZone = $('#uploadZone');
-const afPdfInput = $('#afPdfInput');
-uploadZone.addEventListener('click', () => afPdfInput.click());
-['dragenter','dragover'].forEach(ev => {
-  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-});
-['dragleave','drop'].forEach(ev => {
-  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
-});
-uploadZone.addEventListener('drop', e => {
-  const file = e.dataTransfer && e.dataTransfer.files[0];
-  if(file) handlePdfFile(file);
-});
-afPdfInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(file) handlePdfFile(file);
-});
-async function handlePdfFile(file){
-  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){
-    toast('الرجاء اختيار ملف PDF فقط', 'warn'); return;
+let selectedPdfFile = null;
+$('#uploadZone').addEventListener('click', () => $('#afPdfInput').click());
+$('#afPdfInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(f && f.type === 'application/pdf'){
+    selectedPdfFile = f;
+    $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-check"></i> ${escapeHtml(f.name)}</div>`;
+    if(!$('#afTitle').value) $('#afTitle').value = f.name.replace('.pdf','');
   }
-  if(file.size > 100 * 1024 * 1024){
-    toast('حجم الملف كبير جداً (الحد 100 ميجا)', 'warn'); return;
-  }
-  currentPdfBlob = file;
-  const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-  let pages = '?';
-  try{
-    const ab = await file.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: ab }).promise;
-    pages = doc.numPages;
-    try{ doc.destroy(); }catch(e){}
-  }catch(e){ console.error(e); }
-  $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-circle-check"></i> ${escapeHtml(file.name)} — ${sizeMB} ميجا${pages !== '?' ? ` — ${pages} صفحة` : ''}</div>`;
-  if(!$('#afTitle').value){
-    $('#afTitle').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g,' ');
-  }
-}
-$('#clearFileBtn').addEventListener('click', () => {
-  $('#afTitle').value = '';
-  $('#afCat').value = 'كمي';
-  $('#afDesc').value = '';
-  $('#afImportant').checked = false;
-  $('#uzFileInfo').innerHTML = '';
-  afPdfInput.value = '';
-  currentPdfBlob = null;
-  editingFileId = null;
-  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
 });
+
 $('#saveFileBtn').addEventListener('click', async () => {
-  const btn = $('#saveFileBtn');
   const title = $('#afTitle').value.trim();
   const cat = $('#afCat').value;
   const desc = $('#afDesc').value.trim();
   const important = $('#afImportant').checked;
-  if(!title){ toast('أدخل عنوان الملف', 'warn'); return; }
 
-  if(editingFileId){
-    const f = DB.files.find(x => x.id === editingFileId);
-    if(f){
-      f.title = title; f.cat = cat; f.desc = desc; f.important = important;
-      saveDB();
-      toast('تم تحديث الملف بنجاح', 'ok');
-    }
-    editingFileId = null;
-  } else {
-    if(!currentPdfBlob){ toast('الرجاء اختيار ملف PDF أولاً', 'warn'); return; }
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
-    const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-    const choice = pick(ICONS);
-    let pages = 0;
+  if(!title || !selectedPdfFile){ toast('اختر ملفاً وضع له عنواناً', 'warn'); return; }
+
+  const btn = $('#saveFileBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع إلى سحابة Supabase...';
+
+  try{
+    const fid = 'f_' + Date.now();
+    const filePath = `${fid}.pdf`;
+
+    // 1. رفع ملف الـ PDF إلى Supabase Storage
+    const { error: uploadError } = await supabase.storage.from('pdfs').upload(filePath, selectedPdfFile);
+    if(uploadError) throw uploadError;
+
+    // 2. قراءة عدد الصفحات
+    let pageCount = 1;
     try{
-      const ab = await currentPdfBlob.arrayBuffer();
+      const ab = await selectedPdfFile.arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: ab }).promise;
-      pages = doc.numPages;
-      try{ doc.destroy(); }catch(e){}
-      await IDB.put(id, currentPdfBlob);
-    }catch(err){
-      console.error(err);
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-      toast('تعذّر معالجة الملف أو تخزينه', 'err');
-      return;
-    }
-    DB.files.unshift({ id, title, cat, desc, important, icon: choice.i, color: choice.c, pageCount: pages, createdAt: Date.now() });
-    saveDB();
+      pageCount = doc.numPages;
+      doc.destroy();
+    }catch(e){}
+
+    const choice = pick(ICONS);
+    const newRecord = {
+      id: fid,
+      title: title,
+      cat: cat,
+      desc: desc,
+      important: important,
+      icon: choice.i,
+      color: choice.c,
+      page_count: pageCount,
+      storage_path: filePath,
+      created_at: Date.now()
+    };
+
+    // 3. حفظ بيانات الملف في جدول files
+    await supabase.from('files').insert([newRecord]);
+    await fetchCloudData();
+
+    toast('تم رفع الملف وحفظه سحابياً', 'ok');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-    toast('تم رفع الملف بنجاح', 'ok');
+    btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> رفع وتثبيت الملف في السحاب';
+    selectedPdfFile = null;
+    $('#uzFileInfo').innerHTML = '';
+    $('#afTitle').value = '';
+    renderAdmin();
+    renderFiles();
+  }catch(e){
+    console.error(e);
+    toast('حدث خطأ أثناء الرفع السحابي: تأكد من إنشاء Bucket باسم pdfs', 'err');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> رفع وتثبيت الملف في السحاب';
   }
-  $('#afTitle').value = '';
-  $('#afCat').value = 'كمي';
-  $('#afDesc').value = '';
-  $('#afImportant').checked = false;
-  $('#uzFileInfo').innerHTML = '';
-  afPdfInput.value = '';
-  currentPdfBlob = null;
-  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-  renderAdmin(); renderFiles();
-  $$('.admin-tabs button').forEach(b => b.classList.remove('on'));
-  $$('.admin-panel').forEach(p => p.classList.remove('on'));
-  const tab = document.querySelector('.admin-tabs button[data-panel="files"]');
-  if(tab) tab.classList.add('on');
-  $('#panel-files').classList.add('on');
-});
-$$('.admin-tabs button').forEach(b => {
-  b.addEventListener('click', () => {
-    $$('.admin-tabs button').forEach(x => x.classList.remove('on'));
-    $$('.admin-panel').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    const panel = document.getElementById('panel-' + b.dataset.panel);
-    if(panel) panel.classList.add('on');
-  });
-});
-$('#adExport').addEventListener('click', () => {
-  const data = { platform:'abdqaqra', exportedAt: new Date().toISOString(), users: DB.users, files: DB.files.map(f => ({
-    id:f.id, title:f.title, cat:f.cat, desc:f.desc, important:f.important, icon:f.icon, color:f.color, pageCount:f.pageCount, createdAt:f.createdAt
-  })) };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'abdqaqra-platform-backup.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('تم تصدير نسخة المنصة', 'ok');
-});
-$('#adImportBtn').addEventListener('click', () => $('#adImportFile').click());
-$('#adImportFile').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try{
-      const d = JSON.parse(ev.target.result);
-      if(!d || !Array.isArray(d.users)) throw new Error('bad');
-      confirmBox('استيراد المنصة', 'سيتم دمج المستخدمين والملفات من النسخة. متابعة؟', () => {
-        let added = 0;
-        d.users.forEach(u => { if(!DB.users.find(x => x.email === u.email)){ DB.users.push(u); added++; } });
-        (d.files || []).forEach(f => { if(!DB.files.find(x => x.id === f.id)) DB.files.push(f); });
-        saveDB(); renderAdmin(); refreshAll();
-        toast(`تم الاستيراد (${added} مستخدم جديد)`, 'ok');
-      });
-    }catch(err){ toast('ملف النسخة غير صالح', 'err'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-$('#adSavePass').addEventListener('click', async () => {
-  const v = $('#adNewPass').value;
-  if(!v || v.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
-  currentUserObj.passHash = await sha256(v);
-  delete currentUserObj.password;
-  saveDB();
-  $('#adNewPass').value = '';
-  toast('تم تغيير كلمة مرور الأدمن', 'ok');
-});
-$('#adReset').addEventListener('click', () => {
-  confirmBox('إعادة ضبط شاملة', 'سيتم حذف كل المستخدمين والملفات والتقدم نهائياً. هل أنت متأكد؟', async () => {
-    try{ await IDB.clear(); }catch(e){}
-    DB.users = DB.users.filter(u => u.isAdmin);
-    DB.files = [];
-    saveDB();
-    Object.keys(localStorage).forEach(k => { if(k.startsWith(UD_KEY)) localStorage.removeItem(k); });
-    renderAdmin(); refreshAll();
-    toast('تمت إعادة الضبط', 'ok');
-  }, true);
 });
 
 /* ============================================================
-   15) الحماية والاختصارات
+   البداية
 ============================================================ */
-const isEditable = el => {
-  if(!el) return false;
-  const tag = (el.tagName || '').toLowerCase();
-  return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
-};
-document.addEventListener('contextmenu', e => {
-  if($('#reader').classList.contains('open')){ e.preventDefault(); return; }
-  if(isEditable(e.target)) return; // السماح بالنسخ واللصق داخل الحقول
-  if(e.target.closest('.pdf-page')){ e.preventDefault(); }
-});
-document.addEventListener('keydown', e => {
-  const k = e.key;
-  const readerOpen = $('#reader').classList.contains('open');
-  const editing = isEditable(e.target);
-
-  if(k === 'F12'){ e.preventDefault(); flashShield(); return false; }
-  if(e.ctrlKey && e.shiftKey && ['I','J','C','K','i','j','c','k'].includes(k)){ e.preventDefault(); flashShield(); return false; }
-  if(e.ctrlKey && !e.shiftKey && ['u','U','s','S','p','P'].includes(k)){ e.preventDefault(); flashShield(); return false; }
-
-  if(e.ctrlKey && (k === 'k' || k === 'K')){
-    e.preventDefault();
-    const s = $('#searchInput');
-    if(s && $('#app').classList.contains('open')){ s.focus(); s.select(); }
-    return;
-  }
-
-  if(readerOpen && !editing){
-    if(k === '+' || k === '='){ e.preventDefault(); setZoom(RS.zoom + 0.15); return; }
-    if(k === '-' || k === '_'){ e.preventDefault(); setZoom(RS.zoom - 0.15); return; }
-    if(k === 'ArrowLeft'){ e.preventDefault(); scrollToPage(RS.current + 1, true); return; }
-    if(k === 'ArrowRight'){ e.preventDefault(); scrollToPage(RS.current - 1, true); return; }
-    if(k === 'Home'){ e.preventDefault(); scrollToPage(1, true); return; }
-    if(k === 'End'){ e.preventDefault(); scrollToPage(RS.numPages, true); return; }
-  }
-
-  if(k === 'Escape'){
-    if($('#modal').classList.contains('open')){ $('#modal').classList.remove('open'); return; }
-    if(readerOpen){ closeReader(); return; }
-    const th = $('#rdThumbs'); if(th) th.classList.remove('open');
-    return;
-  }
-  if(editing) return;
-  if(e.ctrlKey || e.altKey || e.metaKey) return;
-  if(k === '1') go('home');
-  if(k === '2') go('files');
-  if(k === '3') go('progress');
-  if(k === '4') go('features');
-  if(k === '5') go('settings');
-  if(k === '6' && currentUserObj && currentUserObj.isAdmin) go('admin');
-});
-document.addEventListener('dragstart', e => { if($('#reader').classList.contains('open')) e.preventDefault(); });
-document.addEventListener('copy', e => {
-  if($('#reader').classList.contains('open') && !isEditable(e.target)){
-    e.preventDefault();
-    toast('النسخ غير مسموح داخل القارئ', 'warn');
-  }
-});
-document.addEventListener('cut', e => {
-  if($('#reader').classList.contains('open') && !isEditable(e.target)) e.preventDefault();
-});
-let shieldTimer = null;
-function flashShield(){
-  const s = $('#shield');
-  s.classList.add('on');
-  clearTimeout(shieldTimer);
-  shieldTimer = setTimeout(() => s.classList.remove('on'), 2200);
-}
-function devtoolsOpen(){
-  if(window.innerWidth <= 720) return false;
-  const wDiff = window.outerWidth - window.innerWidth;
-  const hDiff = window.outerHeight - window.innerHeight;
-  return (wDiff > 260 || hDiff > 280);
-}
-let shieldCheck = 0;
-setInterval(() => {
-  if(!$('#app').classList.contains('open')) return;
-  if(devtoolsOpen()){
-    shieldCheck++;
-    if(shieldCheck >= 2){ $('#shield').classList.add('on'); stopReadClock(); }
-  } else {
-    shieldCheck = 0;
-    $('#shield').classList.remove('on');
-    if($('#reader').classList.contains('open') && !RS.clockId) startReadClock();
-  }
-}, 1200);
-
-/* ============================================================
-   16) تحديث شامل
-============================================================ */
-function refreshAll(){
-  renderFiles();
-  renderHomeStats();
-  updateSidebar();
-  if($('#view-progress').classList.contains('active')) renderProgress();
-  checkBadges();
-}
-
-/* ============================================================
-   17) الإقلاع
-============================================================ */
-(function init(){
-  loadDB();
-  computeBaseWidth();
-
-  const existing = currentUser();
-  if(existing){
-    if(existing.isAdmin){
-      document.querySelectorAll('.admin-nav').forEach(el => el.style.display = 'flex');
-    }
+(async function init(){
+  await fetchCloudData();
+  const uid = localStorage.getItem(SESSION_KEY);
+  if(uid && DB.users.some(u => u.id === uid)){
     enterApp();
   } else {
     $('#enterBtn').addEventListener('click', () => {
-      const w = $('#welcome');
-      w.classList.add('exit');
+      $('#welcome').classList.add('exit');
       setTimeout(() => {
-        w.style.display = 'none';
+        $('#welcome').style.display = 'none';
         showAuth();
-        showAuthForm('login');
-      }, 900);
+      }, 800);
     });
-    document.addEventListener('keydown', function onEnter(e){
-      if(e.key === 'Enter' && $('#welcome').style.display !== 'none' && !$('#welcome').classList.contains('exit')){
-        $('#enterBtn').click();
-      }
-    });
-    applyTheme();
   }
-
-  // إعادة تطبيق الثيم عند تغيير حجم الجوال
-  let rotTimer = null;
-  window.addEventListener('orientationchange', () => {
-    clearTimeout(rotTimer);
-    rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
-  });
 })();
 </script>
 </body>
