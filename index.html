@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#5b6cff">
+<title>العباقرة للقدرات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --primary:#5b6cff;--primary-2:#8b5cf6;--primary-soft:#eef1ff;--primary-rgb:91,108,255;
+  --bg:#eef1fa;--card:#ffffff;--card-2:#f8faff;--text:#141d38;--muted:#6b7a99;--border:#e4e9f6;
+  --accent:#f7b32b;--success:#22c55e;--danger:#ef4444;
+  --shadow:0 12px 40px rgba(48,70,150,.10);--shadow-sm:0 4px 16px rgba(48,70,150,.08);
+  --shadow-lg:0 24px 70px rgba(48,70,150,.18);--radius:22px;--sidebar:270px;--fs:1;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+[data-theme="dark"]{
+  --bg:#070c19;--card:#111a2f;--card-2:#16203a;--text:#e9eefb;--muted:#8b9bc4;--border:#1f2c48;
+  --primary-soft:color-mix(in srgb,var(--primary) 15%,#111a2f);
+  --shadow:0 12px 40px rgba(0,0,0,.5);--shadow-sm:0 4px 16px rgba(0,0,0,.4);--shadow-lg:0 24px 70px rgba(0,0,0,.6);
+}
+html,body{height:100%}
+body{font-family:'Tajawal',system-ui,sans-serif;background:radial-gradient(1400px 800px at 100% -10%,rgba(var(--primary-rgb),.08),transparent 60%),radial-gradient(1000px 700px at -10% 110%,rgba(var(--primary-rgb),.06),transparent 55%),var(--bg);color:var(--text);font-size:calc(16px * var(--fs));overflow:hidden;transition:background .4s ease,color .3s ease}
+body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--primary);background-clip:content-box}
+input,textarea,select,button{font-family:inherit}
+
+/* ================= شاشة الترحيب ================= */
+#welcome{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:radial-gradient(900px 600px at 20% 20%,rgba(var(--primary-rgb),.35),transparent 60%),radial-gradient(800px 700px at 85% 80%,rgba(139,92,246,.3),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 45%,#080d22 100%);padding:16px}
+#welcome.exit{animation:wOut .9s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes wOut{0%{opacity:1;transform:scale(1);filter:blur(0)}55%{opacity:.6;transform:scale(1.06)}100%{opacity:0;transform:scale(1.2);filter:blur(26px);visibility:hidden}}
+.blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.5;pointer-events:none}
+.blob.b1{width:400px;height:400px;background:var(--primary);top:-120px;right:-80px;animation:float1 14s ease-in-out infinite}
+.blob.b2{width:340px;height:340px;background:var(--primary-2);bottom:-120px;left:-60px;animation:float2 17s ease-in-out infinite}
+.blob.b3{width:260px;height:260px;background:#22d3ee;top:45%;left:45%;opacity:.25;animation:float1 20s ease-in-out infinite reverse}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,50px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(70px,-45px)}}
+.grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:.12;background-image:linear-gradient(rgba(255,255,255,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.13) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 72%);-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 72%)}
+.w-inner{position:relative;z-index:3;text-align:center;max-width:700px;width:100%;color:#fff}
+.w-illust{position:relative;width:200px;height:200px;margin:0 auto 24px;display:grid;place-items:center}
+.w-illust .ring{position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(255,255,255,.18);animation:spinSlow 30s linear infinite}
+.w-illust .ring.r2{inset:20px;border-style:solid;border-color:rgba(255,255,255,.08);animation:spinSlow 22s linear infinite reverse}
+.w-illust .ring.r3{inset:40px;border-color:rgba(var(--primary-rgb),.35);border-style:dashed;animation:spinSlow 18s linear infinite}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+.w-illust .glow{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(var(--primary-rgb),.5),transparent 70%);filter:blur(20px);animation:pulseGlow 3s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.w-illust .core{position:relative;z-index:2;width:118px;height:118px;border-radius:34px;display:grid;place-items:center;font-size:56px;color:#fff;background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.3);box-shadow:0 24px 65px rgba(var(--primary-rgb),.5),inset 0 1px 0 rgba(255,255,255,.4);backdrop-filter:blur(14px);animation:coreFloat 4.5s ease-in-out infinite}
+@keyframes coreFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-3deg)}}
+.w-illust .floating{position:absolute;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:16px;color:#fff;background:linear-gradient(140deg,rgba(255,255,255,.22),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);z-index:3;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.w-illust .floating.f1{top:6px;right:14px;animation:fltA 5s ease-in-out infinite}
+.w-illust .floating.f2{bottom:14px;left:6px;animation:fltB 6s ease-in-out infinite}
+.w-illust .floating.f3{top:50%;right:-8px;animation:fltA 7s ease-in-out infinite reverse}
+@keyframes fltA{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,-10px)}}
+@keyframes fltB{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,6px)}}
+.w-inner h1{font-size:clamp(1.7rem,4vw,2.4rem);font-weight:900;letter-spacing:-1px;line-height:1.25;background:linear-gradient(120deg,#ffffff 20%,#a5b4ff 55%,#e9d5ff 90%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:up .8s .25s cubic-bezier(.2,.8,.2,1) both;margin-bottom:10px}
+.w-sub{font-size:clamp(.85rem,1.7vw,.98rem);color:rgba(255,255,255,.78);line-height:1.85;max-width:520px;margin:0 auto 20px;animation:up .8s .35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes up{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+.w-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px}
+.chip{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:100px;font-size:.76rem;font-weight:600;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.92);backdrop-filter:blur(10px);animation:up .7s cubic-bezier(.2,.8,.2,1) both;transition:.3s}
+.chip:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
+.chip i{font-size:.78rem;color:#a5b4ff}
+.w-btn{font-family:inherit;font-size:.95rem;font-weight:800;color:#fff;padding:14px 38px;border:none;border-radius:100px;cursor:pointer;background:linear-gradient(120deg,var(--primary),var(--primary-2) 55%,#a855f7);background-size:200% 100%;box-shadow:0 14px 40px rgba(var(--primary-rgb),.55),inset 0 1px 0 rgba(255,255,255,.35);position:relative;overflow:hidden;animation:up .8s .55s cubic-bezier(.2,.8,.2,1) both,glowPulse 2.6s 1.4s ease-in-out infinite;transition:transform .25s cubic-bezier(.2,1.4,.4,1),background-position .6s;display:inline-flex;align-items:center;gap:10px}
+.w-btn:hover{transform:translateY(-3px) scale(1.02);background-position:100% 0}
+.w-btn::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-22deg);animation:shine 3.2s 1.8s infinite}
+@keyframes shine{0%{left:-120%}55%,100%{left:150%}}
+@keyframes glowPulse{0%,100%{box-shadow:0 14px 40px rgba(var(--primary-rgb),.5),inset 0 1px 0 rgba(255,255,255,.35)}50%{box-shadow:0 18px 55px rgba(139,92,246,.75),inset 0 1px 0 rgba(255,255,255,.35)}}
+.w-foot{margin-top:16px;font-size:.74rem;color:rgba(255,255,255,.42);animation:up .8s .75s cubic-bezier(.2,.8,.2,1) both}
+
+/* ================= شاشة الدخول ================= */
+#auth{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;
+  background:radial-gradient(1000px 700px at 15% 15%,rgba(var(--primary-rgb),.3),transparent 60%),radial-gradient(900px 700px at 85% 85%,rgba(139,92,246,.25),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 50%,#080d22 100%);overflow:auto}
+#auth.open{display:flex}
+.auth-container{width:100%;max-width:900px;display:flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:26px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.55);backdrop-filter:blur(20px);animation:authIn .65s cubic-bezier(.2,.9,.25,1);color:#fff;min-height:520px}
+@keyframes authIn{from{opacity:0;transform:translateY(26px) scale(.96)}to{opacity:1;transform:none}}
+.auth-form-side{flex:1.15;padding:34px 32px;display:flex;flex-direction:column;min-width:0}
+.auth-brand{margin-bottom:20px}
+.auth-brand h2{font-size:1.2rem;font-weight:900;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
+.auth-brand h2 i{color:#a5b4ff;font-size:1.05rem}
+.auth-brand p{font-size:.76rem;color:rgba(255,255,255,.6);margin-top:4px}
+.auth-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:12px;margin-bottom:18px;border:1px solid rgba(255,255,255,.1)}
+.auth-tabs button{flex:1;font-family:inherit;font-size:.8rem;font-weight:700;padding:9px 6px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,.65);cursor:pointer;transition:.25s;display:flex;align-items:center;justify-content:center;gap:6px}
+.auth-tabs button.on{background:rgba(255,255,255,.14);color:#fff}
+.auth-tabs button:hover:not(.on){color:#fff}
+.auth-form{display:none;flex-direction:column;gap:10px;flex:1}
+.auth-form.on{display:flex}
+.input-group{position:relative}
+.input-group input{width:100%;font-family:inherit;font-size:.86rem;padding:12px 42px 12px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:11px;color:#fff;outline:none;transition:.25s}
+.input-group input::placeholder{color:rgba(255,255,255,.4)}
+.input-group input:focus{border-color:rgba(139,92,246,.6);background:rgba(255,255,255,.1);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
+.input-group .ic{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:.9rem;color:rgba(255,255,255,.5);pointer-events:none}
+.auth-btn{font-family:inherit;font-weight:800;font-size:.88rem;padding:12px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 10px 26px rgba(var(--primary-rgb),.45);transition:.25s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.auth-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(var(--primary-rgb),.6)}
+.auth-btn:disabled{opacity:.6;cursor:wait;transform:none}
+.auth-btn.admin{background:linear-gradient(120deg,#f59e0b,#ea580c);box-shadow:0 10px 26px rgba(234,88,12,.45)}
+.auth-msg{font-size:.76rem;padding:9px 13px;border-radius:10px;font-weight:700;display:none;text-align:center}
+.auth-msg.err{display:block;background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.auth-msg.ok{display:block;background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+.auth-hint{font-size:.68rem;color:rgba(255,255,255,.45);text-align:center;margin-top:auto;padding-top:14px;line-height:1.8}
+.auth-hint b{color:rgba(255,255,255,.78);direction:ltr;display:inline-block;font-size:.72rem}
+.auth-image-side{flex:1;background:linear-gradient(160deg,rgba(var(--primary-rgb),.22),rgba(139,92,246,.15));position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 26px;overflow:hidden;border-right:1px solid rgba(255,255,255,.08)}
+.auth-image-side::before{content:"";position:absolute;inset:0;background:radial-gradient(400px 300px at 20% 20%,rgba(var(--primary-rgb),.4),transparent 70%),radial-gradient(300px 300px at 90% 90%,rgba(139,92,246,.35),transparent 70%);pointer-events:none}
+.auth-image-side img{position:relative;z-index:2;width:100%;max-width:250px;height:auto;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.4);background:rgba(255,255,255,.05);padding:6px;border:1px solid rgba(255,255,255,.14)}
+.auth-image-text{position:relative;z-index:2;margin-top:22px;text-align:center}
+.auth-image-text h3{font-size:1.05rem;font-weight:900;letter-spacing:-.3px;margin-bottom:8px;color:#fff}
+.auth-image-text p{font-size:.8rem;color:rgba(255,255,255,.75);line-height:1.8;max-width:260px;margin:0 auto}
+.features-list{margin-top:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;text-align:right}
+.features-list li{display:flex;align-items:center;gap:9px;font-size:.78rem;color:rgba(255,255,255,.82);font-weight:600;list-style:none}
+.features-list li i{color:#a5b4ff;font-size:.75rem;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(var(--primary-rgb),.25);flex-shrink:0}
+.auth-back{position:absolute;top:18px;right:18px;font-size:.76rem;color:rgba(255,255,255,.6);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-family:inherit;font-weight:700;padding:7px 12px;border-radius:9px;transition:.2s;display:inline-flex;align-items:center;gap:6px;z-index:10}
+.auth-back:hover{background:rgba(255,255,255,.13);color:#fff}
+
+/* ================= التطبيق ================= */
+#app{display:none;height:100vh;width:100%}
+#app.open{display:flex;animation:appIn .55s cubic-bezier(.2,.85,.2,1)}
+@keyframes appIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:22px 16px;position:relative;z-index:20}
+.sidebar::before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--primary),var(--primary-2),var(--accent))}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 6px 20px}
+.brand-logo{width:48px;height:48px;border-radius:15px;flex-shrink:0;display:grid;place-items:center;font-size:22px;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 8px 22px rgba(var(--primary-rgb),.4)}
+.brand-txt h2{font-size:1.02rem;font-weight:900;letter-spacing:-.3px;line-height:1.3}
+.brand-txt p{font-size:.7rem;color:var(--muted);font-weight:500}
+.user-card{background:linear-gradient(140deg,var(--primary-soft),transparent);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:11px}
+.user-avatar{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:1rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35)}
+.user-info{flex:1;min-width:0}
+.user-info .nm{font-size:.86rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.user-info .em{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.sub-badge{font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:100px;background:linear-gradient(120deg,#22c55e,#16a34a);color:#fff;display:inline-flex;align-items:center;gap:3px;flex-shrink:0}
+.sub-badge.pending{background:linear-gradient(120deg,#f59e0b,#d97706)}
+.user-card .logout{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:5px;transition:.2s}
+.user-card .logout:hover{color:var(--danger);transform:scale(1.15)}
+.nav{display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto}
+.nav-btn{font-family:inherit;font-size:.92rem;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;border:none;background:transparent;cursor:pointer;text-align:right;width:100%;transition:.22s;position:relative}
+.nav-btn .ic{font-size:1.05rem;width:22px;text-align:center;transition:.25s;flex-shrink:0}
+.nav-btn:hover{background:var(--primary-soft);color:var(--primary);transform:translateX(-3px)}
+.nav-btn.active{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 8px 22px rgba(var(--primary-rgb),.4)}
+.nav-btn.active .ic{transform:scale(1.1)}
+.nav-btn .badge-n{margin-right:auto;font-size:.66rem;font-weight:800;background:var(--accent);color:#3b2600;padding:2px 8px;border-radius:100px}
+.nav-btn.active .badge-n{background:rgba(255,255,255,.25);color:#fff}
+.nav-btn.admin-nav{color:var(--accent)}
+.nav-btn.admin-nav .ic{color:var(--accent)}
+.nav-btn.admin-nav.active{background:linear-gradient(100deg,#f59e0b,#ea580c);color:#fff}
+.nav-btn.admin-nav.active .ic{color:#fff}
+.side-card{margin-top:12px;padding:14px;border-radius:15px;background:linear-gradient(150deg,var(--primary-soft),transparent);border:1px solid var(--border)}
+.side-card h4{font-size:.76rem;font-weight:700;color:var(--muted);margin-bottom:9px;display:flex;justify-content:space-between}
+.side-card h4 b{color:var(--primary);font-size:.92rem}
+.mini-bar{height:8px;border-radius:100px;background:var(--border);overflow:hidden}
+.mini-bar i{display:block;height:100%;width:0;border-radius:100px;background:linear-gradient(90deg,var(--primary),var(--primary-2));transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 34px 70px;scroll-behavior:smooth}
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.topbar h1{font-size:1.7rem;font-weight:900;letter-spacing:-.5px}
+.topbar p{font-size:.86rem;color:var(--muted);margin-top:3px}
+.top-actions{margin-right:auto;display:flex;gap:10px;align-items:center}
+.search-box{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px 15px;min-width:240px;box-shadow:var(--shadow-sm);transition:.25s}
+.search-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.search-box i{color:var(--muted);font-size:.9rem}
+.search-box input{border:none;background:transparent;outline:none;font-family:inherit;font-size:.9rem;color:var(--text);width:100%}
+.search-box input::placeholder{color:var(--muted)}
+.icon-btn{width:44px;height:44px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;display:grid;place-items:center;transition:.22s;box-shadow:var(--shadow-sm);flex-shrink:0}
+.icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);transform:translateY(-2px)}
+.view{display:none;animation:viewIn .45s cubic-bezier(.2,.8,.2,1)}
+.view.active{display:block}
+@keyframes viewIn{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+.sec-title{display:flex;align-items:center;gap:11px;font-size:1.15rem;font-weight:800;margin:32px 0 18px;flex-wrap:wrap}
+.sec-title::before{content:"";width:5px;height:22px;border-radius:100px;background:linear-gradient(180deg,var(--primary),var(--primary-2))}
+.sec-title span.sub{font-size:.78rem;color:var(--muted);font-weight:600;margin-right:4px}
+.subscribe-wall{background:linear-gradient(140deg,var(--card),var(--card-2));border:2px dashed var(--accent);border-radius:22px;padding:34px 30px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.subscribe-wall::before{content:"";position:absolute;top:-80px;right:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(247,179,43,.15),transparent 70%)}
+.sw-icon{width:76px;height:76px;border-radius:22px;margin:0 auto 16px;display:grid;place-items:center;font-size:2rem;color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);position:relative;z-index:2}
+.subscribe-wall h3{font-size:1.25rem;font-weight:900;margin-bottom:8px;position:relative;z-index:2}
+.subscribe-wall p{font-size:.9rem;color:var(--muted);line-height:1.9;max-width:520px;margin:0 auto;position:relative;z-index:2}
+.sw-status{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:10px 20px;border-radius:100px;font-size:.86rem;font-weight:800;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);position:relative;z-index:2}
+.sw-status.ok{background:rgba(34,197,94,.15);color:var(--success)}
+
+/* فلتر التصنيفات */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filter-chip{font-family:inherit;font-size:.78rem;font-weight:700;padding:8px 15px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:.22s}
+.filter-chip:hover{border-color:var(--primary);color:var(--primary)}
+.filter-chip.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(var(--primary-rgb),.3)}
+.sort-select{font-family:inherit;font-size:.78rem;font-weight:700;padding:8px 12px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;outline:none;margin-right:auto}
+
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.file-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow-sm);transition:.28s;display:flex;flex-direction:column;gap:11px;position:relative;overflow:hidden}
+.file-card::before{content:"";position:absolute;top:0;right:0;width:100%;height:3px;background:var(--fc,var(--primary));opacity:.95}
+.file-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--fc,var(--primary))}
+.file-card.important{border-color:var(--accent)}
+.file-card.important::before{background:linear-gradient(90deg,#f7b32b,#f59e0b)}
+.file-card.locked{filter:grayscale(.6);opacity:.68}
+.file-card.locked:hover{transform:translateY(-2px)}
+.fc-head{display:flex;align-items:flex-start;gap:10px}
+.fc-icon{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:1.15rem;color:var(--fc,var(--primary));flex-shrink:0;background:color-mix(in srgb,var(--fc,var(--primary)) 14%,transparent);border:1px solid color-mix(in srgb,var(--fc,var(--primary)) 22%,transparent)}
+.fc-head-txt{flex:1;min-width:0}
+.fc-head-txt h3{font-size:.9rem;font-weight:800;line-height:1.4;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fc-cat{font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:100px;background:color-mix(in srgb,var(--fc,var(--primary)) 15%,transparent);color:var(--fc,var(--primary))}
+.fc-star{position:absolute;top:12px;left:12px;font-size:.95rem;color:var(--accent);filter:drop-shadow(0 2px 4px rgba(247,179,43,.5));animation:starGlow 2s ease-in-out infinite}
+@keyframes starGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.fc-lock{position:absolute;top:12px;left:12px;font-size:.9rem;color:var(--muted);background:var(--card);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+.fc-pdf{position:absolute;top:12px;left:12px;font-size:.66rem;font-weight:800;background:#ef4444;color:#fff;padding:2px 8px;border-radius:6px;box-shadow:0 3px 8px rgba(239,68,68,.4)}
+.fc-fav{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:.78rem;transition:.2s;z-index:4;box-shadow:var(--shadow-sm)}
+.fc-fav:hover{color:var(--accent);transform:scale(1.1)}
+.fc-fav.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--card))}
+.fc-star+.fc-pdf{left:44px}
+.fc-desc{font-size:.78rem;color:var(--muted);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.66em}
+.fc-prog{display:flex;flex-direction:column;gap:6px}
+.fc-prog-top{display:flex;justify-content:space-between;font-size:.72rem;font-weight:700;color:var(--muted)}
+.fc-prog-top b{color:var(--primary);font-weight:900;font-size:.86rem}
+.bar{height:7px;border-radius:100px;background:var(--border);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--primary),var(--primary-2));transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.fc-actions{display:flex;gap:8px}
+.btn{font-family:inherit;font-weight:700;font-size:.82rem;border-radius:11px;padding:9px 14px;border:none;cursor:pointer;transition:.22s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn i{font-size:.82rem}
+.btn-primary{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;flex:1;box-shadow:0 6px 16px rgba(var(--primary-rgb),.32)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(var(--primary-rgb),.45)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-ghost{background:var(--primary-soft);color:var(--primary);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--primary);color:#fff}
+.btn-sm{padding:7px 12px;font-size:.76rem}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+[data-theme="dark"] .btn-danger{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)}
+.btn-danger:hover{background:#dc2626;color:#fff}
+.btn-success{background:linear-gradient(100deg,#22c55e,#16a34a);color:#fff;box-shadow:0 6px 16px rgba(34,197,94,.3)}
+.btn-success:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(34,197,94,.45)}
+.hero-big{position:relative;border-radius:26px;overflow:hidden;box-shadow:var(--shadow-lg);min-height:340px;display:flex;align-items:center}
+.hero-big .hero-bg{position:absolute;inset:0;z-index:-2;background:linear-gradient(120deg,#0a1029 0%,#1a2560 45%,rgba(var(--primary-rgb),.6) 100%);transform:scale(1.05);transition:transform 8s ease}
+.hero-big:hover .hero-bg{transform:scale(1.12)}
+.hero-big::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(600px 400px at 80% 20%,rgba(var(--primary-rgb),.4),transparent 70%),radial-gradient(500px 500px at 10% 90%,rgba(139,92,246,.3),transparent 70%)}
+.hero-big-in{position:relative;z-index:2;padding:36px 42px;width:100%;display:grid;grid-template-columns:1.15fr 1fr;gap:30px;align-items:center;color:#fff}
+.hero-left .tag{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;font-weight:700;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 14px;border-radius:100px;margin-bottom:14px;backdrop-filter:blur(8px)}
+.hero-left h2{font-size:clamp(1.3rem,2.4vw,1.85rem);font-weight:900;line-height:1.5;margin-bottom:12px;letter-spacing:-.6px}
+.hero-left h2 em{font-style:normal;background:linear-gradient(100deg,#a5b4ff,#e9d5ff,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-left p{color:rgba(255,255,255,.82);line-height:1.9;font-size:.9rem;max-width:480px;margin-bottom:18px}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap}
+.btn-hero{font-family:inherit;font-size:.9rem;font-weight:800;padding:12px 22px;border-radius:100px;border:none;cursor:pointer;transition:.28s;display:inline-flex;align-items:center;gap:8px}
+.btn-hero.primary{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 14px 36px rgba(var(--primary-rgb),.5)}
+.btn-hero.primary:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(var(--primary-rgb),.65)}
+.btn-hero.ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px)}
+.btn-hero.ghost:hover{background:rgba(255,255,255,.22);transform:translateY(-3px)}
+.hero-right{display:flex;align-items:center;justify-content:center;position:relative}
+.hero-illustration{width:100%;max-width:340px;height:auto;border-radius:20px;filter:drop-shadow(0 24px 50px rgba(0,0,0,.4));animation:heroFloat 5s ease-in-out infinite}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:-30px;position:relative;z-index:5;padding:0 24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow);transition:.3s;position:relative;overflow:hidden}
+.stat-card::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;border-radius:100px;background:var(--sc,var(--primary))}
+.stat-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.stat-card .si{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:1.2rem;margin-bottom:12px}
+.stat-card h3{font-size:1.5rem;font-weight:900;letter-spacing:-1px;line-height:1}
+.stat-card p{font-size:.76rem;color:var(--muted);font-weight:600;margin-top:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card-basic{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:var(--shadow-sm)}
+.card-basic h3{font-size:1rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.card-basic h3 i{color:var(--primary)}
+/* هدف اليوم */
+.goal-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.goal-ring{position:relative;width:130px;height:130px;flex-shrink:0;display:grid;place-items:center}
+.goal-ring .gv{position:absolute;text-align:center}
+.goal-ring .gv b{display:block;font-size:1.7rem;font-weight:900;color:var(--primary);line-height:1}
+.goal-ring .gv small{font-size:.66rem;color:var(--muted);font-weight:700}
+.goal-info{flex:1;min-width:160px}
+.goal-info p{font-size:.84rem;color:var(--muted);line-height:1.9;margin-bottom:12px}
+.week-chart{display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:12px}
+.week-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.week-bar i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--primary),var(--primary-2));min-height:4px;transition:height .8s cubic-bezier(.2,.8,.2,1)}
+.week-bar span{font-size:.62rem;color:var(--muted);font-weight:700}
+.streak-big{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.streak-big .fl{font-size:2.4rem;filter:drop-shadow(0 6px 14px rgba(247,179,43,.5))}
+.streak-big b{font-size:1.9rem;font-weight:900;color:var(--accent);line-height:1}
+.streak-big small{display:block;font-size:.74rem;color:var(--muted);font-weight:700;margin-top:4px}
+.timer-card{background:linear-gradient(135deg,var(--card),var(--card-2));border:1px solid var(--border);border-radius:22px;padding:30px;box-shadow:var(--shadow);display:flex;align-items:center;gap:40px;flex-wrap:wrap;position:relative;overflow:hidden}
+.timer-card::before{content:"";position:absolute;top:-80px;left:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(var(--primary-rgb),.14),transparent 70%)}
+.timer-dial{position:relative;display:grid;place-items:center;z-index:2;width:150px;height:150px}
+.timer-dial .tv{position:absolute;font-size:2rem;font-weight:900;letter-spacing:1.5px;font-variant-numeric:tabular-nums;background:linear-gradient(120deg,var(--primary),var(--primary-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.timer-dial .tl{position:absolute;bottom:30px;font-size:.68rem;color:var(--muted);font-weight:700}
+.timer-side{flex:1;min-width:230px;position:relative;z-index:2}
+.timer-side h3{font-size:1.2rem;font-weight:900;margin-bottom:8px}
+.timer-side p{font-size:.86rem;color:var(--muted);line-height:1.9;margin-bottom:16px}
+.timer-btns{display:flex;gap:10px;flex-wrap:wrap}
+.timer-meta{display:flex;gap:18px;margin-top:14px;font-size:.78rem;font-weight:700;color:var(--muted);flex-wrap:wrap}
+.timer-meta b{color:var(--primary)}
+.badges-row{display:flex;gap:11px;flex-wrap:wrap}
+.badge-item{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:15px;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow-sm);transition:.3s;opacity:.42;filter:grayscale(1)}
+.badge-item.on{opacity:1;filter:none;border-color:var(--accent);background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 12%,var(--card)),var(--card));box-shadow:0 8px 22px rgba(247,179,43,.25)}
+.badge-item:hover{transform:translateY(-3px)}
+.badge-item .bi{font-size:1.4rem;color:var(--accent)}
+.badge-item b{display:block;font-size:.82rem;font-weight:800}
+.badge-item small{font-size:.68rem;color:var(--muted)}
+.task-input{display:flex;gap:8px;margin-bottom:12px}
+.task-input input{flex:1;font-family:inherit;font-size:.86rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:.25s}
+.task-input input:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.task-list{display:flex;flex-direction:column;gap:7px;max-height:250px;overflow-y:auto}
+.task-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;background:var(--bg);border:1px solid var(--border);transition:.25s}
+.task-item:hover{border-color:var(--primary)}
+.task-item.done .t-txt{text-decoration:line-through;color:var(--muted);opacity:.7}
+.t-check{width:20px;height:20px;border-radius:7px;border:2px solid var(--border);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:.2s;font-size:.62rem;color:#fff}
+.task-item.done .t-check{background:var(--success);border-color:var(--success)}
+.t-txt{flex:1;font-size:.84rem;font-weight:600}
+.t-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;transition:.2s;padding:3px}
+.t-del:hover{color:var(--danger);transform:scale(1.2)}
+.notes-area{width:100%;min-height:200px;font-family:inherit;font-size:.88rem;line-height:1.95;padding:14px;border-radius:14px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;resize:vertical;transition:.25s}
+.notes-area:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.set-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:var(--shadow-sm)}
+.set-card h3{font-size:1rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.set-card h3 i{color:var(--primary)}
+.set-card>p{font-size:.82rem;color:var(--muted);margin-bottom:16px;line-height:1.7}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.set-row:last-child{border-bottom:none;padding-bottom:0}
+.set-row .lbl{font-size:.85rem;font-weight:700}
+.set-row .lbl small{display:block;font-size:.72rem;color:var(--muted);font-weight:500;margin-top:2px}
+.switch{position:relative;width:50px;height:28px;flex-shrink:0;cursor:pointer}
+.switch input{opacity:0;width:0;height:0}
+.slider-sw{position:absolute;inset:0;background:var(--border);border-radius:100px;transition:.3s}
+.slider-sw::before{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;right:3px;transition:.3s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.switch input:checked + .slider-sw{background:linear-gradient(100deg,var(--primary),var(--primary-2))}
+.switch input:checked + .slider-sw::before{transform:translateX(-22px)}
+.seg{display:flex;gap:5px;background:var(--bg);padding:4px;border-radius:11px;border:1px solid var(--border);flex-wrap:wrap}
+.seg button{font-family:inherit;font-size:.76rem;font-weight:700;border:none;background:transparent;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer;transition:.22s}
+.seg button.on{background:var(--card);color:var(--primary);box-shadow:var(--shadow-sm)}
+.themes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:11px}
+.theme-swatch{border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid var(--border);transition:.28s;position:relative;aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center}
+.theme-swatch:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.theme-swatch.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.theme-swatch .sw-bg{position:absolute;inset:0;background:linear-gradient(140deg,var(--c1),var(--c2))}
+.theme-swatch .sw-name{position:relative;z-index:2;width:100%;text-align:center;font-size:.7rem;font-weight:800;color:#fff;background:rgba(0,0,0,.28);padding:5px 4px;backdrop-filter:blur(6px)}
+.theme-swatch .sw-check{position:absolute;top:6px;right:6px;z-index:3;width:22px;height:22px;border-radius:50%;background:#fff;color:var(--primary);display:none;align-items:center;justify-content:center;font-size:.7rem;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+.theme-swatch.on .sw-check{display:flex}
+.range-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.range-row input[type=range]{flex:1;min-width:120px;accent-color:var(--primary);height:6px}
+
+/* ================= المزايا ================= */
+.feat-hero{background:linear-gradient(120deg,var(--primary) 0%,var(--primary-2) 55%,#a855f7 100%);border-radius:22px;padding:36px 42px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(var(--primary-rgb),.45)}
+.feat-hero::before{content:"";position:absolute;top:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
+.feat-hero::after{content:"";position:absolute;bottom:-100px;right:15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
+.feat-hero-in{position:relative;z-index:2;display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.feat-hero-txt{flex:1;min-width:250px}
+.feat-hero-txt .tag{display:inline-block;font-size:.76rem;font-weight:800;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:100px;margin-bottom:12px}
+.feat-hero-txt h2{font-size:clamp(1.3rem,2.5vw,1.75rem);font-weight:900;line-height:1.4;margin-bottom:10px;letter-spacing:-.5px}
+.feat-hero-txt p{font-size:.9rem;line-height:1.9;color:rgba(255,255,255,.85);max-width:520px}
+.feat-hero-count{display:flex;align-items:center;justify-content:center;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);flex-shrink:0;flex-direction:column}
+.feat-hero-count b{font-size:2.6rem;font-weight:900;line-height:1}
+.feat-hero-count span{font-size:.74rem;font-weight:700;color:rgba(255,255,255,.85);margin-top:4px}
+.feat-grid-new{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.feat-new{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:var(--shadow-sm);transition:.32s;position:relative;overflow:hidden}
+.feat-new::before{content:"";position:absolute;top:-60px;left:-60px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--fc,var(--primary)) 20%,transparent),transparent 70%);opacity:0;transition:.4s}
+.feat-new:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--fc,var(--primary))}
+.feat-new:hover::before{opacity:1}
+.feat-new .num-badge{position:absolute;top:16px;left:18px;font-size:2rem;font-weight:900;color:var(--border);line-height:1;transition:.3s}
+.feat-new:hover .num-badge{color:var(--fc,var(--primary));opacity:.35}
+.feat-new .fi{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-size:1.35rem;color:var(--fc,var(--primary));margin-bottom:14px;background:color-mix(in srgb,var(--fc,var(--primary)) 14%,transparent);border:1px solid color-mix(in srgb,var(--fc,var(--primary)) 25%,transparent);position:relative;z-index:2;transition:.3s}
+.feat-new:hover .fi{transform:scale(1.08) rotate(-4deg)}
+.feat-new h3{font-size:.96rem;font-weight:800;margin-bottom:8px;position:relative;z-index:2}
+.feat-new p{font-size:.8rem;color:var(--muted);line-height:1.85;position:relative;z-index:2}
+
+/* ================= الأدمن ================= */
+.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.admin-stat{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.admin-stat::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;border-radius:100px;background:var(--sc,var(--primary))}
+.admin-stat h3{font-size:1.55rem;font-weight:900;line-height:1;color:var(--sc,var(--primary))}
+.admin-stat p{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:6px}
+.admin-tabs{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:14px;border:1px solid var(--border);margin-bottom:20px;box-shadow:var(--shadow-sm);overflow-x:auto}
+.admin-tabs button{font-family:inherit;font-size:.86rem;font-weight:700;padding:11px 20px;border-radius:10px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:.22s;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.admin-tabs button.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 6px 16px rgba(var(--primary-rgb),.35)}
+.admin-tabs button:hover:not(.on){background:var(--primary-soft);color:var(--primary)}
+.admin-panel{display:none}
+.admin-panel.on{display:block;animation:viewIn .35s ease}
+.users-table{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.users-table .thead{display:grid;grid-template-columns:2fr 2.5fr 1.2fr 1.7fr;gap:12px;padding:16px 20px;background:var(--card-2);border-bottom:1px solid var(--border);font-size:.74rem;font-weight:800;color:var(--muted);letter-spacing:.5px}
+.users-table .trow{display:grid;grid-template-columns:2fr 2.5fr 1.2fr 1.7fr;gap:12px;padding:16px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.2s}
+.users-table .trow:hover{background:var(--card-2)}
+.users-table .trow:last-child{border-bottom:none}
+.trow .user-cell{display:flex;align-items:center;gap:11px;min-width:0}
+.trow .user-cell .av{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff}
+.trow .user-cell .info{min-width:0}
+.trow .user-cell b{font-size:.86rem;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .user-cell small{font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.trow .email-cell{font-size:.8rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .status-cell{font-size:.76rem;font-weight:700}
+.trow .actions-cell{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;padding:5px 11px;border-radius:100px}
+.status-badge.on{background:rgba(34,197,94,.14);color:#16a34a}
+.status-badge.pending{background:rgba(247,179,43,.18);color:#d97706}
+.status-badge.off{background:rgba(148,163,184,.16);color:#64748b}
+.admin-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.admin-empty .em-ic{font-size:3rem;margin-bottom:12px;opacity:.35;color:var(--primary)}
+.admin-empty h3{font-size:1rem;font-weight:800;margin-bottom:6px;color:var(--text)}
+.admin-empty p{font-size:.84rem}
+.files-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.admin-file-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow-sm);transition:.28s;position:relative;overflow:hidden}
+.admin-file-card::before{content:"";position:absolute;top:0;right:0;width:100%;height:3px;background:var(--fc,var(--primary))}
+.admin-file-card.important{border-color:var(--accent)}
+.admin-file-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.afc-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.afc-head .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1.1rem;color:var(--fc,var(--primary));flex-shrink:0;background:color-mix(in srgb,var(--fc,var(--primary)) 14%,transparent);border:1px solid color-mix(in srgb,var(--fc,var(--primary)) 25%,transparent)}
+.afc-head h4{font-size:.9rem;font-weight:800;line-height:1.35}
+.afc-head small{font-size:.7rem;color:var(--muted);font-weight:600}
+.afc-meta{display:flex;gap:10px;font-size:.72rem;color:var(--muted);font-weight:700;margin-bottom:12px;flex-wrap:wrap}
+.afc-actions{display:flex;gap:6px;flex-wrap:wrap}
+.upload-zone{border:2px dashed var(--border);border-radius:18px;padding:34px 20px;text-align:center;background:var(--card-2);transition:.28s;cursor:pointer;margin-bottom:16px;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--primary);background:var(--primary-soft)}
+.upload-zone.dragover{transform:scale(1.01)}
+.upload-zone .uz-icon{width:70px;height:70px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;font-size:1.7rem;color:var(--primary);background:var(--primary-soft);border:1px solid color-mix(in srgb,var(--primary) 25%,transparent)}
+.upload-zone h4{font-size:1rem;font-weight:800;margin-bottom:6px}
+.upload-zone p{font-size:.82rem;color:var(--muted);margin-bottom:14px}
+.upload-zone input[type=file]{display:none}
+.upload-zone .uz-file{display:inline-flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);padding:10px 16px;border-radius:12px;font-size:.82rem;font-weight:700;margin-top:10px;color:var(--text);word-break:break-all}
+.upload-zone .uz-file i{color:var(--success)}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.82rem;font-weight:800;margin-bottom:6px}
+.form-group input[type=text],.form-group input[type=email],.form-group input[type=password],.form-group input[type=number],.form-group select,.form-group textarea{width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:.25s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.form-group textarea{min-height:100px;resize:vertical;line-height:1.8}
+.checkbox-row{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--bg);cursor:pointer;transition:.25s;margin-bottom:14px}
+.checkbox-row:hover{border-color:var(--primary)}
+.checkbox-row input{width:20px;height:20px;accent-color:var(--primary);cursor:pointer;flex-shrink:0}
+.checkbox-row span{font-size:.86rem;font-weight:700;cursor:pointer;flex:1}
+.checkbox-row span i{color:var(--accent);margin-left:4px}
+.form-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+
+/* ================= القارئ ================= */
+#reader{position:fixed;inset:0;z-index:500;display:none;background:rgba(8,12,26,.9);backdrop-filter:blur(12px);padding:14px;align-items:center;justify-content:center}
+#reader.open{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.reader-box{width:100%;max-width:1240px;height:96vh;background:#e9edf7;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,.6);animation:readerIn .5s cubic-bezier(.2,.9,.25,1)}
+@keyframes readerIn{from{opacity:0;transform:translateY(40px) scale(.96)}to{opacity:1;transform:none}}
+.reader-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;flex-wrap:nowrap}
+.rh-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:.9rem;cursor:pointer;display:grid;place-items:center;transition:.2s;flex-shrink:0}
+.rh-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.rh-btn.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.rh-btn.danger:hover{background:var(--danger);border-color:var(--danger)}
+.reader-head .rh-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:1rem;flex-shrink:0}
+.reader-head .rh-info{flex:1;min-width:0}
+.reader-head h3{font-size:.92rem;font-weight:800;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reader-head small{font-size:.7rem;color:var(--muted);font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rh-tools{display:flex;gap:6px;flex-shrink:0}
+.reader-toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--card-2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.reader-toolbar::-webkit-scrollbar{display:none}
+.tbtn{font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s;white-space:nowrap;flex-shrink:0}
+.tbtn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.page-jump{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:var(--muted);flex-shrink:0}
+.page-jump input{width:58px;text-align:center;font-family:inherit;font-size:.8rem;font-weight:800;padding:7px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none}
+.page-jump input:focus{border-color:var(--primary)}
+.zoom-val{font-size:.76rem;font-weight:800;color:var(--primary);min-width:44px;text-align:center;flex-shrink:0}
+.tsep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.reader-progress-bar{height:4px;background:var(--border);position:relative;flex-shrink:0}
+.reader-progress-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--primary-2));transition:width .4s ease}
+.reader-main{flex:1;display:flex;min-height:0;overflow:hidden;position:relative}
+.reader-thumbs{width:0;flex-shrink:0;overflow-y:auto;overflow-x:hidden;background:var(--card);border-left:1px solid var(--border);transition:width .25s ease;padding:0}
+.reader-thumbs.open{width:170px;padding:10px}
+.thumb-btn{width:100%;font-family:inherit;font-size:.76rem;font-weight:700;text-align:right;padding:9px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:.2s;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.thumb-btn:hover{background:var(--primary-soft);color:var(--primary)}
+.thumb-btn.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff}
+.reader-body{flex:1;overflow:auto;position:relative;padding:18px 10px 60px;background:#dfe4f0;scroll-behavior:auto;overscroll-behavior:contain}
+.reader-body.snap{scroll-snap-type:y proximity}
+.reader-body.read-light{background:#dfe4f0}
+.reader-body.read-sepia{background:#e8dcc4}
+.reader-body.read-dark{background:#0a1124}
+.pdf-stage{display:flex;flex-direction:column;align-items:center;gap:16px;width:max-content;min-width:100%;margin:0 auto}
+.pdf-page{position:relative;background:#fff;border-radius:6px;box-shadow:0 10px 34px rgba(20,35,80,.18);flex-shrink:0;overflow:hidden;scroll-snap-align:start;transition:box-shadow .3s}
+.reader-body.snap .pdf-page{scroll-snap-align:center}
+.pdf-page.current{box-shadow:0 0 0 3px var(--primary),0 14px 40px rgba(20,35,80,.28)}
+.pdf-page .pg-inner{width:100%;height:100%}
+.pdf-page canvas{display:block;width:100%;height:100%}
+.pdf-page .pg-num{position:absolute;top:8px;left:10px;font-size:.68rem;font-weight:800;color:#8892b5;background:rgba(238,241,250,.92);padding:3px 10px;border-radius:100px;z-index:3;pointer-events:none}
+.pdf-page .pg-wm{position:absolute;bottom:8px;right:14px;font-size:.62rem;font-weight:700;color:rgba(150,160,190,.75);z-index:3;pointer-events:none}
+.reader-body.hide-marks .pg-num,.reader-body.hide-marks .pg-wm{display:none}
+.pdf-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(233,237,247,.94);z-index:50;text-align:center;padding:20px}
+[data-theme="dark"] .pdf-loading{background:rgba(10,17,36,.94);color:#e9eefb}
+.pdf-loading i{font-size:2.6rem;color:var(--primary)}
+.pdf-loading p{font-size:.9rem;font-weight:700}
+.pdf-loading .pl-bar{width:min(320px,80%);height:7px;border-radius:100px;background:var(--border);overflow:hidden}
+.pdf-loading .pl-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--primary-2));transition:width .3s}
+.reader-foot{padding:12px 18px;border-top:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0;padding-bottom:calc(12px + var(--safe-b))}
+.reader-foot .prog-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}
+.reader-foot .prog-info .row{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:700}
+.reader-foot .prog-info .row b{color:var(--primary);font-size:.92rem}
+.reader-foot .prog-info small{font-size:.7rem;color:var(--muted);font-weight:600}
+.reader-foot-actions{display:flex;gap:8px;flex-wrap:wrap}
+.done-btn{font-family:inherit;font-weight:800;font-size:.84rem;padding:11px 20px;border-radius:13px;border:none;cursor:pointer;background:linear-gradient(100deg,#22c55e,#16a34a);color:#fff;box-shadow:0 8px 20px rgba(34,197,94,.35);transition:.25s;display:inline-flex;align-items:center;gap:7px}
+.done-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(34,197,94,.5)}
+.done-btn.achieved{background:linear-gradient(100deg,#f7b32b,#f59e0b)}
+.reader-fab{position:absolute;bottom:18px;left:18px;z-index:20;width:46px;height:46px;border-radius:50%;border:none;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 10px 26px rgba(var(--primary-rgb),.5);display:grid;place-items:center}
+.reader-fab.top{display:none}
+
+/* ================= عناصر عامة ================= */
+#shield{position:fixed;inset:0;z-index:9998;display:none;background:rgba(6,10,22,.96);backdrop-filter:blur(20px);align-items:center;justify-content:center;text-align:center;padding:30px;color:#fff}
+#shield.on{display:flex;animation:fadeIn .25s}
+.shield-in{max-width:480px}
+.shield-in .sh-ic{font-size:4rem;margin-bottom:20px;color:var(--accent)}
+.shield-in h2{font-size:1.5rem;font-weight:900;margin-bottom:14px}
+.shield-in p{font-size:.92rem;line-height:2;color:rgba(255,255,255,.72)}
+#toast{position:fixed;bottom:26px;left:26px;z-index:9500;display:flex;flex-direction:column;gap:9px;pointer-events:none;max-width:calc(100vw - 40px)}
+.toast-item{background:var(--card);border:1px solid var(--border);border-right:4px solid var(--primary);padding:13px 20px;border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.2);font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:10px;animation:toastIn .45s cubic-bezier(.2,1.2,.4,1);min-width:250px}
+.toast-item i{font-size:.95rem}
+.toast-item.ok{border-right-color:var(--success)}.toast-item.ok i{color:var(--success)}
+.toast-item.warn{border-right-color:var(--accent)}.toast-item.warn i{color:var(--accent)}
+.toast-item.err{border-right-color:var(--danger)}.toast-item.err i{color:var(--danger)}
+.toast-item:not([class*="ok"]):not([class*="warn"]):not([class*="err"]) i{color:var(--primary)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-40px) scale(.9)}to{opacity:1;transform:none}}
+.toast-item.out{animation:toastOut .4s forwards}
+@keyframes toastOut{to{opacity:0;transform:translateX(-40px) scale(.9)}}
+.modal{position:fixed;inset:0;z-index:9600;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(8,12,26,.7);backdrop-filter:blur(8px)}
+.modal.open{display:flex;animation:fadeIn .25s}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:26px;max-width:460px;width:100%;box-shadow:var(--shadow-lg);animation:readerIn .4s cubic-bezier(.2,.9,.25,1);max-height:88vh;overflow:auto}
+.modal-box h3{font-size:1.1rem;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+.modal-box h3 i{color:var(--primary)}
+.modal-box p{font-size:.86rem;color:var(--muted);line-height:1.9;margin-bottom:18px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* ================= استجابة الشاشات ================= */
+@media (max-width:1200px){
+  .hero-big-in{grid-template-columns:1fr;padding:28px 26px;gap:20px}
+  .hero-right{display:flex;justify-content:center}
+  .hero-illustration{max-width:280px}
+  .hero-big{min-height:auto}
+  .stats-row{margin-top:20px;padding:0}
+}
+@media (max-width:1000px){
+  :root{--sidebar:78px}
+  .brand-txt,.nav-btn span:not(.ic),.side-card,.user-info,.user-card .logout{display:none}
+  .nav-btn{justify-content:center;padding:14px 0}
+  .brand{justify-content:center;padding:4px 0 16px}
+  .user-card{justify-content:center;padding:8px}
+  .main{padding:20px 18px 80px}
+  .users-table .thead,.users-table .trow{grid-template-columns:1.5fr 2fr 1.2fr;gap:8px;padding:12px 14px}
+  .users-table .email-cell{display:none}
+  .auth-container{max-width:520px;min-height:auto}
+  .auth-image-side{display:none}
+  .auth-form-side{padding:28px 24px}
+}
+@media (max-width:720px){
+  .sidebar{position:fixed;bottom:0;right:0;left:0;top:auto;width:100%;height:calc(62px + var(--safe-b));flex-direction:row;padding:6px 6px calc(6px + var(--safe-b));border-left:none;border-top:1px solid var(--border);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(20,35,80,.1)}
+  .sidebar::before{height:3px}
+  .brand,.user-card,.side-card{display:none}
+  .nav{flex-direction:row;justify-content:space-around;gap:0;width:100%;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav-btn{justify-content:center;padding:8px 4px;border-radius:12px;flex-direction:column;gap:3px;min-width:52px;flex:1}
+  .nav-btn .ic{font-size:1.15rem;width:auto}
+  .nav-btn span:not(.ic){display:block;font-size:.6rem;font-weight:700;white-space:nowrap}
+  .nav-btn .badge-n{position:absolute;top:2px;left:50%;transform:translateX(-140%);font-size:.55rem;padding:1px 5px;margin:0}
+  .nav-btn:hover{transform:none;background:transparent}
+  .main{padding:16px 13px 96px}
+  .topbar h1{font-size:1.25rem}
+  .topbar p{font-size:.76rem}
+  .search-box{min-width:100%;order:5}
+  .hero-big-in{padding:22px 18px}
+  .hero-left h2{font-size:1.2rem}
+  .hero-left p{font-size:.82rem}
+  .stats-row{grid-template-columns:1fr 1fr;gap:10px}
+  .stat-card{padding:14px}
+  .stat-card h3{font-size:1.25rem}
+  .two-col{grid-template-columns:1fr}
+  .reader-body{padding:10px 4px 70px}
+  #reader{padding:0}
+  .reader-box{height:100vh;height:100dvh;border-radius:0;max-width:100%}
+  .reader-head{padding:8px 10px;gap:7px}
+  .reader-head .rh-info h3{font-size:.82rem}
+  .rh-tools .rh-btn{width:34px;height:34px;font-size:.8rem}
+  .reader-head .rh-icon{display:none}
+  .reader-toolbar{padding:7px 10px;gap:6px}
+  .tbtn{padding:6px 10px;font-size:.72rem}
+  .reader-thumbs.open{position:absolute;top:0;bottom:0;right:0;width:62%;z-index:30;box-shadow:-10px 0 30px rgba(0,0,0,.3);border-radius:0}
+  .reader-foot{padding:10px 12px calc(10px + var(--safe-b));gap:10px}
+  .reader-foot-actions{width:100%}
+  .reader-foot-actions .btn,.reader-foot-actions .done-btn{flex:1;justify-content:center}
+  #toast{left:12px;right:12px;bottom:calc(76px + var(--safe-b));max-width:none}
+  .toast-item{min-width:auto;width:100%}
+  .timer-card{padding:20px;gap:18px;justify-content:center;text-align:center}
+  .timer-side{text-align:center}
+  .timer-btns{justify-content:center}
+  .files-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .file-card{padding:12px;gap:9px}
+  .fc-icon{width:38px;height:38px;font-size:1rem}
+  .fc-head-txt h3{font-size:.8rem}
+  .fc-desc{font-size:.72rem}
+  .users-table .thead,.users-table .trow{grid-template-columns:1fr 1fr;gap:6px;padding:10px 12px}
+  .users-table .status-cell{display:none}
+  .admin-stats{grid-template-columns:1fr 1fr}
+  .w-illust{width:160px;height:160px}
+  .w-illust .core{width:94px;height:94px;font-size:42px;border-radius:26px}
+  .w-chips{gap:6px}
+  .chip{font-size:.68rem;padding:6px 11px}
+  .auth-container{max-width:100%;border-radius:20px}
+  .auth-form-side{padding:24px 18px}
+  .hero-illustration{max-width:210px}
+  .goal-wrap{justify-content:center;text-align:center}
+  .goal-info{text-align:center}
+  .set-card{padding:18px}
+}
+@media (max-width:420px){
+  .files-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .nav-btn span:not(.ic){font-size:.55rem}
+}
+@media (hover:none){
+  .file-card:hover{transform:none}
+  .feat-new:hover{transform:none}
+}
+@media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
+</style>
+</head>
+<body>
+
+<!-- ================= شاشة الترحيب ================= -->
+<div id="welcome">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="grid-overlay"></div>
+  <div class="w-inner">
+    <div class="w-illust">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+      <div class="glow"></div>
+      <div class="core"><i class="fas fa-brain"></i></div>
+      <div class="floating f1"><i class="fas fa-book"></i></div>
+      <div class="floating f2"><i class="fas fa-award"></i></div>
+      <div class="floating f3"><i class="fas fa-chart-line"></i></div>
+    </div>
+    <h1>العباقرة للقدرات</h1>
+    <p class="w-sub">
+      منصتك الذكية للاستعداد لاختبار القدرات. أنشئ حسابك، اقرأ ملفات PDF
+      بقارئ متطور، وتابع تقدمك تلقائياً حتى تصل إلى القمة.
+    </p>
+    <div class="w-chips">
+      <div class="chip" style="animation-delay:.4s"><i class="fas fa-user-shield"></i> حساب آمن</div>
+      <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
+      <div class="chip" style="animation-delay:.5s"><i class="fas fa-magnifying-glass-plus"></i> تكبير وتمرير سلس</div>
+      <div class="chip" style="animation-delay:.55s"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
+      <div class="chip" style="animation-delay:.6s"><i class="fas fa-bullseye"></i> هدف يومي</div>
+      <div class="chip" style="animation-delay:.65s"><i class="fas fa-palette"></i> ثيمات</div>
+    </div>
+    <button class="w-btn" id="enterBtn">ابدأ رحلتك <i class="fas fa-arrow-left"></i></button>
+    <div class="w-foot">اضغط للدخول أو إنشاء حساب جديد</div>
+  </div>
+</div>
+
+<!-- ================= شاشة الدخول ================= -->
+<div id="auth">
+  <button class="auth-back" id="authBack"><i class="fas fa-arrow-right"></i> رجوع</button>
+  <div class="auth-container">
+    <div class="auth-form-side">
+      <div class="auth-brand">
+        <h2><i class="fas fa-brain"></i> العباقرة للقدرات</h2>
+        <p>منصتك للتفوق في اختبار القدرات</p>
+      </div>
+      <div class="auth-tabs">
+        <button class="on" data-tab="login"><i class="fas fa-right-to-bracket"></i> دخول</button>
+        <button data-tab="register"><i class="fas fa-user-plus"></i> حساب جديد</button>
+        <button data-tab="admin"><i class="fas fa-shield-halved"></i> أدمن</button>
+      </div>
+      <div class="auth-form on" id="form-login">
+        <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
+        <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password"></div>
+        <div class="auth-msg" id="loginMsg"></div>
+        <button class="auth-btn" id="loginBtn"><i class="fas fa-right-to-bracket"></i> تسجيل الدخول</button>
+        <div class="auth-hint">ليس لديك حساب؟ اضغط <b>حساب جديد</b> بالأعلى</div>
+      </div>
+      <div class="auth-form" id="form-register">
+        <div class="input-group"><i class="fas fa-user ic"></i><input type="text" id="regName" placeholder="الاسم الكامل" autocomplete="name"></div>
+        <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
+        <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="regPass" placeholder="كلمة المرور (6+ أحرف)" autocomplete="new-password"></div>
+        <div class="auth-msg" id="regMsg"></div>
+        <button class="auth-btn" id="regBtn"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+        <div class="auth-hint">بعد التسجيل، حسابك ينتظر موافقة الأدمن</div>
+      </div>
+      <div class="auth-form" id="form-admin">
+        <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="adminEmail" placeholder="بريد الأدمن" autocomplete="email"></div>
+        <div class="input-group"><i class="fas fa-key ic"></i><input type="password" id="adminPass" placeholder="كلمة مرور الأدمن" autocomplete="current-password"></div>
+        <div class="auth-msg" id="adminMsg"></div>
+        <button class="auth-btn admin" id="adminBtn"><i class="fas fa-shield-halved"></i> دخول لوحة التحكم</button>
+        <div class="auth-hint">الافتراضي:<br><b>admin@abdqaqra.com</b> / <b>admin1234</b></div>
+      </div>
+    </div>
+    <div class="auth-image-side">
+      <img src="https://i.postimg.cc/QC5j08sx/Gemini-Generated-Image-6qwolu6qwolu6qwo-removebg-preview.png" alt="تسجيل الدخول الآمن">
+      <div class="auth-image-text">
+        <h3>ابدأ رحلتك التعليمية</h3>
+        <p>انضم إلى آلاف الطلاب الذين حققوا التفوق مع منصة العباقرة</p>
+        <ul class="features-list">
+          <li><i class="fas fa-check"></i> قارئ PDF بتكبير وتنقّل سريع</li>
+          <li><i class="fas fa-check"></i> تتبع تلقائي لتقدمك في كل ملف</li>
+          <li><i class="fas fa-check"></i> هدف يومي وسلسلة أيام وشارات تحفيزية</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= التطبيق ================= -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo"><i class="fas fa-brain"></i></div>
+      <div class="brand-txt"><h2>العباقرة للقدرات</h2><p>رحلتك نحو التميز</p></div>
+    </div>
+    <div class="user-card" id="userCard">
+      <div class="user-avatar" id="userAvatar">؟</div>
+      <div class="user-info">
+        <div class="nm" id="userName">—</div>
+        <div class="em" id="userEmail">—</div>
+      </div>
+      <button class="logout" id="logoutBtn" title="خروج"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+    <nav class="nav" id="navMain">
+      <button class="nav-btn active" data-view="home"><span class="ic"><i class="fas fa-house"></i></span><span>الرئيسية</span></button>
+      <button class="nav-btn" data-view="files"><span class="ic"><i class="fas fa-folder"></i></span><span>الملفات</span><span class="badge-n" id="navCount">0</span></button>
+      <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
+      <button class="nav-btn" data-view="features"><span class="ic"><i class="fas fa-wand-magic-sparkles"></i></span><span>المزايا</span></button>
+      <button class="nav-btn" data-view="settings"><span class="ic"><i class="fas fa-gear"></i></span><span>الإعدادات</span></button>
+      <button class="nav-btn admin-nav" data-view="admin" id="adminNav" style="display:none"><span class="ic"><i class="fas fa-shield-halved"></i></span><span>لوحة الأدمن</span></button>
+    </nav>
+    <div class="side-card">
+      <h4><span>التقدم الكلي</span><b id="sidePct">0%</b></h4>
+      <div class="mini-bar"><i id="sideBar"></i></div>
+    </div>
+  </aside>
+
+  <main class="main" id="mainScroll">
+    <div class="topbar">
+      <div><h1 id="pageTitle">الرئيسية</h1><p id="pageSub">أهلاً بك مجدداً</p></div>
+      <div class="top-actions">
+        <div class="search-box"><i class="fas fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="ابحث في الملفات... (Ctrl+K)"></div>
+        <button class="icon-btn" id="themeBtn" title="تبديل المظهر"><i class="fas fa-moon"></i></button>
+      </div>
+    </div>
+
+    <!-- ========== الرئيسية ========== -->
+    <section class="view active" id="view-home">
+      <div id="homeSubBanner"></div>
+      <div class="hero-big">
+        <div class="hero-bg"></div>
+        <div class="hero-big-in">
+          <div class="hero-left">
+            <div class="tag" id="greetTag"><i class="fas fa-fire"></i> استمر، أنت تبلي بلاءً حسناً</div>
+            <h2 id="heroTitle">كل صفحة تقرأها اليوم، هي <em>درجة ترتفع بها</em> غداً</h2>
+            <p>افتح أي ملف PDF وسيتابع النظام تقدمك تلقائياً مع كل صفحة تمرّ عليها.</p>
+            <div class="hero-cta">
+              <button class="btn-hero primary" onclick="go('files')"><i class="fas fa-book-open"></i> ابدأ المذاكرة</button>
+              <button class="btn-hero ghost" onclick="go('progress')"><i class="fas fa-chart-line"></i> شاهد تقدمك</button>
+            </div>
+          </div>
+          <div class="hero-right">
+            <img class="hero-illustration" src="https://i.postimg.cc/BbZjzPY8/man-sitting-on-pile-of-books-concept-illustration-of-online-courses-distance-studying-self-education.png" alt="التعلم الذكي">
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card" style="--sc:var(--primary)">
+          <div class="si" style="background:var(--primary-soft);color:var(--primary)"><i class="fas fa-book"></i></div>
+          <h3 id="stFiles">0</h3><p>ملفات مكتملة</p>
+        </div>
+        <div class="stat-card" style="--sc:#f7b32b">
+          <div class="si" style="background:#fff4e0;color:#f7b32b"><i class="fas fa-bullseye"></i></div>
+          <h3 id="stAvg">0%</h3><p>متوسط التقدم</p>
+        </div>
+        <div class="stat-card" style="--sc:#22c55e">
+          <div class="si" style="background:#e6f9ef;color:#22c55e"><i class="fas fa-file-lines"></i></div>
+          <h3 id="stPages">0</h3><p>صفحات مقروءة</p>
+        </div>
+        <div class="stat-card" style="--sc:#8b5cf6">
+          <div class="si" style="background:#f3e8ff;color:#8b5cf6"><i class="fas fa-medal"></i></div>
+          <h3 id="stBadge">0</h3><p>شارات مكتسبة</p>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-crosshairs" style="color:var(--primary)"></i> هدف اليوم وسلسلة المذاكرة</div>
+      <div class="two-col">
+        <div class="card-basic">
+          <h3><i class="fas fa-bullseye"></i> هدف الصفحات اليومي</h3>
+          <div class="goal-wrap">
+            <div class="goal-ring" id="goalRing">
+              <div class="gv"><b id="goalToday">0</b><small>من <span id="goalTarget">10</span> صفحة</small></div>
+            </div>
+            <div class="goal-info">
+              <p id="goalMsg">حدّد هدفك اليومي من الإعدادات وابدأ القراءة لترى تقدمك هنا.</p>
+              <button class="btn btn-ghost btn-sm" onclick="go('settings')"><i class="fas fa-sliders"></i> تعديل الهدف</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-basic">
+          <h3><i class="fas fa-fire"></i> سلسلة الأيام</h3>
+          <div class="streak-big">
+            <span class="fl">🔥</span>
+            <div><b id="streakNum">0</b><small>يوم متواصل من المذاكرة</small></div>
+          </div>
+          <div class="week-chart" id="weekChart"></div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-stopwatch" style="color:var(--primary)"></i> المؤقت الدراسي <span class="sub">تقنية بومودورو</span></div>
+      <div class="timer-card">
+        <div class="timer-dial" id="timerDial">
+          <div class="tv" id="timerText">25:00</div>
+          <div class="tl" id="timerLabel">جلسة تركيز</div>
+        </div>
+        <div class="timer-side">
+          <h3 id="timerHead">اعمل بتركيز كامل</h3>
+          <p id="timerDesc">اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت بشكل ملحوظ.</p>
+          <div class="timer-btns">
+            <button class="btn btn-primary" id="timerStart"><i class="fas fa-play"></i> ابدأ الجلسة</button>
+            <button class="btn btn-ghost" id="timerReset"><i class="fas fa-rotate"></i> إعادة</button>
+            <button class="btn btn-ghost" id="timerMode"><i class="fas fa-mug-hot"></i> راحة</button>
+          </div>
+          <div class="timer-meta">
+            <span>الجلسات اليوم: <b id="tmSessions">0</b></span>
+            <span>دقائق اليوم: <b id="tmMinutes">0</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-clock-rotate-left" style="color:var(--primary)"></i> أكمل من حيث توقفت <span class="sub">آخر ملفاتك</span></div>
+      <div class="files-grid" id="recentFiles"></div>
+
+      <div class="sec-title"><i class="fas fa-medal" style="color:var(--accent)"></i> شاراتك</div>
+      <div class="badges-row" id="badgesHome"></div>
+
+      <div class="sec-title"><i class="fas fa-list-check" style="color:var(--primary)"></i> مهامي وملاحظاتي</div>
+      <div class="two-col">
+        <div class="card-basic">
+          <h3><i class="fas fa-list-check"></i> قائمة المهام</h3>
+          <div class="task-input">
+            <input type="text" id="taskInput" placeholder="أضف مهمة جديدة واضغط Enter">
+            <button class="btn btn-primary btn-sm" id="taskAdd"><i class="fas fa-plus"></i></button>
+          </div>
+          <div class="task-list" id="taskList"></div>
+        </div>
+        <div class="card-basic">
+          <h3><i class="fas fa-note-sticky"></i> ملاحظاتي السريعة
+            <button class="btn btn-ghost btn-sm" id="notesExport" style="margin-right:auto"><i class="fas fa-download"></i> تصدير</button>
+          </h3>
+          <textarea class="notes-area" id="notesArea" placeholder="اكتب هنا أي فكرة أو قاعدة تريد تذكرها..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== الملفات ========== -->
+    <section class="view" id="view-files">
+      <div id="filesSubBanner"></div>
+      <div class="sec-title"><i class="fas fa-folder-open" style="color:var(--primary)"></i> مكتبة الملفات</div>
+      <div class="filter-row">
+        <button class="filter-chip on" data-cat="all">الكل</button>
+        <button class="filter-chip" data-cat="كمي">كمي</button>
+        <button class="filter-chip" data-cat="لفظي">لفظي</button>
+        <button class="filter-chip" data-cat="عام">عام</button>
+        <button class="filter-chip" data-cat="مراجعة">مراجعة</button>
+        <button class="filter-chip" data-cat="fav"><i class="fas fa-star"></i> المفضلة</button>
+        <select class="sort-select" id="sortSelect">
+          <option value="new">الأحدث</option>
+          <option value="old">الأقدم</option>
+          <option value="progress">الأكثر إنجازاً</option>
+          <option value="alpha">أبجدياً</option>
+        </select>
+      </div>
+      <div class="files-grid" id="filesGrid"></div>
+    </section>
+
+    <!-- ========== إنجازي ========== -->
+    <section class="view" id="view-progress">
+      <div class="hero-big" style="min-height:280px">
+        <div class="hero-bg"></div>
+        <div class="hero-big-in" style="grid-template-columns:1fr">
+          <div class="hero-left">
+            <div class="tag"><i class="fas fa-chart-pie"></i> تقرير الأداء</div>
+            <h2>أنت على الطريق الصحيح</h2>
+            <p id="progMsg">ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.</p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px">
+              <div style="color:#fff"><div style="font-size:2.1rem;font-weight:900" id="progPctBig">0%</div><div style="font-size:.76rem;opacity:.8;font-weight:700">الإنجاز الكلي</div></div>
+              <div style="color:#fff"><div style="font-size:2.1rem;font-weight:900" id="progDoneBig">0/0</div><div style="font-size:.76rem;opacity:.8;font-weight:700">ملفات مكتملة</div></div>
+              <div style="color:#fff"><div style="font-size:2.1rem;font-weight:900" id="progPagesBig">0</div><div style="font-size:.76rem;opacity:.8;font-weight:700">صفحة مقروءة</div></div>
+              <div style="color:#fff"><div style="font-size:2.1rem;font-weight:900" id="progMinBig">0</div><div style="font-size:.76rem;opacity:.8;font-weight:700">دقيقة مذاكرة</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-calendar-week" style="color:var(--primary)"></i> آخر ٧ أيام <span class="sub">دقائق المذاكرة</span></div>
+      <div class="card-basic">
+        <div class="week-chart" id="weekChartBig" style="height:150px"></div>
+        <div class="timer-meta" style="justify-content:center">
+          <span>أفضل يوم: <b id="bestDay">—</b></span>
+          <span>إجمالي الدقائق: <b id="totalMinutes">0</b></span>
+          <span>جلسات التركيز: <b id="totalSessions">0</b></span>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-chart-bar" style="color:var(--primary)"></i> تفصيل الإنجاز حسب الملف</div>
+      <div class="card-basic" id="progressList"></div>
+
+      <div class="sec-title"><i class="fas fa-trophy" style="color:var(--accent)"></i> الشارات والإنجازات</div>
+      <div class="badges-row" id="badgesAll"></div>
+    </section>
+
+    <!-- ========== المزايا ========== -->
+    <section class="view" id="view-features">
+      <div class="feat-hero">
+        <div class="feat-hero-in">
+          <div class="feat-hero-txt">
+            <div class="tag"><i class="fas fa-wand-magic-sparkles"></i> كل ما تحتاجه في منصة واحدة</div>
+            <h2 id="featHeroTitle">مزايا احترافية صُمّمت لتُحسّن رحلتك الدراسية</h2>
+            <p>من قارئ PDF المتقدم إلى المؤقت الدراسي والهدف اليومي وسلسلة الأيام، كل شيء هنا ليبقيك مركزاً ومتحفزاً.</p>
+          </div>
+          <div class="feat-hero-count"><b id="featCount">0</b><span>ميزة أساسية</span></div>
+        </div>
+      </div>
+      <div class="feat-grid-new" id="featGrid"></div>
+    </section>
+
+    <!-- ========== الإعدادات ========== -->
+    <section class="view" id="view-settings">
+      <div class="sec-title"><i class="fas fa-gear" style="color:var(--primary)"></i> الإعدادات</div>
+      <div class="set-grid">
+
+        <div class="set-card">
+          <h3><i class="fas fa-palette"></i> الثيمات</h3>
+          <p>اختر اللون الذي يريح عينيك ويمنحك الطاقة للمذاكرة.</p>
+          <div class="themes-grid" id="themesGrid"></div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-circle-half-stroke"></i> المظهر</h3>
+          <p>بدّل بين الوضع الفاتح والداكن أو اتركه تلقائياً حسب جهازك.</p>
+          <div class="set-row">
+            <div class="lbl">وضع العرض<small>فاتح / داكن / تلقائي</small></div>
+            <div class="seg" id="modeSeg">
+              <button data-m="light">فاتح</button>
+              <button data-m="dark">داكن</button>
+              <button data-m="auto">تلقائي</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">حجم الخط<small>كبّر أو صغّر النص</small></div>
+            <div class="seg" id="fontSeg">
+              <button data-f="0.9">صغير</button><button data-f="1" class="on">عادي</button>
+              <button data-f="1.12">كبير</button><button data-f="1.25">أكبر</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">تقليل الحركات<small>لأجهزة أضعف أو لمن يفضل ذلك</small></div>
+            <label class="switch"><input type="checkbox" id="setAnim"><span class="slider-sw"></span></label>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-book-open-reader"></i> القارئ</h3>
+          <p>خصّص تجربة القراءة داخل قارئ PDF.</p>
+          <div class="set-row">
+            <div class="lbl">خلفية القارئ<small>فاتح / سيبيا / داكن</small></div>
+            <div class="seg" id="readThemeSeg">
+              <button data-r="light">فاتح</button><button data-r="sepia">سيبيا</button><button data-r="dark">داكن</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">وضع التمرير<small>مستمر أو صفحة واحدة</small></div>
+            <div class="seg" id="snapSeg">
+              <button data-s="0">مستمر</button><button data-s="1">صفحة واحدة</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">إظهار أرقام الصفحات<small>والعلامة المائية</small></div>
+            <label class="switch"><input type="checkbox" id="setMarks"><span class="slider-sw"></span></label>
+          </div>
+          <div class="set-row">
+            <div class="lbl">الحجم الافتراضي<small>عند فتح أي ملف</small></div>
+            <div class="seg" id="zoomSeg">
+              <button data-z="1">ملء العرض</button><button data-z="1.25">125%</button><button data-z="1.5">150%</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">استئناف آخر موضع<small>افتح الملف عند آخر صفحة وصلت إليها</small></div>
+            <label class="switch"><input type="checkbox" id="setResume"><span class="slider-sw"></span></label>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-stopwatch"></i> المؤقت الدراسي</h3>
+          <p>اضبط مدة جلسة التركيز والراحات.</p>
+          <div class="set-row">
+            <div class="lbl">مدة جلسة التركيز<small>بالدقائق</small></div>
+            <div class="seg" id="focusSeg">
+              <button data-m="15">15</button><button data-m="25">25</button>
+              <button data-m="40">40</button><button data-m="50">50</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">مدة الراحة القصيرة<small>بالدقائق</small></div>
+            <div class="seg" id="breakSeg">
+              <button data-m="5">5</button><button data-m="10">10</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">مدة الراحة الطويلة<small>بعد ٤ جلسات</small></div>
+            <div class="seg" id="longSeg">
+              <button data-m="15">15</button><button data-m="20">20</button><button data-m="30">30</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">بدء تلقائي للجلسة التالية</div>
+            <label class="switch"><input type="checkbox" id="setAuto"><span class="slider-sw"></span></label>
+          </div>
+          <div class="set-row">
+            <div class="lbl">تنبيه صوتي<small>عند نهاية الجلسة</small></div>
+            <label class="switch"><input type="checkbox" id="setSound"><span class="slider-sw"></span></label>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-bullseye"></i> الأهداف اليومية</h3>
+          <p>حدّد أهدافاً واقعية وتابع تحقيقها كل يوم.</p>
+          <div class="set-row">
+            <div class="lbl">هدف الصفحات<small>عدد الصفحات في اليوم</small></div>
+            <div class="range-row" style="flex:1">
+              <input type="range" id="goalPagesRange" min="2" max="100" step="1">
+              <b id="goalPagesVal" style="color:var(--primary);min-width:42px;text-align:center">10</b>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="lbl">هدف الدقائق<small>دقائق المذاكرة في اليوم</small></div>
+            <div class="range-row" style="flex:1">
+              <input type="range" id="goalMinRange" min="5" max="300" step="5">
+              <b id="goalMinVal" style="color:var(--primary);min-width:52px;text-align:center">30</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-database"></i> بياناتك</h3>
+          <p>تقدمك محفوظ في حسابك. يمكنك أخذ نسخة احتياطية أو تصفير التقدم.</p>
+          <div class="set-row">
+            <div class="lbl">تصدير نسخة احتياطية<small>تحميل ملف JSON بتقدمك</small></div>
+            <button class="btn btn-ghost btn-sm" id="exportBtn"><i class="fas fa-download"></i> تصدير</button>
+          </div>
+          <div class="set-row">
+            <div class="lbl">استيراد نسخة<small>استرجاع تقدمك من ملف</small></div>
+            <button class="btn btn-ghost btn-sm" id="importBtn"><i class="fas fa-upload"></i> استيراد</button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden>
+          </div>
+          <div class="set-row">
+            <div class="lbl">تصفير التقدم<small>يبقى الحساب وتُمسح النسب والشارات</small></div>
+            <button class="btn btn-danger btn-sm" id="resetProgressBtn"><i class="fas fa-rotate-left"></i> تصفير</button>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-user"></i> حسابك</h3>
+          <p>معلومات حسابك الحالي على المنصة.</p>
+          <div class="set-row"><div class="lbl">الاسم</div><b id="setName" style="color:var(--primary)">—</b></div>
+          <div class="set-row"><div class="lbl">البريد</div><b id="setEmail" style="color:var(--primary);font-size:.8rem">—</b></div>
+          <div class="set-row"><div class="lbl">حالة الاشتراك</div><b id="setSub" style="font-size:.8rem">—</b></div>
+          <div class="set-row">
+            <div class="lbl">تغيير كلمة المرور<small>حماية إضافية لحسابك</small></div>
+            <button class="btn btn-ghost btn-sm" id="changePassBtn"><i class="fas fa-key"></i> تغيير</button>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h3><i class="fas fa-keyboard"></i> اختصارات لوحة المفاتيح</h3>
+          <p>استخدم هذه الاختصارات للتنقل بسرعة.</p>
+          <div class="set-row"><div class="lbl">فتح البحث</div><b style="color:var(--primary);direction:ltr">Ctrl + K</b></div>
+          <div class="set-row"><div class="lbl">الرئيسية / الملفات / إنجازي</div><b style="color:var(--primary);direction:ltr">1 / 2 / 3</b></div>
+          <div class="set-row"><div class="lbl">المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">4 / 5</b></div>
+          <div class="set-row"><div class="lbl">القارئ: تكبير / تصغير</div><b style="color:var(--primary);direction:ltr">+ / -</b></div>
+          <div class="set-row"><div class="lbl">القارئ: صفحة تالية / سابقة</div><b style="color:var(--primary);direction:ltr">← / →</b></div>
+          <div class="set-row"><div class="lbl">إغلاق النافذة</div><b style="color:var(--primary);direction:ltr">Esc</b></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== لوحة الأدمن ========== -->
+    <section class="view" id="view-admin">
+      <div class="sec-title"><i class="fas fa-shield-halved" style="color:var(--accent)"></i> لوحة تحكم الأدمن</div>
+      <div class="admin-stats">
+        <div class="admin-stat" style="--sc:var(--primary)"><h3 id="adUsers">0</h3><p>إجمالي المستخدمين</p></div>
+        <div class="admin-stat" style="--sc:#f7b32b"><h3 id="adPending">0</h3><p>طلبات قيد الانتظار</p></div>
+        <div class="admin-stat" style="--sc:#22c55e"><h3 id="adSubscribed">0</h3><p>المشتركون</p></div>
+        <div class="admin-stat" style="--sc:#8b5cf6"><h3 id="adFiles">0</h3><p>إجمالي الملفات</p></div>
+        <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adImportant">0</h3><p>ملفات مميزة</p></div>
+      </div>
+      <div class="admin-tabs">
+        <button class="on" data-panel="users"><i class="fas fa-users"></i> المستخدمون</button>
+        <button data-panel="files"><i class="fas fa-folder"></i> الملفات</button>
+        <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
+        <button data-panel="tools"><i class="fas fa-toolbox"></i> أدوات</button>
+      </div>
+
+      <div class="admin-panel on" id="panel-users">
+        <div class="filter-row">
+          <div class="search-box" style="min-width:220px;flex:1">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" id="userSearch" placeholder="ابحث بالاسم أو البريد...">
+          </div>
+          <select class="sort-select" id="userFilter">
+            <option value="all">كل الحالات</option>
+            <option value="pending">قيد الانتظار</option>
+            <option value="sub">مشترك</option>
+            <option value="off">غير مشترك</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="addUserBtn"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
+        </div>
+        <div class="users-table" id="usersTable"></div>
+      </div>
+
+      <div class="admin-panel" id="panel-files">
+        <div class="files-admin-grid" id="adminFilesGrid"></div>
+      </div>
+
+      <div class="admin-panel" id="panel-add">
+        <div class="card-basic">
+          <h3><i class="fas fa-cloud-arrow-up"></i> رفع ملف PDF جديد</h3>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">ارفع ملف PDF من جهازك ليظهر مباشرة في قسم الملفات لجميع الطلاب المشتركين.</p>
+          <div class="upload-zone" id="uploadZone">
+            <div class="uz-icon"><i class="fas fa-file-pdf"></i></div>
+            <h4>اسحب ملف PDF هنا أو اضغط للاختيار</h4>
+            <p>الحد الأقصى 100 ميجابايت</p>
+            <input type="file" id="afPdfInput" accept="application/pdf,.pdf">
+            <div id="uzFileInfo"></div>
+          </div>
+          <div class="form-group">
+            <label>عنوان الملف *</label>
+            <input type="text" id="afTitle" placeholder="مثال: أساسيات الهندسة">
+          </div>
+          <div class="form-group">
+            <label>التصنيف *</label>
+            <select id="afCat">
+              <option value="كمي">كمي</option><option value="لفظي">لفظي</option>
+              <option value="عام">عام</option><option value="مراجعة">مراجعة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>وصف مختصر</label>
+            <textarea id="afDesc" placeholder="وصف قصير يظهر في بطاقة الملف..."></textarea>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="afImportant">
+            <span><i class="fas fa-star"></i> تمييز كملف مهم — سيظهر بنجمة مميزة</span>
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="saveFileBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الملف</button>
+            <button class="btn btn-ghost" id="clearFileBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-tools">
+        <div class="set-grid">
+          <div class="set-card">
+            <h3><i class="fas fa-database"></i> نسخة احتياطية للمنصة</h3>
+            <p>تصدير كل المستخدمين والملفات (بيانات وصفية) في ملف واحد.</p>
+            <div class="form-actions">
+              <button class="btn btn-ghost" id="adExport"><i class="fas fa-download"></i> تصدير المنصة</button>
+              <button class="btn btn-ghost" id="adImportBtn"><i class="fas fa-upload"></i> استيراد المنصة</button>
+              <input type="file" id="adImportFile" accept=".json" hidden>
+            </div>
+          </div>
+          <div class="set-card">
+            <h3><i class="fas fa-key"></i> كلمة مرور الأدمن</h3>
+            <p>غيّر كلمة مرور حساب الأدمن الحالي.</p>
+            <div class="form-group">
+              <label>كلمة المرور الجديدة</label>
+              <input type="password" id="adNewPass" placeholder="6 أحرف على الأقل">
+            </div>
+            <button class="btn btn-primary" id="adSavePass"><i class="fas fa-floppy-disk"></i> حفظ</button>
+          </div>
+          <div class="set-card">
+            <h3><i class="fas fa-triangle-exclamation"></i> منطقة الخطر</h3>
+            <p>إعادة ضبط المنصة بالكامل. لا يمكن التراجع عن هذه العملية.</p>
+            <button class="btn btn-danger" id="adReset"><i class="fas fa-trash"></i> إعادة ضبط شاملة</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= القارئ ================= -->
+<div id="reader">
+  <div class="reader-box">
+    <div class="reader-head">
+      <button class="rh-btn danger" id="rdClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
+      <div class="rh-icon" id="rdIcon"><i class="fas fa-file-pdf"></i></div>
+      <div class="rh-info">
+        <h3 id="rdTitle">عنوان الملف</h3>
+        <small id="rdMeta">—</small>
+      </div>
+      <div class="rh-tools">
+        <button class="rh-btn" id="rdFav" title="إضافة للمفضلة"><i class="far fa-star"></i></button>
+        <button class="rh-btn" id="rdBookmark" title="علامة مرجعية"><i class="far fa-bookmark"></i></button>
+        <button class="rh-btn" id="rdThumbsBtn" title="قائمة الصفحات"><i class="fas fa-list-ul"></i></button>
+      </div>
+    </div>
+
+    <div class="reader-toolbar">
+      <button class="tbtn" id="rdPrev" title="الصفحة السابقة"><i class="fas fa-chevron-right"></i></button>
+      <div class="page-jump">
+        <input type="number" id="rdPageInput" min="1" value="1">
+        <span>/ <b id="rdPagesTotal">1</b></span>
+      </div>
+      <button class="tbtn" id="rdNext" title="الصفحة التالية"><i class="fas fa-chevron-left"></i></button>
+      <span class="tsep"></span>
+      <button class="tbtn" id="rdZoomOut" title="تصغير"><i class="fas fa-magnifying-glass-minus"></i></button>
+      <span class="zoom-val" id="rdZoomVal">100%</span>
+      <button class="tbtn" id="rdZoomIn" title="تكبير"><i class="fas fa-magnifying-glass-plus"></i></button>
+      <button class="tbtn" id="rdFit" title="ملء العرض"><i class="fas fa-arrows-left-right"></i></button>
+      <span class="tsep"></span>
+      <button class="tbtn" id="rdSnap" title="وضع الصفحة الواحدة"><i class="fas fa-scroll"></i> <span>مستمر</span></button>
+    </div>
+
+    <div class="reader-progress-bar"><i id="rdBarTop"></i></div>
+
+    <div class="reader-main">
+      <aside class="reader-thumbs" id="rdThumbs"></aside>
+      <div class="reader-body read-light" id="rdBody">
+        <div class="pdf-stage" id="rdStage"></div>
+        <div class="pdf-loading" id="rdLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p id="rdLoadingTxt">جاري تحميل الملف...</p>
+          <div class="pl-bar"><i id="rdLoadingBar"></i></div>
+        </div>
+        <button class="reader-fab" id="rdTop" title="أعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
+      </div>
+    </div>
+
+    <div class="reader-foot">
+      <div class="prog-info">
+        <div class="row"><span>تقدمك في الملف</span><b id="rdPctTxt">0%</b></div>
+        <small id="rdPageInfo">الصفحة 1 من 1</small>
+      </div>
+      <div class="reader-foot-actions">
+        <button class="btn btn-ghost btn-sm" id="rdRestart"><i class="fas fa-rotate-right"></i> من البداية</button>
+        <button class="done-btn" id="rdComplete"><i class="fas fa-check"></i> أنهيت الملف</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= حماية ================= -->
+<div id="shield">
+  <div class="shield-in">
+    <div class="sh-ic"><i class="fas fa-shield-halved"></i></div>
+    <h2>تم إيقاف العرض مؤقتاً</h2>
+    <p>رصدنا محاولة لفتح أدوات المطوّر أو الوصول للمحتوى بطرق غير مصرّح بها.
+       <br>المحتوى محمي بحقوق الملكية الفكرية لمنصة <b>العباقرة للقدرات</b>.
+       <br><br>أغلق أدوات المطوّر وسيُستأنف العرض تلقائياً.</p>
+  </div>
+</div>
+
+<!-- ================= نافذة عامة ================= -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3 id="modalTitle"><i class="fas fa-circle-info"></i> <span>عنوان</span></h3>
+    <p id="modalText">نص</p>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions">
+      <button class="btn btn-ghost" id="modalCancel">إلغاء</button>
+      <button class="btn btn-primary" id="modalOk">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   0) أدوات مساعدة
+============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+if (window.pdfjsLib) {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  } catch(e){}
+}
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toast(msg, type=''){
+  const box = $('#toast');
+  if(!box) return;
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + type;
+  let ic = 'fa-circle-info';
+  if(type === 'ok') ic = 'fa-circle-check';
+  else if(type === 'warn') ic = 'fa-triangle-exclamation';
+  else if(type === 'err') ic = 'fa-circle-xmark';
+  el.innerHTML = `<i class="fas ${ic}"></i><span>${escapeHtml(msg)}</span>`;
+  box.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 420); }, 3200);
+  while(box.children.length > 4) box.removeChild(box.firstChild);
+}
+function beep(){
+  try{
+    if(!userData.sound) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = 880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
+    o.start(); o.stop(ctx.currentTime + 0.95);
+    setTimeout(()=>{ try{ctx.close();}catch(e){} }, 1200);
+  }catch(e){}
+}
+function dayKey(d){
+  const dt = d || new Date();
+  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+}
+function fmtTime(s){
+  const m = Math.floor(Math.max(0,s)/60), ss = Math.max(0,s)%60;
+  return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+}
+async function sha256(str){
+  try{
+    if(!window.crypto || !crypto.subtle) return 'plain:' + str;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('abdq_salt_v1::' + str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return 'plain:' + str; }
+}
+/* نافذة تأكيد/معلومات عامة */
+function openModal({title, text, bodyHTML, okText, cancelText, onOk, danger}){
+  const m = $('#modal');
+  $('#modalTitle').innerHTML = `<i class="fas ${danger?'fa-triangle-exclamation':'fa-circle-info'}"></i> <span>${escapeHtml(title||'')}</span>`;
+  $('#modalText').innerHTML = text || '';
+  $('#modalBody').innerHTML = bodyHTML || '';
+  const ok = $('#modalOk'), cancel = $('#modalCancel');
+  ok.textContent = okText || 'تأكيد';
+  ok.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+  cancel.textContent = cancelText || 'إلغاء';
+  cancel.style.display = onOk ? '' : 'none';
+  m.classList.add('open');
+  const close = () => { m.classList.remove('open'); ok.onclick = null; };
+  ok.onclick = () => { close(); if(onOk) onOk($('#modalBody')); };
+  cancel.onclick = close;
+  m.onclick = e => { if(e.target === m) close(); };
+}
+function confirmBox(title, text, onOk, danger){
+  openModal({title, text, okText: danger ? 'تأكيد الحذف' : 'تأكيد', onOk, danger});
+}
+
+/* ============================================================
+   1) التخزين (IndexedDB + localStorage)
+============================================================ */
+const IDB = {
+  db: null,
+  async open(){
+    if(this.db) return this.db;
+    if(!window.indexedDB) throw new Error('IndexedDB غير مدعوم');
+    this.db = await new Promise((res, rej) => {
+      const req = indexedDB.open('abdqaqra_pdfs', 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('pdfs')) db.createObjectStore('pdfs');
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+    return this.db;
+  },
+  async put(key, val){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pdfs', 'readwrite');
+      tx.objectStore('pdfs').put(val, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+      tx.onabort = () => rej(tx.error);
+    });
+  },
+  async get(key){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pdfs', 'readonly');
+      const req = tx.objectStore('pdfs').get(key);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  },
+  async del(key){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pdfs', 'readwrite');
+      tx.objectStore('pdfs').delete(key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  async clear(){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pdfs', 'readwrite');
+      tx.objectStore('pdfs').clear();
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  async keys(){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('pdfs', 'readonly');
+      const req = tx.objectStore('pdfs').getAllKeys();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => rej(req.error);
+    });
+  }
+};
+
+const DB_KEY = 'abdq_db_v4';
+const SESSION_KEY = 'abdq_session';
+const UD_KEY = 'abdq_user_';
+
+let DB = { users:[], files:[], initialized:false };
+
+function safeSet(key, val){
+  try{ localStorage.setItem(key, val); return true; }
+  catch(e){ toast('تعذّر الحفظ — مساحة التخزين ممتلئة', 'err'); return false; }
+}
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) DB = JSON.parse(raw);
+  }catch(e){ DB = { users:[], files:[], initialized:false }; }
+  if(!DB || !Array.isArray(DB.users)) DB = { users:[], files:[], initialized:false };
+  if(!Array.isArray(DB.files)) DB.files = [];
+  if(!DB.initialized) seedDB();
+  // ترقية: دعم قاعدة بيانات النسخة القديمة
+  try{
+    if(!DB.users.length){
+      const old = localStorage.getItem('abdq_db_v3');
+      if(old){
+        const o = JSON.parse(old);
+        if(o && Array.isArray(o.users)){ DB.users = o.users; DB.files = o.files || []; saveDB(); }
+      }
+    }
+  }catch(e){}
+}
+function saveDB(){ safeSet(DB_KEY, JSON.stringify(DB)); }
+function seedDB(){
+  DB.users = [{
+    id:'admin_' + Date.now(), name:'مدير المنصة', email:'admin@abdqaqra.com',
+    password:'admin1234', subscribed:true, isAdmin:true, requestedAt:null, createdAt:Date.now()
+  }];
+  DB.files = [];
+  DB.initialized = true;
+  saveDB();
+}
+
+let currentUserObj = null;
+function defaultUD(){
+  return {
+    progress:{}, opened:[], favs:[], badges:[],
+    minutes:0, sessions:0, notes:'', tasks:[],
+    theme:'purple', darkMode:'light', font:1, reduceMotion:false,
+    focus:25, brk:5, longBrk:15, autoStart:false, sound:true,
+    goalPages:10, goalMinutes:30,
+    readTheme:'light', snap:false, showMarks:true, defaultZoom:1, autoResume:true,
+    log:{}, streak:0
+  };
+}
+let userData = defaultUD();
+
+function resetUD(){ userData = defaultUD(); }
+function loadUD(uid){
+  resetUD();
+  let raw = null;
+  try{ raw = localStorage.getItem(UD_KEY + uid); }catch(e){}
+  if(raw){
+    try{
+      const d = JSON.parse(raw);
+      if(d && typeof d === 'object'){
+        Object.assign(userData, d);
+        // ترقية: dark القديم -> darkMode
+        if(d.darkMode === undefined) userData.darkMode = d.dark ? 'dark' : 'light';
+        if(!userData.log || typeof userData.log !== 'object') userData.log = {};
+        if(!Array.isArray(userData.favs)) userData.favs = [];
+        if(!Array.isArray(userData.tasks)) userData.tasks = [];
+        if(!Array.isArray(userData.badges)) userData.badges = [];
+        if(!Array.isArray(userData.opened)) userData.opened = [];
+        if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
+      }
+    }catch(e){ resetUD(); }
+  }
+}
+function saveUD(){
+  if(!currentUserObj) return;
+  safeSet(UD_KEY + currentUserObj.id, JSON.stringify(userData));
+}
+function currentUser(){
+  let id = null;
+  try{ id = localStorage.getItem(SESSION_KEY); }catch(e){}
+  if(!id) return null;
+  return DB.users.find(u => u.id === id) || null;
+}
+
+/* ============================================================
+   2) الثيمات والمظهر
+============================================================ */
+const THEMES = [
+  { id:'purple',  name:'بنفسجي', c1:'#5b6cff', c2:'#8b5cf6', rgb:'91,108,255' },
+  { id:'ocean',   name:'محيطي',  c1:'#0284c7', c2:'#06b6d4', rgb:'2,132,199' },
+  { id:'forest',  name:'غابة',   c1:'#16a34a', c2:'#22c55e', rgb:'22,163,74' },
+  { id:'sunset',  name:'غروب',   c1:'#ea580c', c2:'#f59e0b', rgb:'234,88,12' },
+  { id:'rose',    name:'وردي',   c1:'#db2777', c2:'#ec4899', rgb:'219,39,119' },
+  { id:'royal',   name:'ملكي',   c1:'#7c3aed', c2:'#a855f7', rgb:'124,58,237' },
+  { id:'teal',    name:'فيروزي', c1:'#0d9488', c2:'#14b8a6', rgb:'13,148,136' },
+  { id:'crimson', name:'قرمزي',  c1:'#dc2626', c2:'#ef4444', rgb:'220,38,38' }
+];
+const ICONS = [
+  { i:'fa-book', c:'#5b6cff' }, { i:'fa-calculator', c:'#8b5cf6' },
+  { i:'fa-square-root-variable', c:'#f7b32b' }, { i:'fa-book-open', c:'#22c55e' },
+  { i:'fa-pen-fancy', c:'#ef4444' }, { i:'fa-shapes', c:'#0ea5e9' },
+  { i:'fa-ruler-combined', c:'#ec4899' }, { i:'fa-infinity', c:'#14b8a6' },
+  { i:'fa-language', c:'#f97316' }, { i:'fa-spell-check', c:'#a855f7' },
+  { i:'fa-list-check', c:'#06b6d4' }, { i:'fa-graduation-cap', c:'#dc2626' }
+];
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+
+const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function isDark(){
+  if(userData.darkMode === 'dark') return true;
+  if(userData.darkMode === 'auto') return !!(darkQuery && darkQuery.matches);
+  return false;
+}
+function applyTheme(){
+  const t = THEMES.find(x => x.id === userData.theme) || THEMES[0];
+  const root = document.documentElement;
+  root.style.setProperty('--primary', t.c1);
+  root.style.setProperty('--primary-2', t.c2);
+  root.style.setProperty('--primary-rgb', t.rgb);
+  const dark = isDark();
+  if(dark){
+    root.setAttribute('data-theme','dark');
+    root.style.setProperty('--primary-soft', `color-mix(in srgb, ${t.c1} 15%, #111a2f)`);
+  } else {
+    root.removeAttribute('data-theme');
+    root.style.setProperty('--primary-soft', `color-mix(in srgb, ${t.c1} 10%, #ffffff)`);
+  }
+  root.style.setProperty('--fs', userData.font);
+  document.body.classList.toggle('no-anim', !!userData.reduceMotion);
+  const tb = $('#themeBtn');
+  if(tb) tb.innerHTML = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  const mc = document.querySelector('meta[name="theme-color"]');
+  if(mc) mc.setAttribute('content', dark ? '#070c19' : '#eef1fa');
+  drawTimerDial();
+  renderHomeStats();
+  renderThemesGrid();
+  syncSettingsUI();
+}
+function renderThemesGrid(){
+  const grid = $('#themesGrid');
+  if(!grid) return;
+  grid.innerHTML = THEMES.map(t => `
+    <div class="theme-swatch ${t.id === userData.theme ? 'on' : ''}" data-theme-id="${t.id}">
+      <div class="sw-bg" style="--c1:${t.c1};--c2:${t.c2}"></div>
+      <div class="sw-check"><i class="fas fa-check"></i></div>
+      <div class="sw-name">${t.name}</div>
+    </div>`).join('');
+  grid.querySelectorAll('.theme-swatch').forEach(el => {
+    el.addEventListener('click', () => {
+      userData.theme = el.dataset.themeId;
+      saveUD(); applyTheme();
+      toast('تم تغيير الثيم بنجاح', 'ok');
+    });
+  });
+}
+function syncSettingsUI(){
+  const q = id => document.getElementById(id);
+  if(q('setDark')) q('setDark').checked = false;
+  const modeSeg = q('modeSeg');
+  if(modeSeg) modeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === userData.darkMode));
+  const fontSeg = q('fontSeg');
+  if(fontSeg) fontSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.f) === userData.font));
+  const readSeg = q('readThemeSeg');
+  if(readSeg) readSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === userData.readTheme));
+  const snapSeg = q('snapSeg');
+  if(snapSeg) snapSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === '1') === !!userData.snap));
+  const zoomSeg = q('zoomSeg');
+  if(zoomSeg) zoomSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.z) === (userData.defaultZoom||1)));
+  const focusSeg = q('focusSeg');
+  if(focusSeg) focusSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.focus||25)));
+  const brkSeg = q('breakSeg');
+  if(brkSeg) brkSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.brk||5)));
+  const longSeg = q('longSeg');
+  if(longSeg) longSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.longBrk||15)));
+  const sa = q('setAnim'); if(sa) sa.checked = !!userData.reduceMotion;
+  const sm = q('setMarks'); if(sm) sm.checked = !!userData.showMarks;
+  const sr = q('setResume'); if(sr) sr.checked = !!userData.autoResume;
+  const sAuto = q('setAuto'); if(sAuto) sAuto.checked = !!userData.autoStart;
+  const sSound = q('setSound'); if(sSound) sSound.checked = !!userData.sound;
+  const gp = q('goalPagesRange'); if(gp){ gp.value = userData.goalPages; q('goalPagesVal').textContent = userData.goalPages; }
+  const gm = q('goalMinRange'); if(gm){ gm.value = userData.goalMinutes; q('goalMinVal').textContent = userData.goalMinutes; }
+  const gt = q('goalTarget'); if(gt) gt.textContent = userData.goalPages;
+}
+if(darkQuery){
+  const handler = () => { if(userData.darkMode === 'auto') applyTheme(); };
+  if(darkQuery.addEventListener) darkQuery.addEventListener('change', handler);
+  else if(darkQuery.addListener) darkQuery.addListener(handler);
+}
+$('#themeBtn').addEventListener('click', () => {
+  userData.darkMode = isDark() ? 'light' : 'dark';
+  saveUD(); applyTheme();
+  toast(isDark() ? 'الوضع الداكن مُفعّل' : 'الوضع الفاتح مُفعّل', 'ok');
+});
+
+/* ============================================================
+   3) التنقل العام
+============================================================ */
+const TITLES = {
+  home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
+  files:['الملفات','مكتبتك التعليمية الكاملة'],
+  progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
+  features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
+  settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
+  admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
+};
+function go(view){
+  $$('.view').forEach(v => v.classList.remove('active'));
+  const t = document.getElementById('view-' + view);
+  if(t) t.classList.add('active');
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  const meta = TITLES[view] || ['',''];
+  $('#pageTitle').textContent = meta[0];
+  $('#pageSub').textContent = meta[1];
+  $('#mainScroll').scrollTop = 0;
+  if(view === 'progress') renderProgress();
+  if(view === 'admin') renderAdmin();
+  if(view === 'files') renderFiles();
+}
+$$('.nav-btn').forEach(btn => btn.addEventListener('click', () => go(btn.dataset.view)));
+
+/* ============================================================
+   4) الإحصاءات والشارات
+============================================================ */
+function getPct(id){ const p = userData.progress[id]; if(!p) return 0; return typeof p === 'object' ? (p.pct || 0) : p; }
+function getMaxPage(id){ const p = userData.progress[id]; if(!p || typeof p !== 'object') return 0; return p.maxPage || 0; }
+function overallProgress(){
+  if(!DB.files.length) return 0;
+  const sum = DB.files.reduce((a,f)=> a + getPct(f.id), 0);
+  return Math.round(sum / DB.files.length);
+}
+function completedCount(){ return DB.files.filter(f => getPct(f.id) >= 100).length; }
+function totalPagesRead(){ return DB.files.reduce((a,f)=> a + getMaxPage(f.id), 0); }
+function isSubscribed(){ return currentUserObj && (currentUserObj.isAdmin || currentUserObj.subscribed); }
+function isPending(){ return currentUserObj && !currentUserObj.isAdmin && !currentUserObj.subscribed && currentUserObj.requestedAt; }
+
+function todayLog(){
+  const k = dayKey();
+  if(!userData.log[k]) userData.log[k] = { min:0, pages:0, sessions:0 };
+  const e = userData.log[k];
+  if(typeof e.min !== 'number') e.min = 0;
+  if(typeof e.pages !== 'number') e.pages = 0;
+  if(typeof e.sessions !== 'number') e.sessions = 0;
+  return e;
+}
+function addPagesToday(n){
+  if(!n) return;
+  const e = todayLog();
+  e.pages += n;
+  saveUD();
+}
+function addMinutesToday(n){
+  if(!n) return;
+  const e = todayLog();
+  e.min += n;
+  userData.minutes += n;
+  saveUD();
+}
+function computeStreak(){
+  let streak = 0;
+  const d = new Date();
+  const todayHas = (() => {
+    const e = userData.log[dayKey(d)];
+    return e && (e.min >= 1 || e.pages > 0);
+  })();
+  if(!todayHas) d.setDate(d.getDate() - 1);
+  for(let i = 0; i < 400; i++){
+    const e = userData.log[dayKey(d)];
+    if(e && (e.min >= 1 || e.pages > 0)){ streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  userData.streak = streak;
+  return streak;
+}
+function last7Days(){
+  const out = [];
+  const d = new Date();
+  for(let i = 6; i >= 0; i--){
+    const dd = new Date();
+    dd.setDate(d.getDate() - i);
+    const e = userData.log[dayKey(dd)] || { min:0, pages:0 };
+    out.push({ key: dayKey(dd), date: dd, min: Math.round(e.min || 0), pages: e.pages || 0 });
+  }
+  return out;
+}
+
+const BADGES = [
+  { id:'first',   i:'fa-seedling',      t:'البداية الموفقة',  d:'فتحت أول ملف' },
+  { id:'pages10', i:'fa-book-open',     t:'قارئ نشيط',        d:'قرأت 10 صفحات' },
+  { id:'pages100',i:'fa-book-bookmark', t:'قارئ متمكن',       d:'قرأت 100 صفحة' },
+  { id:'half',    i:'fa-fire',          t:'في منتصف الطريق',  d:'أنجزت ملفاً بنسبة 50%+' },
+  { id:'done1',   i:'fa-star',          t:'إنجاز كامل',       d:'أكملت ملفاً بنسبة 100%' },
+  { id:'three',   i:'fa-trophy',        t:'مثابر',            d:'3 ملفات بمعدل 50%+' },
+  { id:'all',     i:'fa-crown',         t:'عبقري القدرات',    d:'أكملت جميع الملفات' },
+  { id:'focus1',  i:'fa-hourglass-end', t:'مركّز',            d:'أتممت جلسة تركيز كاملة' },
+  { id:'focus10', i:'fa-brain',         t:'عقل منظم',         d:'10 جلسات تركيز' },
+  { id:'streak3', i:'fa-fire-flame-curved', t:'ثلاثة أيام',   d:'3 أيام مذاكرة متواصلة' },
+  { id:'streak7', i:'fa-fire-flame-simple', t:'أسبوع كامل',   d:'7 أيام مذاكرة متواصلة' },
+  { id:'goal',    i:'fa-bullseye',      t:'هدف محقق',         d:'حققت هدف اليوم كاملاً' }
+];
+function checkBadges(){
+  const add = id => {
+    if(userData.badges.includes(id)) return;
+    userData.badges.push(id);
+    const b = BADGES.find(x => x.id === id);
+    if(b) toast(`حصلت على شارة «${b.t}»`, 'ok');
+  };
+  const vals = DB.files.map(f => getPct(f.id));
+  if(userData.opened.length) add('first');
+  if(totalPagesRead() >= 10) add('pages10');
+  if(totalPagesRead() >= 100) add('pages100');
+  if(vals.some(v => v >= 50)) add('half');
+  if(vals.some(v => v >= 100)) add('done1');
+  if(vals.filter(v => v >= 50).length >= 3) add('three');
+  if(vals.length && vals.every(v => v >= 100)) add('all');
+  if(userData.sessions >= 1) add('focus1');
+  if(userData.sessions >= 10) add('focus10');
+  const st = computeStreak();
+  if(st >= 3) add('streak3');
+  if(st >= 7) add('streak7');
+  const t = todayLog();
+  if(userData.goalPages && t.pages >= userData.goalPages) add('goal');
+  saveUD();
+}
+function renderBadges(){
+  const html = BADGES.map(b => `
+    <div class="badge-item ${userData.badges.includes(b.id) ? 'on' : ''}">
+      <div class="bi"><i class="fas ${b.i}"></i></div>
+      <div><b>${b.t}</b><small>${b.d}</small></div>
+    </div>`).join('');
+  const h = $('#badgesHome'); if(h) h.innerHTML = html;
+  const a = $('#badgesAll'); if(a) a.innerHTML = html;
+}
+
+/* ============================================================
+   5) البطاقات والملفات
+============================================================ */
+function fileCard(f){
+  const pct = getPct(f.id);
+  const done = pct >= 100;
+  const maxPage = getMaxPage(f.id);
+  const total = f.pageCount || '?';
+  const cur = maxPage > 0 ? Math.min(maxPage, total) : 1;
+  const locked = !isSubscribed();
+  const fav = userData.favs.includes(f.id);
+  return `
+  <div class="file-card ${f.important ? 'important' : ''} ${locked ? 'locked' : ''}" style="--fc:${f.color}">
+    <div class="fc-head">
+      <div class="fc-icon"><i class="fas ${f.icon}"></i></div>
+      <div class="fc-head-txt">
+        <h3>${escapeHtml(f.title)}</h3>
+        <span class="fc-cat">${escapeHtml(f.cat)}</span>
+      </div>
+      ${locked ? '<div class="fc-lock"><i class="fas fa-lock"></i></div>' : (f.important ? '<div class="fc-star"><i class="fas fa-star"></i></div>' : '<div class="fc-pdf">PDF</div>')}
+      ${!locked ? `<button class="fc-fav ${fav?'on':''}" onclick="toggleFav('${f.id}',event)" title="مفضلة"><i class="${fav?'fas':'far'} fa-star"></i></button>` : ''}
+    </div>
+    <p class="fc-desc">${escapeHtml(f.desc || '—')}</p>
+    ${!locked ? `<div class="fc-prog">
+        <div class="fc-prog-top"><span>${cur}/${total} صفحة</span><b>${pct}%</b></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>` : ''}
+    <div class="fc-actions">
+      ${locked
+        ? `<button class="btn btn-ghost" style="flex:1" onclick="showLockMessage()"><i class="fas fa-lock"></i> يتطلب اشتراك</button>`
+        : `<button class="btn btn-primary" onclick="openFile('${f.id}')"><i class="fas fa-book-open"></i> ${done ? 'مراجعة' : pct > 0 ? 'متابعة' : 'فتح'}</button>`}
+    </div>
+  </div>`;
+}
+let fileFilter = 'all';
+let fileSort = 'new';
+
+function renderFiles(){
+  const q = ($('#searchInput') ? $('#searchInput').value : '').trim().toLowerCase();
+  let list = DB.files.slice();
+  if(q) list = list.filter(f =>
+    (f.title||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q) || (f.desc||'').toLowerCase().includes(q));
+  if(fileFilter === 'fav') list = list.filter(f => userData.favs.includes(f.id));
+  else if(fileFilter !== 'all') list = list.filter(f => f.cat === fileFilter);
+  if(fileSort === 'new') list.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+  else if(fileSort === 'old') list.sort((a,b)=> (a.createdAt||0) - (b.createdAt||0));
+  else if(fileSort === 'alpha') list.sort((a,b)=> String(a.title).localeCompare(String(b.title), 'ar'));
+  else if(fileSort === 'progress') list.sort((a,b)=> getPct(b.id) - getPct(a.id));
+
+  const grid = $('#filesGrid');
+  if(!grid) return;
+  if(!list.length){
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>${q || fileFilter !== 'all' ? 'لا توجد نتائج مطابقة' : 'لا توجد ملفات بعد'}</h3><p>${q || fileFilter !== 'all' ? 'جرّب تغيير البحث أو التصنيف' : 'سيتم رفع الملفات من لوحة الأدمن'}</p></div></div>`;
+  } else {
+    grid.innerHTML = list.map(fileCard).join('');
+  }
+  renderRecent();
+  const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
+  renderSubBanners();
+}
+function renderRecent(){
+  const recent = userData.opened.slice(0, 4).map(id => DB.files.find(f => f.id === id)).filter(Boolean);
+  const list = recent.length ? recent : DB.files.slice(0, 4);
+  const box = $('#recentFiles');
+  if(box) box.innerHTML = list.length ? list.map(fileCard).join('') :
+    '<div style="grid-column:1/-1"><div class="admin-empty" style="padding:40px 20px"><div class="em-ic"><i class="fas fa-folder-open"></i></div><h3>لا توجد ملفات بعد</h3><p>سيتم رفع الملفات من لوحة الأدمن</p></div></div>';
+}
+function renderSubBanners(){
+  const bannerHTML = !isSubscribed() ? (() => {
+    if(isPending()){
+      return `<div class="subscribe-wall">
+        <div class="sw-icon"><i class="fas fa-hourglass-half"></i></div>
+        <h3>طلبك قيد المراجعة</h3>
+        <p>تم إرسال طلب اشتراكك بنجاح. سيتم تفعيل حسابك من قبل الأدمن قريباً لتتمكن من الوصول إلى جميع الملفات.</p>
+        <div class="sw-status"><i class="fas fa-clock"></i> بانتظار الموافقة</div>
+      </div>`;
+    }
+    return `<div class="subscribe-wall">
+      <div class="sw-icon"><i class="fas fa-lock"></i></div>
+      <h3>حسابك بحاجة إلى اشتراك</h3>
+      <p>لتصفّح الملفات ومتابعة تقدمك، يجب تفعيل اشتراكك من قبل الأدمن.</p>
+      <div class="sw-status"><i class="fas fa-ban"></i> الوصول غير متاح</div>
+    </div>`;
+  })() : '';
+  const hb = $('#homeSubBanner'); if(hb) hb.innerHTML = bannerHTML;
+  const fb = $('#filesSubBanner'); if(fb) fb.innerHTML = bannerHTML;
+}
+window.showLockMessage = () => {
+  if(isPending()) toast('طلبك قيد المراجعة من قبل الأدمن', 'warn');
+  else toast('تحتاج اشتراكاً مفعّلاً للوصول للملفات', 'warn');
+};
+window.toggleFav = (id, ev) => {
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const i = userData.favs.indexOf(id);
+  if(i > -1){ userData.favs.splice(i,1); toast('أُزيل من المفضلة', 'warn'); }
+  else { userData.favs.push(id); toast('أُضيف إلى المفضلة', 'ok'); }
+  saveUD(); renderFiles();
+};
+
+/* ============================================================
+   6) قارئ PDF المتقدم (تحميل كسول + تكبير + تنقل)
+============================================================ */
+const RS = {
+  doc:null, file:null, numPages:0, dims:[], offsets:[],
+  zoom:1, baseWidth:800, token:0, current:1,
+  rendered:new Set(), rendering:new Set(), inView:new Set(),
+  pageEls:[], observer:null, restoring:false, clockId:null
+};
+let currentFile = null;
+
+const rdBody = $('#rdBody');
+
+function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
+function pageHeight(i){
+  const d = RS.dims[i];
+  if(!d) return 600;
+  return Math.round(d.h * (pageWidth() / d.w));
+}
+function showLoading(txt, pct){
+  const l = $('#rdLoading');
+  if(!l) return;
+  l.style.display = 'flex';
+  if(txt) $('#rdLoadingTxt').textContent = txt;
+  if(typeof pct === 'number') $('#rdLoadingBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+function hideLoading(){ const l = $('#rdLoading'); if(l) l.style.display = 'none'; }
+
+async function openFile(id){
+  if(!currentUserObj) return;
+  if(!isSubscribed()){ showLockMessage(); return; }
+  const f = DB.files.find(x => x.id === id);
+  if(!f) return;
+
+  currentFile = f;
+  RS.file = f;
+  userData.opened = [id, ...userData.opened.filter(x => x !== id)].slice(0, 14);
+  saveUD();
+
+  $('#rdIcon').innerHTML = `<i class="fas ${f.icon}" style="color:${f.color}"></i>`;
+  $('#rdIcon').style.background = `color-mix(in srgb, ${f.color} 16%, transparent)`;
+  $('#rdTitle').textContent = f.title;
+  $('#rdMeta').textContent = `PDF • ${f.cat}${f.important ? ' • مهم' : ''}`;
+  updateFavBtn();
+  updateBookmarkBtn();
+  $('#reader').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  applyReaderTheme();
+  applySnapClass();
+
+  RS.token++;
+  const token = RS.token;
+  teardownReader(false);
+  showLoading('جاري تحميل الملف...', 5);
+  $('#rdStage').innerHTML = '';
+
+  try{
+    let blob = await IDB.get(id);
+    if(!blob){
+      // ملف قديم غير مخزّن (نسخة سابقة)
+      throw new Error('الملف غير موجود في التخزين المحلي');
+    }
+    if(token !== RS.token) return;
+    const ab = await blob.arrayBuffer();
+    if(token !== RS.token) return;
+    const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true }).promise;
+    if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
+
+    RS.doc = doc;
+    RS.numPages = doc.numPages;
+    if(f.pageCount !== RS.numPages){ f.pageCount = RS.numPages; saveDB(); }
+    $('#rdMeta').textContent = `PDF • ${f.cat} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
+    $('#rdPagesTotal').textContent = RS.numPages;
+    $('#rdPageInput').max = RS.numPages;
+
+    showLoading('جاري تجهيز الصفحات...', 15);
+    RS.dims = new Array(RS.numPages);
+    const batch = 12;
+    for(let i = 0; i < RS.numPages; i += batch){
+      if(token !== RS.token) return;
+      const nums = [];
+      for(let j = i; j < Math.min(i + batch, RS.numPages); j++) nums.push(j + 1);
+      const pages = await Promise.all(nums.map(n => doc.getPage(n).catch(()=>null)));
+      pages.forEach((p, k) => {
+        const idx = i + k;
+        if(p){
+          const vp = p.getViewport({ scale: 1 });
+          RS.dims[idx] = { w: vp.width, h: vp.height };
+          try{ p.cleanup(); }catch(e){}
+        } else {
+          RS.dims[idx] = { w: 612, h: 792 };
+        }
+      });
+      showLoading('جاري تجهيز الصفحات...', 15 + Math.round((i / RS.numPages) * 60));
+    }
+
+    if(token !== RS.token) return;
+    buildPages();
+    hideLoading();
+
+    // استئناف الموضع
+    const prog = userData.progress[id];
+    let startPage = 1;
+    if(userData.autoResume && prog && typeof prog === 'object'){
+      if(prog.bookmark) startPage = prog.bookmark;
+      else if(prog.lastPage) startPage = prog.lastPage;
+    }
+    startPage = Math.max(1, Math.min(startPage, RS.numPages));
+    RS.current = startPage;
+    $('#rdPageInput').value = startPage;
+    renderThumbs();
+    if(startPage > 1){
+      RS.restoring = true;
+      scrollToPage(startPage, false);
+      setTimeout(()=>{ RS.restoring = false; }, 500);
+    }
+    updateReaderUI();
+
+    if(!userData.badges.includes('first')){
+      userData.badges.push('first'); saveUD();
+      setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700);
+      renderBadges();
+    }
+    startReadClock();
+    refreshAll();
+  }catch(err){
+    console.error(err);
+    hideLoading();
+    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex">
+      <i class="fas fa-circle-exclamation" style="color:var(--danger)"></i>
+      <p>تعذّر تحميل الملف</p>
+      <small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small>
+    </div>`;
+    toast('تعذّر تحميل الملف — تأكد من رفعه مجدداً', 'err');
+  }
+}
+window.openFile = openFile;
+
+function teardownReader(closeUI){
+  try{ if(RS.observer){ RS.observer.disconnect(); RS.observer = null; } }catch(e){}
+  RS.rendered.clear();
+  RS.rendering.clear();
+  RS.inView.clear();
+  RS.pageEls = [];
+  RS.offsets = [];
+  stopReadClock();
+  if(closeUI){
+    if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
+    RS.doc = null;
+    RS.file = null;
+    RS.numPages = 0;
+    RS.dims = [];
+    currentFile = null;
+  }
+}
+function buildPages(){
+  const stage = $('#rdStage');
+  stage.innerHTML = '';
+  RS.pageEls = [];
+  stage.style.width = pageWidth() + 'px';
+
+  const frag = document.createDocumentFragment();
+  for(let i = 0; i < RS.numPages; i++){
+    const el = document.createElement('div');
+    el.className = 'pdf-page';
+    el.dataset.page = String(i + 1);
+    el.style.width = pageWidth() + 'px';
+    el.style.height = pageHeight(i) + 'px';
+    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div>
+      <div class="pg-inner"></div>
+      <div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
+    frag.appendChild(el);
+    RS.pageEls.push(el);
+  }
+  stage.appendChild(frag);
+
+  RS.observer = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      const idx = parseInt(en.target.dataset.page, 10);
+      if(en.isIntersecting){
+        RS.inView.add(idx);
+        renderPage(idx);
+      } else {
+        RS.inView.delete(idx);
+      }
+    });
+  }, { root: rdBody, rootMargin: '800px 0px' });
+
+  RS.pageEls.forEach(el => RS.observer.observe(el));
+  computeOffsets();
+  applyMarksVisibility();
+}
+function computeOffsets(){
+  RS.offsets = RS.pageEls.map(el => el.offsetTop);
+}
+async function renderPage(num){
+  const holder = RS.pageEls[num - 1];
+  if(!holder || holder.dataset.done === '1') return;
+  if(RS.rendering.has(num)) return;
+  if(!RS.doc) return;
+  const token = RS.token;
+  RS.rendering.add(num);
+  try{
+    const page = await RS.doc.getPage(num);
+    if(token !== RS.token) return;
+    const d = RS.dims[num - 1] || { w: 612, h: 792 };
+    const cssW = pageWidth();
+    const scale = cssW / d.w;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const vp = page.getViewport({ scale: scale * dpr });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.floor(vp.width));
+    canvas.height = Math.max(1, Math.floor(vp.height));
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    const ctx = canvas.getContext('2d', { alpha:false });
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    if(token !== RS.token) return;
+    const inner = holder.querySelector('.pg-inner');
+    if(inner){ inner.innerHTML = ''; inner.appendChild(canvas); }
+    holder.dataset.done = '1';
+    try{ page.cleanup(); }catch(e){}
+  }catch(e){
+    console.warn('render page error', num, e);
+  }finally{
+    RS.rendering.delete(num);
+  }
+}
+function cleanupFarPages(){
+  const cur = RS.current;
+  RS.pageEls.forEach((el, i) => {
+    const n = i + 1;
+    if(Math.abs(n - cur) <= 5) return;
+    if(RS.inView.has(n)) return;
+    if(el.dataset.done === '1'){
+      const inner = el.querySelector('.pg-inner');
+      if(inner) inner.innerHTML = '';
+      el.dataset.done = '0';
+      RS.rendered.delete(n);
+    }
+  });
+}
+function rebuildPageSizes(){
+  RS.pageEls.forEach((el, i) => {
+    el.style.width = pageWidth() + 'px';
+    el.style.height = pageHeight(i) + 'px';
+    if(el.dataset.done === '1'){
+      const inner = el.querySelector('.pg-inner');
+      if(inner) inner.innerHTML = '';
+      el.dataset.done = '0';
+      RS.rendered.delete(i + 1);
+    }
+  });
+  const stage = $('#rdStage');
+  if(stage) stage.style.width = pageWidth() + 'px';
+  computeOffsets();
+  // إعادة رسم المرئي
+  RS.pageEls.forEach((el, i) => {
+    const n = i + 1;
+    if(RS.inView.has(n)) renderPage(n);
+  });
+}
+function scrollToPage(num, smooth){
+  num = Math.max(1, Math.min(num, RS.numPages || 1));
+  const el = RS.pageEls[num - 1];
+  if(!el) return;
+  const top = el.offsetTop - 8;
+  try{
+    rdBody.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  }catch(e){ rdBody.scrollTop = top; }
+  RS.current = num;
+  $('#rdPageInput').value = num;
+  updateReaderUI();
+  highlightThumb(num);
+}
+function pageFromScroll(){
+  const st = rdBody.scrollTop + 60;
+  let page = 1;
+  const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
+  for(let i = 0; i < offs.length; i++){
+    if(offs[i] <= st) page = i + 1; else break;
+  }
+  return page;
+}
+function updateReaderUI(){
+  if(!RS.file || !RS.numPages) return;
+  const pct = Math.max(getPct(RS.file.id), Math.round((RS.current / RS.numPages) * 100));
+  $('#rdPctTxt').textContent = pct + '%';
+  $('#rdPageInfo').textContent = `الصفحة ${RS.current} من ${RS.numPages}`;
+  $('#rdBarTop').style.width = pct + '%';
+  const btn = $('#rdComplete');
+  if(pct >= 100){
+    btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف';
+    btn.classList.add('achieved');
+  } else {
+    btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف';
+    btn.classList.remove('achieved');
+  }
+  const fab = $('#rdTop');
+  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+}
+let scrollTick = null;
+rdBody.addEventListener('scroll', () => {
+  if(!RS.doc){ updateReaderUI(); return; }
+  const fab = $('#rdTop');
+  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+  if(scrollTick) return;
+  scrollTick = requestAnimationFrame(() => {
+    scrollTick = null;
+    handleReaderScroll();
+  });
+}, { passive:true });
+
+function handleReaderScroll(){
+  if(!RS.doc || !RS.file || !RS.numPages) return;
+  const page = pageFromScroll();
+  if(page !== RS.current){
+    RS.current = page;
+    $('#rdPageInput').value = page;
+    highlightThumb(page);
+  }
+  const oldPct = getPct(RS.file.id);
+  const oldMax = getMaxPage(RS.file.id);
+  const pct = Math.round((page / RS.numPages) * 100);
+  const newPct = Math.max(oldPct, pct);
+  const newMax = Math.max(oldMax, page);
+
+  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
+  userData.progress[RS.file.id] = Object.assign({}, prev, {
+    pct: newPct, maxPage: newMax, lastPage: page, at: Date.now()
+  });
+  if(newMax > oldMax) addPagesToday(newMax - oldMax);
+  else saveUD();
+
+  updateReaderUI();
+  updateSidebar();
+  renderHomeStats();
+  if(newPct >= 100 && oldPct < 100) toast('أكملت الملف بالكامل!', 'ok');
+  checkBadges();
+  if(!RS.restoring) cleanupFarPages();
+}
+
+function updateFavBtn(){
+  const b = $('#rdFav');
+  if(!b || !RS.file) return;
+  const on = userData.favs.includes(RS.file.id);
+  b.classList.toggle('on', on);
+  b.innerHTML = `<i class="${on ? 'fas' : 'far'} fa-star"></i>`;
+}
+function updateBookmarkBtn(){
+  const b = $('#rdBookmark');
+  if(!b || !RS.file) return;
+  const p = userData.progress[RS.file.id];
+  const has = p && typeof p === 'object' && p.bookmark;
+  b.classList.toggle('on', !!has);
+  b.innerHTML = `<i class="${has ? 'fas' : 'far'} fa-bookmark"></i>`;
+}
+function applyReaderTheme(){
+  const body = $('#rdBody');
+  if(!body) return;
+  body.classList.remove('read-light','read-sepia','read-dark');
+  body.classList.add('read-' + (userData.readTheme || 'light'));
+  applyMarksVisibility();
+}
+function applySnapClass(){
+  const body = $('#rdBody');
+  if(!body) return;
+  body.classList.toggle('snap', !!userData.snap);
+  const btn = $('#rdSnap');
+  if(btn) btn.innerHTML = `<i class="fas fa-scroll"></i> <span>${userData.snap ? 'صفحة واحدة' : 'مستمر'}</span>`;
+}
+function applyMarksVisibility(){
+  const body = $('#rdBody');
+  if(!body) return;
+  body.classList.toggle('hide-marks', !userData.showMarks);
+}
+function renderThumbs(){
+  const box = $('#rdThumbs');
+  if(!box) return;
+  if(!RS.numPages){ box.innerHTML = ''; return; }
+  let html = '';
+  for(let i = 1; i <= RS.numPages; i++){
+    html += `<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll('.thumb-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      scrollToPage(parseInt(b.dataset.p, 10), true);
+      if(window.innerWidth <= 720) box.classList.remove('open');
+    });
+  });
+}
+function highlightThumb(n){
+  const box = $('#rdThumbs');
+  if(!box) return;
+  box.querySelectorAll('.thumb-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.p,10) === n));
+}
+
+/* ساعة القراءة — تُضاف تلقائياً للدقائق */
+function startReadClock(){
+  stopReadClock();
+  RS.clockId = setInterval(() => {
+    if(document.hidden) return;
+    if(!$('#reader').classList.contains('open')) return;
+    addMinutesToday(0.5);
+  }, 30000);
+}
+function stopReadClock(){
+  if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ saveUD(); }
+});
+
+function closeReader(){
+  if(!$('#reader').classList.contains('open')) return;
+  RS.token++;
+  const id = RS.file ? RS.file.id : null;
+  const page = RS.current;
+  if(id && page){
+    const prev = (userData.progress[id] && typeof userData.progress[id] === 'object') ? userData.progress[id] : {};
+    userData.progress[id] = Object.assign({}, prev, { lastPage: page, at: Date.now() });
+    saveUD();
+  }
+  teardownReader(true);
+  $('#reader').classList.remove('open');
+  document.body.style.overflow = '';
+  $('#rdStage').innerHTML = '';
+  $('#rdThumbs').innerHTML = '';
+  $('#rdThumbs').classList.remove('open');
+  hideLoading();
+  renderFiles();
+  renderBadges();
+  renderRecent();
+  updateSidebar();
+  checkBadges();
+}
+
+/* أحداث القارئ */
+$('#rdClose').addEventListener('click', closeReader);
+$('#reader').addEventListener('click', e => { if(e.target.id === 'reader') closeReader(); });
+$('#rdPrev').addEventListener('click', () => scrollToPage(RS.current - 1, true));
+$('#rdNext').addEventListener('click', () => scrollToPage(RS.current + 1, true));
+$('#rdPageInput').addEventListener('change', e => {
+  const v = parseInt(e.target.value, 10);
+  if(!isNaN(v)) scrollToPage(v, true);
+});
+$('#rdZoomIn').addEventListener('click', () => setZoom(RS.zoom + 0.15));
+$('#rdZoomOut').addEventListener('click', () => setZoom(RS.zoom - 0.15));
+$('#rdFit').addEventListener('click', () => setZoom(1));
+$('#rdTop').addEventListener('click', () => {
+  if(!RS.numPages) return;
+  if(RS.current <= 1) rdBody.scrollTo({ top:0, behavior:'smooth' });
+  else scrollToPage(1, true);
+});
+$('#rdSnap').addEventListener('click', () => {
+  userData.snap = !userData.snap;
+  saveUD(); applySnapClass(); syncSettingsUI();
+  toast(userData.snap ? 'وضع الصفحة الواحدة مُفعّل' : 'وضع التمرير المستمر مُفعّل', 'ok');
+});
+$('#rdThumbsBtn').addEventListener('click', () => {
+  const box = $('#rdThumbs');
+  box.classList.toggle('open');
+  $('#rdThumbsBtn').classList.toggle('on', box.classList.contains('open'));
+  if(box.classList.contains('open')) highlightThumb(RS.current);
+});
+$('#rdFav').addEventListener('click', () => {
+  if(!RS.file) return;
+  const i = userData.favs.indexOf(RS.file.id);
+  if(i > -1) userData.favs.splice(i,1); else userData.favs.push(RS.file.id);
+  saveUD(); updateFavBtn();
+  toast(i > -1 ? 'أُزيل من المفضلة' : 'أُضيف إلى المفضلة', 'ok');
+});
+$('#rdBookmark').addEventListener('click', () => {
+  if(!RS.file) return;
+  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
+  if(prev.bookmark){
+    delete prev.bookmark;
+    toast('تم حذف العلامة المرجعية', 'warn');
+  } else {
+    prev.bookmark = RS.current;
+    toast(`تم حفظ علامة عند الصفحة ${RS.current}`, 'ok');
+  }
+  userData.progress[RS.file.id] = prev;
+  saveUD(); updateBookmarkBtn();
+});
+$('#rdRestart').addEventListener('click', () => { if(RS.numPages) scrollToPage(1, true); });
+$('#rdComplete').addEventListener('click', () => {
+  if(!RS.file) return;
+  const total = RS.numPages || RS.file.pageCount || 1;
+  const oldPct = getPct(RS.file.id);
+  const oldMax = getMaxPage(RS.file.id);
+  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
+  userData.progress[RS.file.id] = Object.assign({}, prev, { pct:100, maxPage:total, lastPage:total, at:Date.now() });
+  if(total > oldMax) addPagesToday(total - oldMax); else saveUD();
+  RS.current = total;
+  updateReaderUI();
+  refreshAll(); checkBadges(); renderBadges();
+  if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
+});
+function setZoom(z){
+  if(!RS.numPages) return;
+  z = Math.max(0.4, Math.min(3, Math.round(z * 100) / 100));
+  if(z === RS.zoom){ updateZoomLabel(); return; }
+  RS.zoom = z;
+  const cur = RS.current;
+  rebuildPageSizes();
+  updateZoomLabel();
+  scrollToPage(cur, false);
+  // إعادة الرسم بعد استقرار الأبعاد
+  setTimeout(() => {
+    RS.pageEls.forEach((el, i) => {
+      const n = i + 1;
+      if(RS.inView.has(n)) renderPage(n);
+    });
+  }, 60);
+}
+function updateZoomLabel(){
+  const el = $('#rdZoomVal');
+  if(el) el.textContent = Math.round(RS.zoom * 100) + '%';
+}
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if(!$('#reader').classList.contains('open') || !RS.numPages) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const cur = RS.current;
+    computeBaseWidth();
+    rebuildPageSizes();
+    scrollToPage(cur, false);
+    updateZoomLabel();
+  }, 250);
+});
+function computeBaseWidth(){
+  const avail = rdBody.clientWidth - 30;
+  const maxW = 980;
+  RS.baseWidth = Math.max(220, Math.min(maxW, avail));
+}
+
+/* ============================================================
+   7) الرئيسية: إحصاءات + هدف + أسبوع
+============================================================ */
+function renderHomeStats(){
+  const avg = overallProgress();
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('stFiles', completedCount());
+  setTxt('stAvg', avg + '%');
+  setTxt('stPages', totalPagesRead());
+  setTxt('stBadge', userData.badges.length);
+  const sp = $('#sidePct'); if(sp) sp.textContent = avg + '%';
+  const sb = $('#sideBar'); if(sb) sb.style.width = avg + '%';
+
+  // هدف اليوم
+  const t = todayLog();
+  const goal = Math.max(1, userData.goalPages || 10);
+  const gp = Math.min(100, Math.round((t.pages / goal) * 100));
+  const gr = $('#goalRing');
+  if(gr){
+    const old = gr.querySelector('svg');
+    if(old) old.remove();
+    gr.insertAdjacentHTML('afterbegin', ringSVG(gp, 130, 12, 'var(--primary)', 'var(--primary-2)'));
+  }
+  setTxt('goalToday', t.pages);
+  setTxt('goalTarget', goal);
+  const gm = $('#goalMsg');
+  if(gm){
+    if(t.pages === 0) gm.textContent = 'لم تبدأ القراءة اليوم. افتح ملفاً وابدأ الآن!';
+    else if(t.pages < goal) gm.textContent = `أحسنت! بقي ${goal - t.pages} صفحة لتحقيق هدف اليوم.`;
+    else gm.textContent = '🎉 رائع! لقد حققت هدف اليوم بالكامل.';
+  }
+  // السلسلة
+  const st = computeStreak();
+  setTxt('streakNum', st);
+  renderWeekChart('#weekChart', 100);
+  renderWeekChart('#weekChartBig', 150);
+  setTxt('tmSessions', t.sessions || 0);
+  setTxt('tmMinutes', Math.round(t.min));
+}
+function renderWeekChart(sel, height){
+  const box = document.querySelector(sel);
+  if(!box) return;
+  const days = last7Days();
+  const max = Math.max(10, ...days.map(d => d.min));
+  const names = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  box.innerHTML = days.map(d => {
+    const h = Math.max(4, Math.round((d.min / max) * (height - 22)));
+    return `<div class="week-bar" title="${d.min} دقيقة">
+      <i style="height:${h}px"></i>
+      <span>${names[d.date.getDay()]}</span>
+    </div>`;
+  }).join('');
+}
+function ringSVG(pct, size, stroke, colorA, colorB, bg){
+  const uid = 'g' + Math.random().toString(36).slice(2, 9);
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const off = c - (Math.max(0, Math.min(100, pct)) / 100) * c;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+    <defs><linearGradient id="${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${colorA}"/><stop offset="100%" stop-color="${colorB}"/>
+    </linearGradient></defs>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${bg || 'var(--border)'}" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#${uid})" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/>
+  </svg>`;
+}
+function updateSidebar(){ renderHomeStats(); }
+
+function renderProgress(){
+  const avg = overallProgress();
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('progPctBig', avg + '%');
+  setTxt('progDoneBig', completedCount() + '/' + DB.files.length);
+  setTxt('progPagesBig', totalPagesRead());
+  setTxt('progMinBig', Math.round(userData.minutes));
+  const msgs = ['ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.','بداية جيدة! استمر في التقدم خطوة بخطوة.','أنت في منتصف الطريق تقريباً، لا تتوقف الآن!','أداء ممتاز! اقتربت من إتمام كل الملفات.','مذهل! أكملت جميع الملفات، أنت عبقري القدرات'];
+  const idx = avg === 0 ? 0 : avg < 30 ? 1 : avg < 65 ? 2 : avg < 100 ? 3 : 4;
+  const pm = $('#progMsg'); if(pm) pm.textContent = msgs[idx];
+
+  const days = last7Days();
+  const best = days.reduce((a,b)=> b.min > a.min ? b : a, days[0]);
+  setTxt('bestDay', best && best.min ? best.min + ' دقيقة' : '—');
+  setTxt('totalMinutes', Math.round(userData.minutes));
+  setTxt('totalSessions', userData.sessions);
+
+  const pl = $('#progressList');
+  if(!pl) return;
+  if(!DB.files.length){
+    pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>';
+    return;
+  }
+  pl.innerHTML = DB.files.map(f => {
+    const p = getPct(f.id);
+    const mp = getMaxPage(f.id);
+    const total = f.pageCount || '?';
+    const curPage = mp > 0 ? Math.min(mp, total) : 0;
+    return `<div style="padding:16px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <i class="fas ${f.icon}" style="font-size:1.2rem;color:${f.color}"></i>
+        <b style="font-size:.9rem;flex:1;min-width:120px">${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.8rem"></i>' : ''}</b>
+        <span style="font-size:.74rem;color:var(--muted);font-weight:700">${curPage}/${total} صفحة</span>
+        <span style="font-size:.86rem;font-weight:900;color:${f.color}">${p}%</span>
+      </div>
+      <div class="bar"><i style="width:${p}%;background:linear-gradient(90deg,${f.color},${f.color}aa)"></i></div>
+    </div>`;
+  }).join('') + `<div style="padding-top:18px;display:flex;gap:20px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);font-weight:700">
+    <span><i class="fas fa-book" style="color:var(--primary)"></i> ملفات مكتملة: <b style="color:var(--primary)">${completedCount()}</b></span>
+    <span><i class="fas fa-file-lines" style="color:var(--primary)"></i> صفحات مقروءة: <b style="color:var(--primary)">${totalPagesRead()}</b></span>
+    <span><i class="fas fa-stopwatch" style="color:var(--primary)"></i> دقائق المذاكرة: <b style="color:var(--primary)">${Math.round(userData.minutes)}</b></span>
+    <span><i class="fas fa-bullseye" style="color:var(--primary)"></i> جلسات التركيز: <b style="color:var(--primary)">${userData.sessions}</b></span>
+  </div>`;
+}
+
+/* ============================================================
+   8) المزايا
+============================================================ */
+const FEATURES = [
+  { i:'fa-user-shield',      t:'حساب شخصي آمن',        d:'كل مستخدم له حسابه الخاص وتقدمه المستقل مع تشفير كلمة المرور.', c:'#ef4444' },
+  { i:'fa-file-pdf',         t:'ملفات PDF حقيقية',     d:'رفع ملفات PDF من الجهاز وعرضها داخل المنصة.', c:'#dc2626' },
+  { i:'fa-bolt',             t:'قارئ فائق السرعة',      d:'تحميل كسول للصفحات: يفتح الملفات الكبيرة فوراً دون تعليق.', c:'#f59e0b' },
+  { i:'fa-magnifying-glass-plus', t:'تكبير وتصغير',    d:'تحكم كامل في حجم الصفحة مع ملء تلقائي للعرض.', c:'#0ea5e9' },
+  { i:'fa-list-ul',          t:'قائمة الصفحات',        d:'انتقل لأي صفحة بسرعة من قائمة جانبية منظمة.', c:'#6366f1' },
+  { i:'fa-bookmark',         t:'علامة مرجعية',         d:'احفظ موضعك المفضل وارجع إليه في أي وقت.', c:'#a855f7' },
+  { i:'fa-circle-half-stroke',t:'أوضاع قراءة مريحة',   d:'خلفيات فاتح وسيبيا وداكن لتقليل إجهاد العين.', c:'#14b8a6' },
+  { i:'fa-scroll',           t:'تمرير مستمر أو صفحة واحدة', d:'اختر طريقة التصفح الأنسب لك مع التثبيت التلقائي.', c:'#ec4899' },
+  { i:'fa-chart-simple',     t:'تتبع إنجاز تلقائي',     d:'النظام يحسب إنجازك من الصفحة التي وصلت إليها.', c:'#5b6cff' },
+  { i:'fa-star',             t:'ملفات مميزة',          d:'إبراز الملفات المهمة بنجمة ليراها الطالب فوراً.', c:'#f7b32b' },
+  { i:'fa-heart',            t:'المفضلة',              d:'ثبّت ملفاتك المفضلة وارجع لها بضغطة واحدة.', c:'#e11d48' },
+  { i:'fa-medal',            t:'شارات تحفيزية',        d:'12 شارة مختلفة تكسبها عند تحقيق إنجازات دراسية.', c:'#22c55e' },
+  { i:'fa-fire',             t:'سلسلة الأيام',          d:'تابع أيامك المتواصلة وحافظ على استمراريتك.', c:'#f97316' },
+  { i:'fa-crosshairs',       t:'هدف يومي',             d:'حدّد عدد صفحات ودقائق يومية وتابع تحقيقها.', c:'#8b5cf6' },
+  { i:'fa-stopwatch',        t:'مؤقت بومودورو',        d:'جلسات تركيز وراحات قصيرة وطويلة قابلة للتخصيص.', c:'#06b6d4' },
+  { i:'fa-chart-column',     t:'تقارير أسبوعية',       d:'رسم بياني لدقائق مذاكرتك خلال آخر ٧ أيام.', c:'#0891b2' },
+  { i:'fa-palette',          t:'ثيمات متعددة',         d:'8 ألوان + وضع ليلي تلقائي لتخصيص تجربتك.', c:'#db2777' },
+  { i:'fa-shield-halved',    t:'لوحة أدمن كاملة',      d:'إدارة المستخدمين والاشتراكات والملفات بسهولة.', c:'#14b8a6' },
+  { i:'fa-user-check',       t:'نظام موافقات ذكي',     d:'الطلاب الجدد ينتظرون موافقة الأدمن لتفعيل حسابهم.', c:'#f59e0b' },
+  { i:'fa-note-sticky',      t:'ملاحظاتي الخاصة',      d:'مساحة لكتابة القواعد مع حفظ فوري وتصدير.', c:'#f97316' },
+  { i:'fa-list-check',       t:'قائمة المهام',         d:'نظّم مهامك الدراسية وأنجزها واحداً تلو الآخر.', c:'#6366f1' },
+  { i:'fa-magnifying-glass', t:'بحث وفلترة فورية',     d:'ابحث بالاسم أو التصنيف مع ترتيب ذكي للنتائج.', c:'#a855f7' },
+  { i:'fa-cloud-arrow-up',   t:'رفع ملفات سهل',        d:'اسحب ملف PDF وأفلته لإضافته فوراً للمكتبة.', c:'#06b6d4' },
+  { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب يعمل بسلاسة على الجوال والتابلت.', c:'#22c55e' }
+];
+function renderFeatures(){
+  const grid = $('#featGrid');
+  if(!grid) return;
+  grid.innerHTML = FEATURES.map((f, i) => `
+    <div class="feat-new" style="--fc:${f.c}">
+      <span class="num-badge">${String(i+1).padStart(2,'0')}</span>
+      <div class="fi"><i class="fas ${f.i}"></i></div>
+      <h3>${f.t}</h3>
+      <p>${f.d}</p>
+    </div>`).join('');
+  const fc = $('#featCount'); if(fc) fc.textContent = FEATURES.length;
+  const ft = $('#featHeroTitle');
+  if(ft) ft.textContent = `${FEATURES.length} ميزة احترافية صُمّمت لتُحسّن رحلتك الدراسية`;
+}
+
+/* ============================================================
+   9) المهام والملاحظات
+============================================================ */
+function renderTasks(){
+  const box = $('#taskList');
+  if(!box) return;
+  if(!userData.tasks.length){
+    box.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem">لا توجد مهام بعد</div>`;
+    return;
+  }
+  box.innerHTML = userData.tasks.map((t, i) => `
+    <div class="task-item ${t.done ? 'done' : ''}">
+      <div class="t-check" onclick="toggleTask(${i})">${t.done ? '<i class="fas fa-check"></i>' : ''}</div>
+      <span class="t-txt">${escapeHtml(t.text)}</span>
+      <button class="t-del" onclick="delTask(${i})"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+}
+window.toggleTask = i => { if(userData.tasks[i]){ userData.tasks[i].done = !userData.tasks[i].done; saveUD(); renderTasks(); } };
+window.delTask = i => { userData.tasks.splice(i, 1); saveUD(); renderTasks(); };
+function addTask(){
+  const inp = $('#taskInput');
+  if(!inp) return;
+  const v = inp.value.trim();
+  if(!v) return;
+  userData.tasks.unshift({ text: v, done:false });
+  inp.value = '';
+  saveUD(); renderTasks();
+}
+$('#taskAdd').addEventListener('click', addTask);
+$('#taskInput').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+
+const notesArea = $('#notesArea');
+let notesTimer = null;
+notesArea.addEventListener('input', () => {
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => { userData.notes = notesArea.value; saveUD(); }, 400);
+});
+$('#notesExport').addEventListener('click', () => {
+  if(!userData.notes.trim()){ toast('لا توجد ملاحظات للتصدير', 'warn'); return; }
+  const blob = new Blob([userData.notes], { type:'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ملاحظاتي-العباقرة.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('تم تصدير الملاحظات', 'ok');
+});
+
+/* ============================================================
+   10) المؤقت (بدون انحراف زمني)
+============================================================ */
+const TIMER = { running:false, mode:'focus', endAt:0, remain:0, int:null, doneCount:0 };
+function timerTotalSec(mode){
+  if(mode === 'focus') return (userData.focus || 25) * 60;
+  if(mode === 'long') return (userData.longBrk || 15) * 60;
+  return (userData.brk || 5) * 60;
+}
+function drawTimerDial(){
+  const holder = $('#timerDial');
+  if(!holder) return;
+  const total = timerTotalSec(TIMER.mode);
+  const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
+  const pct = total ? ((total - remain) / total) * 100 : 0;
+  const old = holder.querySelector('svg');
+  if(old) old.remove();
+  const colA = TIMER.mode === 'focus' ? 'var(--primary)' : '#22c55e';
+  const colB = TIMER.mode === 'focus' ? 'var(--primary-2)' : '#4ade80';
+  holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 150, 12, colA, colB));
+}
+function updateTimerUI(){
+  const total = timerTotalSec(TIMER.mode);
+  const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
+  const tt = $('#timerText'); if(tt) tt.textContent = fmtTime(remain);
+  const tl = $('#timerLabel');
+  if(tl) tl.textContent = TIMER.mode === 'focus' ? 'جلسة تركيز' : (TIMER.mode === 'long' ? 'راحة طويلة' : 'راحة قصيرة');
+  const th = $('#timerHead');
+  if(th) th.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل' : 'وقت الراحة — استرخِ قليلاً';
+  const td = $('#timerDesc');
+  if(td) td.textContent = TIMER.mode === 'focus'
+    ? 'اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت بشكل ملحوظ.'
+    : 'خذ نفساً عميقاً، تحرّك قليلاً، واشرب ماءً. الراحة جزء من الإنتاجية.';
+  const ts = $('#timerStart');
+  if(ts) ts.innerHTML = TIMER.running ? '<i class="fas fa-pause"></i> إيقاف مؤقت' : '<i class="fas fa-play"></i> ' + (TIMER.remain < total ? 'استئناف' : 'ابدأ الجلسة');
+  const tm = $('#timerMode');
+  if(tm) tm.innerHTML = TIMER.mode === 'focus'
+    ? `<i class="fas fa-mug-hot"></i> راحة ${userData.brk || 5}د`
+    : `<i class="fas fa-bullseye"></i> تركيز ${userData.focus || 25}د`;
+  drawTimerDial();
+}
+function startTimer(){
+  if(TIMER.running){
+    TIMER.remain = Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000));
+    clearInterval(TIMER.int); TIMER.int = null;
+    TIMER.running = false;
+    updateTimerUI();
+    return;
+  }
+  if(TIMER.remain <= 0) TIMER.remain = timerTotalSec(TIMER.mode);
+  TIMER.endAt = Date.now() + TIMER.remain * 1000;
+  TIMER.running = true;
+  clearInterval(TIMER.int);
+  TIMER.int = setInterval(timerTick, 250);
+  updateTimerUI();
+}
+function timerTick(){
+  if(!TIMER.running) return;
+  const remain = Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000));
+  TIMER.remain = remain;
+  updateTimerUI();
+  if(remain <= 0) finishTimer();
+}
+function finishTimer(){
+  clearInterval(TIMER.int); TIMER.int = null;
+  TIMER.running = false;
+  beep();
+  if(TIMER.mode === 'focus'){
+    TIMER.doneCount++;
+    userData.sessions++;
+    addMinutesToday(userData.focus || 25);
+    todayLog().sessions = (todayLog().sessions || 0) + 1;
+    userData.badges.includes('focus1') || userData.badges.push('focus1');
+    saveUD();
+    renderHomeStats(); renderBadges(); checkBadges();
+    toast('أحسنت! أكملت جلسة تركيز كاملة', 'ok');
+    const useLong = TIMER.doneCount % 4 === 0;
+    TIMER.mode = useLong ? 'long' : 'break';
+  } else {
+    toast('انتهت الراحة، لنعد للتركيز!', 'warn');
+    TIMER.mode = 'focus';
+  }
+  TIMER.remain = timerTotalSec(TIMER.mode);
+  updateTimerUI();
+  if(userData.autoStart){
+    setTimeout(() => { if(!TIMER.running) startTimer(); }, 900);
+  }
+}
+$('#timerStart').addEventListener('click', startTimer);
+$('#timerReset').addEventListener('click', () => {
+  clearInterval(TIMER.int); TIMER.int = null;
+  TIMER.running = false;
+  TIMER.remain = timerTotalSec(TIMER.mode);
+  updateTimerUI();
+});
+$('#timerMode').addEventListener('click', () => {
+  clearInterval(TIMER.int); TIMER.int = null;
+  TIMER.running = false;
+  TIMER.mode = TIMER.mode === 'focus' ? 'break' : 'focus';
+  TIMER.remain = timerTotalSec(TIMER.mode);
+  updateTimerUI();
+});
+
+/* ============================================================
+   11) الإعدادات — ربط العناصر
+============================================================ */
+const segHandler = (sel, cb) => {
+  const box = document.querySelector(sel);
+  if(!box) return;
+  box.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      box.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      cb(b);
+    });
+  });
+};
+segHandler('#modeSeg', b => { userData.darkMode = b.dataset.m; saveUD(); applyTheme(); });
+segHandler('#fontSeg', b => { userData.font = parseFloat(b.dataset.f); saveUD(); applyTheme(); });
+segHandler('#readThemeSeg', b => { userData.readTheme = b.dataset.r; saveUD(); applyReaderTheme(); });
+segHandler('#snapSeg', b => { userData.snap = b.dataset.s === '1'; saveUD(); applySnapClass(); });
+segHandler('#zoomSeg', b => { userData.defaultZoom = parseFloat(b.dataset.z); saveUD(); });
+segHandler('#focusSeg', b => {
+  userData.focus = parseInt(b.dataset.m, 10); saveUD();
+  if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); updateTimerUI(); }
+  updateTimerUI();
+});
+segHandler('#breakSeg', b => {
+  userData.brk = parseInt(b.dataset.m, 10); saveUD();
+  if(!TIMER.running && TIMER.mode === 'break'){ TIMER.remain = timerTotalSec('break'); }
+  updateTimerUI();
+});
+segHandler('#longSeg', b => {
+  userData.longBrk = parseInt(b.dataset.m, 10); saveUD();
+  if(!TIMER.running && TIMER.mode === 'long'){ TIMER.remain = timerTotalSec('long'); }
+  updateTimerUI();
+});
+$('#setAnim').addEventListener('change', e => { userData.reduceMotion = e.target.checked; saveUD(); applyTheme(); });
+$('#setMarks').addEventListener('change', e => { userData.showMarks = e.target.checked; saveUD(); applyMarksVisibility(); });
+$('#setResume').addEventListener('change', e => { userData.autoResume = e.target.checked; saveUD(); });
+$('#setAuto').addEventListener('change', e => { userData.autoStart = e.target.checked; saveUD(); });
+$('#setSound').addEventListener('change', e => { userData.sound = e.target.checked; saveUD(); });
+$('#goalPagesRange').addEventListener('input', e => {
+  userData.goalPages = parseInt(e.target.value, 10) || 10;
+  $('#goalPagesVal').textContent = userData.goalPages;
+  $('#goalTarget').textContent = userData.goalPages;
+  saveUD(); renderHomeStats(); checkBadges();
+});
+$('#goalMinRange').addEventListener('input', e => {
+  userData.goalMinutes = parseInt(e.target.value, 10) || 30;
+  $('#goalMinVal').textContent = userData.goalMinutes;
+  saveUD();
+});
+
+/* فلترة الملفات */
+$$('.filter-chip').forEach(b => {
+  b.addEventListener('click', () => {
+    $$('.filter-chip').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    fileFilter = b.dataset.cat;
+    renderFiles();
+  });
+});
+$('#sortSelect').addEventListener('change', e => { fileSort = e.target.value; renderFiles(); });
+$('#searchInput').addEventListener('input', () => { go('files'); renderFiles(); });
+
+/* تصدير/استيراد بيانات المستخدم */
+$('#exportBtn').addEventListener('click', () => {
+  const data = Object.assign({}, userData, { exportedAt: new Date().toISOString(), user: currentUserObj ? currentUserObj.name : '' });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'abdqaqra-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('تم تصدير نسختك الاحتياطية', 'ok');
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const d = JSON.parse(ev.target.result);
+      Object.keys(d).forEach(k => { if(k !== 'exportedAt' && k !== 'user') userData[k] = d[k]; });
+      if(!userData.log || typeof userData.log !== 'object') userData.log = {};
+      saveUD();
+      notesArea.value = userData.notes || '';
+      refreshAll(); renderTasks(); renderBadges(); renderProgress(); applyTheme(); applyReaderTheme(); applySnapClass();
+      toast('تم استيراد البيانات بنجاح', 'ok');
+    }catch(err){ toast('الملف غير صالح', 'warn'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+$('#resetProgressBtn').addEventListener('click', () => {
+  confirmBox('تصفير التقدم', 'سيتم مسح كل نسب الإنجاز والشارات والدقائق. هل أنت متأكد؟', () => {
+    userData.progress = {};
+    userData.badges = [];
+    userData.opened = [];
+    userData.minutes = 0;
+    userData.sessions = 0;
+    userData.log = {};
+    saveUD();
+    refreshAll(); renderBadges(); renderProgress();
+    toast('تم تصفير التقدم', 'ok');
+  }, true);
+});
+$('#changePassBtn').addEventListener('click', () => {
+  openModal({
+    title:'تغيير كلمة المرور',
+    text:'أدخل كلمة المرور الحالية والجديدة.',
+    bodyHTML:`<div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="mpOld" placeholder="••••••"></div>
+              <div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="mpNew" placeholder="6 أحرف على الأقل"></div>
+              <div class="form-group"><label>تأكيد كلمة المرور الجديدة</label><input type="password" id="mpNew2" placeholder="••••••"></div>`,
+    okText:'حفظ',
+    onOk: async () => {
+      const oldP = document.getElementById('mpOld').value;
+      const n1 = document.getElementById('mpNew').value;
+      const n2 = document.getElementById('mpNew2').value;
+      if(!await checkPass(currentUserObj, oldP)){ toast('كلمة المرور الحالية غير صحيحة', 'err'); return; }
+      if(!n1 || n1.length < 6){ toast('كلمة المرور الجديدة قصيرة', 'err'); return; }
+      if(n1 !== n2){ toast('كلمتا المرور غير متطابقتين', 'err'); return; }
+      currentUserObj.passHash = await sha256(n1);
+      delete currentUserObj.password;
+      saveDB();
+      toast('تم تغيير كلمة المرور', 'ok');
+    }
+  });
+});
+
+/* ============================================================
+   12) المصادقة
+============================================================ */
+async function checkPass(user, pass){
+  if(!user) return false;
+  if(user.passHash) return user.passHash === await sha256(pass);
+  if(typeof user.password === 'string'){
+    if(user.password === pass){
+      user.passHash = await sha256(pass);
+      delete user.password;
+      saveDB();
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+function showAuth(){ $('#auth').classList.add('open'); }
+function hideAuth(){ $('#auth').classList.remove('open'); }
+function showAuthForm(tab){
+  $$('.auth-tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $$('.auth-form').forEach(f => f.classList.remove('on'));
+  const el = document.getElementById('form-' + tab);
+  if(el) el.classList.add('on');
+  ['loginMsg','regMsg','adminMsg'].forEach(id => {
+    const m = document.getElementById(id);
+    if(m){ m.className = 'auth-msg'; m.textContent = ''; }
+  });
+}
+function showMsg(elId, text, type='err'){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<i class="fas ${type === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${escapeHtml(text)}`;
+  el.className = 'auth-msg ' + type;
+}
+$$('.auth-tabs button').forEach(b => b.addEventListener('click', () => showAuthForm(b.dataset.tab)));
+$('#authBack').addEventListener('click', () => {
+  hideAuth();
+  const w = $('#welcome');
+  w.style.display = 'flex';
+  w.classList.remove('exit');
+});
+$('#regBtn').addEventListener('click', async () => {
+  const btn = $('#regBtn');
+  const name = $('#regName').value.trim();
+  const email = $('#regEmail').value.trim().toLowerCase();
+  const pass = $('#regPass').value;
+  if(!name || name.length < 2){ showMsg('regMsg','أدخل اسماً صحيحاً (حرفان على الأقل)'); return; }
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg','أدخل بريداً إلكترونياً صحيحاً'); return; }
+  if(!pass || pass.length < 6){ showMsg('regMsg','كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+  if(DB.users.find(u => u.email === email)){ showMsg('regMsg','هذا البريد مسجّل مسبقاً'); return; }
+  btn.disabled = true;
+  const user = {
+    id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name, email,
+    passHash: await sha256(pass),
+    subscribed: false, requestedAt: Date.now(), isAdmin: false, createdAt: Date.now()
+  };
+  btn.disabled = false;
+  DB.users.push(user);
+  saveDB();
+  showMsg('regMsg','تم إنشاء حسابك، جاري الدخول...', 'ok');
+  setTimeout(() => {
+    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
+    enterApp();
+  }, 600);
+});
+$('#loginBtn').addEventListener('click', async () => {
+  const btn = $('#loginBtn');
+  const email = $('#loginEmail').value.trim().toLowerCase();
+  const pass = $('#loginPass').value;
+  if(!email || !pass){ showMsg('loginMsg','أدخل البريد وكلمة المرور'); return; }
+  const user = DB.users.find(u => u.email === email);
+  if(!user){ showMsg('loginMsg','البريد أو كلمة المرور غير صحيحة'); return; }
+  if(user.isAdmin){ showMsg('loginMsg','هذا حساب أدمن — استخدم تبويب الأدمن'); return; }
+  btn.disabled = true;
+  const ok = await checkPass(user, pass);
+  btn.disabled = false;
+  if(!ok){ showMsg('loginMsg','البريد أو كلمة المرور غير صحيحة'); return; }
+  showMsg('loginMsg','تم تسجيل الدخول', 'ok');
+  setTimeout(() => {
+    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
+    enterApp();
+  }, 400);
+});
+$('#adminBtn').addEventListener('click', async () => {
+  const btn = $('#adminBtn');
+  const email = $('#adminEmail').value.trim().toLowerCase();
+  const pass = $('#adminPass').value;
+  const user = DB.users.find(u => u.email === email && u.isAdmin);
+  if(!user){ showMsg('adminMsg','بيانات الأدمن غير صحيحة'); return; }
+  btn.disabled = true;
+  const ok = await checkPass(user, pass);
+  btn.disabled = false;
+  if(!ok){ showMsg('adminMsg','بيانات الأدمن غير صحيحة'); return; }
+  showMsg('adminMsg','مرحباً بك أيها المدير', 'ok');
+  setTimeout(() => {
+    try{ localStorage.setItem(SESSION_KEY, user.id); }catch(e){}
+    enterApp();
+  }, 400);
+});
+
+/* ============================================================
+   13) الدخول للتطبيق
+============================================================ */
+function enterApp(){
+  hideAuth();
+  $('#welcome').style.display = 'none';
+  currentUserObj = currentUser();
+  if(!currentUserObj){
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    showAuth();
+    return;
+  }
+  loadUD(currentUserObj.id);
+  applyTheme();
+  applyUserUI();
+  $('#app').classList.add('open');
+  $('#mainScroll').scrollTop = 0;
+  go('home');
+  refreshAll();
+  renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
+  notesArea.value = userData.notes || '';
+  TIMER.mode = 'focus';
+  TIMER.remain = timerTotalSec('focus');
+  updateTimerUI();
+  applyReaderTheme();
+  applySnapClass();
+  syncSettingsUI();
+  setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 500);
+}
+function applyUserUI(){
+  if(!currentUserObj) return;
+  const nm = currentUserObj.name || '—';
+  $('#userAvatar').textContent = nm.trim().charAt(0);
+  let badgeHTML = '';
+  if(currentUserObj.isAdmin){
+    badgeHTML = ' <span class="sub-badge"><i class="fas fa-shield-halved"></i> أدمن</span>';
+  } else if(currentUserObj.subscribed){
+    badgeHTML = ' <span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
+  } else if(currentUserObj.requestedAt){
+    badgeHTML = ' <span class="sub-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
+  }
+  $('#userName').innerHTML = escapeHtml(nm) + badgeHTML;
+  $('#userEmail').textContent = currentUserObj.email;
+  $('#setName').textContent = currentUserObj.name;
+  $('#setEmail').textContent = currentUserObj.email;
+  $('#setSub').innerHTML = currentUserObj.subscribed
+    ? '<span style="color:var(--success)"><i class="fas fa-circle-check"></i> مشترك</span>'
+    : currentUserObj.requestedAt
+      ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
+      : '<span style="color:var(--muted)"><i class="fas fa-ban"></i> غير مشترك</span>';
+  $('#adminNav').style.display = currentUserObj.isAdmin ? 'flex' : 'none';
+}
+$('#logoutBtn').addEventListener('click', () => {
+  confirmBox('تسجيل الخروج', 'هل تريد تسجيل الخروج من حسابك؟', () => {
+    saveUD();
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    currentUserObj = null;
+    closeReader();
+    $('#app').classList.remove('open');
+    const w = $('#welcome');
+    w.style.display = 'flex';
+    w.classList.remove('exit');
+    ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    ['loginMsg','adminMsg'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el){ el.className = 'auth-msg'; el.textContent = ''; }
+    });
+    showAuthForm('login');
+    showAuth();
+  });
+});
+
+/* ============================================================
+   14) لوحة الأدمن
+============================================================ */
+function renderAdmin(){
+  if(!currentUserObj || !currentUserObj.isAdmin) return;
+  const nonAdmins = DB.users.filter(u => !u.isAdmin);
+  const setTxt = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('adUsers', nonAdmins.length);
+  setTxt('adPending', nonAdmins.filter(u => u.requestedAt && !u.subscribed).length);
+  setTxt('adSubscribed', nonAdmins.filter(u => u.subscribed).length);
+  setTxt('adFiles', DB.files.length);
+  setTxt('adImportant', DB.files.filter(f => f.important).length);
+  renderUsersTable();
+  renderAdminFiles();
+}
+function renderUsersTable(){
+  const box = $('#usersTable');
+  if(!box) return;
+  const q = ($('#userSearch') ? $('#userSearch').value : '').trim().toLowerCase();
+  const filter = $('#userFilter') ? $('#userFilter').value : 'all';
+  let list = DB.users.filter(u => !u.isAdmin);
+  if(q) list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+  if(filter === 'pending') list = list.filter(u => u.requestedAt && !u.subscribed);
+  else if(filter === 'sub') list = list.filter(u => u.subscribed);
+  else if(filter === 'off') list = list.filter(u => !u.subscribed);
+  list.sort((a,b) => {
+    const ap = (a.requestedAt && !a.subscribed) ? 0 : 1;
+    const bp = (b.requestedAt && !b.subscribed) ? 0 : 1;
+    return ap - bp || (b.createdAt || 0) - (a.createdAt || 0);
+  });
+
+  if(!list.length){
+    box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>سيظهر هنا كل من يسجّل حساباً جديداً</p></div>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="thead">
+      <div>المستخدم</div><div>البريد الإلكتروني</div><div>الحالة</div><div style="text-align:left">إجراءات</div>
+    </div>
+    ${list.map(u => {
+      let statusBadge;
+      if(u.subscribed) statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
+      else if(u.requestedAt) statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> طلب معلّق</span>';
+      else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> غير مشترك</span>';
+      const progressCount = Object.keys(loadUserProgressKeys(u.id)).length;
+      return `<div class="trow">
+        <div class="user-cell">
+          <div class="av">${escapeHtml((u.name||'؟').trim().charAt(0))}</div>
+          <div class="info">
+            <b>${escapeHtml(u.name)}</b>
+            <small>${new Date(u.createdAt).toLocaleDateString('ar-SA')} • ${progressCount} ملف نشط</small>
+          </div>
+        </div>
+        <div class="email-cell">${escapeHtml(u.email)}</div>
+        <div class="status-cell">${statusBadge}</div>
+        <div class="actions-cell">
+          <button class="btn ${u.subscribed ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleSub('${u.id}')">
+            ${u.subscribed ? '<i class="fas fa-ban"></i> إلغاء' : '<i class="fas fa-check"></i> تفعيل'}
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="resetUserProgress('${u.id}')" title="تصفير تقدم المستخدم"><i class="fas fa-rotate-left"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+function loadUserProgressKeys(uid){
+  try{
+    const raw = localStorage.getItem(UD_KEY + uid);
+    if(!raw) return {};
+    const d = JSON.parse(raw);
+    return (d && d.progress) ? d.progress : {};
+  }catch(e){ return {}; }
+}
+window.toggleSub = id => {
+  const u = DB.users.find(x => x.id === id);
+  if(!u) return;
+  u.subscribed = !u.subscribed;
+  saveDB(); renderAdmin();
+  toast(u.subscribed ? 'تم تفعيل الاشتراك' : 'تم إلغاء الاشتراك', u.subscribed ? 'ok' : 'warn');
+};
+window.resetUserProgress = id => {
+  const u = DB.users.find(x => x.id === id);
+  if(!u) return;
+  confirmBox('تصفير تقدم المستخدم', `سيتم مسح تقدم «${escapeHtml(u.name)}» بالكامل.`, () => {
+    try{ localStorage.removeItem(UD_KEY + id); }catch(e){}
+    renderAdmin();
+    toast('تم تصفير تقدم المستخدم', 'ok');
+  }, true);
+};
+window.deleteUser = id => {
+  const u = DB.users.find(x => x.id === id);
+  if(!u) return;
+  confirmBox('حذف الحساب', `حذف حساب «${escapeHtml(u.name)}» بكل بياناته؟ لا يمكن التراجع.`, () => {
+    DB.users = DB.users.filter(x => x.id !== id);
+    saveDB();
+    try{ localStorage.removeItem(UD_KEY + id); }catch(e){}
+    let ses = null;
+    try{ ses = localStorage.getItem(SESSION_KEY); }catch(e){}
+    if(ses === id) try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    renderAdmin();
+    toast('تم حذف الحساب بكل بياناته', 'ok');
+  }, true);
+};
+$('#userSearch').addEventListener('input', renderUsersTable);
+$('#userFilter').addEventListener('change', renderUsersTable);
+$('#addUserBtn').addEventListener('click', () => {
+  openModal({
+    title:'إضافة مستخدم يدوياً',
+    text:'أضف مستخدماً مشتركاً مباشرة دون انتظار الموافقة.',
+    bodyHTML:`<div class="form-group"><label>الاسم</label><input type="text" id="nuName" placeholder="الاسم الكامل"></div>
+              <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="nuEmail" placeholder="name@example.com"></div>
+              <div class="form-group"><label>كلمة المرور</label><input type="password" id="nuPass" placeholder="6 أحرف على الأقل"></div>
+              <label class="checkbox-row"><input type="checkbox" id="nuSub" checked><span>تفعيل الاشتراك فوراً</span></label>`,
+    okText:'إضافة',
+    onOk: async () => {
+      const name = document.getElementById('nuName').value.trim();
+      const email = document.getElementById('nuEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('nuPass').value;
+      const sub = document.getElementById('nuSub').checked;
+      if(!name || name.length < 2){ toast('اسم غير صالح', 'err'); return; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صالح', 'err'); return; }
+      if(!pass || pass.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
+      if(DB.users.find(u => u.email === email)){ toast('البريد مسجّل مسبقاً', 'err'); return; }
+      DB.users.push({
+        id:'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+        name, email, passHash: await sha256(pass),
+        subscribed: sub, requestedAt: sub ? null : Date.now(),
+        isAdmin:false, createdAt: Date.now()
+      });
+      saveDB(); renderAdmin();
+      toast('تمت إضافة المستخدم', 'ok');
+    }
+  });
+});
+
+function renderAdminFiles(){
+  const box = $('#adminFilesGrid');
+  if(!box) return;
+  if(!DB.files.length){
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3><p>اذهب لتبويب «إضافة ملف» لرفع أول ملف PDF</p></div>';
+    return;
+  }
+  box.innerHTML = DB.files.map(f => `
+    <div class="admin-file-card ${f.important ? 'important' : ''}" style="--fc:${f.color}">
+      <div class="afc-head">
+        <div class="ic"><i class="fas ${f.icon}"></i></div>
+        <div style="flex:1;min-width:0">
+          <h4>${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
+          <small>${escapeHtml(f.cat)} • ${f.pageCount || '?'} صفحة</small>
+        </div>
+      </div>
+      <div class="afc-meta">
+        <span>${f.important ? '<i class="fas fa-star" style="color:var(--accent)"></i> مهم' : 'ملف عادي'}</span>
+        <span>${new Date(f.createdAt || Date.now()).toLocaleDateString('ar-SA')}</span>
+      </div>
+      <div class="afc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="editFile('${f.id}')"><i class="fas fa-pen"></i> تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+window.toggleImportant = id => {
+  const f = DB.files.find(x => x.id === id);
+  if(!f) return;
+  f.important = !f.important;
+  saveDB(); renderAdmin(); renderFiles();
+  toast(f.important ? 'أصبح الملف مميزاً' : 'تم إزالة النجمة', 'ok');
+};
+window.deleteFile = id => {
+  const f = DB.files.find(x => x.id === id);
+  if(!f) return;
+  confirmBox('حذف الملف', `حذف الملف «${escapeHtml(f.title)}»؟ سيتم حذف تقدم المستخدمين المرتبط به.`, async () => {
+    try{ await IDB.del(id); }catch(e){}
+    DB.files = DB.files.filter(x => x.id !== id);
+    // تنظيف تقدم المستخدمين
+    DB.users.forEach(u => {
+      try{
+        const raw = localStorage.getItem(UD_KEY + u.id);
+        if(!raw) return;
+        const d = JSON.parse(raw);
+        if(d && d.progress && d.progress[id]){
+          delete d.progress[id];
+          if(Array.isArray(d.opened)) d.opened = d.opened.filter(x => x !== id);
+          if(Array.isArray(d.favs)) d.favs = d.favs.filter(x => x !== id);
+          localStorage.setItem(UD_KEY + u.id, JSON.stringify(d));
+        }
+      }catch(e){}
+    });
+    saveDB();
+    renderAdmin(); renderFiles(); refreshAll();
+    toast('تم حذف الملف', 'ok');
+  }, true);
+};
+window.editFile = id => {
+  const f = DB.files.find(x => x.id === id);
+  if(!f) return;
+  go('admin');
+  $$('.admin-tabs button').forEach(b => b.classList.remove('on'));
+  $$('.admin-panel').forEach(p => p.classList.remove('on'));
+  const tab = document.querySelector('.admin-tabs button[data-panel="add"]');
+  if(tab) tab.classList.add('on');
+  $('#panel-add').classList.add('on');
+  $('#afTitle').value = f.title;
+  $('#afCat').value = f.cat;
+  $('#afDesc').value = f.desc || '';
+  $('#afImportant').checked = !!f.important;
+  editingFileId = id;
+  currentPdfBlob = null;
+  $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-circle-info"></i> لتغيير ملف PDF نفسه، احذف الملف وأنشئ واحداً جديداً</div>`;
+  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ التعديلات';
+};
+let editingFileId = null;
+let currentPdfBlob = null;
+
+const uploadZone = $('#uploadZone');
+const afPdfInput = $('#afPdfInput');
+uploadZone.addEventListener('click', () => afPdfInput.click());
+['dragenter','dragover'].forEach(ev => {
+  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(ev => {
+  uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+});
+uploadZone.addEventListener('drop', e => {
+  const file = e.dataTransfer && e.dataTransfer.files[0];
+  if(file) handlePdfFile(file);
+});
+afPdfInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(file) handlePdfFile(file);
+});
+async function handlePdfFile(file){
+  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){
+    toast('الرجاء اختيار ملف PDF فقط', 'warn'); return;
+  }
+  if(file.size > 100 * 1024 * 1024){
+    toast('حجم الملف كبير جداً (الحد 100 ميجا)', 'warn'); return;
+  }
+  currentPdfBlob = file;
+  const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+  let pages = '?';
+  try{
+    const ab = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+    pages = doc.numPages;
+    try{ doc.destroy(); }catch(e){}
+  }catch(e){ console.error(e); }
+  $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-circle-check"></i> ${escapeHtml(file.name)} — ${sizeMB} ميجا${pages !== '?' ? ` — ${pages} صفحة` : ''}</div>`;
+  if(!$('#afTitle').value){
+    $('#afTitle').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g,' ');
+  }
+}
+$('#clearFileBtn').addEventListener('click', () => {
+  $('#afTitle').value = '';
+  $('#afCat').value = 'كمي';
+  $('#afDesc').value = '';
+  $('#afImportant').checked = false;
+  $('#uzFileInfo').innerHTML = '';
+  afPdfInput.value = '';
+  currentPdfBlob = null;
+  editingFileId = null;
+  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+});
+$('#saveFileBtn').addEventListener('click', async () => {
+  const btn = $('#saveFileBtn');
+  const title = $('#afTitle').value.trim();
+  const cat = $('#afCat').value;
+  const desc = $('#afDesc').value.trim();
+  const important = $('#afImportant').checked;
+  if(!title){ toast('أدخل عنوان الملف', 'warn'); return; }
+
+  if(editingFileId){
+    const f = DB.files.find(x => x.id === editingFileId);
+    if(f){
+      f.title = title; f.cat = cat; f.desc = desc; f.important = important;
+      saveDB();
+      toast('تم تحديث الملف بنجاح', 'ok');
+    }
+    editingFileId = null;
+  } else {
+    if(!currentPdfBlob){ toast('الرجاء اختيار ملف PDF أولاً', 'warn'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+    const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    const choice = pick(ICONS);
+    let pages = 0;
+    try{
+      const ab = await currentPdfBlob.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+      pages = doc.numPages;
+      try{ doc.destroy(); }catch(e){}
+      await IDB.put(id, currentPdfBlob);
+    }catch(err){
+      console.error(err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+      toast('تعذّر معالجة الملف أو تخزينه', 'err');
+      return;
+    }
+    DB.files.unshift({ id, title, cat, desc, important, icon: choice.i, color: choice.c, pageCount: pages, createdAt: Date.now() });
+    saveDB();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+    toast('تم رفع الملف بنجاح', 'ok');
+  }
+  $('#afTitle').value = '';
+  $('#afCat').value = 'كمي';
+  $('#afDesc').value = '';
+  $('#afImportant').checked = false;
+  $('#uzFileInfo').innerHTML = '';
+  afPdfInput.value = '';
+  currentPdfBlob = null;
+  $('#saveFileBtn').innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+  renderAdmin(); renderFiles();
+  $$('.admin-tabs button').forEach(b => b.classList.remove('on'));
+  $$('.admin-panel').forEach(p => p.classList.remove('on'));
+  const tab = document.querySelector('.admin-tabs button[data-panel="files"]');
+  if(tab) tab.classList.add('on');
+  $('#panel-files').classList.add('on');
+});
+$$('.admin-tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    $$('.admin-tabs button').forEach(x => x.classList.remove('on'));
+    $$('.admin-panel').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const panel = document.getElementById('panel-' + b.dataset.panel);
+    if(panel) panel.classList.add('on');
+  });
+});
+$('#adExport').addEventListener('click', () => {
+  const data = { platform:'abdqaqra', exportedAt: new Date().toISOString(), users: DB.users, files: DB.files.map(f => ({
+    id:f.id, title:f.title, cat:f.cat, desc:f.desc, important:f.important, icon:f.icon, color:f.color, pageCount:f.pageCount, createdAt:f.createdAt
+  })) };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'abdqaqra-platform-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('تم تصدير نسخة المنصة', 'ok');
+});
+$('#adImportBtn').addEventListener('click', () => $('#adImportFile').click());
+$('#adImportFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const d = JSON.parse(ev.target.result);
+      if(!d || !Array.isArray(d.users)) throw new Error('bad');
+      confirmBox('استيراد المنصة', 'سيتم دمج المستخدمين والملفات من النسخة. متابعة؟', () => {
+        let added = 0;
+        d.users.forEach(u => { if(!DB.users.find(x => x.email === u.email)){ DB.users.push(u); added++; } });
+        (d.files || []).forEach(f => { if(!DB.files.find(x => x.id === f.id)) DB.files.push(f); });
+        saveDB(); renderAdmin(); refreshAll();
+        toast(`تم الاستيراد (${added} مستخدم جديد)`, 'ok');
+      });
+    }catch(err){ toast('ملف النسخة غير صالح', 'err'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+$('#adSavePass').addEventListener('click', async () => {
+  const v = $('#adNewPass').value;
+  if(!v || v.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
+  currentUserObj.passHash = await sha256(v);
+  delete currentUserObj.password;
+  saveDB();
+  $('#adNewPass').value = '';
+  toast('تم تغيير كلمة مرور الأدمن', 'ok');
+});
+$('#adReset').addEventListener('click', () => {
+  confirmBox('إعادة ضبط شاملة', 'سيتم حذف كل المستخدمين والملفات والتقدم نهائياً. هل أنت متأكد؟', async () => {
+    try{ await IDB.clear(); }catch(e){}
+    DB.users = DB.users.filter(u => u.isAdmin);
+    DB.files = [];
+    saveDB();
+    Object.keys(localStorage).forEach(k => { if(k.startsWith(UD_KEY)) localStorage.removeItem(k); });
+    renderAdmin(); refreshAll();
+    toast('تمت إعادة الضبط', 'ok');
+  }, true);
+});
+
+/* ============================================================
+   15) الحماية والاختصارات
+============================================================ */
+const isEditable = el => {
+  if(!el) return false;
+  const tag = (el.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+};
+document.addEventListener('contextmenu', e => {
+  if($('#reader').classList.contains('open')){ e.preventDefault(); return; }
+  if(isEditable(e.target)) return; // السماح بالنسخ واللصق داخل الحقول
+  if(e.target.closest('.pdf-page')){ e.preventDefault(); }
+});
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  const readerOpen = $('#reader').classList.contains('open');
+  const editing = isEditable(e.target);
+
+  if(k === 'F12'){ e.preventDefault(); flashShield(); return false; }
+  if(e.ctrlKey && e.shiftKey && ['I','J','C','K','i','j','c','k'].includes(k)){ e.preventDefault(); flashShield(); return false; }
+  if(e.ctrlKey && !e.shiftKey && ['u','U','s','S','p','P'].includes(k)){ e.preventDefault(); flashShield(); return false; }
+
+  if(e.ctrlKey && (k === 'k' || k === 'K')){
+    e.preventDefault();
+    const s = $('#searchInput');
+    if(s && $('#app').classList.contains('open')){ s.focus(); s.select(); }
+    return;
+  }
+
+  if(readerOpen && !editing){
+    if(k === '+' || k === '='){ e.preventDefault(); setZoom(RS.zoom + 0.15); return; }
+    if(k === '-' || k === '_'){ e.preventDefault(); setZoom(RS.zoom - 0.15); return; }
+    if(k === 'ArrowLeft'){ e.preventDefault(); scrollToPage(RS.current + 1, true); return; }
+    if(k === 'ArrowRight'){ e.preventDefault(); scrollToPage(RS.current - 1, true); return; }
+    if(k === 'Home'){ e.preventDefault(); scrollToPage(1, true); return; }
+    if(k === 'End'){ e.preventDefault(); scrollToPage(RS.numPages, true); return; }
+  }
+
+  if(k === 'Escape'){
+    if($('#modal').classList.contains('open')){ $('#modal').classList.remove('open'); return; }
+    if(readerOpen){ closeReader(); return; }
+    const th = $('#rdThumbs'); if(th) th.classList.remove('open');
+    return;
+  }
+  if(editing) return;
+  if(e.ctrlKey || e.altKey || e.metaKey) return;
+  if(k === '1') go('home');
+  if(k === '2') go('files');
+  if(k === '3') go('progress');
+  if(k === '4') go('features');
+  if(k === '5') go('settings');
+  if(k === '6' && currentUserObj && currentUserObj.isAdmin) go('admin');
+});
+document.addEventListener('dragstart', e => { if($('#reader').classList.contains('open')) e.preventDefault(); });
+document.addEventListener('copy', e => {
+  if($('#reader').classList.contains('open') && !isEditable(e.target)){
+    e.preventDefault();
+    toast('النسخ غير مسموح داخل القارئ', 'warn');
+  }
+});
+document.addEventListener('cut', e => {
+  if($('#reader').classList.contains('open') && !isEditable(e.target)) e.preventDefault();
+});
+let shieldTimer = null;
+function flashShield(){
+  const s = $('#shield');
+  s.classList.add('on');
+  clearTimeout(shieldTimer);
+  shieldTimer = setTimeout(() => s.classList.remove('on'), 2200);
+}
+function devtoolsOpen(){
+  if(window.innerWidth <= 720) return false;
+  const wDiff = window.outerWidth - window.innerWidth;
+  const hDiff = window.outerHeight - window.innerHeight;
+  return (wDiff > 260 || hDiff > 280);
+}
+let shieldCheck = 0;
+setInterval(() => {
+  if(!$('#app').classList.contains('open')) return;
+  if(devtoolsOpen()){
+    shieldCheck++;
+    if(shieldCheck >= 2){ $('#shield').classList.add('on'); stopReadClock(); }
+  } else {
+    shieldCheck = 0;
+    $('#shield').classList.remove('on');
+    if($('#reader').classList.contains('open') && !RS.clockId) startReadClock();
+  }
+}, 1200);
+
+/* ============================================================
+   16) تحديث شامل
+============================================================ */
+function refreshAll(){
+  renderFiles();
+  renderHomeStats();
+  updateSidebar();
+  if($('#view-progress').classList.contains('active')) renderProgress();
+  checkBadges();
+}
+
+/* ============================================================
+   17) الإقلاع
+============================================================ */
+(function init(){
+  loadDB();
+  computeBaseWidth();
+
+  const existing = currentUser();
+  if(existing){
+    if(existing.isAdmin){
+      document.querySelectorAll('.admin-nav').forEach(el => el.style.display = 'flex');
+    }
+    enterApp();
+  } else {
+    $('#enterBtn').addEventListener('click', () => {
+      const w = $('#welcome');
+      w.classList.add('exit');
+      setTimeout(() => {
+        w.style.display = 'none';
+        showAuth();
+        showAuthForm('login');
+      }, 900);
+    });
+    document.addEventListener('keydown', function onEnter(e){
+      if(e.key === 'Enter' && $('#welcome').style.display !== 'none' && !$('#welcome').classList.contains('exit')){
+        $('#enterBtn').click();
+      }
+    });
+    applyTheme();
+  }
+
+  // إعادة تطبيق الثيم عند تغيير حجم الجوال
+  let rotTimer = null;
+  window.addEventListener('orientationchange', () => {
+    clearTimeout(rotTimer);
+    rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
+  });
+})();
+</script>
+</body>
+</html>
