@@ -3985,6 +3985,186 @@ function setupDrawUI(){
     wbResizeTimer = setTimeout(() => redrawWhiteboard(), 220);
   });
 }
+
+
+/* ===== PATCH: رفع الصورة الشخصية إلى Supabase Storage ===== */
+(function patchAvatarStorage(){
+  function publicUrl(path){
+    try{
+      const { data } = sb.storage.from('avatars').getPublicUrl(path);
+      return (data && data.publicUrl) ? data.publicUrl + '?t=' + Date.now() : '';
+    }catch(e){ return ''; }
+  }
+
+  // اجعل ستايل الصورة يقرأ من الرابط مباشرة
+  window.avatarStyleFor = function(p){
+    if(p && p.avatar_url) return "background-image:url('" + p.avatar_url + "')";
+    return '';
+  };
+
+  // رفع الصورة إلى Storage ثم حفظ الرابط في قاعدة البيانات
+  window.uploadAvatar = async function(file){
+    if(!file) return;
+    if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
+    if(!file.type.startsWith('image/')){ toast('اختر صورة صحيحة', 'warn'); return; }
+    if(file.size > 5 * 1024 * 1024){ toast('حجم الصورة كبير (الحد 5 ميجا)', 'warn'); return; }
+
+    const btn = document.getElementById('profileCamBtn');
+    if(btn) btn.disabled = true;
+    toast('جاري رفع الصورة...');
+
+    try{
+      // اضغط الصورة إلى 400×400 JPEG لتقليل الحجم
+      const blob = await resizeImageToBlob(file, 400, 0.85);
+      const ext = 'jpg';
+      const path = currentUserObj.id + '/avatar_' + Date.now() + '.' + ext;
+
+      // رفع الملف
+      const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: 'image/jpeg'
+      });
+      if(upErr){ toast('فشل رفع الصورة: ' + upErr.message, 'err'); if(btn) btn.disabled = false; return; }
+
+      // حاول نحذف الصور القديمة (اختياري - نتجاهل الأخطاء)
+      try{
+        const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
+        if(list && list.length){
+          const olds = list.filter(f => f.name !== path.split('/').pop()).map(f => currentUserObj.id + '/' + f.name);
+          if(olds.length) await sb.storage.from('avatars').remove(olds);
+        }
+      }catch(e){}
+
+      // احصل على الرابط العام
+      const url = publicUrl(path);
+
+      // احفظ الرابط في قاعدة البيانات
+      const { error: dbErr } = await sb.from('profiles').update({ avatar_url: url }).eq('id', currentUserObj.id);
+      if(dbErr){ toast('فشل حفظ الرابط: ' + dbErr.message, 'err'); if(btn) btn.disabled = false; return; }
+
+      currentUserObj.avatar_url = url;
+      applyUserUI();
+      renderProfile();
+      try{ updateMobileUserMenu(); }catch(e){}
+      toast('تم تحديث الصورة بنجاح ✓', 'ok');
+    }catch(e){
+      console.error(e);
+      toast('خطأ: ' + (e.message || 'غير معروف'), 'err');
+    }
+    if(btn) btn.disabled = false;
+  };
+
+  // حذف الصورة من Storage ومن قاعدة البيانات
+  window.removeAvatar = async function(){
+    if(!currentUserObj) return;
+    confirmBox('حذف الصورة', 'هل تريد حذف صورتك الشخصية؟', async () => {
+      try{
+        const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
+        if(list && list.length){
+          const paths = list.map(f => currentUserObj.id + '/' + f.name);
+          await sb.storage.from('avatars').remove(paths);
+        }
+      }catch(e){}
+      try{ await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUserObj.id); }catch(e){}
+      currentUserObj.avatar_url = null;
+      applyUserUI();
+      renderProfile();
+      try{ updateMobileUserMenu(); }catch(e){}
+      toast('تم حذف الصورة', 'ok');
+    }, true);
+  };
+
+  // حول الصورة إلى Blob مضغوط (JPEG)
+  window.resizeImageToBlob = function(file, maxSize, quality){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+          const w = Math.max(1, Math.round(img.width * ratio));
+          const h = Math.max(1, Math.round(img.height * ratio));
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', quality || 0.85);
+        };
+        img.onerror = () => reject(new Error('تعذّر قراءة الصورة'));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('تعذّر فتح الملف'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // قائمة الجوال تقرأ الصورة من الرابط
+  window.updateMobileUserMenu = function(){
+    if(!currentUserObj) return;
+    const nm = currentUserObj.name || '—';
+    const init = String(nm).trim().charAt(0) || '؟';
+    const avUrl = currentUserObj.avatar_url || '';
+    const avEl = document.getElementById('mumAvatar');
+    const mb = document.getElementById('mobileUserAvatar');
+    const dot = document.getElementById('mobileUserDot');
+    if(avEl){ avEl.textContent = avUrl ? '' : init; avEl.style.cssText = avUrl ? "background-image:url('" + avUrl + "')" : ''; }
+    if(mb){ mb.textContent = avUrl ? '' : init; mb.style.backgroundImage = avUrl ? "url('" + avUrl + "')" : ''; }
+    const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
+    const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
+    let badge = '';
+    if(currentUserObj.role === 'admin') badge = '<span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+    else if(currentUserObj.status === 'approved') badge = '<span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
+    else if(currentUserObj.status === 'pending') badge = '<span class="sub-badge pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+    else badge = '<span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626)"><i class="fas fa-ban"></i> غير مفعّل</span>';
+    const bd = document.getElementById('mumBadge'); if(bd) bd.innerHTML = badge;
+    if(dot){
+      dot.classList.remove('pending','off');
+      if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){ }
+      else if(currentUserObj.status === 'pending') dot.classList.add('pending');
+      else dot.classList.add('off');
+    }
+  };
+
+  // أعد ربط زر حذف الصورة بالدالة الجديدة
+  const rb = document.getElementById('profileRemoveAvatar');
+  if(rb){
+    const clone = rb.cloneNode(true);
+    rb.parentNode.replaceChild(clone, rb);
+    clone.addEventListener('click', function(){ window.removeAvatar(); });
+  }
+
+  // عند الدخول: لو فيه صورة قديمة مخزنة كـ base64 في قاعدة البيانات، نرفعها تلقائياً إلى Storage
+  window.migrateAvatarIfNeeded = async function(){
+    try{
+      if(!currentUserObj || !currentUserObj.avatar_url) return;
+      const u = currentUserObj.avatar_url;
+      if(!u.startsWith('data:')) return; // ليست base64، لا حاجة للترحيل
+      // حوّلها إلى blob وارفعها
+      const res = await fetch(u);
+      const blob = await res.blob();
+      const path = currentUserObj.id + '/avatar_' + Date.now() + '.jpg';
+      const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
+        cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
+      });
+      if(upErr) return;
+      const { data } = sb.storage.from('avatars').getPublicUrl(path);
+      const url = data && data.publicUrl ? data.publicUrl : '';
+      if(url){
+        await sb.from('profiles').update({ avatar_url: url }).eq('id', currentUserObj.id);
+        currentUserObj.avatar_url = url;
+        applyUserUI(); renderProfile(); updateMobileUserMenu();
+      }
+    }catch(e){ console.warn('avatar migration skipped', e); }
+  };
+  setTimeout(() => { try{ window.migrateAvatarIfNeeded(); }catch(e){} }, 1500);
+
+  // حدث الصور الحالية
+  try{ if(currentUserObj){ applyUserUI(); renderProfile(); updateMobileUserMenu(); } }catch(e){}
+})();
+
 </script>
 </body>
 </html>
