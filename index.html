@@ -34,7 +34,6 @@ body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!impor
 ::-webkit-scrollbar-thumb:hover{background:var(--primary);background-clip:content-box}
 input,textarea,select,button{font-family:inherit}
 
-/* ================= شاشة الترحيب ================= */
 #welcome{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;
   background:radial-gradient(900px 600px at 20% 20%,rgba(var(--primary-rgb),.35),transparent 60%),radial-gradient(800px 700px at 85% 80%,rgba(139,92,246,.3),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 45%,#080d22 100%);padding:16px}
 #welcome.exit{animation:wOut .9s cubic-bezier(.7,0,.3,1) forwards}
@@ -76,7 +75,6 @@ input,textarea,select,button{font-family:inherit}
 @keyframes glowPulse{0%,100%{box-shadow:0 14px 40px rgba(var(--primary-rgb),.5),inset 0 1px 0 rgba(255,255,255,.35)}50%{box-shadow:0 18px 55px rgba(139,92,246,.75),inset 0 1px 0 rgba(255,255,255,.35)}}
 .w-foot{margin-top:16px;font-size:.74rem;color:rgba(255,255,255,.42);animation:up .8s .75s cubic-bezier(.2,.8,.2,1) both}
 
-/* ================= شاشة الدخول ================= */
 #auth{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;
   background:radial-gradient(1000px 700px at 15% 15%,rgba(var(--primary-rgb),.3),transparent 60%),radial-gradient(900px 700px at 85% 85%,rgba(139,92,246,.25),transparent 60%),linear-gradient(160deg,#0a1029 0%,#131c44 50%,#080d22 100%);overflow:auto}
 #auth.open{display:flex}
@@ -118,8 +116,9 @@ input,textarea,select,button{font-family:inherit}
 .features-list li i{color:#a5b4ff;font-size:.75rem;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(var(--primary-rgb),.25);flex-shrink:0}
 .auth-back{position:absolute;top:18px;right:18px;font-size:.76rem;color:rgba(255,255,255,.6);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-family:inherit;font-weight:700;padding:7px 12px;border-radius:9px;transition:.2s;display:inline-flex;align-items:center;gap:6px;z-index:10}
 .auth-back:hover{background:rgba(255,255,255,.13);color:#fff}
+.forgot-link{display:block;text-align:center;font-size:.78rem;font-weight:700;color:#a5b4ff;text-decoration:none;margin-top:12px;cursor:pointer;transition:.2s;background:none;border:none;font-family:inherit;width:100%}
+.forgot-link:hover{color:#fff;text-decoration:underline}
 
-/* ================= التطبيق ================= */
 #app{display:none;height:100vh;width:100%}
 #app.open{display:flex;animation:appIn .55s cubic-bezier(.2,.85,.2,1)}
 @keyframes appIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
@@ -130,7 +129,7 @@ input,textarea,select,button{font-family:inherit}
 .brand-txt h2{font-size:1.02rem;font-weight:900;letter-spacing:-.3px;line-height:1.3}
 .brand-txt p{font-size:.7rem;color:var(--muted);font-weight:500}
 .user-card{background:linear-gradient(140deg,var(--primary-soft),transparent);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:11px}
-.user-avatar{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:1rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35)}
+.user-avatar{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:1rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35);background-size:cover;background-position:center}
 .user-info{flex:1;min-width:0}
 .user-info .nm{font-size:.86rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
 .user-info .em{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -370,7 +369,7 @@ input,textarea,select,button{font-family:inherit}
 .users-table .trow:hover{background:var(--card-2)}
 .users-table .trow:last-child{border-bottom:none}
 .trow .user-cell{display:flex;align-items:center;gap:11px;min-width:0}
-.trow .user-cell .av{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff}
+.trow .user-cell .av{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;background-size:cover;background-position:center}
 .trow .user-cell .info{min-width:0}
 .trow .user-cell b{font-size:.86rem;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trow .user-cell small{font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
@@ -581,6 +580,20 @@ input,textarea,select,button{font-family:inherit}
   .goal-wrap{justify-content:center;text-align:center}
   .goal-info{text-align:center}
   .set-card{padding:18px}
+  .mobile-user-btn{display:grid !important}
+  .wb-panel.open{position:absolute;inset:0;width:100%;z-index:26;border-right:none;border-radius:0}
+  .wb-panel{z-index:26}
+  .draw-bar{padding:7px 10px;gap:6px}
+  .dtool{width:34px;height:32px}
+  .color-dot{width:24px;height:24px}
+  .color-dots{gap:4px}
+  .size-dot{width:28px;height:28px}
+  .topbar{gap:10px;margin-bottom:18px}
+  .topbar h1{font-size:1.15rem}
+  .search-box{order:5;min-width:100%;padding:12px 15px;border-radius:16px;box-shadow:var(--shadow)}
+  .search-box input{font-size:1rem}
+  .top-actions{gap:8px}
+  .icon-btn{width:42px;height:42px;border-radius:13px}
 }
 @media (max-width:420px){
   .files-grid{grid-template-columns:1fr}
@@ -593,16 +606,7 @@ input,textarea,select,button{font-family:inherit}
 }
 @media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
 
-/* ============================================================
-   ★★★ إضافات جديدة: الرسم على الملف والصبورة البيضاء
-   ★★★ قائمة جوال المستخدم + نسيت كلمة المرور
-============================================================ */
-
-/* ---------- نسيت كلمة المرور ---------- */
-.forgot-link{display:block;text-align:center;font-size:.78rem;font-weight:700;color:#a5b4ff;text-decoration:none;margin-top:12px;cursor:pointer;transition:.2s;background:none;border:none;font-family:inherit;width:100%}
-.forgot-link:hover{color:#fff;text-decoration:underline}
-
-/* ---------- شريط أدوات الرسم ---------- */
+/* ===== الرسم ===== */
 .draw-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(100deg,var(--card-2),var(--card));border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .draw-bar::-webkit-scrollbar{display:none}
 .draw-bar.on{display:flex}
@@ -620,13 +624,9 @@ input,textarea,select,button{font-family:inherit}
 .size-dot i{display:block;background:var(--text);border-radius:50%}
 .size-dot.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px var(--primary-soft)}
 .size-dot.on i{background:var(--primary)}
-
-/* ---------- Canvas الرسم فوق صفحة PDF ---------- */
 .pdf-page .pg-draw{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:none}
 .reader-body.draw-on .pdf-page .pg-draw{pointer-events:auto;cursor:crosshair}
 .reader-body.draw-on .pdf-page{cursor:crosshair}
-
-/* ---------- الصبورة البيضاء ---------- */
 .wb-panel{width:0;flex-shrink:0;overflow:hidden;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s ease;position:relative}
 .wb-panel.open{width:min(460px,44%)}
 .wb-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
@@ -637,17 +637,15 @@ input,textarea,select,button{font-family:inherit}
 [data-theme="dark"] .wb-stage,[data-theme="dark"] .wb-canvas,[data-theme="dark"] .wb-panel{background:#161a24}
 .wb-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:.82rem;font-weight:700;pointer-events:none;text-align:center;padding:20px}
 .wb-empty i{font-size:2rem;opacity:.35}
-
-/* ---------- قائمة مستخدم الجوال ---------- */
 .mobile-user-btn{display:none !important;position:relative}
-.mobile-user-btn .avatar-mini{font-weight:900;font-size:.86rem}
+.mobile-user-btn .avatar-mini{font-weight:900;font-size:.86rem;background-size:cover;background-position:center;width:100%;height:100%;display:grid;place-items:center;border-radius:inherit}
 .mobile-user-btn .dot{position:absolute;top:6px;left:6px;width:9px;height:9px;border-radius:50%;background:var(--success);border:2px solid var(--card)}
 .mobile-user-btn .dot.pending{background:var(--accent)}
 .mobile-user-btn .dot.off{background:var(--danger)}
 .mobile-user-menu{position:fixed;top:72px;left:12px;width:280px;max-width:calc(100vw - 24px);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:16px;z-index:8500;display:none;animation:viewIn .25s ease}
 .mobile-user-menu.open{display:block}
 .mum-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px}
-.mum-avatar{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:1.1rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35)}
+.mum-avatar{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:1.1rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35);background-size:cover;background-position:center}
 .mum-info{min-width:0;flex:1}
 .mum-info b{display:block;font-size:.9rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mum-info small{display:block;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -659,28 +657,132 @@ input,textarea,select,button{font-family:inherit}
 .mum-btn.danger:hover{background:color-mix(in srgb,var(--danger) 12%,transparent);border-color:var(--danger);color:var(--danger)}
 .mum-btn i{width:18px;text-align:center}
 
+/* ============================================================
+   ★ جديد: قائمة المتصدرين + الملف الشخصي
+============================================================ */
+.lb-hero{background:linear-gradient(120deg,var(--primary) 0%,var(--primary-2) 55%,#a855f7 100%);border-radius:22px;padding:34px 38px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(var(--primary-rgb),.45)}
+.lb-hero::before{content:"";position:absolute;top:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
+.lb-hero::after{content:"";position:absolute;bottom:-100px;right:15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
+.lb-hero-in{position:relative;z-index:2;display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.lb-hero-txt{flex:1;min-width:250px}
+.lb-hero-txt .tag{display:inline-block;font-size:.76rem;font-weight:800;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:100px;margin-bottom:12px}
+.lb-hero-txt h2{font-size:clamp(1.3rem,2.5vw,1.75rem);font-weight:900;line-height:1.4;margin-bottom:10px;letter-spacing:-.5px}
+.lb-hero-txt p{font-size:.9rem;line-height:1.9;color:rgba(255,255,255,.85);max-width:520px}
+.lb-hero-count{display:flex;align-items:center;justify-content:center;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);flex-shrink:0;flex-direction:column}
+.lb-hero-count b{font-size:2.6rem;font-weight:900;line-height:1}
+.lb-hero-count span{font-size:.74rem;font-weight:700;color:rgba(255,255,255,.85);margin-top:4px}
+
+.lb-podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:26px;align-items:end}
+.lb-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:24px 16px 20px;text-align:center;box-shadow:var(--shadow);position:relative;transition:.35s cubic-bezier(.2,.8,.2,1);overflow:visible}
+.lb-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.lb-card.rank1{background:linear-gradient(160deg,#fffbe6 0%,#fff4bf 60%,#fde68a 100%);border:2px solid #f7b32b;box-shadow:0 24px 60px rgba(247,179,43,.4);transform:translateY(-16px);padding:34px 18px 24px}
+.lb-card.rank1:hover{transform:translateY(-22px)}
+[data-theme="dark"] .lb-card.rank1{background:linear-gradient(160deg,#2a2205 0%,#3d3108 60%,#4a3a08 100%);border-color:#f7b32b}
+.lb-card.rank2{background:linear-gradient(160deg,#f7f8fa 0%,#e8ecf3 100%);border:2px solid #c0c8d4;box-shadow:0 18px 44px rgba(192,200,212,.4)}
+[data-theme="dark"] .lb-card.rank2{background:linear-gradient(160deg,#1c222e 0%,#252c3a 100%)}
+.lb-card.rank3{background:linear-gradient(160deg,#fdf0e2 0%,#f5d9b8 100%);border:2px solid #cd7f32;box-shadow:0 18px 44px rgba(205,127,50,.35)}
+[data-theme="dark"] .lb-card.rank3{background:linear-gradient(160deg,#2a1e0f 0%,#3a2815 100%)}
+.lb-avatar-wrap{position:relative;width:86px;height:86px;margin:0 auto 12px;display:grid;place-items:center}
+.lb-card.rank1 .lb-avatar-wrap{width:118px;height:118px}
+.lb-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:2rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));border:4px solid var(--card);box-shadow:0 10px 26px rgba(0,0,0,.15);background-size:cover;background-position:center;overflow:hidden}
+.lb-card.rank1 .lb-avatar{border-color:#f7b32b;box-shadow:0 16px 40px rgba(247,179,43,.55)}
+.lb-card.rank2 .lb-avatar{border-color:#c0c8d4;box-shadow:0 12px 30px rgba(148,163,184,.4)}
+.lb-card.rank3 .lb-avatar{border-color:#cd7f32;box-shadow:0 12px 30px rgba(205,127,50,.4)}
+.lb-crown{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:2.4rem;color:#f7b32b;filter:drop-shadow(0 6px 14px rgba(247,179,43,.7));animation:crownFloat 2.6s ease-in-out infinite;z-index:3}
+@keyframes crownFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-5deg)}50%{transform:translateX(-50%) translateY(-7px) rotate(5deg)}}
+.lb-medal{position:absolute;bottom:-8px;right:-8px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:.9rem;color:#fff;border:3px solid var(--card);box-shadow:0 6px 14px rgba(0,0,0,.2);z-index:4}
+.lb-card.rank1 .lb-medal{background:linear-gradient(140deg,#f7b32b,#d97706);width:46px;height:46px;font-size:1.1rem;border-width:4px}
+.lb-card.rank2 .lb-medal{background:linear-gradient(140deg,#c0c8d4,#94a3b8)}
+.lb-card.rank3 .lb-medal{background:linear-gradient(140deg,#cd7f32,#a05a20)}
+.lb-name{font-size:1rem;font-weight:900;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.lb-card.rank1 .lb-name{font-size:1.2rem;color:#8a5a00}
+[data-theme="dark"] .lb-card.rank1 .lb-name{color:#f7b32b}
+.lb-xp{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;font-weight:900;padding:6px 14px;border-radius:100px;background:var(--primary-soft);color:var(--primary);margin-bottom:8px}
+.lb-card.rank1 .lb-xp{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff;font-size:1rem;box-shadow:0 6px 16px rgba(247,179,43,.5)}
+.lb-card.rank2 .lb-xp{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
+.lb-card.rank3 .lb-xp{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
+.lb-stats-mini{display:flex;justify-content:center;gap:10px;font-size:.7rem;color:var(--muted);font-weight:700;flex-wrap:wrap;margin-top:6px}
+.lb-stats-mini span{display:inline-flex;align-items:center;gap:4px}
+.lb-stats-mini i{color:var(--primary);font-size:.66rem}
+.lb-card.rank1 .lb-stats-mini{color:#8a5a00}
+[data-theme="dark"] .lb-card.rank1 .lb-stats-mini{color:#d4a548}
+
+.lb-list{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.lb-row{display:grid;grid-template-columns:60px 1fr auto auto auto;gap:14px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.22s}
+.lb-row:hover{background:var(--card-2)}
+.lb-row:last-child{border-bottom:none}
+.lb-row.me{background:linear-gradient(100deg,var(--primary-soft),transparent);border-right:4px solid var(--primary)}
+.lb-rank-num{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:1rem;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.lb-rank-num.g1{background:linear-gradient(140deg,#f7b32b,#d97706);color:#fff;border:none;box-shadow:0 6px 16px rgba(247,179,43,.4)}
+.lb-rank-num.g2{background:linear-gradient(140deg,#c0c8d4,#94a3b8);color:#fff;border:none}
+.lb-rank-num.g3{background:linear-gradient(140deg,#cd7f32,#a05a20);color:#fff;border:none}
+.lb-user-cell{display:flex;align-items:center;gap:11px;min-width:0}
+.lb-user-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;box-shadow:0 4px 12px rgba(0,0,0,.15);border:2px solid var(--card)}
+.lb-user-cell b{font-size:.9rem;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-user-cell small{font-size:.7rem;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-xp-cell{font-size:1rem;font-weight:900;color:var(--primary);white-space:nowrap;text-align:center}
+.lb-xp-cell small{display:block;font-size:.62rem;color:var(--muted);font-weight:700}
+.lb-badge-mini{font-size:.66rem;font-weight:800;padding:5px 11px;border-radius:100px;background:var(--primary-soft);color:var(--primary);white-space:nowrap}
+.lb-badge-mini.gold{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff}
+.lb-badge-mini.silver{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
+.lb-badge-mini.bronze{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
+.lb-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.lb-empty i{font-size:3rem;opacity:.35;color:var(--primary);margin-bottom:12px;display:block}
+.lb-empty h3{font-size:1.05rem;font-weight:800;margin-bottom:6px;color:var(--text)}
+.lb-empty p{font-size:.85rem}
+
 @media (max-width:720px){
-  .mobile-user-btn{display:grid !important}
-  .wb-panel.open{position:absolute;inset:0;width:100%;z-index:26;border-right:none;border-radius:0}
-  .wb-panel{z-index:26}
-  .draw-bar{padding:7px 10px;gap:6px}
-  .dtool{width:34px;height:32px}
-  .color-dot{width:24px;height:24px}
-  .color-dots{gap:4px}
-  .size-dot{width:28px;height:28px}
-  /* تحسين شريط البحث في الجوال */
-  .topbar{gap:10px;margin-bottom:18px}
-  .topbar h1{font-size:1.15rem}
-  .search-box{order:5;min-width:100%;padding:12px 15px;border-radius:16px;box-shadow:var(--shadow)}
-  .search-box input{font-size:1rem}
-  .top-actions{gap:8px}
-  .icon-btn{width:42px;height:42px;border-radius:13px}
+  .lb-podium{grid-template-columns:1fr;gap:14px}
+  .lb-card.rank1{transform:none;order:-1}
+  .lb-card.rank1:hover{transform:translateY(-4px)}
+  .lb-card{padding:18px 14px 16px}
+  .lb-avatar-wrap{width:72px;height:72px}
+  .lb-card.rank1 .lb-avatar-wrap{width:88px;height:88px}
+  .lb-row{grid-template-columns:48px 1fr auto;gap:10px;padding:12px 14px}
+  .lb-row .lb-xp-cell,.lb-row .lb-badge-mini{display:none}
+  .lb-rank-num{width:38px;height:38px;font-size:.85rem}
+  .lb-user-av{width:38px;height:38px;font-size:.85rem}
+  .lb-hero{padding:24px 20px}
+  .lb-hero-count{width:90px;height:90px}
+  .lb-hero-count b{font-size:2rem}
 }
+
+/* ===== الملف الشخصي ===== */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:960px;margin:0 auto}
+@media (max-width:820px){.profile-grid{grid-template-columns:1fr}}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 26px;box-shadow:var(--shadow);text-align:center;position:relative;overflow:hidden}
+.profile-card::before{content:"";position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(120deg,var(--primary),var(--primary-2));opacity:.14;pointer-events:none}
+.profile-avatar-wrap{position:relative;width:140px;height:140px;margin:0 auto 18px;z-index:2}
+.profile-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:3rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;border:5px solid var(--card);box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.profile-avatar:hover{transform:scale(1.03);box-shadow:0 20px 55px rgba(var(--primary-rgb),.55)}
+.profile-avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;display:grid;place-items:center;color:#fff;font-size:1.6rem;transition:.25s;border-radius:50%}
+.profile-avatar:hover .profile-avatar-overlay{opacity:1}
+.profile-cam{position:absolute;bottom:4px;left:4px;width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;display:grid;place-items:center;font-size:1rem;box-shadow:0 8px 20px rgba(var(--primary-rgb),.5);border:3px solid var(--card);cursor:pointer;transition:.25s;z-index:3}
+.profile-cam:hover{transform:scale(1.1) rotate(-8deg)}
+.profile-name-big{font-size:1.45rem;font-weight:900;margin-bottom:6px;position:relative;z-index:2}
+.profile-email-small{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:18px;position:relative;z-index:2;word-break:break-all}
+.profile-badges-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:relative;z-index:2}
+.profile-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;z-index:2}
+.profile-stat{text-align:center}
+.profile-stat b{display:block;font-size:1.5rem;font-weight:900;color:var(--primary);line-height:1}
+.profile-stat small{display:block;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:6px}
+.profile-form{display:flex;flex-direction:column;gap:14px;text-align:right;position:relative;z-index:2}
+.profile-form label{font-size:.82rem;font-weight:800;color:var(--muted);display:block;margin-bottom:6px}
+.profile-form input[type=text],.profile-form input[type=email]{width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:.25s}
+.profile-form input[type=text]:focus,.profile-form input[type=email]:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.profile-form input[type=email]:disabled{opacity:.7;cursor:not-allowed}
+.profile-actions{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.profile-tips{background:linear-gradient(140deg,var(--primary-soft),transparent);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:right;font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.85;margin-top:14px;position:relative;z-index:2}
+.profile-tips i{color:var(--primary);margin-left:6px}
+.profile-xp-card{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);margin-bottom:18px}
+.profile-xp-card .xp-num{font-size:2.6rem;font-weight:900;line-height:1;margin-bottom:6px}
+.profile-xp-card small{font-size:.8rem;opacity:.9;font-weight:700}
+.profile-xp-card .xp-breakdown{display:flex;justify-content:center;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.25);flex-wrap:wrap}
+.profile-xp-card .xp-breakdown span{font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:5px}
 </style>
 </head>
 <body>
 
-<!-- ================= شاشة الترحيب ================= -->
 <div id="welcome">
   <div class="blob b1"></div>
   <div class="blob b2"></div>
@@ -707,7 +809,7 @@ input,textarea,select,button{font-family:inherit}
       <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
       <div class="chip" style="animation-delay:.5s"><i class="fas fa-pen-ruler"></i> رسم وملاحظات</div>
       <div class="chip" style="animation-delay:.55s"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
-      <div class="chip" style="animation-delay:.6s"><i class="fas fa-bullseye"></i> هدف يومي</div>
+      <div class="chip" style="animation-delay:.6s"><i class="fas fa-trophy"></i> قائمة المتصدرين</div>
       <div class="chip" style="animation-delay:.65s"><i class="fas fa-palette"></i> ثيمات</div>
     </div>
     <button class="w-btn" id="enterBtn">ابدأ رحلتك <i class="fas fa-arrow-left"></i></button>
@@ -715,7 +817,6 @@ input,textarea,select,button{font-family:inherit}
   </div>
 </div>
 
-<!-- ================= شاشة الدخول ================= -->
 <div id="auth">
   <button class="auth-back" id="authBack"><i class="fas fa-arrow-right"></i> رجوع</button>
   <div class="auth-container">
@@ -761,14 +862,13 @@ input,textarea,select,button{font-family:inherit}
         <ul class="features-list">
           <li><i class="fas fa-check"></i> ارسم على الملف أو الصبورة البيضاء</li>
           <li><i class="fas fa-check"></i> تتبع تلقائي لتقدمك في كل ملف</li>
-          <li><i class="fas fa-check"></i> هدف يومي وسلسلة أيام وشارات تحفيزية</li>
+          <li><i class="fas fa-check"></i> قائمة متصدرين بنظام النقاط XP</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= التطبيق ================= -->
 <div id="app">
   <aside class="sidebar">
     <div class="brand">
@@ -787,6 +887,8 @@ input,textarea,select,button{font-family:inherit}
       <button class="nav-btn active" data-view="home"><span class="ic"><i class="fas fa-house"></i></span><span>الرئيسية</span></button>
       <button class="nav-btn" data-view="files"><span class="ic"><i class="fas fa-folder"></i></span><span>الملفات</span><span class="badge-n" id="navCount">0</span></button>
       <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
+      <button class="nav-btn" data-view="leaderboard"><span class="ic"><i class="fas fa-trophy"></i></span><span>المتصدرون</span></button>
+      <button class="nav-btn" data-view="profile"><span class="ic"><i class="fas fa-user-circle"></i></span><span>ملفي</span></button>
       <button class="nav-btn" data-view="features"><span class="ic"><i class="fas fa-wand-magic-sparkles"></i></span><span>المزايا</span></button>
       <button class="nav-btn" data-view="settings"><span class="ic"><i class="fas fa-gear"></i></span><span>الإعدادات</span></button>
       <button class="nav-btn admin-nav" data-view="admin" id="adminNav" style="display:none"><span class="ic"><i class="fas fa-shield-halved"></i></span><span>لوحة الأدمن</span></button>
@@ -821,7 +923,7 @@ input,textarea,select,button{font-family:inherit}
             <p>افتح أي ملف PDF وسيتابع النظام تقدمك تلقائياً مع كل صفحة تمرّ عليها.</p>
             <div class="hero-cta">
               <button class="btn-hero primary" onclick="go('files')"><i class="fas fa-book-open"></i> ابدأ المذاكرة</button>
-              <button class="btn-hero ghost" onclick="go('progress')"><i class="fas fa-chart-line"></i> شاهد تقدمك</button>
+              <button class="btn-hero ghost" onclick="go('leaderboard')"><i class="fas fa-trophy"></i> قائمة المتصدرين</button>
             </div>
           </div>
           <div class="hero-right">
@@ -972,6 +1074,96 @@ input,textarea,select,button{font-family:inherit}
 
       <div class="sec-title"><i class="fas fa-trophy" style="color:var(--accent)"></i> الشارات والإنجازات</div>
       <div class="badges-row" id="badgesAll"></div>
+    </section>
+
+    <!-- ★ جديد: قائمة المتصدرين -->
+    <section class="view" id="view-leaderboard">
+      <div class="lb-hero">
+        <div class="lb-hero-in">
+          <div class="lb-hero-txt">
+            <div class="tag"><i class="fas fa-trophy"></i> لوحة الشرف</div>
+            <h2>قائمة المتصدرين 🏆</h2>
+            <p>النقاط تُحسب من: الصفحات المقروءة (+٢ لكل صفحة) + الملفات المكتملة (+١٠٠) + جلسات التركيز (+٢٥). اجمع النقاط واحتلّ القمة!</p>
+          </div>
+          <div class="lb-hero-count"><b id="lbMyRank">—</b><span>ترتيبك</span></div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-medal" style="color:var(--accent)"></i> منصة التتويج <span class="sub">أفضل ٣ طلاب</span></div>
+      <div class="lb-podium" id="lbPodium"></div>
+
+      <div class="sec-title"><i class="fas fa-list-ol" style="color:var(--primary)"></i> كل المتصدرين</div>
+      <div class="lb-list" id="lbList"></div>
+    </section>
+
+    <!-- ★ جديد: الملف الشخصي -->
+    <section class="view" id="view-profile">
+      <div class="sec-title"><i class="fas fa-user-circle" style="color:var(--primary)"></i> ملفي الشخصي</div>
+      <div class="profile-grid">
+        <div class="profile-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profileAvatar">
+              <span id="profileAvatarText">؟</span>
+              <div class="profile-avatar-overlay"><i class="fas fa-camera"></i></div>
+            </div>
+            <button class="profile-cam" id="profileCamBtn" title="تغيير الصورة"><i class="fas fa-camera"></i></button>
+            <input type="file" id="avatarInput" accept="image/*" hidden>
+          </div>
+          <div class="profile-name-big" id="profileNameBig">—</div>
+          <div class="profile-email-small" id="profileEmailSmall">—</div>
+          <div class="profile-badges-row" id="profileBadgesRow"></div>
+          <div class="profile-stats-row">
+            <div class="profile-stat"><b id="pStatFiles">0</b><small>ملف مكتمل</small></div>
+            <div class="profile-stat"><b id="pStatSessions">0</b><small>جلسة تركيز</small></div>
+            <div class="profile-stat"><b id="pStatBadges">0</b><small>شارة</small></div>
+          </div>
+          <div class="profile-form">
+            <div>
+              <label><i class="fas fa-user" style="color:var(--primary);margin-left:4px"></i> الاسم الكامل</label>
+              <input type="text" id="profileNameInput" placeholder="اكتب اسمك" maxlength="40">
+            </div>
+            <div>
+              <label><i class="fas fa-envelope" style="color:var(--primary);margin-left:4px"></i> البريد الإلكتروني</label>
+              <input type="email" id="profileEmailInput" disabled>
+            </div>
+            <div class="profile-actions">
+              <button class="btn btn-primary" id="profileSaveBtn" style="flex:1"><i class="fas fa-floppy-disk"></i> حفظ التعديلات</button>
+              <button class="btn btn-ghost" id="profileRemoveAvatar"><i class="fas fa-trash"></i> حذف الصورة</button>
+            </div>
+            <div class="profile-tips">
+              <i class="fas fa-circle-info"></i> صورتك واسمك يظهران في القائمة الجانبية، قائمة الجوال، وقائمة المتصدرين.
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="profile-xp-card">
+            <div style="font-size:2.4rem;margin-bottom:6px"><i class="fas fa-star"></i></div>
+            <div class="xp-num" id="pXp">0</div>
+            <small>مجموع نقاط XP</small>
+            <div class="xp-breakdown">
+              <span><i class="fas fa-file-lines"></i> <b id="pXpPages">0</b> صفحة</span>
+              <span><i class="fas fa-book"></i> <b id="pXpFiles">0</b> ملف</span>
+              <span><i class="fas fa-stopwatch"></i> <b id="pXpSessions">0</b> جلسة</span>
+            </div>
+          </div>
+
+          <div class="card-basic">
+            <h3><i class="fas fa-award" style="color:var(--accent)"></i> شاراتك</h3>
+            <div class="badges-row" id="profileBadgesList"></div>
+          </div>
+
+          <div class="card-basic" style="margin-top:14px">
+            <h3><i class="fas fa-lightbulb" style="color:var(--accent)"></i> كيف أزيد نقاطي؟</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:.84rem;color:var(--muted);line-height:1.9;font-weight:600">
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> اقرأ صفحة جديدة = <b style="color:var(--primary)">+٢ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أنهِ ملفاً كاملاً = <b style="color:var(--primary)">+١٠٠ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أتمم جلسة تركيز = <b style="color:var(--primary)">+٢٥ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> احصل على شارة = <b style="color:var(--primary)">+١٥ نقطة</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="view" id="view-features">
@@ -1139,9 +1331,9 @@ input,textarea,select,button{font-family:inherit}
           <p>استخدم هذه الاختصارات للتنقل بسرعة.</p>
           <div class="set-row"><div class="lbl">فتح البحث</div><b style="color:var(--primary);direction:ltr">Ctrl + K</b></div>
           <div class="set-row"><div class="lbl">الرئيسية / الملفات / إنجازي</div><b style="color:var(--primary);direction:ltr">1 / 2 / 3</b></div>
-          <div class="set-row"><div class="lbl">المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">4 / 5</b></div>
+          <div class="set-row"><div class="lbl">المتصدرون / ملفي / المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">L / P / 4 / 5</b></div>
           <div class="set-row"><div class="lbl">القارئ: تكبير / تصغير</div><b style="color:var(--primary);direction:ltr">+ / -</b></div>
-          <div class="set-row"><div class="lbl">القارئ: صفحة تالية / سابقة</div><b style="color:var(--primary);direction:ltr">← / →</b></div>
+          <div class="set-row"><div class="lbl">القارئ: رسم / صبورة</div><b style="color:var(--primary);direction:ltr">P / W</b></div>
           <div class="set-row"><div class="lbl">إغلاق النافذة</div><b style="color:var(--primary);direction:ltr">Esc</b></div>
         </div>
 
@@ -1180,7 +1372,6 @@ input,textarea,select,button{font-family:inherit}
         <div class="users-table" id="usersTable"></div>
       </div>
 
-      <!-- ★ جديد: إضافة مستخدم -->
       <div class="admin-panel" id="panel-adduser">
         <div class="card-basic">
           <h3><i class="fas fa-user-plus"></i> إنشاء حساب مستخدم جديد</h3>
@@ -1246,7 +1437,6 @@ input,textarea,select,button{font-family:inherit}
   </main>
 </div>
 
-<!-- ================= القارئ ================= -->
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
@@ -1259,7 +1449,6 @@ input,textarea,select,button{font-family:inherit}
       <div class="rh-tools">
         <button class="rh-btn" id="rdFav" title="إضافة للمفضلة"><i class="far fa-star"></i></button>
         <button class="rh-btn" id="rdBookmark" title="علامة مرجعية"><i class="far fa-bookmark"></i></button>
-        <!-- ★ جديد: أزرار الرسم والصبورة -->
         <button class="rh-btn" id="rdDraw" title="الرسم على الملف"><i class="fas fa-pen"></i></button>
         <button class="rh-btn" id="rdWb" title="الصبورة البيضاء"><i class="fas fa-chalkboard"></i></button>
         <button class="rh-btn" id="rdThumbsBtn" title="قائمة الصفحات"><i class="fas fa-list-ul"></i></button>
@@ -1282,7 +1471,6 @@ input,textarea,select,button{font-family:inherit}
       <button class="tbtn" id="rdSnap" title="وضع الصفحة الواحدة"><i class="fas fa-scroll"></i> <span>مستمر</span></button>
     </div>
 
-    <!-- ★ جديد: شريط أدوات الرسم -->
     <div class="draw-bar" id="drawBar">
       <div class="draw-tools">
         <button class="dtool on" data-tool="pen" title="قلم"><i class="fas fa-pen"></i></button>
@@ -1311,7 +1499,6 @@ input,textarea,select,button{font-family:inherit}
         </div>
         <button class="reader-fab" id="rdTop" title="أعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
       </div>
-      <!-- ★ جديد: الصبورة البيضاء -->
       <aside class="wb-panel" id="wbPanel">
         <div class="wb-head">
           <b><i class="fas fa-chalkboard"></i> الصبورة البيضاء</b>
@@ -1340,7 +1527,6 @@ input,textarea,select,button{font-family:inherit}
   </div>
 </div>
 
-<!-- ★ جديد: قائمة مستخدم الجوال -->
 <div class="mobile-user-menu" id="mobileUserMenu">
   <div class="mum-head">
     <div class="mum-avatar" id="mumAvatar">؟</div>
@@ -1351,6 +1537,7 @@ input,textarea,select,button{font-family:inherit}
   </div>
   <div class="mum-badge" id="mumBadge"></div>
   <div class="mum-actions">
+    <button class="mum-btn" id="mumProfile"><i class="fas fa-user-circle"></i> ملفي الشخصي</button>
     <button class="mum-btn" id="mumSettings"><i class="fas fa-gear"></i> الإعدادات</button>
     <button class="mum-btn danger" id="mumLogout"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
   </div>
@@ -1383,37 +1570,28 @@ input,textarea,select,button{font-family:inherit}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
-   0) Supabase + أدوات مساعدة
+   0) Supabase + أدوات
 ============================================================ */
 const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ★ عميل مؤقت لإضافة مستخدمين من لوحة الأدمن بدون التأثير على الجلسة الحالية */
 const sbTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storageKey: 'sb-temp-signup-' + Date.now(),
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false
-  }
+  auth: { storageKey: 'sb-temp-signup-' + Date.now(), persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
 
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 if (window.pdfjsLib) {
-  try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  } catch(e){}
+  try { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch(e){}
 }
 
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function toast(msg, type=''){
-  const box = $('#toast');
-  if(!box) return;
+  const box = $('#toast'); if(!box) return;
   const el = document.createElement('div');
   el.className = 'toast-item ' + type;
   let ic = 'fa-circle-info';
@@ -1428,8 +1606,7 @@ function toast(msg, type=''){
 function beep(){
   try{
     if(!userData.sound) return;
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if(!Ctx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return;
     const ctx = new Ctx();
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = 'sine'; o.frequency.value = 880;
@@ -1441,14 +1618,8 @@ function beep(){
     setTimeout(()=>{ try{ctx.close();}catch(e){} }, 1200);
   }catch(e){}
 }
-function dayKey(d){
-  const dt = d || new Date();
-  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-}
-function fmtTime(s){
-  const m = Math.floor(Math.max(0,s)/60), ss = Math.max(0,s)%60;
-  return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
-}
+function dayKey(d){ const dt = d || new Date(); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
+function fmtTime(s){ const m = Math.floor(Math.max(0,s)/60), ss = Math.max(0,s)%60; return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0'); }
 function openModal({title, text, bodyHTML, okText, onOk, danger}){
   const m = $('#modal');
   $('#modalTitle').innerHTML = `<i class="fas ${danger?'fa-triangle-exclamation':'fa-circle-info'}"></i> <span>${escapeHtml(title||'')}</span>`;
@@ -1465,21 +1636,17 @@ function openModal({title, text, bodyHTML, okText, onOk, danger}){
   cancel.onclick = close;
   m.onclick = e => { if(e.target === m) close(); };
 }
-function confirmBox(title, text, onOk, danger){
-  openModal({title, text, okText: danger ? 'تأكيد الحذف' : 'تأكيد', onOk, danger});
-}
+function confirmBox(title, text, onOk, danger){ openModal({title, text, okText: danger ? 'تأكيد الحذف' : 'تأكيد', onOk, danger}); }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 /* ============================================================
-   1) الحالة العامة (Supabase كقاعدة البيانات)
+   1) الحالة العامة
 ============================================================ */
 let session = null;
-let currentUserObj = null;   // profile من Supabase
-let DB = { users: [], files: [] };  // cache
-let userData = null;          // { progress, opened, favs, badges, minutes, sessions, notes, tasks, theme, ... }
-let myProfileChannel = null;
-let filesChannel = null;
-let profilesChannel = null;
+let currentUserObj = null;
+let DB = { users: [], files: [] };
+let userData = null;
+let myProfileChannel = null, filesChannel = null, profilesChannel = null;
 
 function defaultUD(){
   return {
@@ -1489,16 +1656,11 @@ function defaultUD(){
     focus:25, brk:5, longBrk:15, autoStart:false, sound:true,
     goalPages:10, goalMinutes:30,
     readTheme:'light', snap:false, showMarks:true, defaultZoom:1, autoResume:true,
-    log:{}, streak:0,
-    drawings:{}   // ★ جديد: الرسومات على الملف والصبورة
+    log:{}, streak:0, drawings:{}
   };
 }
 function resetUD(){ userData = defaultUD(); }
-
-function prefsKey(){
-  if(!session) return 'abdq_prefs_guest';
-  return 'abdq_prefs_' + session.user.id;
-}
+function prefsKey(){ if(!session) return 'abdq_prefs_guest'; return 'abdq_prefs_' + session.user.id; }
 function savePrefs(){
   if(!session) return;
   const localOnly = {
@@ -1509,8 +1671,7 @@ function savePrefs(){
     goalPages: userData.goalPages, goalMinutes: userData.goalMinutes,
     readTheme: userData.readTheme, snap: userData.snap, showMarks: userData.showMarks,
     defaultZoom: userData.defaultZoom, autoResume: userData.autoResume,
-    log: userData.log, opened: userData.opened, minutes: userData.minutes,
-    sessions: userData.sessions
+    log: userData.log, opened: userData.opened, minutes: userData.minutes, sessions: userData.sessions
   };
   try{ localStorage.setItem(prefsKey(), JSON.stringify(localOnly)); }catch(e){}
 }
@@ -1535,7 +1696,7 @@ function loadPrefs(){
 }
 
 /* ============================================================
-   2) الثيمات والمظهر
+   2) الثيمات
 ============================================================ */
 const THEMES = [
   { id:'purple',  name:'بنفسجي', c1:'#5b6cff', c2:'#8b5cf6', rgb:'91,108,255' },
@@ -1590,8 +1751,7 @@ function applyTheme(){
   syncSettingsUI();
 }
 function renderThemesGrid(){
-  const grid = $('#themesGrid');
-  if(!grid) return;
+  const grid = $('#themesGrid'); if(!grid) return;
   grid.innerHTML = THEMES.map(t => `
     <div class="theme-swatch ${t.id === userData.theme ? 'on' : ''}" data-theme-id="${t.id}">
       <div class="sw-bg" style="--c1:${t.c1};--c2:${t.c2}"></div>
@@ -1608,22 +1768,14 @@ function renderThemesGrid(){
 }
 function syncSettingsUI(){
   const q = id => document.getElementById(id);
-  const modeSeg = q('modeSeg');
-  if(modeSeg) modeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === userData.darkMode));
-  const fontSeg = q('fontSeg');
-  if(fontSeg) fontSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.f) === userData.font));
-  const readSeg = q('readThemeSeg');
-  if(readSeg) readSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === userData.readTheme));
-  const snapSeg = q('snapSeg');
-  if(snapSeg) snapSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === '1') === !!userData.snap));
-  const zoomSeg = q('zoomSeg');
-  if(zoomSeg) zoomSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.z) === (userData.defaultZoom||1)));
-  const focusSeg = q('focusSeg');
-  if(focusSeg) focusSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.focus||25)));
-  const brkSeg = q('breakSeg');
-  if(brkSeg) brkSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.brk||5)));
-  const longSeg = q('longSeg');
-  if(longSeg) longSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.longBrk||15)));
+  const modeSeg = q('modeSeg'); if(modeSeg) modeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === userData.darkMode));
+  const fontSeg = q('fontSeg'); if(fontSeg) fontSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.f) === userData.font));
+  const readSeg = q('readThemeSeg'); if(readSeg) readSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === userData.readTheme));
+  const snapSeg = q('snapSeg'); if(snapSeg) snapSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === '1') === !!userData.snap));
+  const zoomSeg = q('zoomSeg'); if(zoomSeg) zoomSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.z) === (userData.defaultZoom||1)));
+  const focusSeg = q('focusSeg'); if(focusSeg) focusSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.focus||25)));
+  const brkSeg = q('breakSeg'); if(brkSeg) brkSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.brk||5)));
+  const longSeg = q('longSeg'); if(longSeg) longSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.m,10) === (userData.longBrk||15)));
   const sa = q('setAnim'); if(sa) sa.checked = !!userData.reduceMotion;
   const sm = q('setMarks'); if(sm) sm.checked = !!userData.showMarks;
   const sr = q('setResume'); if(sr) sr.checked = !!userData.autoResume;
@@ -1645,12 +1797,14 @@ $('#themeBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   3) التنقل العام
+   3) التنقل
 ============================================================ */
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
   files:['الملفات','مكتبتك التعليمية الكاملة'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
+  leaderboard:['قائمة المتصدرين','ترتيب الطلاب حسب نقاط XP'],
+  profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
   features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
@@ -1667,6 +1821,8 @@ function go(view){
   if(view === 'progress') renderProgress();
   if(view === 'admin') renderAdmin();
   if(view === 'files') renderFiles();
+  if(view === 'leaderboard') renderLeaderboard();
+  if(view === 'profile') renderProfile();
 }
 $$('.nav-btn').forEach(btn => btn.addEventListener('click', () => go(btn.dataset.view)));
 
@@ -1694,31 +1850,16 @@ function todayLog(){
   if(typeof e.sessions !== 'number') e.sessions = 0;
   return e;
 }
-function addPagesToday(n){
-  if(!n) return;
-  const e = todayLog();
-  e.pages += n;
-  savePrefs();
-}
-function addMinutesToday(n){
-  if(!n) return;
-  const e = todayLog();
-  e.min += n;
-  userData.minutes += n;
-  savePrefs();
-}
+function addPagesToday(n){ if(!n) return; const e = todayLog(); e.pages += n; savePrefs(); }
+function addMinutesToday(n){ if(!n) return; const e = todayLog(); e.min += n; userData.minutes += n; savePrefs(); }
 function computeStreak(){
   let streak = 0;
   const d = new Date();
-  const todayHas = (() => {
-    const e = userData.log[dayKey(d)];
-    return e && (e.min >= 1 || e.pages > 0);
-  })();
+  const todayHas = (() => { const e = userData.log[dayKey(d)]; return e && (e.min >= 1 || e.pages > 0); })();
   if(!todayHas) d.setDate(d.getDate() - 1);
   for(let i = 0; i < 400; i++){
     const e = userData.log[dayKey(d)];
-    if(e && (e.min >= 1 || e.pages > 0)){ streak++; d.setDate(d.getDate() - 1); }
-    else break;
+    if(e && (e.min >= 1 || e.pages > 0)){ streak++; d.setDate(d.getDate() - 1); } else break;
   }
   userData.streak = streak;
   return streak;
@@ -1781,6 +1922,7 @@ function renderBadges(){
     </div>`).join('');
   const h = $('#badgesHome'); if(h) h.innerHTML = html;
   const a = $('#badgesAll'); if(a) a.innerHTML = html;
+  const p = $('#profileBadgesList'); if(p) p.innerHTML = html;
 }
 
 /* ============================================================
@@ -1820,8 +1962,7 @@ function fileCard(f){
     </div>
   </div>`;
 }
-let fileFilter = 'all';
-let fileSort = 'new';
+let fileFilter = 'all', fileSort = 'new';
 
 function renderFiles(){
   const q = ($('#searchInput') ? $('#searchInput').value : '').trim().toLowerCase();
@@ -1835,13 +1976,10 @@ function renderFiles(){
   else if(fileSort === 'alpha') list.sort((a,b)=> String(a.title).localeCompare(String(b.title), 'ar'));
   else if(fileSort === 'progress') list.sort((a,b)=> getPct(b.id) - getPct(a.id));
 
-  const grid = $('#filesGrid');
-  if(!grid) return;
+  const grid = $('#filesGrid'); if(!grid) return;
   if(!list.length){
     grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>${q || fileFilter !== 'all' ? 'لا توجد نتائج مطابقة' : 'لا توجد ملفات بعد'}</h3><p>${q || fileFilter !== 'all' ? 'جرّب تغيير البحث أو التصنيف' : 'سيتم رفع الملفات من لوحة الأدمن'}</p></div></div>`;
-  } else {
-    grid.innerHTML = list.map(fileCard).join('');
-  }
+  } else grid.innerHTML = list.map(fileCard).join('');
   renderRecent();
   const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
   renderSubBanners();
@@ -1851,24 +1989,14 @@ function renderRecent(){
   const list = recent.length ? recent : DB.files.slice(0, 4);
   const box = $('#recentFiles');
   if(box) box.innerHTML = list.length ? list.map(fileCard).join('') :
-    '<div style="grid-column:1/-1"><div class="admin-empty" style="padding:40px 20px"><div class="em-ic"><i class="fas fa-folder-open"></i></div><h3>لا توجد ملفات بعد</h3><p>سيتم رفع الملفات من لوحة الأدمن</p></div></div>';
+    '<div style="grid-column:1/-1"><div class="admin-empty" style="padding:40px 20px"><div class="em-ic"><i class="fas fa-folder-open"></i></div><h3>لا توجد ملفات بعد</h3></div></div>';
 }
 function renderSubBanners(){
   const bannerHTML = !isSubscribed() ? (() => {
     if(isPending()){
-      return `<div class="subscribe-wall">
-        <div class="sw-icon"><i class="fas fa-hourglass-half"></i></div>
-        <h3>طلبك قيد المراجعة</h3>
-        <p>تم إرسال طلب اشتراكك بنجاح. سيتم تفعيل حسابك من قبل الأدمن قريباً — والصفحة ستُحدّث تلقائياً عند الموافقة.</p>
-        <div class="sw-status"><i class="fas fa-clock"></i> بانتظار الموافقة</div>
-      </div>`;
+      return `<div class="subscribe-wall"><div class="sw-icon"><i class="fas fa-hourglass-half"></i></div><h3>طلبك قيد المراجعة</h3><p>تم إرسال طلب اشتراكك بنجاح. سيتم تفعيل حسابك من قبل الأدمن قريباً.</p><div class="sw-status"><i class="fas fa-clock"></i> بانتظار الموافقة</div></div>`;
     }
-    return `<div class="subscribe-wall">
-      <div class="sw-icon"><i class="fas fa-lock"></i></div>
-      <h3>حسابك بحاجة إلى اشتراك</h3>
-      <p>لتصفّح الملفات ومتابعة تقدمك، يجب تفعيل اشتراكك من قبل الأدمن.</p>
-      <div class="sw-status"><i class="fas fa-ban"></i> الوصول غير متاح</div>
-    </div>`;
+    return `<div class="subscribe-wall"><div class="sw-icon"><i class="fas fa-lock"></i></div><h3>حسابك بحاجة إلى اشتراك</h3><p>لتصفّح الملفات ومتابعة تقدمك، يجب تفعيل اشتراكك من قبل الأدمن.</p><div class="sw-status"><i class="fas fa-ban"></i> الوصول غير متاح</div></div>`;
   })() : '';
   const hb = $('#homeSubBanner'); if(hb) hb.innerHTML = bannerHTML;
   const fb = $('#filesSubBanner'); if(fb) fb.innerHTML = bannerHTML;
@@ -1896,16 +2024,10 @@ const RS = {
 };
 let currentFile = null;
 const rdBody = $('#rdBody');
-
 function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
-function pageHeight(i){
-  const d = RS.dims[i];
-  if(!d) return 600;
-  return Math.round(d.h * (pageWidth() / d.w));
-}
+function pageHeight(i){ const d = RS.dims[i]; if(!d) return 600; return Math.round(d.h * (pageWidth() / d.w)); }
 function showLoading(txt, pct){
-  const l = $('#rdLoading');
-  if(!l) return;
+  const l = $('#rdLoading'); if(!l) return;
   l.style.display = 'flex';
   if(txt) $('#rdLoadingTxt').textContent = txt;
   if(typeof pct === 'number') $('#rdLoadingBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
@@ -1917,34 +2039,25 @@ async function openFile(id){
   if(!isSubscribed()){ showLockMessage(); return; }
   const f = DB.files.find(x => x.id === id);
   if(!f) return;
-
-  currentFile = f;
-  RS.file = f;
+  currentFile = f; RS.file = f;
   userData.opened = [id, ...userData.opened.filter(x => x !== id)].slice(0, 14);
   savePrefs();
-
   const icon = f.icon || 'fa-file-pdf';
   const color = f.color || '#5b6cff';
   $('#rdIcon').innerHTML = `<i class="fas ${icon}" style="color:${color}"></i>`;
   $('#rdIcon').style.background = `color-mix(in srgb, ${color} 16%, transparent)`;
   $('#rdTitle').textContent = f.title;
   $('#rdMeta').textContent = `PDF • ${f.category}${f.important ? ' • مهم' : ''}`;
-  updateFavBtn();
-  updateBookmarkBtn();
+  updateFavBtn(); updateBookmarkBtn();
   $('#reader').classList.add('open');
   document.body.style.overflow = 'hidden';
-  applyReaderTheme();
-  applySnapClass();
-
-  RS.token++;
-  const token = RS.token;
+  applyReaderTheme(); applySnapClass();
+  RS.token++; const token = RS.token;
   teardownReader(false);
   showLoading('جاري تحميل الملف من السحابة...', 10);
   $('#rdStage').innerHTML = '';
   RS.baseWidth = Math.max(220, Math.min(980, rdBody.clientWidth - 30));
-
   try{
-    // تنزيل من Supabase Storage
     const { data: blob, error } = await sb.storage.from('pdfs').download(f.storage_path);
     if(error) throw new Error(error.message);
     if(token !== RS.token) return;
@@ -1952,14 +2065,11 @@ async function openFile(id){
     const ab = await blob.arrayBuffer();
     const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true }).promise;
     if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
-
-    RS.doc = doc;
-    RS.numPages = doc.numPages;
+    RS.doc = doc; RS.numPages = doc.numPages;
     if(f.page_count !== RS.numPages){ f.page_count = RS.numPages; }
     $('#rdMeta').textContent = `PDF • ${f.category} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
     $('#rdPagesTotal').textContent = RS.numPages;
     $('#rdPageInput').max = RS.numPages;
-
     RS.dims = new Array(RS.numPages);
     const batch = 12;
     for(let i = 0; i < RS.numPages; i += batch){
@@ -1969,21 +2079,14 @@ async function openFile(id){
       const pages = await Promise.all(nums.map(n => doc.getPage(n).catch(()=>null)));
       pages.forEach((p, k) => {
         const idx = i + k;
-        if(p){
-          const vp = p.getViewport({ scale: 1 });
-          RS.dims[idx] = { w: vp.width, h: vp.height };
-          try{ p.cleanup(); }catch(e){}
-        } else {
-          RS.dims[idx] = { w: 612, h: 792 };
-        }
+        if(p){ const vp = p.getViewport({ scale: 1 }); RS.dims[idx] = { w: vp.width, h: vp.height }; try{ p.cleanup(); }catch(e){} }
+        else RS.dims[idx] = { w: 612, h: 792 };
       });
       showLoading('جاري تجهيز الصفحات...', 30 + Math.round((i / RS.numPages) * 60));
     }
-
     if(token !== RS.token) return;
     buildPages();
     hideLoading();
-
     const prog = userData.progress[id];
     let startPage = 1;
     if(userData.autoResume && prog && typeof prog === 'object'){
@@ -1994,30 +2097,15 @@ async function openFile(id){
     RS.current = startPage;
     $('#rdPageInput').value = startPage;
     renderThumbs();
-    if(startPage > 1){
-      RS.restoring = true;
-      scrollToPage(startPage, false);
-      setTimeout(()=>{ RS.restoring = false; }, 500);
-    }
+    if(startPage > 1){ RS.restoring = true; scrollToPage(startPage, false); setTimeout(()=>{ RS.restoring = false; }, 500); }
     updateReaderUI();
-
-    if(!userData.badges.includes('first')){
-      userData.badges.push('first'); savePrefs();
-      setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700);
-      renderBadges();
-    }
+    if(!userData.badges.includes('first')){ userData.badges.push('first'); savePrefs(); setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700); renderBadges(); }
     startReadClock();
     refreshAll();
-    // ★ استئناف الرسومات والصبورة إن وُجدت
     try{ refreshDrawSurface(); }catch(e){}
   }catch(err){
-    console.error(err);
-    hideLoading();
-    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex">
-      <i class="fas fa-circle-exclamation" style="color:var(--danger)"></i>
-      <p>تعذّر تحميل الملف</p>
-      <small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small>
-    </div>`;
+    console.error(err); hideLoading();
+    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex"><i class="fas fa-circle-exclamation" style="color:var(--danger)"></i><p>تعذّر تحميل الملف</p><small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small></div>`;
     toast('تعذّر تحميل الملف: ' + err.message, 'err');
   }
 }
@@ -2025,27 +2113,18 @@ window.openFile = openFile;
 
 function teardownReader(closeUI){
   try{ if(RS.observer){ RS.observer.disconnect(); RS.observer = null; } }catch(e){}
-  RS.rendered.clear();
-  RS.rendering.clear();
-  RS.inView.clear();
-  RS.pageEls = [];
-  RS.offsets = [];
+  RS.rendered.clear(); RS.rendering.clear(); RS.inView.clear();
+  RS.pageEls = []; RS.offsets = [];
   stopReadClock();
   if(closeUI){
     if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
-    RS.doc = null;
-    RS.file = null;
-    RS.numPages = 0;
-    RS.dims = [];
-    currentFile = null;
+    RS.doc = null; RS.file = null; RS.numPages = 0; RS.dims = []; currentFile = null;
   }
 }
 function buildPages(){
   const stage = $('#rdStage');
-  stage.innerHTML = '';
-  RS.pageEls = [];
+  stage.innerHTML = ''; RS.pageEls = [];
   stage.style.width = pageWidth() + 'px';
-
   const frag = document.createDocumentFragment();
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
@@ -2053,15 +2132,10 @@ function buildPages(){
     el.dataset.page = String(i + 1);
     el.style.width = pageWidth() + 'px';
     el.style.height = pageHeight(i) + 'px';
-    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div>
-      <div class="pg-inner"></div>
-      <div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
-    frag.appendChild(el);
-    RS.pageEls.push(el);
+    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
+    frag.appendChild(el); RS.pageEls.push(el);
   }
   stage.appendChild(frag);
-
-  // ★ إضافة canvas الرسم لكل صفحة
   RS.pageEls.forEach((el, i) => {
     const c = document.createElement('canvas');
     c.className = 'pg-draw';
@@ -2069,23 +2143,15 @@ function buildPages(){
     el.appendChild(c);
     attachPdfDrawEvents(c, i + 1);
   });
-
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
-      if(en.isIntersecting){
-        RS.inView.add(idx);
-        renderPage(idx);
-      } else {
-        RS.inView.delete(idx);
-      }
+      if(en.isIntersecting){ RS.inView.add(idx); renderPage(idx); } else RS.inView.delete(idx);
     });
   }, { root: rdBody, rootMargin: '800px 0px' });
-
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
-  // ★ ارسم الرسومات المحفوظة على الصفحات
   requestAnimationFrame(() => redrawAllPdfDrawings());
 }
 function computeOffsets(){ RS.offsets = RS.pageEls.map(el => el.offsetTop); }
@@ -2107,8 +2173,7 @@ async function renderPage(num){
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.floor(vp.width));
     canvas.height = Math.max(1, Math.floor(vp.height));
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
+    canvas.style.width = '100%'; canvas.style.height = '100%';
     const ctx = canvas.getContext('2d', { alpha:false });
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     if(token !== RS.token) return;
@@ -2147,32 +2212,24 @@ function rebuildPageSizes(){
   const stage = $('#rdStage');
   if(stage) stage.style.width = pageWidth() + 'px';
   computeOffsets();
-  RS.pageEls.forEach((el, i) => {
-    const n = i + 1;
-    if(RS.inView.has(n)) renderPage(n);
-  });
-  // ★ إعادة رسم الرسومات بالحجم الجديد
+  RS.pageEls.forEach((el, i) => { const n = i + 1; if(RS.inView.has(n)) renderPage(n); });
   requestAnimationFrame(() => redrawAllPdfDrawings());
 }
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
-  const el = RS.pageEls[num - 1];
-  if(!el) return;
+  const el = RS.pageEls[num - 1]; if(!el) return;
   const top = el.offsetTop - 8;
   try{ rdBody.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' }); }
   catch(e){ rdBody.scrollTop = top; }
   RS.current = num;
   $('#rdPageInput').value = num;
-  updateReaderUI();
-  highlightThumb(num);
+  updateReaderUI(); highlightThumb(num);
 }
 function pageFromScroll(){
   const st = rdBody.scrollTop + 60;
   let page = 1;
   const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
-  for(let i = 0; i < offs.length; i++){
-    if(offs[i] <= st) page = i + 1; else break;
-  }
+  for(let i = 0; i < offs.length; i++){ if(offs[i] <= st) page = i + 1; else break; }
   return page;
 }
 function updateReaderUI(){
@@ -2182,13 +2239,8 @@ function updateReaderUI(){
   $('#rdPageInfo').textContent = `الصفحة ${RS.current} من ${RS.numPages}`;
   $('#rdBarTop').style.width = pct + '%';
   const btn = $('#rdComplete');
-  if(pct >= 100){
-    btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف';
-    btn.classList.add('achieved');
-  } else {
-    btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف';
-    btn.classList.remove('achieved');
-  }
+  if(pct >= 100){ btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف'; btn.classList.add('achieved'); }
+  else { btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف'; btn.classList.remove('achieved'); }
   const fab = $('#rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
 }
@@ -2198,45 +2250,29 @@ rdBody.addEventListener('scroll', () => {
   const fab = $('#rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
   if(scrollTick) return;
-  scrollTick = requestAnimationFrame(() => {
-    scrollTick = null;
-    handleReaderScroll();
-  });
+  scrollTick = requestAnimationFrame(() => { scrollTick = null; handleReaderScroll(); });
 }, { passive:true });
 
 function handleReaderScroll(){
   if(!RS.doc || !RS.file || !RS.numPages) return;
   const page = pageFromScroll();
-  if(page !== RS.current){
-    RS.current = page;
-    $('#rdPageInput').value = page;
-    highlightThumb(page);
-  }
+  if(page !== RS.current){ RS.current = page; $('#rdPageInput').value = page; highlightThumb(page); }
   const oldPct = getPct(RS.file.id);
   const oldMax = getMaxPage(RS.file.id);
   const pct = Math.round((page / RS.numPages) * 100);
   const newPct = Math.max(oldPct, pct);
   const newMax = Math.max(oldMax, page);
-
   const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  userData.progress[RS.file.id] = Object.assign({}, prev, {
-    pct: newPct, maxPage: newMax, lastPage: page, at: Date.now()
-  });
-  if(newMax > oldMax) addPagesToday(newMax - oldMax);
-  else savePrefs();
-
+  userData.progress[RS.file.id] = Object.assign({}, prev, { pct: newPct, maxPage: newMax, lastPage: page, at: Date.now() });
+  if(newMax > oldMax) addPagesToday(newMax - oldMax); else savePrefs();
   scheduleProgressSync(RS.file.id, newPct, newMax, page);
-
-  updateReaderUI();
-  updateSidebar();
-  renderHomeStats();
+  updateReaderUI(); updateSidebar(); renderHomeStats();
   if(newPct >= 100 && oldPct < 100) toast('أكملت الملف بالكامل!', 'ok');
   checkBadges();
   if(!RS.restoring) cleanupFarPages();
 }
 
-let progressSyncTimer = null;
-let progressSyncQueue = {};
+let progressSyncTimer = null, progressSyncQueue = {};
 function scheduleProgressSync(fileId, pct, maxPage, lastPage){
   progressSyncQueue[fileId] = { pct, max_page: maxPage, last_page: lastPage };
   clearTimeout(progressSyncTimer);
@@ -2245,61 +2281,52 @@ function scheduleProgressSync(fileId, pct, maxPage, lastPage){
 async function flushProgressSync(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
   const rows = Object.keys(progressSyncQueue).map(fid => ({
-    user_id: currentUserObj.id,
-    file_id: fid,
-    pct: progressSyncQueue[fid].pct,
-    max_page: progressSyncQueue[fid].max_page,
-    last_page: progressSyncQueue[fid].last_page,
+    user_id: currentUserObj.id, file_id: fid,
+    pct: progressSyncQueue[fid].pct, max_page: progressSyncQueue[fid].max_page, last_page: progressSyncQueue[fid].last_page,
     updated_at: new Date().toISOString()
   }));
   progressSyncQueue = {};
   if(!rows.length) return;
   const { error } = await sb.from('user_progress').upsert(rows, { onConflict: 'user_id,file_id' });
   if(error) console.warn('progress sync failed', error);
+  // حدّث نقطة XP في الملف الشخصي
+  try{ syncMyXp(); }catch(e){}
 }
 
 function updateFavBtn(){
-  const b = $('#rdFav');
-  if(!b || !RS.file) return;
+  const b = $('#rdFav'); if(!b || !RS.file) return;
   const on = userData.favs.includes(RS.file.id);
   b.classList.toggle('on', on);
   b.innerHTML = `<i class="${on ? 'fas' : 'far'} fa-star"></i>`;
 }
 function updateBookmarkBtn(){
-  const b = $('#rdBookmark');
-  if(!b || !RS.file) return;
+  const b = $('#rdBookmark'); if(!b || !RS.file) return;
   const p = userData.progress[RS.file.id];
   const has = p && typeof p === 'object' && p.bookmark;
   b.classList.toggle('on', !!has);
   b.innerHTML = `<i class="${has ? 'fas' : 'far'} fa-bookmark"></i>`;
 }
 function applyReaderTheme(){
-  const body = $('#rdBody');
-  if(!body) return;
+  const body = $('#rdBody'); if(!body) return;
   body.classList.remove('read-light','read-sepia','read-dark');
   body.classList.add('read-' + (userData.readTheme || 'light'));
   applyMarksVisibility();
 }
 function applySnapClass(){
-  const body = $('#rdBody');
-  if(!body) return;
+  const body = $('#rdBody'); if(!body) return;
   body.classList.toggle('snap', !!userData.snap);
   const btn = $('#rdSnap');
   if(btn) btn.innerHTML = `<i class="fas fa-scroll"></i> <span>${userData.snap ? 'صفحة واحدة' : 'مستمر'}</span>`;
 }
 function applyMarksVisibility(){
-  const body = $('#rdBody');
-  if(!body) return;
+  const body = $('#rdBody'); if(!body) return;
   body.classList.toggle('hide-marks', !userData.showMarks);
 }
 function renderThumbs(){
-  const box = $('#rdThumbs');
-  if(!box) return;
+  const box = $('#rdThumbs'); if(!box) return;
   if(!RS.numPages){ box.innerHTML = ''; return; }
   let html = '';
-  for(let i = 1; i <= RS.numPages; i++){
-    html += `<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
-  }
+  for(let i = 1; i <= RS.numPages; i++) html += `<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
   box.innerHTML = html;
   box.querySelectorAll('.thumb-btn').forEach(b => {
     b.addEventListener('click', () => {
@@ -2309,8 +2336,7 @@ function renderThumbs(){
   });
 }
 function highlightThumb(n){
-  const box = $('#rdThumbs');
-  if(!box) return;
+  const box = $('#rdThumbs'); if(!box) return;
   box.querySelectorAll('.thumb-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.p,10) === n));
 }
 function startReadClock(){
@@ -2321,16 +2347,13 @@ function startReadClock(){
     addMinutesToday(0.5);
   }, 30000);
 }
-function stopReadClock(){
-  if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; }
-}
+function stopReadClock(){ if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; } }
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){ savePrefs(); flushProgressSync(); saveDrawings(); }
 });
 
 function closeReader(){
   if(!$('#reader').classList.contains('open')) return;
-  // ★ تنظيف وضع الرسم والصبورة قبل الإغلاق
   try{
     DRAW.active = false; DRAW.wb = false; DRAW.drawing = false; DRAW.current = null;
     saveDrawings();
@@ -2340,7 +2363,6 @@ function closeReader(){
     const wbtn = $('#rdWb'); if(wbtn) wbtn.classList.remove('on');
     if(rdBody) rdBody.classList.remove('draw-on');
   }catch(e){}
-
   RS.token++;
   const id = RS.file ? RS.file.id : null;
   const page = RS.current;
@@ -2357,27 +2379,19 @@ function closeReader(){
   $('#rdThumbs').innerHTML = '';
   $('#rdThumbs').classList.remove('open');
   hideLoading();
-  renderFiles();
-  renderBadges();
-  renderRecent();
-  updateSidebar();
-  checkBadges();
+  renderFiles(); renderBadges(); renderRecent(); updateSidebar(); checkBadges();
 }
 $('#rdClose').addEventListener('click', closeReader);
 $('#reader').addEventListener('click', e => { if(e.target.id === 'reader') closeReader(); });
 $('#rdPrev').addEventListener('click', () => scrollToPage(RS.current - 1, true));
 $('#rdNext').addEventListener('click', () => scrollToPage(RS.current + 1, true));
-$('#rdPageInput').addEventListener('change', e => {
-  const v = parseInt(e.target.value, 10);
-  if(!isNaN(v)) scrollToPage(v, true);
-});
+$('#rdPageInput').addEventListener('change', e => { const v = parseInt(e.target.value, 10); if(!isNaN(v)) scrollToPage(v, true); });
 $('#rdZoomIn').addEventListener('click', () => setZoom(RS.zoom + 0.15));
 $('#rdZoomOut').addEventListener('click', () => setZoom(RS.zoom - 0.15));
 $('#rdFit').addEventListener('click', () => setZoom(1));
 $('#rdTop').addEventListener('click', () => {
   if(!RS.numPages) return;
-  if(RS.current <= 1) rdBody.scrollTo({ top:0, behavior:'smooth' });
-  else scrollToPage(1, true);
+  if(RS.current <= 1) rdBody.scrollTo({ top:0, behavior:'smooth' }); else scrollToPage(1, true);
 });
 $('#rdSnap').addEventListener('click', () => {
   userData.snap = !userData.snap;
@@ -2400,13 +2414,8 @@ $('#rdFav').addEventListener('click', () => {
 $('#rdBookmark').addEventListener('click', () => {
   if(!RS.file) return;
   const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  if(prev.bookmark){
-    delete prev.bookmark;
-    toast('تم حذف العلامة المرجعية', 'warn');
-  } else {
-    prev.bookmark = RS.current;
-    toast(`تم حفظ علامة عند الصفحة ${RS.current}`, 'ok');
-  }
+  if(prev.bookmark){ delete prev.bookmark; toast('تم حذف العلامة المرجعية', 'warn'); }
+  else { prev.bookmark = RS.current; toast(`تم حفظ علامة عند الصفحة ${RS.current}`, 'ok'); }
   userData.progress[RS.file.id] = prev;
   savePrefs(); updateBookmarkBtn();
 });
@@ -2421,8 +2430,7 @@ $('#rdComplete').addEventListener('click', () => {
   if(total > oldMax) addPagesToday(total - oldMax); else savePrefs();
   scheduleProgressSync(RS.file.id, 100, total, total);
   RS.current = total;
-  updateReaderUI();
-  refreshAll(); checkBadges(); renderBadges();
+  updateReaderUI(); refreshAll(); checkBadges(); renderBadges();
   if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
 });
 function setZoom(z){
@@ -2434,27 +2442,16 @@ function setZoom(z){
   rebuildPageSizes();
   updateZoomLabel();
   scrollToPage(cur, false);
-  setTimeout(() => {
-    RS.pageEls.forEach((el, i) => {
-      const n = i + 1;
-      if(RS.inView.has(n)) renderPage(n);
-    });
-  }, 60);
+  setTimeout(() => { RS.pageEls.forEach((el, i) => { const n = i + 1; if(RS.inView.has(n)) renderPage(n); }); }, 60);
 }
-function updateZoomLabel(){
-  const el = $('#rdZoomVal');
-  if(el) el.textContent = Math.round(RS.zoom * 100) + '%';
-}
+function updateZoomLabel(){ const el = $('#rdZoomVal'); if(el) el.textContent = Math.round(RS.zoom * 100) + '%'; }
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   if(!$('#reader').classList.contains('open') || !RS.numPages) return;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     const cur = RS.current;
-    computeBaseWidth();
-    rebuildPageSizes();
-    scrollToPage(cur, false);
-    updateZoomLabel();
+    computeBaseWidth(); rebuildPageSizes(); scrollToPage(cur, false); updateZoomLabel();
   }, 250);
 });
 function computeBaseWidth(){
@@ -2476,16 +2473,11 @@ function renderHomeStats(){
   setTxt('stBadge', userData.badges.length);
   const sp = $('#sidePct'); if(sp) sp.textContent = avg + '%';
   const sb = $('#sideBar'); if(sb) sb.style.width = avg + '%';
-
   const t = todayLog();
   const goal = Math.max(1, userData.goalPages || 10);
   const gp = Math.min(100, Math.round((t.pages / goal) * 100));
   const gr = $('#goalRing');
-  if(gr){
-    const old = gr.querySelector('svg');
-    if(old) old.remove();
-    gr.insertAdjacentHTML('afterbegin', ringSVG(gp, 130, 12, 'var(--primary)', 'var(--primary-2)'));
-  }
+  if(gr){ const old = gr.querySelector('svg'); if(old) old.remove(); gr.insertAdjacentHTML('afterbegin', ringSVG(gp, 130, 12, 'var(--primary)', 'var(--primary-2)')); }
   setTxt('goalToday', t.pages);
   setTxt('goalTarget', goal);
   const gm = $('#goalMsg');
@@ -2502,17 +2494,13 @@ function renderHomeStats(){
   setTxt('tmMinutes', Math.round(t.min));
 }
 function renderWeekChart(sel, height){
-  const box = document.querySelector(sel);
-  if(!box) return;
+  const box = document.querySelector(sel); if(!box) return;
   const days = last7Days();
   const max = Math.max(10, ...days.map(d => d.min));
   const names = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
   box.innerHTML = days.map(d => {
     const h = Math.max(4, Math.round((d.min / max) * (height - 22)));
-    return `<div class="week-bar" title="${d.min} دقيقة">
-      <i style="height:${h}px"></i>
-      <span>${names[d.date.getDay()]}</span>
-    </div>`;
+    return `<div class="week-bar" title="${d.min} دقيقة"><i style="height:${h}px"></i><span>${names[d.date.getDay()]}</span></div>`;
   }).join('');
 }
 function ringSVG(pct, size, stroke, colorA, colorB, bg){
@@ -2520,13 +2508,7 @@ function ringSVG(pct, size, stroke, colorA, colorB, bg){
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const off = c - (Math.max(0, Math.min(100, pct)) / 100) * c;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
-    <defs><linearGradient id="${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${colorA}"/><stop offset="100%" stop-color="${colorB}"/>
-    </linearGradient></defs>
-    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${bg || 'var(--border)'}" stroke-width="${stroke}"/>
-    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#${uid})" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/>
-  </svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><defs><linearGradient id="${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${colorA}"/><stop offset="100%" stop-color="${colorB}"/></linearGradient></defs><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${bg || 'var(--border)'}" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="url(#${uid})" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/></svg>`;
 }
 function updateSidebar(){ renderHomeStats(); }
 
@@ -2540,19 +2522,13 @@ function renderProgress(){
   const msgs = ['ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.','بداية جيدة! استمر في التقدم خطوة بخطوة.','أنت في منتصف الطريق تقريباً، لا تتوقف الآن!','أداء ممتاز! اقتربت من إتمام كل الملفات.','مذهل! أكملت جميع الملفات، أنت عبقري القدرات'];
   const idx = avg === 0 ? 0 : avg < 30 ? 1 : avg < 65 ? 2 : avg < 100 ? 3 : 4;
   const pm = $('#progMsg'); if(pm) pm.textContent = msgs[idx];
-
   const days = last7Days();
   const best = days.reduce((a,b)=> b.min > a.min ? b : a, days[0]);
   setTxt('bestDay', best && best.min ? best.min + ' دقيقة' : '—');
   setTxt('totalMinutes', Math.round(userData.minutes));
   setTxt('totalSessions', userData.sessions);
-
-  const pl = $('#progressList');
-  if(!pl) return;
-  if(!DB.files.length){
-    pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>';
-    return;
-  }
+  const pl = $('#progressList'); if(!pl) return;
+  if(!DB.files.length){ pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>'; return; }
   pl.innerHTML = DB.files.map(f => {
     const p = getPct(f.id);
     const mp = getMaxPage(f.id);
@@ -2560,42 +2536,31 @@ function renderProgress(){
     const curPage = mp > 0 ? Math.min(mp, total) : 0;
     const icon = f.icon || 'fa-book';
     const color = f.color || '#5b6cff';
-    return `<div style="padding:16px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-        <i class="fas ${icon}" style="font-size:1.2rem;color:${color}"></i>
-        <b style="font-size:.9rem;flex:1;min-width:120px">${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.8rem"></i>' : ''}</b>
-        <span style="font-size:.74rem;color:var(--muted);font-weight:700">${curPage}/${total} صفحة</span>
-        <span style="font-size:.86rem;font-weight:900;color:${color}">${p}%</span>
-      </div>
-      <div class="bar"><i style="width:${p}%;background:linear-gradient(90deg,${color},${color}aa)"></i></div>
-    </div>`;
-  }).join('') + `<div style="padding-top:18px;display:flex;gap:20px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);font-weight:700">
-    <span><i class="fas fa-book" style="color:var(--primary)"></i> ملفات مكتملة: <b style="color:var(--primary)">${completedCount()}</b></span>
-    <span><i class="fas fa-file-lines" style="color:var(--primary)"></i> صفحات مقروءة: <b style="color:var(--primary)">${totalPagesRead()}</b></span>
-    <span><i class="fas fa-stopwatch" style="color:var(--primary)"></i> دقائق المذاكرة: <b style="color:var(--primary)">${Math.round(userData.minutes)}</b></span>
-    <span><i class="fas fa-bullseye" style="color:var(--primary)"></i> جلسات التركيز: <b style="color:var(--primary)">${userData.sessions}</b></span>
-  </div>`;
+    return `<div style="padding:16px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap"><i class="fas ${icon}" style="font-size:1.2rem;color:${color}"></i><b style="font-size:.9rem;flex:1;min-width:120px">${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.8rem"></i>' : ''}</b><span style="font-size:.74rem;color:var(--muted);font-weight:700">${curPage}/${total} صفحة</span><span style="font-size:.86rem;font-weight:900;color:${color}">${p}%</span></div><div class="bar"><i style="width:${p}%;background:linear-gradient(90deg,${color},${color}aa)"></i></div></div>`;
+  }).join('') + `<div style="padding-top:18px;display:flex;gap:20px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);font-weight:700"><span><i class="fas fa-book" style="color:var(--primary)"></i> ملفات مكتملة: <b style="color:var(--primary)">${completedCount()}</b></span><span><i class="fas fa-file-lines" style="color:var(--primary)"></i> صفحات مقروءة: <b style="color:var(--primary)">${totalPagesRead()}</b></span><span><i class="fas fa-stopwatch" style="color:var(--primary)"></i> دقائق المذاكرة: <b style="color:var(--primary)">${Math.round(userData.minutes)}</b></span><span><i class="fas fa-bullseye" style="color:var(--primary)"></i> جلسات التركيز: <b style="color:var(--primary)">${userData.sessions}</b></span></div>`;
 }
 
 /* ============================================================
    8) المزايا
 ============================================================ */
 const FEATURES = [
-  { i:'fa-user-shield',      t:'حساب شخصي آمن',        d:'كل مستخدم له حسابه الخاص وتقدمه المستقل مع تشفير كلمة المرور.', c:'#ef4444' },
+  { i:'fa-user-shield',      t:'حساب شخصي آمن',        d:'كل مستخدم له حسابه الخاص وتقدمه المستقل.', c:'#ef4444' },
   { i:'fa-file-pdf',         t:'ملفات PDF حقيقية',     d:'رفع ملفات PDF من الجهاز وعرضها داخل المنصة.', c:'#dc2626' },
-  { i:'fa-pen-ruler',        t:'رسم على الملف',        d:'اكتب وارسم فوق صفحات PDF بأقلام وألوان وأحجام متعددة.', c:'#0ea5e9' },
+  { i:'fa-pen-ruler',        t:'رسم على الملف',        d:'اكتب وارسم فوق صفحات PDF بأقلام وألوان متعددة.', c:'#0ea5e9' },
   { i:'fa-chalkboard',       t:'صبورة بيضاء جانبية',   d:'صبورة بجانب الملف للشرح والتفكير — تبقى محفوظة.', c:'#8b5cf6' },
   { i:'fa-highlighter',      t:'هايلايت وممحاة',       d:'قلم هايلايت شفاف وممحاة دقيقة، مع تراجع ومسح.', c:'#facc15' },
-  { i:'fa-bolt',             t:'قارئ فائق السرعة',      d:'تحميل كسول للصفحات: يفتح الملفات الكبيرة فوراً دون تعليق.', c:'#f59e0b' },
+  { i:'fa-trophy',           t:'قائمة المتصدرين',      d:'نظام نقاط XP وتصنيف الطلاب مع تاج ذهبي للأول.', c:'#f7b32b' },
+  { i:'fa-user-circle',      t:'ملف شخصي مخصص',        d:'عدّل اسمك وارفع صورتك الشخصية بسهولة.', c:'#8b5cf6' },
+  { i:'fa-bolt',             t:'قارئ فائق السرعة',      d:'تحميل كسول للصفحات: يفتح الملفات الكبيرة فوراً.', c:'#f59e0b' },
   { i:'fa-magnifying-glass-plus', t:'تكبير وتصغير',    d:'تحكم كامل في حجم الصفحة مع ملء تلقائي للعرض.', c:'#0ea5e9' },
   { i:'fa-list-ul',          t:'قائمة الصفحات',        d:'انتقل لأي صفحة بسرعة من قائمة جانبية منظمة.', c:'#6366f1' },
   { i:'fa-bookmark',         t:'علامة مرجعية',         d:'احفظ موضعك المفضل وارجع إليه في أي وقت.', c:'#a855f7' },
   { i:'fa-circle-half-stroke',t:'أوضاع قراءة مريحة',   d:'خلفيات فاتح وسيبيا وداكن لتقليل إجهاد العين.', c:'#14b8a6' },
-  { i:'fa-scroll',           t:'تمرير مستمر أو صفحة واحدة', d:'اختر طريقة التصفح الأنسب لك مع التثبيت التلقائي.', c:'#ec4899' },
+  { i:'fa-scroll',           t:'تمرير مستمر أو صفحة واحدة', d:'اختر طريقة التصفح الأنسب لك.', c:'#ec4899' },
   { i:'fa-chart-simple',     t:'تتبع إنجاز تلقائي',     d:'النظام يحسب إنجازك من الصفحة التي وصلت إليها.', c:'#5b6cff' },
   { i:'fa-star',             t:'ملفات مميزة',          d:'إبراز الملفات المهمة بنجمة ليراها الطالب فوراً.', c:'#f7b32b' },
   { i:'fa-heart',            t:'المفضلة',              d:'ثبّت ملفاتك المفضلة وارجع لها بضغطة واحدة.', c:'#e11d48' },
-  { i:'fa-medal',            t:'شارات تحفيزية',        d:'12 شارة مختلفة تكسبها عند تحقيق إنجازات دراسية.', c:'#22c55e' },
+  { i:'fa-medal',            t:'شارات تحفيزية',        d:'12 شارة مختلفة تكسبها عند تحقيق إنجازات.', c:'#22c55e' },
   { i:'fa-fire',             t:'سلسلة الأيام',          d:'تابع أيامك المتواصلة وحافظ على استمراريتك.', c:'#f97316' },
   { i:'fa-crosshairs',       t:'هدف يومي',             d:'حدّد عدد صفحات ودقائق يومية وتابع تحقيقها.', c:'#8b5cf6' },
   { i:'fa-stopwatch',        t:'مؤقت بومودورو',        d:'جلسات تركيز وراحات قصيرة وطويلة قابلة للتخصيص.', c:'#06b6d4' },
@@ -2604,16 +2569,15 @@ const FEATURES = [
   { i:'fa-key',              t:'استعادة كلمة المرور',  d:'نسيت كلمتك؟ رابط إعادة تعيين يصل لبريدك.', c:'#14b8a6' },
   { i:'fa-shield-halved',    t:'لوحة أدمن كاملة',      d:'إدارة المستخدمين والاشتراكات والملفات بسهولة.', c:'#14b8a6' },
   { i:'fa-user-plus',        t:'إضافة مستخدمين',       d:'الأدمن ينشئ حسابات مباشرة — بلا حدود.', c:'#22c55e' },
-  { i:'fa-user-check',       t:'نظام موافقات ذكي',     d:'الطلاب الجدد ينتظرون موافقة الأدمن لتفعيل حسابهم.', c:'#f59e0b' },
+  { i:'fa-user-check',       t:'نظام موافقات ذكي',     d:'الطلاب الجدد ينتظرون موافقة الأدمن.', c:'#f59e0b' },
   { i:'fa-note-sticky',      t:'ملاحظاتي الخاصة',      d:'مساحة لكتابة القواعد مع حفظ فوري وتصدير.', c:'#f97316' },
   { i:'fa-list-check',       t:'قائمة المهام',         d:'نظّم مهامك الدراسية وأنجزها واحداً تلو الآخر.', c:'#6366f1' },
-  { i:'fa-magnifying-glass', t:'بحث وفلترة فورية',     d:'ابحث بالاسم أو التصنيف مع ترتيب ذكي للنتائج.', c:'#a855f7' },
-  { i:'fa-cloud-arrow-up',   t:'رفع ملفات سهل',        d:'اسحب ملف PDF وأفلته لإضافته فوراً للمكتبة.', c:'#06b6d4' },
+  { i:'fa-magnifying-glass', t:'بحث وفلترة فورية',     d:'ابحث بالاسم أو التصنيف مع ترتيب ذكي.', c:'#a855f7' },
+  { i:'fa-cloud-arrow-up',   t:'رفع ملفات سهل',        d:'اسحب ملف PDF وأفلته لإضافته فوراً.', c:'#06b6d4' },
   { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب مع قائمة مستخدم خاصة للجوال.', c:'#22c55e' }
 ];
 function renderFeatures(){
-  const grid = $('#featGrid');
-  if(!grid) return;
+  const grid = $('#featGrid'); if(!grid) return;
   grid.innerHTML = FEATURES.map((f, i) => `
     <div class="feat-new" style="--fc:${f.c}">
       <span class="num-badge">${String(i+1).padStart(2,'0')}</span>
@@ -2630,12 +2594,8 @@ function renderFeatures(){
    9) المهام والملاحظات
 ============================================================ */
 function renderTasks(){
-  const box = $('#taskList');
-  if(!box) return;
-  if(!userData.tasks.length){
-    box.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem">لا توجد مهام بعد</div>`;
-    return;
-  }
+  const box = $('#taskList'); if(!box) return;
+  if(!userData.tasks.length){ box.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem">لا توجد مهام بعد</div>`; return; }
   box.innerHTML = userData.tasks.map((t, i) => `
     <div class="task-item ${t.done ? 'done' : ''}">
       <div class="t-check" onclick="toggleTask(${i})">${t.done ? '<i class="fas fa-check"></i>' : ''}</div>
@@ -2646,13 +2606,10 @@ function renderTasks(){
 window.toggleTask = i => { if(userData.tasks[i]){ userData.tasks[i].done = !userData.tasks[i].done; savePrefs(); renderTasks(); } };
 window.delTask = i => { userData.tasks.splice(i, 1); savePrefs(); renderTasks(); };
 function addTask(){
-  const inp = $('#taskInput');
-  if(!inp) return;
-  const v = inp.value.trim();
-  if(!v) return;
+  const inp = $('#taskInput'); if(!inp) return;
+  const v = inp.value.trim(); if(!v) return;
   userData.tasks.unshift({ text: v, done:false });
-  inp.value = '';
-  savePrefs(); renderTasks();
+  inp.value = ''; savePrefs(); renderTasks();
 }
 $('#taskAdd').addEventListener('click', addTask);
 $('#taskInput').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
@@ -2668,8 +2625,7 @@ $('#notesExport').addEventListener('click', () => {
   const blob = new Blob([userData.notes], { type:'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ملاحظاتي-العباقرة.txt';
-  a.click();
+  a.download = 'ملاحظاتي-العباقرة.txt'; a.click();
   URL.revokeObjectURL(a.href);
   toast('تم تصدير الملاحظات', 'ok');
 });
@@ -2684,13 +2640,11 @@ function timerTotalSec(mode){
   return (userData.brk || 5) * 60;
 }
 function drawTimerDial(){
-  const holder = $('#timerDial');
-  if(!holder) return;
+  const holder = $('#timerDial'); if(!holder) return;
   const total = timerTotalSec(TIMER.mode);
   const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
   const pct = total ? ((total - remain) / total) * 100 : 0;
-  const old = holder.querySelector('svg');
-  if(old) old.remove();
+  const old = holder.querySelector('svg'); if(old) old.remove();
   const colA = TIMER.mode === 'focus' ? 'var(--primary)' : '#22c55e';
   const colB = TIMER.mode === 'focus' ? 'var(--primary-2)' : '#4ade80';
   holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 150, 12, colA, colB));
@@ -2699,20 +2653,14 @@ function updateTimerUI(){
   const total = timerTotalSec(TIMER.mode);
   const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
   const tt = $('#timerText'); if(tt) tt.textContent = fmtTime(remain);
-  const tl = $('#timerLabel');
-  if(tl) tl.textContent = TIMER.mode === 'focus' ? 'جلسة تركيز' : (TIMER.mode === 'long' ? 'راحة طويلة' : 'راحة قصيرة');
-  const th = $('#timerHead');
-  if(th) th.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل' : 'وقت الراحة — استرخِ قليلاً';
+  const tl = $('#timerLabel'); if(tl) tl.textContent = TIMER.mode === 'focus' ? 'جلسة تركيز' : (TIMER.mode === 'long' ? 'راحة طويلة' : 'راحة قصيرة');
+  const th = $('#timerHead'); if(th) th.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل' : 'وقت الراحة — استرخِ قليلاً';
   const td = $('#timerDesc');
-  if(td) td.textContent = TIMER.mode === 'focus'
-    ? 'اعمل بتركيز كامل، ثم خذ راحة قصيرة. هذه الطريقة ترفع التركيز وتقلل التشتت بشكل ملحوظ.'
-    : 'خذ نفساً عميقاً، تحرّك قليلاً، واشرب ماءً. الراحة جزء من الإنتاجية.';
+  if(td) td.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل، ثم خذ راحة قصيرة.' : 'خذ نفساً عميقاً، تحرّك قليلاً، واشرب ماءً.';
   const ts = $('#timerStart');
   if(ts) ts.innerHTML = TIMER.running ? '<i class="fas fa-pause"></i> إيقاف مؤقت' : '<i class="fas fa-play"></i> ' + (TIMER.remain < total ? 'استئناف' : 'ابدأ الجلسة');
   const tm = $('#timerMode');
-  if(tm) tm.innerHTML = TIMER.mode === 'focus'
-    ? `<i class="fas fa-mug-hot"></i> راحة ${userData.brk || 5}د`
-    : `<i class="fas fa-bullseye"></i> تركيز ${userData.focus || 25}د`;
+  if(tm) tm.innerHTML = TIMER.mode === 'focus' ? `<i class="fas fa-mug-hot"></i> راحة ${userData.brk || 5}د` : `<i class="fas fa-bullseye"></i> تركيز ${userData.focus || 25}د`;
   drawTimerDial();
 }
 function startTimer(){
@@ -2720,8 +2668,7 @@ function startTimer(){
     TIMER.remain = Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000));
     clearInterval(TIMER.int); TIMER.int = null;
     TIMER.running = false;
-    updateTimerUI();
-    return;
+    updateTimerUI(); return;
   }
   if(TIMER.remain <= 0) TIMER.remain = timerTotalSec(TIMER.mode);
   TIMER.endAt = Date.now() + TIMER.remain * 1000;
@@ -2752,15 +2699,14 @@ function finishTimer(){
     toast('أحسنت! أكملت جلسة تركيز كاملة', 'ok');
     const useLong = TIMER.doneCount % 4 === 0;
     TIMER.mode = useLong ? 'long' : 'break';
+    try{ syncMyXp(); }catch(e){}
   } else {
     toast('انتهت الراحة، لنعد للتركيز!', 'warn');
     TIMER.mode = 'focus';
   }
   TIMER.remain = timerTotalSec(TIMER.mode);
   updateTimerUI();
-  if(userData.autoStart){
-    setTimeout(() => { if(!TIMER.running) startTimer(); }, 900);
-  }
+  if(userData.autoStart){ setTimeout(() => { if(!TIMER.running) startTimer(); }, 900); }
 }
 $('#timerStart').addEventListener('click', startTimer);
 $('#timerReset').addEventListener('click', () => {
@@ -2781,13 +2727,11 @@ $('#timerMode').addEventListener('click', () => {
    11) الإعدادات
 ============================================================ */
 const segHandler = (sel, cb) => {
-  const box = document.querySelector(sel);
-  if(!box) return;
+  const box = document.querySelector(sel); if(!box) return;
   box.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', () => {
       box.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      cb(b);
+      b.classList.add('on'); cb(b);
     });
   });
 };
@@ -2796,21 +2740,9 @@ segHandler('#fontSeg', b => { userData.font = parseFloat(b.dataset.f); savePrefs
 segHandler('#readThemeSeg', b => { userData.readTheme = b.dataset.r; savePrefs(); applyReaderTheme(); });
 segHandler('#snapSeg', b => { userData.snap = b.dataset.s === '1'; savePrefs(); applySnapClass(); });
 segHandler('#zoomSeg', b => { userData.defaultZoom = parseFloat(b.dataset.z); savePrefs(); });
-segHandler('#focusSeg', b => {
-  userData.focus = parseInt(b.dataset.m, 10); savePrefs();
-  if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); updateTimerUI(); }
-  updateTimerUI();
-});
-segHandler('#breakSeg', b => {
-  userData.brk = parseInt(b.dataset.m, 10); savePrefs();
-  if(!TIMER.running && TIMER.mode === 'break'){ TIMER.remain = timerTotalSec('break'); }
-  updateTimerUI();
-});
-segHandler('#longSeg', b => {
-  userData.longBrk = parseInt(b.dataset.m, 10); savePrefs();
-  if(!TIMER.running && TIMER.mode === 'long'){ TIMER.remain = timerTotalSec('long'); }
-  updateTimerUI();
-});
+segHandler('#focusSeg', b => { userData.focus = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); updateTimerUI(); } updateTimerUI(); });
+segHandler('#breakSeg', b => { userData.brk = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'break'){ TIMER.remain = timerTotalSec('break'); } updateTimerUI(); });
+segHandler('#longSeg', b => { userData.longBrk = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'long'){ TIMER.remain = timerTotalSec('long'); } updateTimerUI(); });
 $('#setAnim').addEventListener('change', e => { userData.reduceMotion = e.target.checked; savePrefs(); applyTheme(); });
 $('#setMarks').addEventListener('change', e => { userData.showMarks = e.target.checked; savePrefs(); applyMarksVisibility(); });
 $('#setResume').addEventListener('change', e => { userData.autoResume = e.target.checked; savePrefs(); });
@@ -2831,9 +2763,7 @@ $('#goalMinRange').addEventListener('input', e => {
 $$('.filter-chip').forEach(b => {
   b.addEventListener('click', () => {
     $$('.filter-chip').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    fileFilter = b.dataset.cat;
-    renderFiles();
+    b.classList.add('on'); fileFilter = b.dataset.cat; renderFiles();
   });
 });
 $('#sortSelect').addEventListener('change', e => { fileSort = e.target.value; renderFiles(); });
@@ -2844,15 +2774,13 @@ $('#exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'abdqaqra-backup.json';
-  a.click();
+  a.download = 'abdqaqra-backup.json'; a.click();
   URL.revokeObjectURL(a.href);
   toast('تم تصدير نسختك الاحتياطية', 'ok');
 });
 $('#importBtn').addEventListener('click', () => $('#importFile').click());
 $('#importFile').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(!file) return;
+  const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     try{
@@ -2866,17 +2794,12 @@ $('#importFile').addEventListener('change', e => {
       toast('تم استيراد البيانات بنجاح', 'ok');
     }catch(err){ toast('الملف غير صالح', 'warn'); }
   };
-  reader.readAsText(file);
-  e.target.value = '';
+  reader.readAsText(file); e.target.value = '';
 });
 $('#resetProgressBtn').addEventListener('click', () => {
   confirmBox('تصفير التقدم', 'سيتم مسح كل نسب الإنجاز والشارات والدقائق. هل أنت متأكد؟', async () => {
-    userData.progress = {};
-    userData.badges = [];
-    userData.opened = [];
-    userData.minutes = 0;
-    userData.sessions = 0;
-    userData.log = {};
+    userData.progress = {}; userData.badges = []; userData.opened = [];
+    userData.minutes = 0; userData.sessions = 0; userData.log = {};
     savePrefs();
     if(currentUserObj && currentUserObj.role !== 'admin'){
       try{ await sb.from('user_progress').delete().eq('user_id', currentUserObj.id); }catch(e){}
@@ -2887,8 +2810,7 @@ $('#resetProgressBtn').addEventListener('click', () => {
 });
 $('#changePassBtn').addEventListener('click', () => {
   openModal({
-    title:'تغيير كلمة المرور',
-    text:'أدخل كلمة المرور الجديدة.',
+    title:'تغيير كلمة المرور', text:'أدخل كلمة المرور الجديدة.',
     bodyHTML:`<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="mpNew" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
     okText:'حفظ',
     onOk: async () => {
@@ -2902,23 +2824,18 @@ $('#changePassBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   12) Supabase: تحميل البيانات والمزامنة
+   12) Supabase: تحميل البيانات
 ============================================================ */
 async function loadProfilesAndFiles(){
   const { data: filesData, error: filesErr } = await sb.from('files').select('*').order('created_at', { ascending: false });
   if(filesErr) console.warn('load files failed', filesErr);
   DB.files = filesData || [];
-
   if(currentUserObj && currentUserObj.role === 'admin'){
     const { data: usersData, error: usersErr } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     if(usersErr) console.warn('load users failed', usersErr);
     DB.users = (usersData || []).filter(u => u.role !== 'admin');
   }
-
-  renderFiles();
-  renderRecent();
-  renderHomeStats();
-  renderAdmin();
+  renderFiles(); renderRecent(); renderHomeStats(); renderAdmin();
 }
 async function loadMyProgress(){
   if(!currentUserObj || currentUserObj.role === 'admin'){ userData.progress = {}; return; }
@@ -2948,17 +2865,14 @@ function showAuthForm(tab){
   });
 }
 function showMsg(elId, text, type='err'){
-  const el = document.getElementById(elId);
-  if(!el) return;
+  const el = document.getElementById(elId); if(!el) return;
   el.innerHTML = `<i class="fas ${type === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${escapeHtml(text)}`;
   el.className = 'auth-msg ' + type;
 }
 $$('.auth-tabs button').forEach(b => b.addEventListener('click', () => showAuthForm(b.dataset.tab)));
 $('#authBack').addEventListener('click', () => {
   hideAuth();
-  const w = $('#welcome');
-  w.style.display = 'flex';
-  w.classList.remove('exit');
+  const w = $('#welcome'); w.style.display = 'flex'; w.classList.remove('exit');
 });
 
 $('#regBtn').addEventListener('click', async () => {
@@ -2970,16 +2884,11 @@ $('#regBtn').addEventListener('click', async () => {
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg','أدخل بريداً إلكترونياً صحيحاً'); return; }
   if(!pass || pass.length < 6){ showMsg('regMsg','كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
   btn.disabled = true;
-  const { data, error } = await sb.auth.signUp({
-    email, password: pass,
-    options: { data: { name } }
-  });
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { name } } });
   btn.disabled = false;
   if(error){ showMsg('regMsg', error.message); return; }
   showMsg('regMsg','تم إنشاء حسابك بنجاح! في انتظار موافقة الأدمن...', 'ok');
-  if(data && data.session){
-    // سيتم الدخول عبر onAuthStateChange
-  } else {
+  if(!(data && data.session)){
     setTimeout(() => showMsg('regMsg','تفقّد بريدك لتأكيد الحساب، ثم سجّل الدخول', 'ok'), 1500);
   }
 });
@@ -2999,7 +2908,6 @@ $('#loginBtn').addEventListener('click', async () => {
   showMsg('loginMsg','تم تسجيل الدخول', 'ok');
 });
 
-/* ★ جديد: نسيت كلمة المرور */
 $('#forgotLink').addEventListener('click', () => {
   openModal({
     title: 'استعادة كلمة المرور',
@@ -3010,9 +2918,7 @@ $('#forgotLink').addEventListener('click', () => {
       const email = document.getElementById('fpEmail').value.trim().toLowerCase();
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً إلكترونياً صحيحاً', 'err'); return; }
       try{
-        const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + window.location.pathname
-        });
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
         if(error){ toast('فشل الإرسال: ' + error.message, 'err'); return; }
         toast('تم إرسال رابط إعادة التعيين إلى بريدك', 'ok');
       }catch(e){ toast('تعذّر الإرسال: ' + e.message, 'err'); }
@@ -3045,51 +2951,302 @@ async function enterApp(){
   hideAuth();
   $('#welcome').style.display = 'none';
   if(!session){ showAuth(); return; }
-
   const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
   if(error || !data){ toast('تعذّر تحميل الملف الشخصي', 'err'); return; }
   currentUserObj = data;
-
   loadPrefs();
-  loadDrawings();   // ★ تحميل الرسومات المحفوظة
+  loadDrawings();
   applyTheme();
   applyUserUI();
-
   $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
   go('home');
-
   await loadProfilesAndFiles();
   await loadMyProgress();
-
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
   notesArea.value = userData.notes || '';
   TIMER.mode = 'focus';
   TIMER.remain = timerTotalSec('focus');
   updateTimerUI();
-  applyReaderTheme();
-  applySnapClass();
-  syncSettingsUI();
-  renderDrawToolbar();  // ★
+  applyReaderTheme(); applySnapClass(); syncSettingsUI();
+  renderDrawToolbar();
+  try{ syncMyXp(); }catch(e){}
   setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 400);
-
   subscribeMyProfile();
   subscribeFiles();
   if(currentUserObj.role === 'admin') subscribeProfilesForAdmin();
 }
 
+/* ============================================================
+   ★★★ دوال XP والمتصدرين والملف الشخصي ★★★
+============================================================ */
+function calcXp(pages, completed, sessions, badges){
+  return (pages * 2) + (completed * 100) + (sessions * 25) + ((badges || 0) * 15);
+}
+function myStats(){
+  let pages = 0, completed = 0;
+  for(const fid in userData.progress){
+    const p = userData.progress[fid];
+    if(!p) continue;
+    const pct = typeof p === 'object' ? (p.pct || 0) : p;
+    const mp = typeof p === 'object' ? (p.maxPage || 0) : 0;
+    pages += mp;
+    if(pct >= 100) completed++;
+  }
+  const sessions = userData.sessions || 0;
+  const badges = (userData.badges || []).length;
+  const xp = calcXp(pages, completed, sessions, badges);
+  return { pages, completed, sessions, badges, xp };
+}
+async function syncMyXp(){
+  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  const s = myStats();
+  try{
+    await sb.from('profiles').update({
+      xp_points: s.xp,
+      focus_sessions: s.sessions,
+      completed_files: s.completed
+    }).eq('id', currentUserObj.id);
+    currentUserObj.xp_points = s.xp;
+    currentUserObj.focus_sessions = s.sessions;
+    currentUserObj.completed_files = s.completed;
+  }catch(e){ /* الأعمدة غير موجودة بعد */ }
+}
+
+function avatarStyleFor(p){
+  if(p && p.avatar_url) return `background-image:url('${p.avatar_url}')`;
+  return '';
+}
+function avatarInitialFor(p){
+  return (p && p.name ? String(p.name).trim().charAt(0) : '؟') || '؟';
+}
+
+async function renderLeaderboard(){
+  const podiumBox = $('#lbPodium');
+  const listBox = $('#lbList');
+  const myRankBox = $('#lbMyRank');
+  if(!podiumBox || !listBox) return;
+  podiumBox.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary)"></i></div>';
+  listBox.innerHTML = '';
+
+  let profilesData = [];
+  let progressData = [];
+  try{
+    const r1 = await sb.from('profiles').select('id, name, email, avatar_url, role, status, xp_points, focus_sessions, completed_files').neq('role', 'admin');
+    profilesData = r1.data || [];
+  }catch(e){}
+  if(!profilesData.length){
+    // fallback: حاول بدون أعمدة XP
+    try{
+      const r1 = await sb.from('profiles').select('id, name, email, role, status').neq('role', 'admin');
+      profilesData = r1.data || [];
+    }catch(e){}
+  }
+  try{
+    const r2 = await sb.from('user_progress').select('user_id, pct, max_page');
+    progressData = r2.data || [];
+  }catch(e){}
+
+  const users = profilesData.map(p => {
+    const prog = progressData.filter(x => x.user_id === p.id);
+    let pages = 0, completed = 0;
+    prog.forEach(r => { pages += (r.max_page || 0); if((r.pct || 0) >= 100) completed++; });
+    const sessions = p.focus_sessions || 0;
+    const badges = 0; // لا نحتفظ بها على السيرفر
+    let xp = p.xp_points;
+    if(typeof xp !== 'number') xp = calcXp(pages, completed, sessions, badges);
+    return { id: p.id, name: p.name || 'طالب', avatar_url: p.avatar_url, xp, pages, completed, sessions };
+  });
+  users.sort((a,b) => (b.xp - a.xp) || String(a.name).localeCompare(String(b.name), 'ar'));
+
+  if(!users.length){
+    podiumBox.innerHTML = '';
+    listBox.innerHTML = '<div class="lb-empty"><i class="fas fa-trophy"></i><h3>لا يوجد متصدرون بعد</h3><p>ابدأ المذاكرة واجمع النقاط لتظهر هنا!</p></div>';
+    if(myRankBox) myRankBox.textContent = '—';
+    return;
+  }
+
+  const myIdx = users.findIndex(u => currentUserObj && u.id === currentUserObj.id);
+  if(myRankBox) myRankBox.textContent = myIdx >= 0 ? '#' + (myIdx + 1) : '—';
+
+  // منصة التتويج
+  const top3 = users.slice(0, 3);
+  function podiumCard(u, rank){
+    const av = avatarStyleFor(u);
+    const cls = rank === 1 ? 'rank1' : rank === 2 ? 'rank2' : 'rank3';
+    const crown = rank === 1 ? '<div class="lb-crown"><i class="fas fa-crown"></i></div>' : '';
+    return `<div class="lb-card ${cls}">
+      ${crown}
+      <div class="lb-avatar-wrap">
+        <div class="lb-avatar" style="${av}">${av ? '' : escapeHtml(avatarInitialFor(u))}</div>
+        <div class="lb-medal">${rank}</div>
+      </div>
+      <div class="lb-name">${escapeHtml(u.name)}</div>
+      <div class="lb-xp"><i class="fas fa-star"></i> ${u.xp} XP</div>
+      <div class="lb-stats-mini">
+        <span><i class="fas fa-file-lines"></i> ${u.pages} صفحة</span>
+        <span><i class="fas fa-book"></i> ${u.completed} ملف</span>
+        <span><i class="fas fa-stopwatch"></i> ${u.sessions} جلسة</span>
+      </div>
+    </div>`;
+  }
+  // ترتيب منصة التتويج: 2 - 1 - 3
+  const ordered = [];
+  if(top3[1]) ordered.push(podiumCard(top3[1], 2));
+  if(top3[0]) ordered.push(podiumCard(top3[0], 1));
+  if(top3[2]) ordered.push(podiumCard(top3[2], 3));
+  podiumBox.innerHTML = ordered.join('');
+
+  // القائمة العامة
+  listBox.innerHTML = users.map((u, i) => {
+    const rank = i + 1;
+    const av = avatarStyleFor(u);
+    const isMe = currentUserObj && u.id === currentUserObj.id;
+    const rankCls = rank === 1 ? 'g1' : rank === 2 ? 'g2' : rank === 3 ? 'g3' : '';
+    const badgeCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const badgeTxt = rank === 1 ? '🥇 ذهبي' : rank === 2 ? '🥈 فضي' : rank === 3 ? '🥉 برونزي' : 'مشارك';
+    return `<div class="lb-row ${isMe ? 'me' : ''}">
+      <div class="lb-rank-num ${rankCls}">${rank}</div>
+      <div class="lb-user-cell">
+        <div class="lb-user-av" style="${av}">${av ? '' : escapeHtml(avatarInitialFor(u))}</div>
+        <div style="min-width:0">
+          <b>${escapeHtml(u.name)} ${isMe ? '<span style="color:var(--primary);font-size:.72rem">(أنت)</span>' : ''}</b>
+          <small>${u.pages} صفحة • ${u.completed} ملف • ${u.sessions} جلسة</small>
+        </div>
+      </div>
+      <div class="lb-xp-cell">${u.xp}<small>XP</small></div>
+      <div class="lb-badge-mini ${badgeCls}">${badgeTxt}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProfile(){
+  if(!currentUserObj) return;
+  const s = myStats();
+  const av = avatarStyleFor(currentUserObj);
+  const avEl = $('#profileAvatar');
+  if(avEl){ avEl.style.cssText = av; }
+  const avTxt = $('#profileAvatarText');
+  if(avTxt) avTxt.textContent = av ? '' : avatarInitialFor(currentUserObj);
+  const nm = $('#profileNameBig'); if(nm) nm.textContent = currentUserObj.name || '—';
+  const em = $('#profileEmailSmall'); if(em) em.textContent = currentUserObj.email || '';
+  const ni = $('#profileNameInput'); if(ni && document.activeElement !== ni) ni.value = currentUserObj.name || '';
+  const ei = $('#profileEmailInput'); if(ei) ei.value = currentUserObj.email || '';
+  const f = $('#pStatFiles'); if(f) f.textContent = s.completed;
+  const ss = $('#pStatSessions'); if(ss) ss.textContent = s.sessions;
+  const b = $('#pStatBadges'); if(b) b.textContent = s.badges;
+  const xp = $('#pXp'); if(xp) xp.textContent = s.xp;
+  const xpP = $('#pXpPages'); if(xpP) xpP.textContent = s.pages;
+  const xpF = $('#pXpFiles'); if(xpF) xpF.textContent = s.completed;
+  const xpS = $('#pXpSessions'); if(xpS) xpS.textContent = s.sessions;
+  // شارات مختصرة
+  const badgesRow = $('#profileBadgesRow');
+  if(badgesRow){
+    const owned = BADGES.filter(bd => userData.badges.includes(bd.id)).slice(0, 4);
+    badgesRow.innerHTML = owned.length
+      ? owned.map(bd => `<div class="badge-item on" style="padding:7px 12px"><div class="bi" style="font-size:1rem"><i class="fas ${bd.i}"></i></div><div><b style="font-size:.74rem">${bd.t}</b></div></div>`).join('')
+      : '<span style="font-size:.78rem;color:var(--muted);font-weight:600">لا توجد شارات بعد — ابدأ المذاكرة!</span>';
+  }
+  renderBadges();
+}
+
+/* رفع الصورة */
+async function resizeImageToDataUrl(file, maxSize = 300, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
+        const w = Math.max(1, Math.round(img.width * ratio));
+        const h = Math.max(1, Math.round(img.height * ratio));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try{ resolve(c.toDataURL('image/jpeg', quality)); }
+        catch(e){ reject(e); }
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadAvatar(file){
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('اختر صورة صحيحة', 'warn'); return; }
+  if(file.size > 5 * 1024 * 1024){ toast('حجم الصورة كبير (الحد 5 ميجا)', 'warn'); return; }
+  try{
+    const dataUrl = await resizeImageToDataUrl(file);
+    const { error } = await sb.from('profiles').update({ avatar_url: dataUrl }).eq('id', currentUserObj.id);
+    if(error){
+      toast('فشل الحفظ: تأكد من إضافة العمود avatar_url', 'err');
+      return;
+    }
+    currentUserObj.avatar_url = dataUrl;
+    applyUserUI();
+    renderProfile();
+    toast('تم تحديث الصورة بنجاح', 'ok');
+  }catch(e){ toast('فشل معالجة الصورة: ' + e.message, 'err'); }
+}
+
+async function saveProfile(){
+  if(!currentUserObj) return;
+  const name = $('#profileNameInput').value.trim();
+  if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً (حرفان على الأقل)', 'warn'); return; }
+  const btn = $('#profileSaveBtn');
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+  const { error } = await sb.from('profiles').update({ name }).eq('id', currentUserObj.id);
+  btn.disabled = false;
+  btn.innerHTML = orig;
+  if(error){ toast('فشل الحفظ: ' + error.message, 'err'); return; }
+  currentUserObj.name = name;
+  applyUserUI();
+  renderProfile();
+  toast('تم حفظ التعديلات', 'ok');
+}
+
+async function removeAvatar(){
+  if(!currentUserObj) return;
+  confirmBox('حذف الصورة', 'هل تريد حذف صورتك الشخصية؟', async () => {
+    const { error } = await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUserObj.id);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    currentUserObj.avatar_url = null;
+    applyUserUI();
+    renderProfile();
+    toast('تم حذف الصورة', 'ok');
+  }, true);
+}
+
+// ربط أزرار الملف الشخصي
+$('#profileCamBtn').addEventListener('click', () => $('#avatarInput').click());
+$('#profileAvatar').addEventListener('click', () => $('#avatarInput').click());
+$('#avatarInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(f) uploadAvatar(f);
+  e.target.value = '';
+});
+$('#profileSaveBtn').addEventListener('click', saveProfile);
+$('#profileRemoveAvatar').addEventListener('click', removeAvatar);
+
+/* ============================================================
+   15) applyUserUI + قائمة الجوال
+============================================================ */
 function applyUserUI(){
   if(!currentUserObj) return;
   const nm = currentUserObj.name || '—';
-  $('#userAvatar').textContent = nm.trim().charAt(0) || '؟';
+  const init = String(nm).trim().charAt(0) || '؟';
+  const av = avatarStyleFor(currentUserObj);
+  const ua = $('#userAvatar');
+  if(ua){ ua.textContent = av ? '' : init; ua.style.cssText = av; }
   let badgeHTML = '';
-  if(currentUserObj.role === 'admin'){
-    badgeHTML = ' <span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
-  } else if(currentUserObj.status === 'approved'){
-    badgeHTML = ' <span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
-  } else if(currentUserObj.status === 'pending'){
-    badgeHTML = ' <span class="sub-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
-  }
+  if(currentUserObj.role === 'admin') badgeHTML = ' <span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+  else if(currentUserObj.status === 'approved') badgeHTML = ' <span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
+  else if(currentUserObj.status === 'pending') badgeHTML = ' <span class="sub-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
   $('#userName').innerHTML = escapeHtml(nm) + badgeHTML;
   $('#userEmail').textContent = currentUserObj.email;
   $('#setName').textContent = currentUserObj.name;
@@ -3102,7 +3259,33 @@ function applyUserUI(){
         ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
         : '<span style="color:var(--danger)"><i class="fas fa-ban"></i> مرفوض</span>';
   $('#adminNav').style.display = currentUserObj.role === 'admin' ? 'flex' : 'none';
-  updateMobileUserMenu();  // ★
+  updateMobileUserMenu();
+}
+
+function updateMobileUserMenu(){
+  if(!currentUserObj) return;
+  const nm = currentUserObj.name || '—';
+  const init = String(nm).trim().charAt(0) || '؟';
+  const av = avatarStyleFor(currentUserObj);
+  const avEl = document.getElementById('mumAvatar');
+  const mb = document.getElementById('mobileUserAvatar');
+  const dot = document.getElementById('mobileUserDot');
+  if(avEl){ avEl.textContent = av ? '' : init; avEl.style.cssText = av; }
+  if(mb){ mb.textContent = av ? '' : init; mb.style.backgroundImage = av ? `url('${currentUserObj.avatar_url}')` : ''; }
+  const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
+  const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
+  let badge = '';
+  if(currentUserObj.role === 'admin') badge = '<span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+  else if(currentUserObj.status === 'approved') badge = '<span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
+  else if(currentUserObj.status === 'pending') badge = '<span class="sub-badge pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+  else badge = '<span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626)"><i class="fas fa-ban"></i> غير مفعّل</span>';
+  const bd = document.getElementById('mumBadge'); if(bd) bd.innerHTML = badge;
+  if(dot){
+    dot.classList.remove('pending','off');
+    if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){ }
+    else if(currentUserObj.status === 'pending') dot.classList.add('pending');
+    else dot.classList.add('off');
+  }
 }
 
 $('#logoutBtn').addEventListener('click', () => {
@@ -3115,24 +3298,32 @@ $('#logoutBtn').addEventListener('click', () => {
     closeReader();
     $('#app').classList.remove('open');
     const w = $('#welcome');
-    w.style.display = 'flex';
-    w.classList.remove('exit');
-    ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = '';
-    });
-    ['loginMsg','adminMsg'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el){ el.className = 'auth-msg'; el.textContent = ''; }
-    });
+    w.style.display = 'flex'; w.classList.remove('exit');
+    ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    ['loginMsg','adminMsg'].forEach(id => { const el = document.getElementById(id); if(el){ el.className = 'auth-msg'; el.textContent = ''; } });
     const mum = $('#mobileUserMenu'); if(mum) mum.classList.remove('open');
     showAuthForm('login');
     showAuth();
   });
 });
 
+$('#mobileUserBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const menu = $('#mobileUserMenu');
+  menu.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  const menu = $('#mobileUserMenu');
+  if(!menu || !menu.classList.contains('open')) return;
+  if(e.target.closest('#mobileUserMenu') || e.target.closest('#mobileUserBtn')) return;
+  menu.classList.remove('open');
+});
+$('#mumProfile').addEventListener('click', () => { $('#mobileUserMenu').classList.remove('open'); go('profile'); });
+$('#mumSettings').addEventListener('click', () => { $('#mobileUserMenu').classList.remove('open'); go('settings'); });
+$('#mumLogout').addEventListener('click', () => { $('#mobileUserMenu').classList.remove('open'); $('#logoutBtn').click(); });
+
 /* ============================================================
-   15) Realtime Subscriptions
+   16) Realtime
 ============================================================ */
 function cleanupChannels(){
   try{ if(myProfileChannel) sb.removeChannel(myProfileChannel); }catch(e){}
@@ -3151,30 +3342,19 @@ function subscribeMyProfile(){
         const oldRole = currentUserObj ? currentUserObj.role : null;
         currentUserObj = Object.assign({}, currentUserObj, payload.new);
         applyUserUI();
-        if(currentUserObj.role === 'admin' && oldRole !== 'admin'){
-          $('#adminNav').style.display = 'flex';
-          subscribeProfilesForAdmin();
-        }
-        if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){
-          toast('🎉 تمت الموافقة على حسابك!', 'ok');
-          renderSubBanners();
-          renderFiles();
-        } else if(currentUserObj.status === 'rejected' && oldStatus !== 'rejected'){
-          toast('تم رفض طلبك', 'warn');
-          renderSubBanners();
-        } else if(currentUserObj.status === 'pending'){
-          renderSubBanners();
-        }
+        if($('#view-profile').classList.contains('active')) renderProfile();
+        if(currentUserObj.role === 'admin' && oldRole !== 'admin'){ $('#adminNav').style.display = 'flex'; subscribeProfilesForAdmin(); }
+        if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){ toast('🎉 تمت الموافقة على حسابك!', 'ok'); renderSubBanners(); renderFiles(); }
+        else if(currentUserObj.status === 'rejected' && oldStatus !== 'rejected'){ toast('تم رفض طلبك', 'warn'); renderSubBanners(); }
+        else if(currentUserObj.status === 'pending'){ renderSubBanners(); }
       })
       .subscribe();
-  }catch(e){ console.warn('my profile channel failed', e); }
+  }catch(e){}
 }
 function subscribeFiles(){
   if(filesChannel) return;
   filesChannel = sb.channel('files-all')
-    .on('postgres_changes', { event:'*', schema:'public', table:'files' }, () => {
-      loadProfilesAndFiles();
-    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'files' }, () => { loadProfilesAndFiles(); })
     .subscribe();
 }
 function subscribeProfilesForAdmin(){
@@ -3193,7 +3373,7 @@ function subscribeProfilesForAdmin(){
 }
 
 /* ============================================================
-   16) لوحة الأدمن
+   17) لوحة الأدمن
 ============================================================ */
 function renderAdmin(){
   if(!currentUserObj || currentUserObj.role !== 'admin') return;
@@ -3208,8 +3388,7 @@ function renderAdmin(){
   renderAdminFiles();
 }
 function renderUsersTable(){
-  const box = $('#usersTable');
-  if(!box) return;
+  const box = $('#usersTable'); if(!box) return;
   const q = ($('#userSearch') ? $('#userSearch').value : '').trim().toLowerCase();
   const filter = $('#userFilter') ? $('#userFilter').value : 'all';
   let list = DB.users.filter(u => u.role !== 'admin');
@@ -3222,23 +3401,21 @@ function renderUsersTable(){
     const bp = b.status === 'pending' ? 0 : 1;
     return ap - bp || new Date(b.created_at||0) - new Date(a.created_at||0);
   });
-
   if(!list.length){
     box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>سيظهر هنا كل من يسجّل حساباً جديداً</p></div>';
     return;
   }
   box.innerHTML = `
-    <div class="thead">
-      <div>المستخدم</div><div>البريد الإلكتروني</div><div>الحالة</div><div style="text-align:left">إجراءات</div>
-    </div>
+    <div class="thead"><div>المستخدم</div><div>البريد الإلكتروني</div><div>الحالة</div><div style="text-align:left">إجراءات</div></div>
     ${list.map(u => {
       let statusBadge;
       if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
       else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> طلب معلّق</span>';
       else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> مرفوض</span>';
+      const avStyle = u.avatar_url ? `background-image:url('${u.avatar_url}')` : '';
       return `<div class="trow">
         <div class="user-cell">
-          <div class="av">${escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
+          <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
           <div class="info">
             <b>${escapeHtml(u.name || '—')}</b>
             <small>${u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—'}</small>
@@ -3257,7 +3434,7 @@ function renderUsersTable(){
 window.approveUser = async id => {
   const { error } = await sb.from('profiles').update({ status:'approved' }).eq('id', id);
   if(error){ toast('فشل التحديث: ' + error.message, 'err'); return; }
-  toast('تم تفعيل الاشتراك — سيصل الإشعار فوراً للمستخدم', 'ok');
+  toast('تم تفعيل الاشتراك', 'ok');
 };
 window.rejectUser = async id => {
   const { error } = await sb.from('profiles').update({ status:'rejected' }).eq('id', id);
@@ -3268,8 +3445,7 @@ $('#userSearch').addEventListener('input', renderUsersTable);
 $('#userFilter').addEventListener('change', renderUsersTable);
 
 function renderAdminFiles(){
-  const box = $('#adminFilesGrid');
-  if(!box) return;
+  const box = $('#adminFilesGrid'); if(!box) return;
   if(!DB.files.length){
     box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3><p>اذهب لتبويب «إضافة ملف» لرفع أول ملف PDF</p></div>';
     return;
@@ -3295,15 +3471,13 @@ function renderAdminFiles(){
   `).join('');
 }
 window.toggleImportant = async id => {
-  const f = DB.files.find(x => x.id === id);
-  if(!f) return;
+  const f = DB.files.find(x => x.id === id); if(!f) return;
   const { error } = await sb.from('files').update({ important: !f.important }).eq('id', id);
   if(error){ toast('فشل: ' + error.message, 'err'); return; }
   toast(f.important ? 'تم إزالة النجمة' : 'أصبح الملف مميزاً', 'ok');
 };
 window.deleteFile = (id, path) => {
-  const f = DB.files.find(x => x.id === id);
-  if(!f) return;
+  const f = DB.files.find(x => x.id === id); if(!f) return;
   confirmBox('حذف الملف', `حذف الملف «${escapeHtml(f.title)}»؟`, async () => {
     try{ await sb.storage.from('pdfs').remove([path]); }catch(e){}
     const { error } = await sb.from('files').delete().eq('id', id);
@@ -3312,35 +3486,19 @@ window.deleteFile = (id, path) => {
   }, true);
 };
 
-/* رفع الملفات */
 let currentPdfBlob = null;
-
 const uploadZone = $('#uploadZone');
 const afPdfInput = $('#afPdfInput');
 if(uploadZone && afPdfInput){
   uploadZone.addEventListener('click', () => afPdfInput.click());
-  ['dragenter','dragover'].forEach(ev => {
-    uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-  });
-  ['dragleave','drop'].forEach(ev => {
-    uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
-  });
-  uploadZone.addEventListener('drop', e => {
-    const file = e.dataTransfer && e.dataTransfer.files[0];
-    if(file) handlePdfFile(file);
-  });
-  afPdfInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if(file) handlePdfFile(file);
-  });
+  ['dragenter','dragover'].forEach(ev => { uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); }); });
+  ['dragleave','drop'].forEach(ev => { uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); }); });
+  uploadZone.addEventListener('drop', e => { const file = e.dataTransfer && e.dataTransfer.files[0]; if(file) handlePdfFile(file); });
+  afPdfInput.addEventListener('change', e => { const file = e.target.files[0]; if(file) handlePdfFile(file); });
 }
 async function handlePdfFile(file){
-  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){
-    toast('الرجاء اختيار ملف PDF فقط', 'warn'); return;
-  }
-  if(file.size > 100 * 1024 * 1024){
-    toast('حجم الملف كبير جداً (الحد 100 ميجا)', 'warn'); return;
-  }
+  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('الرجاء اختيار ملف PDF فقط', 'warn'); return; }
+  if(file.size > 100 * 1024 * 1024){ toast('حجم الملف كبير جداً (الحد 100 ميجا)', 'warn'); return; }
   currentPdfBlob = file;
   const sizeMB = (file.size / 1024 / 1024).toFixed(2);
   let pages = '?';
@@ -3349,20 +3507,13 @@ async function handlePdfFile(file){
     const doc = await pdfjsLib.getDocument({ data: ab }).promise;
     pages = doc.numPages;
     try{ doc.destroy(); }catch(e){}
-  }catch(e){ console.error(e); }
+  }catch(e){}
   $('#uzFileInfo').innerHTML = `<div class="uz-file"><i class="fas fa-circle-check"></i> ${escapeHtml(file.name)} — ${sizeMB} ميجا${pages !== '?' ? ` — ${pages} صفحة` : ''}</div>`;
-  if(!$('#afTitle').value){
-    $('#afTitle').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g,' ');
-  }
+  if(!$('#afTitle').value) $('#afTitle').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g,' ');
 }
 $('#clearFileBtn').addEventListener('click', () => {
-  $('#afTitle').value = '';
-  $('#afCat').value = 'كمي';
-  $('#afDesc').value = '';
-  $('#afImportant').checked = false;
-  $('#uzFileInfo').innerHTML = '';
-  if(afPdfInput) afPdfInput.value = '';
-  currentPdfBlob = null;
+  $('#afTitle').value = ''; $('#afCat').value = 'كمي'; $('#afDesc').value = ''; $('#afImportant').checked = false;
+  $('#uzFileInfo').innerHTML = ''; if(afPdfInput) afPdfInput.value = ''; currentPdfBlob = null;
 });
 $('#saveFileBtn').addEventListener('click', async () => {
   if(!currentUserObj || currentUserObj.role !== 'admin'){ toast('غير مصرح', 'err'); return; }
@@ -3375,29 +3526,13 @@ $('#saveFileBtn').addEventListener('click', async () => {
   if(!currentPdfBlob){ toast('اختر ملف PDF أولاً', 'warn'); return; }
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
-
   const id = (crypto.randomUUID ? crypto.randomUUID() : ('f_' + Date.now() + '_' + Math.random().toString(36).slice(2,9)));
   const safeName = currentPdfBlob.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
   const storagePath = currentUserObj.id + '/' + id + '_' + safeName;
-
   let pages = 0;
-  try{
-    const ab = await currentPdfBlob.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: ab }).promise;
-    pages = doc.numPages;
-    try{ doc.destroy(); }catch(e){}
-  }catch(e){}
-
-  const { error: upErr } = await sb.storage.from('pdfs').upload(storagePath, currentPdfBlob, {
-    cacheControl: '3600', upsert: false, contentType: 'application/pdf'
-  });
-  if(upErr){
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-    toast('فشل رفع الملف: ' + upErr.message, 'err');
-    return;
-  }
-
+  try{ const ab = await currentPdfBlob.arrayBuffer(); const doc = await pdfjsLib.getDocument({ data: ab }).promise; pages = doc.numPages; try{ doc.destroy(); }catch(e){} }catch(e){}
+  const { error: upErr } = await sb.storage.from('pdfs').upload(storagePath, currentPdfBlob, { cacheControl: '3600', upsert: false, contentType: 'application/pdf' });
+  if(upErr){ btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف'; toast('فشل رفع الملف: ' + upErr.message, 'err'); return; }
   const choice = pick(ICONS);
   const { error: dbErr } = await sb.from('files').insert({
     id: id, title, category: cat, description: desc, important,
@@ -3406,23 +3541,13 @@ $('#saveFileBtn').addEventListener('click', async () => {
   });
   if(dbErr){
     try{ await sb.storage.from('pdfs').remove([storagePath]); }catch(e){}
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-    toast('فشل حفظ البيانات: ' + dbErr.message, 'err');
-    return;
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+    toast('فشل حفظ البيانات: ' + dbErr.message, 'err'); return;
   }
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
-  $('#afTitle').value = '';
-  $('#afCat').value = 'كمي';
-  $('#afDesc').value = '';
-  $('#afImportant').checked = false;
-  $('#uzFileInfo').innerHTML = '';
-  if(afPdfInput) afPdfInput.value = '';
-  currentPdfBlob = null;
-  toast('تم رفع الملف بنجاح — سيظهر لجميع المستخدمين فوراً', 'ok');
-
+  btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ الملف';
+  $('#afTitle').value = ''; $('#afCat').value = 'كمي'; $('#afDesc').value = ''; $('#afImportant').checked = false;
+  $('#uzFileInfo').innerHTML = ''; if(afPdfInput) afPdfInput.value = ''; currentPdfBlob = null;
+  toast('تم رفع الملف بنجاح', 'ok');
   $$('.admin-tabs button').forEach(b => b.classList.remove('on'));
   $$('.admin-panel').forEach(p => p.classList.remove('on'));
   const tab = document.querySelector('.admin-tabs button[data-panel="files"]');
@@ -3439,8 +3564,45 @@ $$('.admin-tabs button').forEach(b => {
   });
 });
 
+/* إضافة مستخدم من لوحة الأدمن */
+(function bindAdminCreateUser(){
+  const btn = document.getElementById('nuCreateBtn'); if(!btn) return;
+  btn.addEventListener('click', async () => {
+    if(!currentUserObj || currentUserObj.role !== 'admin'){ toast('غير مصرح', 'err'); return; }
+    const name = $('#nuName').value.trim();
+    const email = $('#nuEmail').value.trim().toLowerCase();
+    const pass = $('#nuPass').value;
+    const approve = $('#nuApprove').checked;
+    if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً صحيحاً', 'warn'); return; }
+    if(!pass || pass.length < 6){ toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+    try{
+      const { data, error } = await sbTemp.auth.signUp({ email, password: pass, options: { data: { name } } });
+      if(error){ toast('فشل الإنشاء: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
+      if(approve && data && data.user){
+        await new Promise(r => setTimeout(r, 800));
+        const { error: upErr } = await sb.from('profiles').update({ status:'approved', name }).eq('id', data.user.id);
+        if(upErr) console.warn('auto approve failed', upErr);
+      }
+      toast('تم إنشاء الحساب بنجاح', 'ok');
+      $('#nuName').value = ''; $('#nuEmail').value = '';
+      try{
+        const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = (usersData || []).filter(u => u.role !== 'admin');
+        renderAdmin();
+      }catch(e){}
+    }catch(e){ toast('خطأ: ' + e.message, 'err'); }
+    btn.disabled = false; btn.innerHTML = orig;
+  });
+  const clr = document.getElementById('nuClearBtn');
+  if(clr) clr.addEventListener('click', () => { $('#nuName').value = ''; $('#nuEmail').value = ''; $('#nuPass').value = '123456'; $('#nuApprove').checked = true; });
+})();
+
 /* ============================================================
-   17) الحماية والاختصارات
+   18) الحماية والاختصارات
 ============================================================ */
 const isEditable = el => {
   if(!el) return false;
@@ -3456,22 +3618,11 @@ document.addEventListener('keydown', e => {
   const k = e.key;
   const readerOpen = $('#reader').classList.contains('open');
   const editing = isEditable(e.target);
-
   if(k === 'F12'){ e.preventDefault(); flashShield(); return false; }
   if(e.ctrlKey && e.shiftKey && ['I','J','C','K','i','j','c','k'].includes(k)){ e.preventDefault(); flashShield(); return false; }
   if(e.ctrlKey && !e.shiftKey && ['u','U','s','S','p','P'].includes(k)){ e.preventDefault(); flashShield(); return false; }
-
-  if(e.ctrlKey && (k === 'z' || k === 'Z') && readerOpen && !editing){
-    e.preventDefault(); undoDraw(); return;
-  }
-
-  if(e.ctrlKey && (k === 'k' || k === 'K')){
-    e.preventDefault();
-    const s = $('#searchInput');
-    if(s && $('#app').classList.contains('open')){ s.focus(); s.select(); }
-    return;
-  }
-
+  if(e.ctrlKey && (k === 'z' || k === 'Z') && readerOpen && !editing){ e.preventDefault(); undoDraw(); return; }
+  if(e.ctrlKey && (k === 'k' || k === 'K')){ e.preventDefault(); const s = $('#searchInput'); if(s && $('#app').classList.contains('open')){ s.focus(); s.select(); } return; }
   if(readerOpen && !editing){
     if(k === '+' || k === '='){ e.preventDefault(); setZoom(RS.zoom + 0.15); return; }
     if(k === '-' || k === '_'){ e.preventDefault(); setZoom(RS.zoom - 0.15); return; }
@@ -3482,7 +3633,6 @@ document.addEventListener('keydown', e => {
     if(k === 'p' || k === 'P'){ e.preventDefault(); toggleDrawMode(); return; }
     if(k === 'w' || k === 'W'){ e.preventDefault(); toggleWhiteboard(); return; }
   }
-
   if(k === 'Escape'){
     if($('#modal').classList.contains('open')){ $('#modal').classList.remove('open'); return; }
     const mum = $('#mobileUserMenu'); if(mum && mum.classList.contains('open')){ mum.classList.remove('open'); return; }
@@ -3495,24 +3645,20 @@ document.addEventListener('keydown', e => {
   if(k === '1') go('home');
   if(k === '2') go('files');
   if(k === '3') go('progress');
+  if(k === 'l' || k === 'L') go('leaderboard');
+  if(k === 'p' || k === 'P') go('profile');
   if(k === '4') go('features');
   if(k === '5') go('settings');
   if(k === '6' && currentUserObj && currentUserObj.role === 'admin') go('admin');
 });
 document.addEventListener('dragstart', e => { if($('#reader').classList.contains('open')) e.preventDefault(); });
 document.addEventListener('copy', e => {
-  if($('#reader').classList.contains('open') && !isEditable(e.target)){
-    e.preventDefault();
-    toast('النسخ غير مسموح داخل القارئ', 'warn');
-  }
+  if($('#reader').classList.contains('open') && !isEditable(e.target)){ e.preventDefault(); toast('النسخ غير مسموح داخل القارئ', 'warn'); }
 });
-document.addEventListener('cut', e => {
-  if($('#reader').classList.contains('open') && !isEditable(e.target)) e.preventDefault();
-});
+document.addEventListener('cut', e => { if($('#reader').classList.contains('open') && !isEditable(e.target)) e.preventDefault(); });
 let shieldTimer = null;
 function flashShield(){
-  const s = $('#shield');
-  s.classList.add('on');
+  const s = $('#shield'); s.classList.add('on');
   clearTimeout(shieldTimer);
   shieldTimer = setTimeout(() => s.classList.remove('on'), 2200);
 }
@@ -3525,43 +3671,29 @@ function devtoolsOpen(){
 let shieldCheck = 0;
 setInterval(() => {
   if(!$('#app').classList.contains('open')) return;
-  if(devtoolsOpen()){
-    shieldCheck++;
-    if(shieldCheck >= 2){ $('#shield').classList.add('on'); stopReadClock(); }
-  } else {
-    shieldCheck = 0;
-    $('#shield').classList.remove('on');
-    if($('#reader').classList.contains('open') && !RS.clockId) startReadClock();
-  }
+  if(devtoolsOpen()){ shieldCheck++; if(shieldCheck >= 2){ $('#shield').classList.add('on'); stopReadClock(); } }
+  else { shieldCheck = 0; $('#shield').classList.remove('on'); if($('#reader').classList.contains('open') && !RS.clockId) startReadClock(); }
 }, 1200);
 
 /* ============================================================
-   18) تحديث شامل
+   19) تحديث شامل
 ============================================================ */
 function refreshAll(){
-  renderFiles();
-  renderHomeStats();
-  updateSidebar();
+  renderFiles(); renderHomeStats(); updateSidebar();
   if($('#view-progress').classList.contains('active')) renderProgress();
   checkBadges();
 }
 
 /* ============================================================
-   19) الإقلاع
+   20) الإقلاع
 ============================================================ */
 (async function init(){
   userData = defaultUD();
   applyTheme();
-
-  try{
-    const { data: { session: s } } = await sb.auth.getSession();
-    session = s;
-  }catch(e){ session = null; }
-
+  try{ const { data: { session: s } } = await sb.auth.getSession(); session = s; }catch(e){ session = null; }
   sb.auth.onAuthStateChange(async (event, newSession) => {
     session = newSession;
     if(event === 'PASSWORD_RECOVERY'){
-      // ★ عند عودة المستخدم من رابط استعادة كلمة المرور
       setTimeout(() => {
         openModal({
           title: 'تعيين كلمة مرور جديدة',
@@ -3580,23 +3712,10 @@ function refreshAll(){
       }, 600);
       return;
     }
-    if(event === 'SIGNED_IN' && newSession){
-      await enterApp();
-    } else if(event === 'SIGNED_OUT'){
-      currentUserObj = null;
-      cleanupChannels();
-      $('#app').classList.remove('open');
-      showWelcome();
-    }
+    if(event === 'SIGNED_IN' && newSession){ await enterApp(); }
+    else if(event === 'SIGNED_OUT'){ currentUserObj = null; cleanupChannels(); $('#app').classList.remove('open'); showWelcome(); }
   });
-
-  if(session){
-    await enterApp();
-  } else {
-    showWelcome();
-  }
-
-  // ★ التعامل مع عودة المستخدم من رابط إعادة تعيين كلمة المرور (احتياطي)
+  if(session){ await enterApp(); } else { showWelcome(); }
   if(window.location.hash && window.location.hash.includes('type=recovery')){
     setTimeout(() => {
       openModal({
@@ -3615,29 +3734,15 @@ function refreshAll(){
       });
     }, 900);
   }
-
   $('#enterBtn').addEventListener('click', () => {
-    const w = $('#welcome');
-    w.classList.add('exit');
-    setTimeout(() => {
-      w.style.display = 'none';
-      showAuth();
-      showAuthForm('login');
-    }, 900);
+    const w = $('#welcome'); w.classList.add('exit');
+    setTimeout(() => { w.style.display = 'none'; showAuth(); showAuthForm('login'); }, 900);
   });
   document.addEventListener('keydown', function onEnter(e){
-    if(e.key === 'Enter' && $('#welcome').style.display !== 'none' && !$('#welcome').classList.contains('exit')){
-      $('#enterBtn').click();
-    }
+    if(e.key === 'Enter' && $('#welcome').style.display !== 'none' && !$('#welcome').classList.contains('exit')){ $('#enterBtn').click(); }
   });
-
   let rotTimer = null;
-  window.addEventListener('orientationchange', () => {
-    clearTimeout(rotTimer);
-    rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
-  });
-
-  // ★ ربط مهام الرسم والصبورة بعد التحميل
+  window.addEventListener('orientationchange', () => { clearTimeout(rotTimer); rotTimer = setTimeout(() => { computeBaseWidth(); }, 350); });
   setupDrawUI();
 })();
 
@@ -3647,68 +3752,33 @@ function showWelcome(){
   $('#auth').classList.remove('open');
   $('#app').classList.remove('open');
 }
-
-window.addEventListener('beforeunload', () => {
-  savePrefs();
-  saveDrawings();
-  flushProgressSync();
-});
+window.addEventListener('beforeunload', () => { savePrefs(); saveDrawings(); flushProgressSync(); });
 
 /* ============================================================
-   20) ★★★ نظام الرسم على الملف والصبورة البيضاء ★★★
+   21) الرسم على الملف والصبورة
 ============================================================ */
 const DRAW_COLORS = [
-  { c:'#ef4444', n:'أحمر' },
-  { c:'#f97316', n:'برتقالي' },
-  { c:'#facc15', n:'أصفر' },
-  { c:'#22c55e', n:'أخضر' },
-  { c:'#06b6d4', n:'سماوي' },
-  { c:'#3b82f6', n:'أزرق' },
-  { c:'#8b5cf6', n:'بنفسجي' },
-  { c:'#ec4899', n:'وردي' },
-  { c:'#78350f', n:'بني' },
-  { c:'#000000', n:'أسود' },
-  { c:'#94a3b8', n:'رمادي' },
-  { c:'#ffffff', n:'أبيض' }
+  { c:'#ef4444', n:'أحمر' }, { c:'#f97316', n:'برتقالي' }, { c:'#facc15', n:'أصفر' },
+  { c:'#22c55e', n:'أخضر' }, { c:'#06b6d4', n:'سماوي' }, { c:'#3b82f6', n:'أزرق' },
+  { c:'#8b5cf6', n:'بنفسجي' }, { c:'#ec4899', n:'وردي' }, { c:'#78350f', n:'بني' },
+  { c:'#000000', n:'أسود' }, { c:'#94a3b8', n:'رمادي' }, { c:'#ffffff', n:'أبيض' }
 ];
 const DRAW_SIZES = [2, 4, 7, 12, 20, 32];
-
 const DRAW = {
-  active: false,      // وضع الرسم على الملف
-  wb: false,          // الصبورة مفتوحة
-  tool: 'pen',        // pen | marker | eraser
-  color: '#ef4444',
-  size: 4,
-  drawing: false,
-  targetCanvas: null,
-  current: null,
-  lastKey: null
+  active: false, wb: false, tool: 'pen', color: '#ef4444', size: 4,
+  drawing: false, targetCanvas: null, current: null, lastKey: null
 };
-
 function drawKeyPdf(fileId, page){ return 'pdf:' + fileId + ':' + page; }
 function drawKeyWb(fileId){ return 'wb:' + (fileId || 'default'); }
-
-function drawingsKey(){
-  if(!session) return 'abdq_draw_guest';
-  return 'abdq_draw_' + session.user.id;
-}
+function drawingsKey(){ if(!session) return 'abdq_draw_guest'; return 'abdq_draw_' + session.user.id; }
 function loadDrawings(){
   userData.drawings = {};
   try{
     const raw = localStorage.getItem(drawingsKey());
-    if(raw){
-      const d = JSON.parse(raw);
-      if(d && typeof d === 'object') userData.drawings = d;
-    }
+    if(raw){ const d = JSON.parse(raw); if(d && typeof d === 'object') userData.drawings = d; }
   }catch(e){}
 }
-function saveDrawings(){
-  try{
-    localStorage.setItem(drawingsKey(), JSON.stringify(userData.drawings));
-  }catch(e){
-    console.warn('drawings save failed', e);
-  }
-}
+function saveDrawings(){ try{ localStorage.setItem(drawingsKey(), JSON.stringify(userData.drawings)); }catch(e){} }
 
 function drawStrokeOnCtx(ctx, s, w, h){
   if(!s.points || s.points.length < 1) return;
@@ -3716,38 +3786,16 @@ function drawStrokeOnCtx(ctx, s, w, h){
   const scale = w / base;
   let lw = Math.max(1, (s.size || 4) * scale);
   ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = s.color || '#000';
-  ctx.fillStyle = s.color || '#000';
-  if(s.tool === 'marker'){
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = 0.35;
-    lw *= 3;
-  } else if(s.tool === 'eraser'){
-    ctx.globalCompositeOperation = 'destination-out';
-    lw *= 3;
-  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = s.color || '#000'; ctx.fillStyle = s.color || '#000';
+  if(s.tool === 'marker'){ ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.35; lw *= 3; }
+  else if(s.tool === 'eraser'){ ctx.globalCompositeOperation = 'destination-out'; lw *= 3; }
   ctx.lineWidth = lw;
-
   const pts = s.points;
-  if(pts.length === 1){
-    const p = pts[0];
-    ctx.beginPath();
-    ctx.arc(p.x * w, p.y * h, lw / 2, 0, Math.PI * 2);
-    ctx.fill();
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x * w, pts[0].y * h);
-    for(let i = 1; i < pts.length; i++){
-      const p = pts[i];
-      ctx.lineTo(p.x * w, p.y * h);
-    }
-    ctx.stroke();
-  }
+  if(pts.length === 1){ const p = pts[0]; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, lw / 2, 0, Math.PI * 2); ctx.fill(); }
+  else { ctx.beginPath(); ctx.moveTo(pts[0].x * w, pts[0].y * h); for(let i = 1; i < pts.length; i++){ const p = pts[i]; ctx.lineTo(p.x * w, p.y * h); } ctx.stroke(); }
   ctx.restore();
 }
-
 function redrawCanvas(canvas, key, includeCurrent){
   if(!canvas) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -3755,9 +3803,7 @@ function redrawCanvas(canvas, key, includeCurrent){
   const w = Math.max(1, Math.round(rect.width));
   const h = Math.max(1, Math.round(rect.height));
   const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
-  if(canvas.width !== bw || canvas.height !== bh){
-    canvas.width = bw; canvas.height = bh;
-  }
+  if(canvas.width !== bw || canvas.height !== bh){ canvas.width = bw; canvas.height = bh; }
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
@@ -3765,126 +3811,72 @@ function redrawCanvas(canvas, key, includeCurrent){
   if(includeCurrent && DRAW.current) strokes.push(DRAW.current);
   strokes.forEach(s => drawStrokeOnCtx(ctx, s, w, h));
 }
-
 function redrawAllPdfDrawings(){
   if(!RS.file) return;
-  RS.pageEls.forEach((el, i) => {
-    const c = el.querySelector('.pg-draw');
-    if(c) redrawCanvas(c, drawKeyPdf(RS.file.id, i + 1), false);
-  });
+  RS.pageEls.forEach((el, i) => { const c = el.querySelector('.pg-draw'); if(c) redrawCanvas(c, drawKeyPdf(RS.file.id, i + 1), false); });
 }
 function redrawWhiteboard(){
-  const c = $('#wbCanvas');
-  if(!c) return;
+  const c = $('#wbCanvas'); if(!c) return;
   const key = drawKeyWb(RS.file ? RS.file.id : 'default');
-  redrawCanvas(c, key, false);
-  updateWbEmpty();
+  redrawCanvas(c, key, false); updateWbEmpty();
 }
 function updateWbEmpty(){
-  const empty = $('#wbEmpty');
-  if(!empty) return;
+  const empty = $('#wbEmpty'); if(!empty) return;
   const key = drawKeyWb(RS.file ? RS.file.id : 'default');
   const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
   empty.style.display = has ? 'none' : 'flex';
 }
-function refreshDrawSurface(){
-  redrawAllPdfDrawings();
-  redrawWhiteboard();
-}
+function refreshDrawSurface(){ redrawAllPdfDrawings(); redrawWhiteboard(); }
 
 function attachPdfDrawEvents(canvas, pageNum){
   canvas.addEventListener('pointerdown', e => {
-    if(!DRAW.active) return;
-    if(!RS.file) return;
+    if(!DRAW.active || !RS.file) return;
     e.preventDefault();
-    const key = drawKeyPdf(RS.file.id, pageNum);
-    startStroke(e, canvas, key);
+    startStroke(e, canvas, drawKeyPdf(RS.file.id, pageNum));
   });
-  canvas.addEventListener('pointermove', e => {
-    if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return;
-    e.preventDefault();
-    moveStroke(e, canvas);
-  });
-  canvas.addEventListener('pointerup', e => {
-    if(DRAW.targetCanvas !== canvas) return;
-    endStroke(e, canvas);
-  });
-  canvas.addEventListener('pointercancel', e => {
-    if(DRAW.targetCanvas !== canvas) return;
-    endStroke(e, canvas);
-  });
+  canvas.addEventListener('pointermove', e => { if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return; e.preventDefault(); moveStroke(e, canvas); });
+  canvas.addEventListener('pointerup', e => { if(DRAW.targetCanvas !== canvas) return; endStroke(e, canvas); });
+  canvas.addEventListener('pointercancel', e => { if(DRAW.targetCanvas !== canvas) return; endStroke(e, canvas); });
 }
-
 function attachWbDrawEvents(canvas){
-  canvas.addEventListener('pointerdown', e => {
-    if(!RS.file) return;
-    e.preventDefault();
-    const key = drawKeyWb(RS.file.id);
-    startStroke(e, canvas, key);
-  });
-  canvas.addEventListener('pointermove', e => {
-    if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return;
-    e.preventDefault();
-    moveStroke(e, canvas);
-  });
-  canvas.addEventListener('pointerup', e => {
-    if(DRAW.targetCanvas !== canvas) return;
-    endStroke(e, canvas);
-  });
-  canvas.addEventListener('pointercancel', e => {
-    if(DRAW.targetCanvas !== canvas) return;
-    endStroke(e, canvas);
-  });
+  canvas.addEventListener('pointerdown', e => { if(!RS.file) return; e.preventDefault(); startStroke(e, canvas, drawKeyWb(RS.file.id)); });
+  canvas.addEventListener('pointermove', e => { if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return; e.preventDefault(); moveStroke(e, canvas); });
+  canvas.addEventListener('pointerup', e => { if(DRAW.targetCanvas !== canvas) return; endStroke(e, canvas); });
+  canvas.addEventListener('pointercancel', e => { if(DRAW.targetCanvas !== canvas) return; endStroke(e, canvas); });
 }
-
 function getNormCoords(e, canvas){
   const rect = canvas.getBoundingClientRect();
   const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
   const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
   return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 };
 }
-
 function startStroke(e, canvas, key){
   try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
   const p = getNormCoords(e, canvas);
-  DRAW.drawing = true;
-  DRAW.targetCanvas = canvas;
-  DRAW.lastKey = key;
-  DRAW.current = {
-    tool: DRAW.tool,
-    color: DRAW.color,
-    size: DRAW.size,
-    points: [p]
-  };
+  DRAW.drawing = true; DRAW.targetCanvas = canvas; DRAW.lastKey = key;
+  DRAW.current = { tool: DRAW.tool, color: DRAW.color, size: DRAW.size, points: [p] };
   redrawCanvas(canvas, key, true);
 }
-
 function moveStroke(e, canvas){
   if(!DRAW.current) return;
   const p = getNormCoords(e, canvas);
   const last = DRAW.current.points[DRAW.current.points.length - 1];
   if(last && Math.abs(last.x - p.x) < 0.0015 && Math.abs(last.y - p.y) < 0.0015) return;
   DRAW.current.points.push(p);
-  const key = DRAW.lastKey;
-  redrawCanvas(canvas, key, true);
+  redrawCanvas(canvas, DRAW.lastKey, true);
 }
-
 function endStroke(e, canvas){
   if(!DRAW.drawing || !DRAW.current) return;
   const key = DRAW.lastKey;
   if(!userData.drawings) userData.drawings = {};
   if(!userData.drawings[key]) userData.drawings[key] = [];
-  // احتفظ بحد أقصى 500 ضربة لكل لوحة
   if(userData.drawings[key].length > 500) userData.drawings[key].shift();
   userData.drawings[key].push(DRAW.current);
-  DRAW.drawing = false;
-  DRAW.current = null;
-  DRAW.targetCanvas = null;
+  DRAW.drawing = false; DRAW.current = null; DRAW.targetCanvas = null;
   saveDrawings();
   redrawCanvas(canvas, key, false);
   if(key && key.startsWith('wb:')) updateWbEmpty();
 }
-
 function currentDrawKey(){
   if(DRAW.lastKey) return DRAW.lastKey;
   if(DRAW.wb && RS.file) return drawKeyWb(RS.file.id);
@@ -3893,29 +3885,22 @@ function currentDrawKey(){
 }
 function redrawSurfaceByKey(key){
   if(!key) return;
-  if(key.startsWith('wb:')){
-    redrawWhiteboard();
-  } else if(key.startsWith('pdf:')){
+  if(key.startsWith('wb:')) redrawWhiteboard();
+  else if(key.startsWith('pdf:')){
     const parts = key.split(':');
     const page = parseInt(parts[2], 10);
     const el = RS.pageEls[page - 1];
-    if(el){
-      const c = el.querySelector('.pg-draw');
-      if(c) redrawCanvas(c, key, false);
-    }
+    if(el){ const c = el.querySelector('.pg-draw'); if(c) redrawCanvas(c, key, false); }
   }
 }
-
 function undoDraw(){
   const key = currentDrawKey();
   if(!key){ toast('لا يوجد رسم للتراجع عنه', 'warn'); return; }
   const arr = userData.drawings[key];
   if(!arr || !arr.length){ toast('لا يوجد رسم للتراجع عنه', 'warn'); return; }
   arr.pop();
-  saveDrawings();
-  redrawSurfaceByKey(key);
+  saveDrawings(); redrawSurfaceByKey(key);
 }
-
 function clearDraw(){
   const key = currentDrawKey();
   if(!key){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
@@ -3923,26 +3908,20 @@ function clearDraw(){
   if(!arr || !arr.length){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
   confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', () => {
     delete userData.drawings[key];
-    saveDrawings();
-    redrawSurfaceByKey(key);
+    saveDrawings(); redrawSurfaceByKey(key);
     if(key.startsWith('wb:')) updateWbEmpty();
     toast('تم مسح الرسم', 'ok');
   }, true);
 }
-
 function renderDrawToolbar(){
   const colorsBox = $('#drawColors');
   if(colorsBox && !colorsBox.dataset.init){
     colorsBox.dataset.init = '1';
-    colorsBox.innerHTML = DRAW_COLORS.map((c, i) =>
-      `<button class="color-dot ${c.c === DRAW.color ? 'on' : ''}" data-c="${c.c}" style="--cc:${c.c}" title="${c.n}"></button>`
-    ).join('');
+    colorsBox.innerHTML = DRAW_COLORS.map(c => `<button class="color-dot ${c.c === DRAW.color ? 'on' : ''}" data-c="${c.c}" style="--cc:${c.c}" title="${c.n}"></button>`).join('');
     colorsBox.addEventListener('click', e => {
-      const b = e.target.closest('.color-dot');
-      if(!b) return;
+      const b = e.target.closest('.color-dot'); if(!b) return;
       DRAW.color = b.dataset.c;
       colorsBox.querySelectorAll('.color-dot').forEach(x => x.classList.toggle('on', x === b));
-      // لو الأداة eraser، بدّلها إلى قلم عند اختيار لون
       if(DRAW.tool === 'eraser') setTool('pen');
     });
   }
@@ -3954,61 +3933,40 @@ function renderDrawToolbar(){
       return `<button class="size-dot ${s === DRAW.size ? 'on' : ''}" data-s="${s}" title="حجم ${s}"><i style="width:${v}px;height:${v}px"></i></button>`;
     }).join('');
     sizesBox.addEventListener('click', e => {
-      const b = e.target.closest('.size-dot');
-      if(!b) return;
+      const b = e.target.closest('.size-dot'); if(!b) return;
       DRAW.size = parseInt(b.dataset.s, 10);
       sizesBox.querySelectorAll('.size-dot').forEach(x => x.classList.toggle('on', x === b));
     });
   }
 }
-
 function setTool(tool){
   DRAW.tool = tool;
   $$('#drawBar .dtool').forEach(b => b.classList.toggle('on', b.dataset.tool === tool));
 }
-
 function updateDrawBarVisibility(){
-  const bar = $('#drawBar');
-  if(!bar) return;
+  const bar = $('#drawBar'); if(!bar) return;
   bar.classList.toggle('on', DRAW.active || DRAW.wb);
 }
-
 function toggleDrawMode(){
   DRAW.active = !DRAW.active;
-  const btn = $('#rdDraw');
-  if(btn) btn.classList.toggle('on', DRAW.active);
+  const btn = $('#rdDraw'); if(btn) btn.classList.toggle('on', DRAW.active);
   if(rdBody) rdBody.classList.toggle('draw-on', DRAW.active);
   updateDrawBarVisibility();
   if(DRAW.active) toast('وضع الرسم مُفعّل — ارسم على الصفحة', 'ok');
 }
-
 function toggleWhiteboard(){
   DRAW.wb = !DRAW.wb;
-  const btn = $('#rdWb');
-  const panel = $('#wbPanel');
-  if(btn) btn.classList.toggle('on', DRAW.wb);
-  if(panel) panel.classList.toggle('open', DRAW.wb);
+  const btn = $('#rdWb'); if(btn) btn.classList.toggle('on', DRAW.wb);
+  const panel = $('#wbPanel'); if(panel) panel.classList.toggle('open', DRAW.wb);
   updateDrawBarVisibility();
-  if(DRAW.wb){
-    setTimeout(() => { redrawWhiteboard(); }, 320);
-    toast('الصبورة البيضاء مفتوحة — ارسم بحرية', 'ok');
-  }
+  if(DRAW.wb){ setTimeout(() => { redrawWhiteboard(); }, 320); toast('الصبورة البيضاء مفتوحة', 'ok'); }
 }
-
 function setupDrawUI(){
   renderDrawToolbar();
-
   const wbCanvas = $('#wbCanvas');
-  if(wbCanvas && !wbCanvas.dataset.init){
-    wbCanvas.dataset.init = '1';
-    attachWbDrawEvents(wbCanvas);
-  }
-
-  // أزرار الرسم في الرأس
-  const rdDraw = $('#rdDraw');
-  if(rdDraw) rdDraw.addEventListener('click', toggleDrawMode);
-  const rdWb = $('#rdWb');
-  if(rdWb) rdWb.addEventListener('click', toggleWhiteboard);
+  if(wbCanvas && !wbCanvas.dataset.init){ wbCanvas.dataset.init = '1'; attachWbDrawEvents(wbCanvas); }
+  const rdDraw = $('#rdDraw'); if(rdDraw) rdDraw.addEventListener('click', toggleDrawMode);
+  const rdWb = $('#rdWb'); if(rdWb) rdWb.addEventListener('click', toggleWhiteboard);
   const wbClose = $('#wbClose');
   if(wbClose) wbClose.addEventListener('click', () => {
     DRAW.wb = false;
@@ -4016,20 +3974,10 @@ function setupDrawUI(){
     const p = $('#wbPanel'); if(p) p.classList.remove('open');
     updateDrawBarVisibility();
   });
-
-  // أدوات شريط الرسم
   const bar = $('#drawBar');
-  if(bar){
-    bar.querySelectorAll('.dtool').forEach(b => {
-      b.addEventListener('click', () => setTool(b.dataset.tool));
-    });
-  }
-  const und = $('#drawUndo');
-  if(und) und.addEventListener('click', undoDraw);
-  const clr = $('#drawClear');
-  if(clr) clr.addEventListener('click', clearDraw);
-
-  // إعادة رسم الصبورة عند تغيير حجم النافذة
+  if(bar) bar.querySelectorAll('.dtool').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+  const und = $('#drawUndo'); if(und) und.addEventListener('click', undoDraw);
+  const clr = $('#drawClear'); if(clr) clr.addEventListener('click', clearDraw);
   let wbResizeTimer = null;
   window.addEventListener('resize', () => {
     if(!DRAW.wb) return;
@@ -4037,126 +3985,6 @@ function setupDrawUI(){
     wbResizeTimer = setTimeout(() => redrawWhiteboard(), 220);
   });
 }
-
-/* ============================================================
-   21) ★★★ قائمة مستخدم الجوال + إنشاء مستخدمين ★★★
-============================================================ */
-function updateMobileUserMenu(){
-  if(!currentUserObj) return;
-  const nm = currentUserObj.name || '—';
-  const av = document.getElementById('mumAvatar');
-  const mb = document.getElementById('mobileUserAvatar');
-  const dot = document.getElementById('mobileUserDot');
-  const first = (nm.trim().charAt(0) || '؟');
-  if(av) av.textContent = first;
-  if(mb) mb.textContent = first;
-  const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
-  const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
-  let badge = '';
-  if(currentUserObj.role === 'admin'){
-    badge = '<span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
-  } else if(currentUserObj.status === 'approved'){
-    badge = '<span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
-  } else if(currentUserObj.status === 'pending'){
-    badge = '<span class="sub-badge pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
-  } else {
-    badge = '<span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626)"><i class="fas fa-ban"></i> غير مفعّل</span>';
-  }
-  const bd = document.getElementById('mumBadge');
-  if(bd) bd.innerHTML = badge;
-  if(dot){
-    dot.classList.remove('pending','off');
-    if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){ /* أخضر */ }
-    else if(currentUserObj.status === 'pending') dot.classList.add('pending');
-    else dot.classList.add('off');
-  }
-}
-
-// ربط أزرار قائمة الجوال
-$('#mobileUserBtn').addEventListener('click', e => {
-  e.stopPropagation();
-  const menu = $('#mobileUserMenu');
-  menu.classList.toggle('open');
-});
-document.addEventListener('click', e => {
-  const menu = $('#mobileUserMenu');
-  if(!menu || !menu.classList.contains('open')) return;
-  if(e.target.closest('#mobileUserMenu') || e.target.closest('#mobileUserBtn')) return;
-  menu.classList.remove('open');
-});
-$('#mumSettings').addEventListener('click', () => {
-  $('#mobileUserMenu').classList.remove('open');
-  go('settings');
-});
-$('#mumLogout').addEventListener('click', () => {
-  $('#mobileUserMenu').classList.remove('open');
-  $('#logoutBtn').click();
-});
-
-/* ★★★ إنشاء مستخدم جديد من لوحة الأدمن ★★★ */
-(function bindAdminCreateUser(){
-  const btn = document.getElementById('nuCreateBtn');
-  const clr = document.getElementById('nuClearBtn');
-  if(!btn) return;
-
-  btn.addEventListener('click', async () => {
-    if(!currentUserObj || currentUserObj.role !== 'admin'){ toast('غير مصرح', 'err'); return; }
-    const name = $('#nuName').value.trim();
-    const email = $('#nuEmail').value.trim().toLowerCase();
-    const pass = $('#nuPass').value;
-    const approve = $('#nuApprove').checked;
-
-    if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
-    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً صحيحاً', 'warn'); return; }
-    if(!pass || pass.length < 6){ toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
-
-    btn.disabled = true;
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
-
-    try{
-      // استخدم عميلاً مؤقتاً حتى لا يتأثر جلوس الأدمن
-      const { data, error } = await sbTemp.auth.signUp({
-        email,
-        password: pass,
-        options: { data: { name } }
-      });
-      if(error){
-        toast('فشل الإنشاء: ' + error.message, 'err');
-        btn.disabled = false; btn.innerHTML = orig;
-        return;
-      }
-      // إذا كان الاشتراك مفعّلاً تلقائياً، نحدّث ملف المستخدم
-      if(approve && data && data.user){
-        // انتظر قليلاً حتى ينشئ trigger الملف
-        await new Promise(r => setTimeout(r, 800));
-        const { error: upErr } = await sb.from('profiles').update({ status:'approved', name }).eq('id', data.user.id);
-        if(upErr) console.warn('auto approve failed', upErr);
-      }
-      toast('تم إنشاء الحساب بنجاح', 'ok');
-      $('#nuName').value = '';
-      $('#nuEmail').value = '';
-      // حدّث القائمة
-      try{
-        const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-        DB.users = (usersData || []).filter(u => u.role !== 'admin');
-        renderAdmin();
-      }catch(e){}
-    }catch(e){
-      toast('خطأ: ' + e.message, 'err');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = orig;
-  });
-
-  if(clr) clr.addEventListener('click', () => {
-    $('#nuName').value = '';
-    $('#nuEmail').value = '';
-    $('#nuPass').value = '123456';
-    $('#nuApprove').checked = true;
-  });
-})();
 </script>
 </body>
 </html>
