@@ -4145,7 +4145,8 @@ function setupDrawUI(){
       // حوّلها إلى blob وارفعها
       const res = await fetch(u);
       const blob = await res.blob();
-      const path = currentUserObj.id + '/avatar_' + Date.now() + '.jpg';
+      const uid = (session && session.user && session.user.id) ? session.user.id : currentUserObj.id;
+      const path = uid + '/avatar_' + Date.now() + '.' + ext;
       const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
         cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
       });
