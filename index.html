@@ -592,6 +592,90 @@ input,textarea,select,button{font-family:inherit}
   .feat-new:hover{transform:none}
 }
 @media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
+
+/* ============================================================
+   ★★★ إضافات جديدة: الرسم على الملف والصبورة البيضاء
+   ★★★ قائمة جوال المستخدم + نسيت كلمة المرور
+============================================================ */
+
+/* ---------- نسيت كلمة المرور ---------- */
+.forgot-link{display:block;text-align:center;font-size:.78rem;font-weight:700;color:#a5b4ff;text-decoration:none;margin-top:12px;cursor:pointer;transition:.2s;background:none;border:none;font-family:inherit;width:100%}
+.forgot-link:hover{color:#fff;text-decoration:underline}
+
+/* ---------- شريط أدوات الرسم ---------- */
+.draw-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(100deg,var(--card-2),var(--card));border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.draw-bar::-webkit-scrollbar{display:none}
+.draw-bar.on{display:flex}
+.draw-tools{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:11px;border:1px solid var(--border);flex-shrink:0}
+.dtool{width:36px;height:34px;border-radius:9px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:.88rem;transition:.2s;flex-shrink:0}
+.dtool:hover{color:var(--primary);background:var(--card)}
+.dtool.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 6px 14px rgba(var(--primary-rgb),.35)}
+.color-dots{display:flex;gap:5px;flex-shrink:0}
+.color-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--cc);cursor:pointer;padding:0;transition:.2s;flex-shrink:0;position:relative}
+.color-dot:hover{transform:scale(1.12)}
+.color-dot.on{border-color:var(--primary);transform:scale(1.15);box-shadow:0 0 0 3px var(--primary-soft)}
+.color-dot.on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.68rem;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.size-dots{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.size-dot{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0;transition:.2s;flex-shrink:0}
+.size-dot i{display:block;background:var(--text);border-radius:50%}
+.size-dot.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px var(--primary-soft)}
+.size-dot.on i{background:var(--primary)}
+
+/* ---------- Canvas الرسم فوق صفحة PDF ---------- */
+.pdf-page .pg-draw{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:none}
+.reader-body.draw-on .pdf-page .pg-draw{pointer-events:auto;cursor:crosshair}
+.reader-body.draw-on .pdf-page{cursor:crosshair}
+
+/* ---------- الصبورة البيضاء ---------- */
+.wb-panel{width:0;flex-shrink:0;overflow:hidden;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s ease;position:relative}
+.wb-panel.open{width:min(460px,44%)}
+.wb-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.wb-head b{flex:1;font-size:.86rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:7px}
+.wb-head b i{color:var(--primary)}
+.wb-stage{flex:1;position:relative;overflow:hidden;background:#ffffff}
+.wb-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;background:#ffffff;display:block}
+[data-theme="dark"] .wb-stage,[data-theme="dark"] .wb-canvas,[data-theme="dark"] .wb-panel{background:#161a24}
+.wb-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:.82rem;font-weight:700;pointer-events:none;text-align:center;padding:20px}
+.wb-empty i{font-size:2rem;opacity:.35}
+
+/* ---------- قائمة مستخدم الجوال ---------- */
+.mobile-user-btn{display:none !important;position:relative}
+.mobile-user-btn .avatar-mini{font-weight:900;font-size:.86rem}
+.mobile-user-btn .dot{position:absolute;top:6px;left:6px;width:9px;height:9px;border-radius:50%;background:var(--success);border:2px solid var(--card)}
+.mobile-user-btn .dot.pending{background:var(--accent)}
+.mobile-user-btn .dot.off{background:var(--danger)}
+.mobile-user-menu{position:fixed;top:72px;left:12px;width:280px;max-width:calc(100vw - 24px);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:16px;z-index:8500;display:none;animation:viewIn .25s ease}
+.mobile-user-menu.open{display:block}
+.mum-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.mum-avatar{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:1.1rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35)}
+.mum-info{min-width:0;flex:1}
+.mum-info b{display:block;font-size:.9rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mum-info small{display:block;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.mum-badge{display:flex;justify-content:center;margin-bottom:12px}
+.mum-actions{display:flex;flex-direction:column;gap:8px}
+.mum-btn{font-family:inherit;font-size:.86rem;font-weight:700;padding:11px 14px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:9px;transition:.2s;text-align:right}
+.mum-btn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.mum-btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,var(--border))}
+.mum-btn.danger:hover{background:color-mix(in srgb,var(--danger) 12%,transparent);border-color:var(--danger);color:var(--danger)}
+.mum-btn i{width:18px;text-align:center}
+
+@media (max-width:720px){
+  .mobile-user-btn{display:grid !important}
+  .wb-panel.open{position:absolute;inset:0;width:100%;z-index:26;border-right:none;border-radius:0}
+  .wb-panel{z-index:26}
+  .draw-bar{padding:7px 10px;gap:6px}
+  .dtool{width:34px;height:32px}
+  .color-dot{width:24px;height:24px}
+  .color-dots{gap:4px}
+  .size-dot{width:28px;height:28px}
+  /* تحسين شريط البحث في الجوال */
+  .topbar{gap:10px;margin-bottom:18px}
+  .topbar h1{font-size:1.15rem}
+  .search-box{order:5;min-width:100%;padding:12px 15px;border-radius:16px;box-shadow:var(--shadow)}
+  .search-box input{font-size:1rem}
+  .top-actions{gap:8px}
+  .icon-btn{width:42px;height:42px;border-radius:13px}
+}
 </style>
 </head>
 <body>
@@ -621,7 +705,7 @@ input,textarea,select,button{font-family:inherit}
     <div class="w-chips">
       <div class="chip" style="animation-delay:.4s"><i class="fas fa-user-shield"></i> حساب آمن</div>
       <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
-      <div class="chip" style="animation-delay:.5s"><i class="fas fa-magnifying-glass-plus"></i> تكبير وتمرير سلس</div>
+      <div class="chip" style="animation-delay:.5s"><i class="fas fa-pen-ruler"></i> رسم وملاحظات</div>
       <div class="chip" style="animation-delay:.55s"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
       <div class="chip" style="animation-delay:.6s"><i class="fas fa-bullseye"></i> هدف يومي</div>
       <div class="chip" style="animation-delay:.65s"><i class="fas fa-palette"></i> ثيمات</div>
@@ -650,6 +734,7 @@ input,textarea,select,button{font-family:inherit}
         <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password"></div>
         <div class="auth-msg" id="loginMsg"></div>
         <button class="auth-btn" id="loginBtn"><i class="fas fa-right-to-bracket"></i> تسجيل الدخول</button>
+        <button class="forgot-link" type="button" id="forgotLink">نسيت كلمة المرور؟</button>
         <div class="auth-hint">ليس لديك حساب؟ اضغط <b>حساب جديد</b> بالأعلى</div>
       </div>
       <div class="auth-form" id="form-register">
@@ -674,7 +759,7 @@ input,textarea,select,button{font-family:inherit}
         <h3>ابدأ رحلتك التعليمية</h3>
         <p>انضم إلى آلاف الطلاب الذين حققوا التفوق مع منصة العباقرة</p>
         <ul class="features-list">
-          <li><i class="fas fa-check"></i> قارئ PDF بتكبير وتنقّل سريع</li>
+          <li><i class="fas fa-check"></i> ارسم على الملف أو الصبورة البيضاء</li>
           <li><i class="fas fa-check"></i> تتبع تلقائي لتقدمك في كل ملف</li>
           <li><i class="fas fa-check"></i> هدف يومي وسلسلة أيام وشارات تحفيزية</li>
         </ul>
@@ -718,6 +803,10 @@ input,textarea,select,button{font-family:inherit}
       <div class="top-actions">
         <div class="search-box"><i class="fas fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="ابحث في الملفات... (Ctrl+K)"></div>
         <button class="icon-btn" id="themeBtn" title="تبديل المظهر"><i class="fas fa-moon"></i></button>
+        <button class="icon-btn mobile-user-btn" id="mobileUserBtn" title="حسابي">
+          <span class="avatar-mini" id="mobileUserAvatar">؟</span>
+          <span class="dot" id="mobileUserDot"></span>
+        </button>
       </div>
     </div>
 
@@ -891,7 +980,7 @@ input,textarea,select,button{font-family:inherit}
           <div class="feat-hero-txt">
             <div class="tag"><i class="fas fa-wand-magic-sparkles"></i> كل ما تحتاجه في منصة واحدة</div>
             <h2 id="featHeroTitle">مزايا احترافية صُمّمت لتُحسّن رحلتك الدراسية</h2>
-            <p>من قارئ PDF المتقدم إلى المؤقت الدراسي والهدف اليومي وسلسلة الأيام، كل شيء هنا ليبقيك مركزاً ومتحفزاً.</p>
+            <p>من قارئ PDF المتقدم إلى الرسم على الملف والصبورة البيضاء، كل شيء هنا ليبقيك مركزاً ومتحفزاً.</p>
           </div>
           <div class="feat-hero-count"><b id="featCount">0</b><span>ميزة أساسية</span></div>
         </div>
@@ -1070,6 +1159,7 @@ input,textarea,select,button{font-family:inherit}
       </div>
       <div class="admin-tabs">
         <button class="on" data-panel="users"><i class="fas fa-users"></i> المستخدمون</button>
+        <button data-panel="adduser"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
         <button data-panel="files"><i class="fas fa-folder"></i> الملفات</button>
         <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
       </div>
@@ -1088,6 +1178,28 @@ input,textarea,select,button{font-family:inherit}
           </select>
         </div>
         <div class="users-table" id="usersTable"></div>
+      </div>
+
+      <!-- ★ جديد: إضافة مستخدم -->
+      <div class="admin-panel" id="panel-adduser">
+        <div class="card-basic">
+          <h3><i class="fas fa-user-plus"></i> إنشاء حساب مستخدم جديد</h3>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
+            أنشئ حسابات مباشرة لطلابك دون الحاجة لأن يسجلوا بأنفسهم. لن تتأثر جلستك كأدمن.
+            <br><b style="color:var(--accent)">ملاحظة:</b> إذا كان «تأكيد البريد» مُفعّلاً في إعدادات Supabase، سيصل للطالب بريد تأكيد. عطّله لإنشاء مستخدمين غير محدود.
+          </p>
+          <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="nuName" placeholder="مثال: محمد أحمد"></div>
+          <div class="form-group"><label>البريد الإلكتروني *</label><input type="email" id="nuEmail" placeholder="student@email.com"></div>
+          <div class="form-group"><label>كلمة المرور *</label><input type="text" id="nuPass" placeholder="6 أحرف على الأقل" value="123456" autocomplete="off"></div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="nuApprove" checked>
+            <span><i class="fas fa-circle-check"></i> تفعيل الاشتراك مباشرة (بدون انتظار موافقة)</span>
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="nuCreateBtn" style="flex:1;padding:14px"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
+            <button class="btn btn-ghost" id="nuClearBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
+          </div>
+        </div>
       </div>
 
       <div class="admin-panel" id="panel-files">
@@ -1147,6 +1259,9 @@ input,textarea,select,button{font-family:inherit}
       <div class="rh-tools">
         <button class="rh-btn" id="rdFav" title="إضافة للمفضلة"><i class="far fa-star"></i></button>
         <button class="rh-btn" id="rdBookmark" title="علامة مرجعية"><i class="far fa-bookmark"></i></button>
+        <!-- ★ جديد: أزرار الرسم والصبورة -->
+        <button class="rh-btn" id="rdDraw" title="الرسم على الملف"><i class="fas fa-pen"></i></button>
+        <button class="rh-btn" id="rdWb" title="الصبورة البيضاء"><i class="fas fa-chalkboard"></i></button>
         <button class="rh-btn" id="rdThumbsBtn" title="قائمة الصفحات"><i class="fas fa-list-ul"></i></button>
       </div>
     </div>
@@ -1167,6 +1282,22 @@ input,textarea,select,button{font-family:inherit}
       <button class="tbtn" id="rdSnap" title="وضع الصفحة الواحدة"><i class="fas fa-scroll"></i> <span>مستمر</span></button>
     </div>
 
+    <!-- ★ جديد: شريط أدوات الرسم -->
+    <div class="draw-bar" id="drawBar">
+      <div class="draw-tools">
+        <button class="dtool on" data-tool="pen" title="قلم"><i class="fas fa-pen"></i></button>
+        <button class="dtool" data-tool="marker" title="هايلايت"><i class="fas fa-highlighter"></i></button>
+        <button class="dtool" data-tool="eraser" title="ممحاة"><i class="fas fa-eraser"></i></button>
+      </div>
+      <span class="tsep"></span>
+      <div class="color-dots" id="drawColors"></div>
+      <span class="tsep"></span>
+      <div class="size-dots" id="drawSizes"></div>
+      <span class="tsep"></span>
+      <button class="tbtn" id="drawUndo" title="تراجع"><i class="fas fa-rotate-left"></i> تراجع</button>
+      <button class="tbtn" id="drawClear" title="مسح"><i class="fas fa-trash"></i> مسح</button>
+    </div>
+
     <div class="reader-progress-bar"><i id="rdBarTop"></i></div>
 
     <div class="reader-main">
@@ -1180,6 +1311,20 @@ input,textarea,select,button{font-family:inherit}
         </div>
         <button class="reader-fab" id="rdTop" title="أعلى الصفحة"><i class="fas fa-arrow-up"></i></button>
       </div>
+      <!-- ★ جديد: الصبورة البيضاء -->
+      <aside class="wb-panel" id="wbPanel">
+        <div class="wb-head">
+          <b><i class="fas fa-chalkboard"></i> الصبورة البيضاء</b>
+          <button class="rh-btn" id="wbClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="wb-stage">
+          <canvas class="wb-canvas" id="wbCanvas"></canvas>
+          <div class="wb-empty" id="wbEmpty" style="display:none">
+            <i class="fas fa-chalkboard"></i>
+            <span>الصبورة فارغة — اختر قلمك وابدأ الرسم</span>
+          </div>
+        </div>
+      </aside>
     </div>
 
     <div class="reader-foot">
@@ -1192,6 +1337,22 @@ input,textarea,select,button{font-family:inherit}
         <button class="done-btn" id="rdComplete"><i class="fas fa-check"></i> أنهيت الملف</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ★ جديد: قائمة مستخدم الجوال -->
+<div class="mobile-user-menu" id="mobileUserMenu">
+  <div class="mum-head">
+    <div class="mum-avatar" id="mumAvatar">؟</div>
+    <div class="mum-info">
+      <b id="mumName">—</b>
+      <small id="mumEmail">—</small>
+    </div>
+  </div>
+  <div class="mum-badge" id="mumBadge"></div>
+  <div class="mum-actions">
+    <button class="mum-btn" id="mumSettings"><i class="fas fa-gear"></i> الإعدادات</button>
+    <button class="mum-btn danger" id="mumLogout"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
   </div>
 </div>
 
@@ -1227,6 +1388,16 @@ input,textarea,select,button{font-family:inherit}
 const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ★ عميل مؤقت لإضافة مستخدمين من لوحة الأدمن بدون التأثير على الجلسة الحالية */
+const sbTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    storageKey: 'sb-temp-signup-' + Date.now(),
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+});
 
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1318,7 +1489,8 @@ function defaultUD(){
     focus:25, brk:5, longBrk:15, autoStart:false, sound:true,
     goalPages:10, goalMinutes:30,
     readTheme:'light', snap:false, showMarks:true, defaultZoom:1, autoResume:true,
-    log:{}, streak:0
+    log:{}, streak:0,
+    drawings:{}   // ★ جديد: الرسومات على الملف والصبورة
   };
 }
 function resetUD(){ userData = defaultUD(); }
@@ -1356,6 +1528,7 @@ function loadPrefs(){
         if(!Array.isArray(userData.badges)) userData.badges = [];
         if(!Array.isArray(userData.opened)) userData.opened = [];
         if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
+        if(!userData.drawings || typeof userData.drawings !== 'object') userData.drawings = {};
       }
     }
   }catch(e){}
@@ -1835,6 +2008,8 @@ async function openFile(id){
     }
     startReadClock();
     refreshAll();
+    // ★ استئناف الرسومات والصبورة إن وُجدت
+    try{ refreshDrawSurface(); }catch(e){}
   }catch(err){
     console.error(err);
     hideLoading();
@@ -1886,6 +2061,15 @@ function buildPages(){
   }
   stage.appendChild(frag);
 
+  // ★ إضافة canvas الرسم لكل صفحة
+  RS.pageEls.forEach((el, i) => {
+    const c = document.createElement('canvas');
+    c.className = 'pg-draw';
+    c.dataset.page = String(i + 1);
+    el.appendChild(c);
+    attachPdfDrawEvents(c, i + 1);
+  });
+
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
@@ -1901,6 +2085,8 @@ function buildPages(){
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
+  // ★ ارسم الرسومات المحفوظة على الصفحات
+  requestAnimationFrame(() => redrawAllPdfDrawings());
 }
 function computeOffsets(){ RS.offsets = RS.pageEls.map(el => el.offsetTop); }
 async function renderPage(num){
@@ -1965,6 +2151,8 @@ function rebuildPageSizes(){
     const n = i + 1;
     if(RS.inView.has(n)) renderPage(n);
   });
+  // ★ إعادة رسم الرسومات بالحجم الجديد
+  requestAnimationFrame(() => redrawAllPdfDrawings());
 }
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
@@ -2037,7 +2225,6 @@ function handleReaderScroll(){
   if(newMax > oldMax) addPagesToday(newMax - oldMax);
   else savePrefs();
 
-  // مزامنة مع Supabase (مؤجل قليلاً لتقليل الطلبات)
   scheduleProgressSync(RS.file.id, newPct, newMax, page);
 
   updateReaderUI();
@@ -2138,11 +2325,22 @@ function stopReadClock(){
   if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; }
 }
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden){ savePrefs(); flushProgressSync(); }
+  if(document.hidden){ savePrefs(); flushProgressSync(); saveDrawings(); }
 });
 
 function closeReader(){
   if(!$('#reader').classList.contains('open')) return;
+  // ★ تنظيف وضع الرسم والصبورة قبل الإغلاق
+  try{
+    DRAW.active = false; DRAW.wb = false; DRAW.drawing = false; DRAW.current = null;
+    saveDrawings();
+    const bar = $('#drawBar'); if(bar) bar.classList.remove('on');
+    const panel = $('#wbPanel'); if(panel) panel.classList.remove('open');
+    const dbtn = $('#rdDraw'); if(dbtn) dbtn.classList.remove('on');
+    const wbtn = $('#rdWb'); if(wbtn) wbtn.classList.remove('on');
+    if(rdBody) rdBody.classList.remove('draw-on');
+  }catch(e){}
+
   RS.token++;
   const id = RS.file ? RS.file.id : null;
   const page = RS.current;
@@ -2385,6 +2583,9 @@ function renderProgress(){
 const FEATURES = [
   { i:'fa-user-shield',      t:'حساب شخصي آمن',        d:'كل مستخدم له حسابه الخاص وتقدمه المستقل مع تشفير كلمة المرور.', c:'#ef4444' },
   { i:'fa-file-pdf',         t:'ملفات PDF حقيقية',     d:'رفع ملفات PDF من الجهاز وعرضها داخل المنصة.', c:'#dc2626' },
+  { i:'fa-pen-ruler',        t:'رسم على الملف',        d:'اكتب وارسم فوق صفحات PDF بأقلام وألوان وأحجام متعددة.', c:'#0ea5e9' },
+  { i:'fa-chalkboard',       t:'صبورة بيضاء جانبية',   d:'صبورة بجانب الملف للشرح والتفكير — تبقى محفوظة.', c:'#8b5cf6' },
+  { i:'fa-highlighter',      t:'هايلايت وممحاة',       d:'قلم هايلايت شفاف وممحاة دقيقة، مع تراجع ومسح.', c:'#facc15' },
   { i:'fa-bolt',             t:'قارئ فائق السرعة',      d:'تحميل كسول للصفحات: يفتح الملفات الكبيرة فوراً دون تعليق.', c:'#f59e0b' },
   { i:'fa-magnifying-glass-plus', t:'تكبير وتصغير',    d:'تحكم كامل في حجم الصفحة مع ملء تلقائي للعرض.', c:'#0ea5e9' },
   { i:'fa-list-ul',          t:'قائمة الصفحات',        d:'انتقل لأي صفحة بسرعة من قائمة جانبية منظمة.', c:'#6366f1' },
@@ -2400,13 +2601,15 @@ const FEATURES = [
   { i:'fa-stopwatch',        t:'مؤقت بومودورو',        d:'جلسات تركيز وراحات قصيرة وطويلة قابلة للتخصيص.', c:'#06b6d4' },
   { i:'fa-chart-column',     t:'تقارير أسبوعية',       d:'رسم بياني لدقائق مذاكرتك خلال آخر ٧ أيام.', c:'#0891b2' },
   { i:'fa-palette',          t:'ثيمات متعددة',         d:'8 ألوان + وضع ليلي تلقائي لتخصيص تجربتك.', c:'#db2777' },
+  { i:'fa-key',              t:'استعادة كلمة المرور',  d:'نسيت كلمتك؟ رابط إعادة تعيين يصل لبريدك.', c:'#14b8a6' },
   { i:'fa-shield-halved',    t:'لوحة أدمن كاملة',      d:'إدارة المستخدمين والاشتراكات والملفات بسهولة.', c:'#14b8a6' },
+  { i:'fa-user-plus',        t:'إضافة مستخدمين',       d:'الأدمن ينشئ حسابات مباشرة — بلا حدود.', c:'#22c55e' },
   { i:'fa-user-check',       t:'نظام موافقات ذكي',     d:'الطلاب الجدد ينتظرون موافقة الأدمن لتفعيل حسابهم.', c:'#f59e0b' },
   { i:'fa-note-sticky',      t:'ملاحظاتي الخاصة',      d:'مساحة لكتابة القواعد مع حفظ فوري وتصدير.', c:'#f97316' },
   { i:'fa-list-check',       t:'قائمة المهام',         d:'نظّم مهامك الدراسية وأنجزها واحداً تلو الآخر.', c:'#6366f1' },
   { i:'fa-magnifying-glass', t:'بحث وفلترة فورية',     d:'ابحث بالاسم أو التصنيف مع ترتيب ذكي للنتائج.', c:'#a855f7' },
   { i:'fa-cloud-arrow-up',   t:'رفع ملفات سهل',        d:'اسحب ملف PDF وأفلته لإضافته فوراً للمكتبة.', c:'#06b6d4' },
-  { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب يعمل بسلاسة على الجوال والتابلت.', c:'#22c55e' }
+  { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب مع قائمة مستخدم خاصة للجوال.', c:'#22c55e' }
 ];
 function renderFeatures(){
   const grid = $('#featGrid');
@@ -2656,6 +2859,7 @@ $('#importFile').addEventListener('change', e => {
       const d = JSON.parse(ev.target.result);
       Object.keys(d).forEach(k => { if(k !== 'exportedAt' && k !== 'user') userData[k] = d[k]; });
       if(!userData.log || typeof userData.log !== 'object') userData.log = {};
+      if(!userData.drawings || typeof userData.drawings !== 'object') userData.drawings = {};
       savePrefs();
       notesArea.value = userData.notes || '';
       refreshAll(); renderTasks(); renderBadges(); renderProgress(); applyTheme(); applyReaderTheme(); applySnapClass();
@@ -2684,8 +2888,8 @@ $('#resetProgressBtn').addEventListener('click', () => {
 $('#changePassBtn').addEventListener('click', () => {
   openModal({
     title:'تغيير كلمة المرور',
-    text:'أدخل كلمة المرور الجديدة. سيتم إرسال رابط التغيير لبريدك.',
-    bodyHTML:`<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="mpNew" placeholder="6 أحرف على الأقل"></div>`,
+    text:'أدخل كلمة المرور الجديدة.',
+    bodyHTML:`<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="mpNew" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
     okText:'حفظ',
     onOk: async () => {
       const n1 = document.getElementById('mpNew').value;
@@ -2701,12 +2905,10 @@ $('#changePassBtn').addEventListener('click', () => {
    12) Supabase: تحميل البيانات والمزامنة
 ============================================================ */
 async function loadProfilesAndFiles(){
-  // تحميل ملفات
   const { data: filesData, error: filesErr } = await sb.from('files').select('*').order('created_at', { ascending: false });
   if(filesErr) console.warn('load files failed', filesErr);
   DB.files = filesData || [];
 
-  // تحميل المستخدمين (فقط لو أدمن)
   if(currentUserObj && currentUserObj.role === 'admin'){
     const { data: usersData, error: usersErr } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     if(usersErr) console.warn('load users failed', usersErr);
@@ -2797,6 +2999,27 @@ $('#loginBtn').addEventListener('click', async () => {
   showMsg('loginMsg','تم تسجيل الدخول', 'ok');
 });
 
+/* ★ جديد: نسيت كلمة المرور */
+$('#forgotLink').addEventListener('click', () => {
+  openModal({
+    title: 'استعادة كلمة المرور',
+    text: 'أدخل بريدك الإلكتروني المسجّل وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+    bodyHTML: `<div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="fpEmail" placeholder="example@email.com" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
+    okText: 'إرسال الرابط',
+    onOk: async () => {
+      const email = document.getElementById('fpEmail').value.trim().toLowerCase();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً إلكترونياً صحيحاً', 'err'); return; }
+      try{
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+        if(error){ toast('فشل الإرسال: ' + error.message, 'err'); return; }
+        toast('تم إرسال رابط إعادة التعيين إلى بريدك', 'ok');
+      }catch(e){ toast('تعذّر الإرسال: ' + e.message, 'err'); }
+    }
+  });
+});
+
 $('#adminBtn').addEventListener('click', async () => {
   const btn = $('#adminBtn');
   const email = $('#adminEmail').value.trim().toLowerCase();
@@ -2806,7 +3029,6 @@ $('#adminBtn').addEventListener('click', async () => {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   btn.disabled = false;
   if(error){ showMsg('adminMsg','بيانات الدخول غير صحيحة'); return; }
-  // تأكد أنه أدمن
   const { data: prof, error: pErr } = await sb.from('profiles').select('role').eq('id', data.user.id).single();
   if(pErr || !prof || prof.role !== 'admin'){
     await sb.auth.signOut();
@@ -2829,6 +3051,7 @@ async function enterApp(){
   currentUserObj = data;
 
   loadPrefs();
+  loadDrawings();   // ★ تحميل الرسومات المحفوظة
   applyTheme();
   applyUserUI();
 
@@ -2847,6 +3070,7 @@ async function enterApp(){
   applyReaderTheme();
   applySnapClass();
   syncSettingsUI();
+  renderDrawToolbar();  // ★
   setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 400);
 
   subscribeMyProfile();
@@ -2878,11 +3102,12 @@ function applyUserUI(){
         ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
         : '<span style="color:var(--danger)"><i class="fas fa-ban"></i> مرفوض</span>';
   $('#adminNav').style.display = currentUserObj.role === 'admin' ? 'flex' : 'none';
+  updateMobileUserMenu();  // ★
 }
 
 $('#logoutBtn').addEventListener('click', () => {
   confirmBox('تسجيل الخروج', 'هل تريد تسجيل الخروج من حسابك؟', async () => {
-    savePrefs(); flushProgressSync();
+    savePrefs(); saveDrawings(); flushProgressSync();
     cleanupChannels();
     await sb.auth.signOut();
     currentUserObj = null;
@@ -2900,6 +3125,7 @@ $('#logoutBtn').addEventListener('click', () => {
       const el = document.getElementById(id);
       if(el){ el.className = 'auth-msg'; el.textContent = ''; }
     });
+    const mum = $('#mobileUserMenu'); if(mum) mum.classList.remove('open');
     showAuthForm('login');
     showAuth();
   });
@@ -2957,7 +3183,6 @@ function subscribeProfilesForAdmin(){
   profilesChannel = sb.channel('profiles-admin')
     .on('postgres_changes', { event:'*', schema:'public', table:'profiles' }, () => {
       if(currentUserObj && currentUserObj.role === 'admin'){
-        // تحديث قائمة المستخدمين
         sb.from('profiles').select('*').order('created_at', { ascending: false }).then(({ data }) => {
           DB.users = (data || []).filter(u => u.role !== 'admin');
           renderAdmin();
@@ -3236,6 +3461,10 @@ document.addEventListener('keydown', e => {
   if(e.ctrlKey && e.shiftKey && ['I','J','C','K','i','j','c','k'].includes(k)){ e.preventDefault(); flashShield(); return false; }
   if(e.ctrlKey && !e.shiftKey && ['u','U','s','S','p','P'].includes(k)){ e.preventDefault(); flashShield(); return false; }
 
+  if(e.ctrlKey && (k === 'z' || k === 'Z') && readerOpen && !editing){
+    e.preventDefault(); undoDraw(); return;
+  }
+
   if(e.ctrlKey && (k === 'k' || k === 'K')){
     e.preventDefault();
     const s = $('#searchInput');
@@ -3250,10 +3479,13 @@ document.addEventListener('keydown', e => {
     if(k === 'ArrowRight'){ e.preventDefault(); scrollToPage(RS.current - 1, true); return; }
     if(k === 'Home'){ e.preventDefault(); scrollToPage(1, true); return; }
     if(k === 'End'){ e.preventDefault(); scrollToPage(RS.numPages, true); return; }
+    if(k === 'p' || k === 'P'){ e.preventDefault(); toggleDrawMode(); return; }
+    if(k === 'w' || k === 'W'){ e.preventDefault(); toggleWhiteboard(); return; }
   }
 
   if(k === 'Escape'){
     if($('#modal').classList.contains('open')){ $('#modal').classList.remove('open'); return; }
+    const mum = $('#mobileUserMenu'); if(mum && mum.classList.contains('open')){ mum.classList.remove('open'); return; }
     if(readerOpen){ closeReader(); return; }
     const th = $('#rdThumbs'); if(th) th.classList.remove('open');
     return;
@@ -3321,15 +3553,33 @@ function refreshAll(){
   userData = defaultUD();
   applyTheme();
 
-  // جلب الجلسة الحالية
   try{
     const { data: { session: s } } = await sb.auth.getSession();
     session = s;
   }catch(e){ session = null; }
 
-  // مراقبة تغيرات المصادقة
   sb.auth.onAuthStateChange(async (event, newSession) => {
     session = newSession;
+    if(event === 'PASSWORD_RECOVERY'){
+      // ★ عند عودة المستخدم من رابط استعادة كلمة المرور
+      setTimeout(() => {
+        openModal({
+          title: 'تعيين كلمة مرور جديدة',
+          text: 'أدخل كلمة المرور الجديدة لحسابك.',
+          bodyHTML: `<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="npPass" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
+          okText: 'حفظ كلمة المرور',
+          onOk: async () => {
+            const p = document.getElementById('npPass').value;
+            if(!p || p.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
+            const { error } = await sb.auth.updateUser({ password: p });
+            if(error){ toast('فشل: ' + error.message, 'err'); return; }
+            toast('تم تحديث كلمة المرور بنجاح', 'ok');
+            try{ history.replaceState(null, '', window.location.pathname); }catch(e){}
+          }
+        });
+      }, 600);
+      return;
+    }
     if(event === 'SIGNED_IN' && newSession){
       await enterApp();
     } else if(event === 'SIGNED_OUT'){
@@ -3344,6 +3594,26 @@ function refreshAll(){
     await enterApp();
   } else {
     showWelcome();
+  }
+
+  // ★ التعامل مع عودة المستخدم من رابط إعادة تعيين كلمة المرور (احتياطي)
+  if(window.location.hash && window.location.hash.includes('type=recovery')){
+    setTimeout(() => {
+      openModal({
+        title: 'تعيين كلمة مرور جديدة',
+        text: 'أدخل كلمة المرور الجديدة لحسابك.',
+        bodyHTML: `<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="npPass2" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
+        okText: 'حفظ كلمة المرور',
+        onOk: async () => {
+          const p = document.getElementById('npPass2').value;
+          if(!p || p.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
+          const { error } = await sb.auth.updateUser({ password: p });
+          if(error){ toast('فشل: ' + error.message, 'err'); return; }
+          toast('تم تحديث كلمة المرور بنجاح', 'ok');
+          try{ history.replaceState(null, '', window.location.pathname); }catch(e){}
+        }
+      });
+    }, 900);
   }
 
   $('#enterBtn').addEventListener('click', () => {
@@ -3366,6 +3636,9 @@ function refreshAll(){
     clearTimeout(rotTimer);
     rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
   });
+
+  // ★ ربط مهام الرسم والصبورة بعد التحميل
+  setupDrawUI();
 })();
 
 function showWelcome(){
@@ -3375,11 +3648,515 @@ function showWelcome(){
   $('#app').classList.remove('open');
 }
 
-// حفظ التفضيلات والتقدم قبل إغلاق الصفحة
 window.addEventListener('beforeunload', () => {
   savePrefs();
+  saveDrawings();
   flushProgressSync();
 });
+
+/* ============================================================
+   20) ★★★ نظام الرسم على الملف والصبورة البيضاء ★★★
+============================================================ */
+const DRAW_COLORS = [
+  { c:'#ef4444', n:'أحمر' },
+  { c:'#f97316', n:'برتقالي' },
+  { c:'#facc15', n:'أصفر' },
+  { c:'#22c55e', n:'أخضر' },
+  { c:'#06b6d4', n:'سماوي' },
+  { c:'#3b82f6', n:'أزرق' },
+  { c:'#8b5cf6', n:'بنفسجي' },
+  { c:'#ec4899', n:'وردي' },
+  { c:'#78350f', n:'بني' },
+  { c:'#000000', n:'أسود' },
+  { c:'#94a3b8', n:'رمادي' },
+  { c:'#ffffff', n:'أبيض' }
+];
+const DRAW_SIZES = [2, 4, 7, 12, 20, 32];
+
+const DRAW = {
+  active: false,      // وضع الرسم على الملف
+  wb: false,          // الصبورة مفتوحة
+  tool: 'pen',        // pen | marker | eraser
+  color: '#ef4444',
+  size: 4,
+  drawing: false,
+  targetCanvas: null,
+  current: null,
+  lastKey: null
+};
+
+function drawKeyPdf(fileId, page){ return 'pdf:' + fileId + ':' + page; }
+function drawKeyWb(fileId){ return 'wb:' + (fileId || 'default'); }
+
+function drawingsKey(){
+  if(!session) return 'abdq_draw_guest';
+  return 'abdq_draw_' + session.user.id;
+}
+function loadDrawings(){
+  userData.drawings = {};
+  try{
+    const raw = localStorage.getItem(drawingsKey());
+    if(raw){
+      const d = JSON.parse(raw);
+      if(d && typeof d === 'object') userData.drawings = d;
+    }
+  }catch(e){}
+}
+function saveDrawings(){
+  try{
+    localStorage.setItem(drawingsKey(), JSON.stringify(userData.drawings));
+  }catch(e){
+    console.warn('drawings save failed', e);
+  }
+}
+
+function drawStrokeOnCtx(ctx, s, w, h){
+  if(!s.points || s.points.length < 1) return;
+  const base = 800;
+  const scale = w / base;
+  let lw = Math.max(1, (s.size || 4) * scale);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = s.color || '#000';
+  ctx.fillStyle = s.color || '#000';
+  if(s.tool === 'marker'){
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.35;
+    lw *= 3;
+  } else if(s.tool === 'eraser'){
+    ctx.globalCompositeOperation = 'destination-out';
+    lw *= 3;
+  }
+  ctx.lineWidth = lw;
+
+  const pts = s.points;
+  if(pts.length === 1){
+    const p = pts[0];
+    ctx.beginPath();
+    ctx.arc(p.x * w, p.y * h, lw / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x * w, pts[0].y * h);
+    for(let i = 1; i < pts.length; i++){
+      const p = pts[i];
+      ctx.lineTo(p.x * w, p.y * h);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function redrawCanvas(canvas, key, includeCurrent){
+  if(!canvas) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
+  const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+  if(canvas.width !== bw || canvas.height !== bh){
+    canvas.width = bw; canvas.height = bh;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const strokes = ((userData.drawings && userData.drawings[key]) || []).slice();
+  if(includeCurrent && DRAW.current) strokes.push(DRAW.current);
+  strokes.forEach(s => drawStrokeOnCtx(ctx, s, w, h));
+}
+
+function redrawAllPdfDrawings(){
+  if(!RS.file) return;
+  RS.pageEls.forEach((el, i) => {
+    const c = el.querySelector('.pg-draw');
+    if(c) redrawCanvas(c, drawKeyPdf(RS.file.id, i + 1), false);
+  });
+}
+function redrawWhiteboard(){
+  const c = $('#wbCanvas');
+  if(!c) return;
+  const key = drawKeyWb(RS.file ? RS.file.id : 'default');
+  redrawCanvas(c, key, false);
+  updateWbEmpty();
+}
+function updateWbEmpty(){
+  const empty = $('#wbEmpty');
+  if(!empty) return;
+  const key = drawKeyWb(RS.file ? RS.file.id : 'default');
+  const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
+  empty.style.display = has ? 'none' : 'flex';
+}
+function refreshDrawSurface(){
+  redrawAllPdfDrawings();
+  redrawWhiteboard();
+}
+
+function attachPdfDrawEvents(canvas, pageNum){
+  canvas.addEventListener('pointerdown', e => {
+    if(!DRAW.active) return;
+    if(!RS.file) return;
+    e.preventDefault();
+    const key = drawKeyPdf(RS.file.id, pageNum);
+    startStroke(e, canvas, key);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return;
+    e.preventDefault();
+    moveStroke(e, canvas);
+  });
+  canvas.addEventListener('pointerup', e => {
+    if(DRAW.targetCanvas !== canvas) return;
+    endStroke(e, canvas);
+  });
+  canvas.addEventListener('pointercancel', e => {
+    if(DRAW.targetCanvas !== canvas) return;
+    endStroke(e, canvas);
+  });
+}
+
+function attachWbDrawEvents(canvas){
+  canvas.addEventListener('pointerdown', e => {
+    if(!RS.file) return;
+    e.preventDefault();
+    const key = drawKeyWb(RS.file.id);
+    startStroke(e, canvas, key);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if(!DRAW.drawing || DRAW.targetCanvas !== canvas) return;
+    e.preventDefault();
+    moveStroke(e, canvas);
+  });
+  canvas.addEventListener('pointerup', e => {
+    if(DRAW.targetCanvas !== canvas) return;
+    endStroke(e, canvas);
+  });
+  canvas.addEventListener('pointercancel', e => {
+    if(DRAW.targetCanvas !== canvas) return;
+    endStroke(e, canvas);
+  });
+}
+
+function getNormCoords(e, canvas){
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+  const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height)));
+  return { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 };
+}
+
+function startStroke(e, canvas, key){
+  try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+  const p = getNormCoords(e, canvas);
+  DRAW.drawing = true;
+  DRAW.targetCanvas = canvas;
+  DRAW.lastKey = key;
+  DRAW.current = {
+    tool: DRAW.tool,
+    color: DRAW.color,
+    size: DRAW.size,
+    points: [p]
+  };
+  redrawCanvas(canvas, key, true);
+}
+
+function moveStroke(e, canvas){
+  if(!DRAW.current) return;
+  const p = getNormCoords(e, canvas);
+  const last = DRAW.current.points[DRAW.current.points.length - 1];
+  if(last && Math.abs(last.x - p.x) < 0.0015 && Math.abs(last.y - p.y) < 0.0015) return;
+  DRAW.current.points.push(p);
+  const key = DRAW.lastKey;
+  redrawCanvas(canvas, key, true);
+}
+
+function endStroke(e, canvas){
+  if(!DRAW.drawing || !DRAW.current) return;
+  const key = DRAW.lastKey;
+  if(!userData.drawings) userData.drawings = {};
+  if(!userData.drawings[key]) userData.drawings[key] = [];
+  // احتفظ بحد أقصى 500 ضربة لكل لوحة
+  if(userData.drawings[key].length > 500) userData.drawings[key].shift();
+  userData.drawings[key].push(DRAW.current);
+  DRAW.drawing = false;
+  DRAW.current = null;
+  DRAW.targetCanvas = null;
+  saveDrawings();
+  redrawCanvas(canvas, key, false);
+  if(key && key.startsWith('wb:')) updateWbEmpty();
+}
+
+function currentDrawKey(){
+  if(DRAW.lastKey) return DRAW.lastKey;
+  if(DRAW.wb && RS.file) return drawKeyWb(RS.file.id);
+  if(DRAW.active && RS.file) return drawKeyPdf(RS.file.id, RS.current);
+  return null;
+}
+function redrawSurfaceByKey(key){
+  if(!key) return;
+  if(key.startsWith('wb:')){
+    redrawWhiteboard();
+  } else if(key.startsWith('pdf:')){
+    const parts = key.split(':');
+    const page = parseInt(parts[2], 10);
+    const el = RS.pageEls[page - 1];
+    if(el){
+      const c = el.querySelector('.pg-draw');
+      if(c) redrawCanvas(c, key, false);
+    }
+  }
+}
+
+function undoDraw(){
+  const key = currentDrawKey();
+  if(!key){ toast('لا يوجد رسم للتراجع عنه', 'warn'); return; }
+  const arr = userData.drawings[key];
+  if(!arr || !arr.length){ toast('لا يوجد رسم للتراجع عنه', 'warn'); return; }
+  arr.pop();
+  saveDrawings();
+  redrawSurfaceByKey(key);
+}
+
+function clearDraw(){
+  const key = currentDrawKey();
+  if(!key){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
+  const arr = userData.drawings[key];
+  if(!arr || !arr.length){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
+  confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', () => {
+    delete userData.drawings[key];
+    saveDrawings();
+    redrawSurfaceByKey(key);
+    if(key.startsWith('wb:')) updateWbEmpty();
+    toast('تم مسح الرسم', 'ok');
+  }, true);
+}
+
+function renderDrawToolbar(){
+  const colorsBox = $('#drawColors');
+  if(colorsBox && !colorsBox.dataset.init){
+    colorsBox.dataset.init = '1';
+    colorsBox.innerHTML = DRAW_COLORS.map((c, i) =>
+      `<button class="color-dot ${c.c === DRAW.color ? 'on' : ''}" data-c="${c.c}" style="--cc:${c.c}" title="${c.n}"></button>`
+    ).join('');
+    colorsBox.addEventListener('click', e => {
+      const b = e.target.closest('.color-dot');
+      if(!b) return;
+      DRAW.color = b.dataset.c;
+      colorsBox.querySelectorAll('.color-dot').forEach(x => x.classList.toggle('on', x === b));
+      // لو الأداة eraser، بدّلها إلى قلم عند اختيار لون
+      if(DRAW.tool === 'eraser') setTool('pen');
+    });
+  }
+  const sizesBox = $('#drawSizes');
+  if(sizesBox && !sizesBox.dataset.init){
+    sizesBox.dataset.init = '1';
+    sizesBox.innerHTML = DRAW_SIZES.map(s => {
+      const v = Math.min(s, 16);
+      return `<button class="size-dot ${s === DRAW.size ? 'on' : ''}" data-s="${s}" title="حجم ${s}"><i style="width:${v}px;height:${v}px"></i></button>`;
+    }).join('');
+    sizesBox.addEventListener('click', e => {
+      const b = e.target.closest('.size-dot');
+      if(!b) return;
+      DRAW.size = parseInt(b.dataset.s, 10);
+      sizesBox.querySelectorAll('.size-dot').forEach(x => x.classList.toggle('on', x === b));
+    });
+  }
+}
+
+function setTool(tool){
+  DRAW.tool = tool;
+  $$('#drawBar .dtool').forEach(b => b.classList.toggle('on', b.dataset.tool === tool));
+}
+
+function updateDrawBarVisibility(){
+  const bar = $('#drawBar');
+  if(!bar) return;
+  bar.classList.toggle('on', DRAW.active || DRAW.wb);
+}
+
+function toggleDrawMode(){
+  DRAW.active = !DRAW.active;
+  const btn = $('#rdDraw');
+  if(btn) btn.classList.toggle('on', DRAW.active);
+  if(rdBody) rdBody.classList.toggle('draw-on', DRAW.active);
+  updateDrawBarVisibility();
+  if(DRAW.active) toast('وضع الرسم مُفعّل — ارسم على الصفحة', 'ok');
+}
+
+function toggleWhiteboard(){
+  DRAW.wb = !DRAW.wb;
+  const btn = $('#rdWb');
+  const panel = $('#wbPanel');
+  if(btn) btn.classList.toggle('on', DRAW.wb);
+  if(panel) panel.classList.toggle('open', DRAW.wb);
+  updateDrawBarVisibility();
+  if(DRAW.wb){
+    setTimeout(() => { redrawWhiteboard(); }, 320);
+    toast('الصبورة البيضاء مفتوحة — ارسم بحرية', 'ok');
+  }
+}
+
+function setupDrawUI(){
+  renderDrawToolbar();
+
+  const wbCanvas = $('#wbCanvas');
+  if(wbCanvas && !wbCanvas.dataset.init){
+    wbCanvas.dataset.init = '1';
+    attachWbDrawEvents(wbCanvas);
+  }
+
+  // أزرار الرسم في الرأس
+  const rdDraw = $('#rdDraw');
+  if(rdDraw) rdDraw.addEventListener('click', toggleDrawMode);
+  const rdWb = $('#rdWb');
+  if(rdWb) rdWb.addEventListener('click', toggleWhiteboard);
+  const wbClose = $('#wbClose');
+  if(wbClose) wbClose.addEventListener('click', () => {
+    DRAW.wb = false;
+    const b = $('#rdWb'); if(b) b.classList.remove('on');
+    const p = $('#wbPanel'); if(p) p.classList.remove('open');
+    updateDrawBarVisibility();
+  });
+
+  // أدوات شريط الرسم
+  const bar = $('#drawBar');
+  if(bar){
+    bar.querySelectorAll('.dtool').forEach(b => {
+      b.addEventListener('click', () => setTool(b.dataset.tool));
+    });
+  }
+  const und = $('#drawUndo');
+  if(und) und.addEventListener('click', undoDraw);
+  const clr = $('#drawClear');
+  if(clr) clr.addEventListener('click', clearDraw);
+
+  // إعادة رسم الصبورة عند تغيير حجم النافذة
+  let wbResizeTimer = null;
+  window.addEventListener('resize', () => {
+    if(!DRAW.wb) return;
+    clearTimeout(wbResizeTimer);
+    wbResizeTimer = setTimeout(() => redrawWhiteboard(), 220);
+  });
+}
+
+/* ============================================================
+   21) ★★★ قائمة مستخدم الجوال + إنشاء مستخدمين ★★★
+============================================================ */
+function updateMobileUserMenu(){
+  if(!currentUserObj) return;
+  const nm = currentUserObj.name || '—';
+  const av = document.getElementById('mumAvatar');
+  const mb = document.getElementById('mobileUserAvatar');
+  const dot = document.getElementById('mobileUserDot');
+  const first = (nm.trim().charAt(0) || '؟');
+  if(av) av.textContent = first;
+  if(mb) mb.textContent = first;
+  const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
+  const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
+  let badge = '';
+  if(currentUserObj.role === 'admin'){
+    badge = '<span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+  } else if(currentUserObj.status === 'approved'){
+    badge = '<span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
+  } else if(currentUserObj.status === 'pending'){
+    badge = '<span class="sub-badge pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+  } else {
+    badge = '<span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626)"><i class="fas fa-ban"></i> غير مفعّل</span>';
+  }
+  const bd = document.getElementById('mumBadge');
+  if(bd) bd.innerHTML = badge;
+  if(dot){
+    dot.classList.remove('pending','off');
+    if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){ /* أخضر */ }
+    else if(currentUserObj.status === 'pending') dot.classList.add('pending');
+    else dot.classList.add('off');
+  }
+}
+
+// ربط أزرار قائمة الجوال
+$('#mobileUserBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const menu = $('#mobileUserMenu');
+  menu.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  const menu = $('#mobileUserMenu');
+  if(!menu || !menu.classList.contains('open')) return;
+  if(e.target.closest('#mobileUserMenu') || e.target.closest('#mobileUserBtn')) return;
+  menu.classList.remove('open');
+});
+$('#mumSettings').addEventListener('click', () => {
+  $('#mobileUserMenu').classList.remove('open');
+  go('settings');
+});
+$('#mumLogout').addEventListener('click', () => {
+  $('#mobileUserMenu').classList.remove('open');
+  $('#logoutBtn').click();
+});
+
+/* ★★★ إنشاء مستخدم جديد من لوحة الأدمن ★★★ */
+(function bindAdminCreateUser(){
+  const btn = document.getElementById('nuCreateBtn');
+  const clr = document.getElementById('nuClearBtn');
+  if(!btn) return;
+
+  btn.addEventListener('click', async () => {
+    if(!currentUserObj || currentUserObj.role !== 'admin'){ toast('غير مصرح', 'err'); return; }
+    const name = $('#nuName').value.trim();
+    const email = $('#nuEmail').value.trim().toLowerCase();
+    const pass = $('#nuPass').value;
+    const approve = $('#nuApprove').checked;
+
+    if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً صحيحاً', 'warn'); return; }
+    if(!pass || pass.length < 6){ toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
+
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+
+    try{
+      // استخدم عميلاً مؤقتاً حتى لا يتأثر جلوس الأدمن
+      const { data, error } = await sbTemp.auth.signUp({
+        email,
+        password: pass,
+        options: { data: { name } }
+      });
+      if(error){
+        toast('فشل الإنشاء: ' + error.message, 'err');
+        btn.disabled = false; btn.innerHTML = orig;
+        return;
+      }
+      // إذا كان الاشتراك مفعّلاً تلقائياً، نحدّث ملف المستخدم
+      if(approve && data && data.user){
+        // انتظر قليلاً حتى ينشئ trigger الملف
+        await new Promise(r => setTimeout(r, 800));
+        const { error: upErr } = await sb.from('profiles').update({ status:'approved', name }).eq('id', data.user.id);
+        if(upErr) console.warn('auto approve failed', upErr);
+      }
+      toast('تم إنشاء الحساب بنجاح', 'ok');
+      $('#nuName').value = '';
+      $('#nuEmail').value = '';
+      // حدّث القائمة
+      try{
+        const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = (usersData || []).filter(u => u.role !== 'admin');
+        renderAdmin();
+      }catch(e){}
+    }catch(e){
+      toast('خطأ: ' + e.message, 'err');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  });
+
+  if(clr) clr.addEventListener('click', () => {
+    $('#nuName').value = '';
+    $('#nuEmail').value = '';
+    $('#nuPass').value = '123456';
+    $('#nuApprove').checked = true;
+  });
+})();
 </script>
 </body>
 </html>
