@@ -364,8 +364,8 @@ input,textarea,select,button{font-family:inherit}
 .admin-panel{display:none}
 .admin-panel.on{display:block;animation:viewIn .35s ease}
 .users-table{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)}
-.users-table .thead{display:grid;grid-template-columns:2fr 2.5fr 1.2fr 1.7fr;gap:12px;padding:16px 20px;background:var(--card-2);border-bottom:1px solid var(--border);font-size:.74rem;font-weight:800;color:var(--muted);letter-spacing:.5px}
-.users-table .trow{display:grid;grid-template-columns:2fr 2.5fr 1.2fr 1.7fr;gap:12px;padding:16px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.2s}
+.users-table .thead{display:grid;grid-template-columns:2fr 2.5fr 1.6fr 1.2fr 2fr;gap:12px;padding:16px 20px;background:var(--card-2);border-bottom:1px solid var(--border);font-size:.74rem;font-weight:800;color:var(--muted);letter-spacing:.5px}
+.users-table .trow{display:grid;grid-template-columns:2fr 2.5fr 1.6fr 1.2fr 2fr;gap:12px;padding:16px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.2s}
 .users-table .trow:hover{background:var(--card-2)}
 .users-table .trow:last-child{border-bottom:none}
 .trow .user-cell{display:flex;align-items:center;gap:11px;min-width:0}
@@ -457,7 +457,7 @@ input,textarea,select,button{font-family:inherit}
 .reader-body.snap .pdf-page{scroll-snap-align:center}
 .pdf-page.current{box-shadow:0 0 0 3px var(--primary),0 14px 40px rgba(20,35,80,.28)}
 .pdf-page .pg-inner{width:100%;height:100%}
-.pdf-page canvas{display:block;width:100%;height:100%}
+.pdf-page canvas:not(.pg-draw){display:block;width:100%;height:100%}
 .pdf-page .pg-num{position:absolute;top:8px;left:10px;font-size:.68rem;font-weight:800;color:#8892b5;background:rgba(238,241,250,.92);padding:3px 10px;border-radius:100px;z-index:3;pointer-events:none}
 .pdf-page .pg-wm{position:absolute;bottom:8px;right:14px;font-size:.62rem;font-weight:700;color:rgba(150,160,190,.75);z-index:3;pointer-events:none}
 .reader-body.hide-marks .pg-num,.reader-body.hide-marks .pg-wm{display:none}
@@ -502,6 +502,162 @@ input,textarea,select,button{font-family:inherit}
 .modal-box p{font-size:.86rem;color:var(--muted);line-height:1.9;margin-bottom:18px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* ===== الرسم ===== */
+.draw-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(100deg,var(--card-2),var(--card));border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.draw-bar::-webkit-scrollbar{display:none}
+.draw-bar.on{display:flex}
+.draw-tools{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:11px;border:1px solid var(--border);flex-shrink:0}
+.dtool{width:36px;height:34px;border-radius:9px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:.88rem;transition:.2s;flex-shrink:0}
+.dtool:hover{color:var(--primary);background:var(--card)}
+.dtool.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 6px 14px rgba(var(--primary-rgb),.35)}
+.color-dots{display:flex;gap:5px;flex-shrink:0}
+.color-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--cc);cursor:pointer;padding:0;transition:.2s;flex-shrink:0;position:relative}
+.color-dot:hover{transform:scale(1.12)}
+.color-dot.on{border-color:var(--primary);transform:scale(1.15);box-shadow:0 0 0 3px var(--primary-soft)}
+.color-dot.on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.68rem;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.size-dots{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.size-dot{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0;transition:.2s;flex-shrink:0}
+.size-dot i{display:block;background:var(--text);border-radius:50%}
+.size-dot.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px var(--primary-soft)}
+.size-dot.on i{background:var(--primary)}
+.pdf-page .pg-draw{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:none}
+.reader-body.draw-on .pdf-page .pg-draw{pointer-events:auto;cursor:crosshair}
+.reader-body.draw-on .pdf-page{cursor:crosshair}
+.wb-panel{width:0;flex-shrink:0;overflow:hidden;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s ease;position:relative}
+.wb-panel.open{width:min(460px,44%)}
+.wb-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.wb-head b{flex:1;font-size:.86rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:7px}
+.wb-head b i{color:var(--primary)}
+.wb-stage{flex:1;position:relative;overflow:hidden;background:#ffffff}
+.wb-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;background:#ffffff;display:block}
+[data-theme="dark"] .wb-stage,[data-theme="dark"] .wb-canvas,[data-theme="dark"] .wb-panel{background:#161a24}
+.wb-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:.82rem;font-weight:700;pointer-events:none;text-align:center;padding:20px}
+.wb-empty i{font-size:2rem;opacity:.35}
+.mobile-user-btn{display:none !important;position:relative}
+.mobile-user-btn .avatar-mini{font-weight:900;font-size:.86rem;background-size:cover;background-position:center;width:100%;height:100%;display:grid;place-items:center;border-radius:inherit}
+.mobile-user-btn .dot{position:absolute;top:6px;left:6px;width:9px;height:9px;border-radius:50%;background:var(--success);border:2px solid var(--card)}
+.mobile-user-btn .dot.pending{background:var(--accent)}
+.mobile-user-btn .dot.off{background:var(--danger)}
+.mobile-user-menu{position:fixed;top:72px;left:12px;width:280px;max-width:calc(100vw - 24px);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:16px;z-index:8500;display:none;animation:viewIn .25s ease}
+.mobile-user-menu.open{display:block}
+.mum-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.mum-avatar{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:1.1rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35);background-size:cover;background-position:center}
+.mum-info{min-width:0;flex:1}
+.mum-info b{display:block;font-size:.9rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mum-info small{display:block;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.mum-badge{display:flex;justify-content:center;margin-bottom:12px}
+.mum-actions{display:flex;flex-direction:column;gap:8px}
+.mum-btn{font-family:inherit;font-size:.86rem;font-weight:700;padding:11px 14px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:9px;transition:.2s;text-align:right}
+.mum-btn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.mum-btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,var(--border))}
+.mum-btn.danger:hover{background:color-mix(in srgb,var(--danger) 12%,transparent);border-color:var(--danger);color:var(--danger)}
+.mum-btn i{width:18px;text-align:center}
+
+/* ===== المتصدرين ===== */
+.lb-hero{background:linear-gradient(120deg,var(--primary) 0%,var(--primary-2) 55%,#a855f7 100%);border-radius:22px;padding:34px 38px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(var(--primary-rgb),.45)}
+.lb-hero::before{content:"";position:absolute;top:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
+.lb-hero::after{content:"";position:absolute;bottom:-100px;right:15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
+.lb-hero-in{position:relative;z-index:2;display:flex;align-items:center;gap:30px;flex-wrap:wrap}
+.lb-hero-txt{flex:1;min-width:250px}
+.lb-hero-txt .tag{display:inline-block;font-size:.76rem;font-weight:800;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:100px;margin-bottom:12px}
+.lb-hero-txt h2{font-size:clamp(1.3rem,2.5vw,1.75rem);font-weight:900;line-height:1.4;margin-bottom:10px;letter-spacing:-.5px}
+.lb-hero-txt p{font-size:.9rem;line-height:1.9;color:rgba(255,255,255,.85);max-width:520px}
+.lb-hero-count{display:flex;align-items:center;justify-content:center;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);flex-shrink:0;flex-direction:column}
+.lb-hero-count b{font-size:2.6rem;font-weight:900;line-height:1}
+.lb-hero-count span{font-size:.74rem;font-weight:700;color:rgba(255,255,255,.85);margin-top:4px}
+
+.lb-podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:26px;align-items:end}
+.lb-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:24px 16px 20px;text-align:center;box-shadow:var(--shadow);position:relative;transition:.35s cubic-bezier(.2,.8,.2,1);overflow:visible}
+.lb-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.lb-card.rank1{background:linear-gradient(160deg,#fffbe6 0%,#fff4bf 60%,#fde68a 100%);border:2px solid #f7b32b;box-shadow:0 24px 60px rgba(247,179,43,.4);transform:translateY(-16px);padding:34px 18px 24px}
+.lb-card.rank1:hover{transform:translateY(-22px)}
+[data-theme="dark"] .lb-card.rank1{background:linear-gradient(160deg,#2a2205 0%,#3d3108 60%,#4a3a08 100%);border-color:#f7b32b}
+.lb-card.rank2{background:linear-gradient(160deg,#f7f8fa 0%,#e8ecf3 100%);border:2px solid #c0c8d4;box-shadow:0 18px 44px rgba(192,200,212,.4)}
+[data-theme="dark"] .lb-card.rank2{background:linear-gradient(160deg,#1c222e 0%,#252c3a 100%)}
+.lb-card.rank3{background:linear-gradient(160deg,#fdf0e2 0%,#f5d9b8 100%);border:2px solid #cd7f32;box-shadow:0 18px 44px rgba(205,127,50,.35)}
+[data-theme="dark"] .lb-card.rank3{background:linear-gradient(160deg,#2a1e0f 0%,#3a2815 100%)}
+.lb-avatar-wrap{position:relative;width:86px;height:86px;margin:0 auto 12px;display:grid;place-items:center}
+.lb-card.rank1 .lb-avatar-wrap{width:118px;height:118px}
+.lb-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:2rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));border:4px solid var(--card);box-shadow:0 10px 26px rgba(0,0,0,.15);background-size:cover;background-position:center;overflow:hidden}
+.lb-card.rank1 .lb-avatar{border-color:#f7b32b;box-shadow:0 16px 40px rgba(247,179,43,.55)}
+.lb-card.rank2 .lb-avatar{border-color:#c0c8d4;box-shadow:0 12px 30px rgba(148,163,184,.4)}
+.lb-card.rank3 .lb-avatar{border-color:#cd7f32;box-shadow:0 12px 30px rgba(205,127,50,.4)}
+.lb-crown{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:2.4rem;color:#f7b32b;filter:drop-shadow(0 6px 14px rgba(247,179,43,.7));animation:crownFloat 2.6s ease-in-out infinite;z-index:3}
+@keyframes crownFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-5deg)}50%{transform:translateX(-50%) translateY(-7px) rotate(5deg)}}
+.lb-medal{position:absolute;bottom:-8px;right:-8px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:.9rem;color:#fff;border:3px solid var(--card);box-shadow:0 6px 14px rgba(0,0,0,.2);z-index:4}
+.lb-card.rank1 .lb-medal{background:linear-gradient(140deg,#f7b32b,#d97706);width:46px;height:46px;font-size:1.1rem;border-width:4px}
+.lb-card.rank2 .lb-medal{background:linear-gradient(140deg,#c0c8d4,#94a3b8)}
+.lb-card.rank3 .lb-medal{background:linear-gradient(140deg,#cd7f32,#a05a20)}
+.lb-name{font-size:1rem;font-weight:900;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.lb-card.rank1 .lb-name{font-size:1.2rem;color:#8a5a00}
+[data-theme="dark"] .lb-card.rank1 .lb-name{color:#f7b32b}
+.lb-xp{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;font-weight:900;padding:6px 14px;border-radius:100px;background:var(--primary-soft);color:var(--primary);margin-bottom:8px}
+.lb-card.rank1 .lb-xp{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff;font-size:1rem;box-shadow:0 6px 16px rgba(247,179,43,.5)}
+.lb-card.rank2 .lb-xp{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
+.lb-card.rank3 .lb-xp{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
+.lb-stats-mini{display:flex;justify-content:center;gap:10px;font-size:.7rem;color:var(--muted);font-weight:700;flex-wrap:wrap;margin-top:6px}
+.lb-stats-mini span{display:inline-flex;align-items:center;gap:4px}
+.lb-stats-mini i{color:var(--primary);font-size:.66rem}
+.lb-card.rank1 .lb-stats-mini{color:#8a5a00}
+[data-theme="dark"] .lb-card.rank1 .lb-stats-mini{color:#d4a548}
+
+.lb-list{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.lb-row{display:grid;grid-template-columns:60px 1fr auto auto auto;gap:14px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.22s}
+.lb-row:hover{background:var(--card-2)}
+.lb-row:last-child{border-bottom:none}
+.lb-row.me{background:linear-gradient(100deg,var(--primary-soft),transparent);border-right:4px solid var(--primary)}
+.lb-rank-num{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:1rem;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.lb-rank-num.g1{background:linear-gradient(140deg,#f7b32b,#d97706);color:#fff;border:none;box-shadow:0 6px 16px rgba(247,179,43,.4)}
+.lb-rank-num.g2{background:linear-gradient(140deg,#c0c8d4,#94a3b8);color:#fff;border:none}
+.lb-rank-num.g3{background:linear-gradient(140deg,#cd7f32,#a05a20);color:#fff;border:none}
+.lb-user-cell{display:flex;align-items:center;gap:11px;min-width:0}
+.lb-user-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;box-shadow:0 4px 12px rgba(0,0,0,.15);border:2px solid var(--card)}
+.lb-user-cell b{font-size:.9rem;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-user-cell small{font-size:.7rem;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-xp-cell{font-size:1rem;font-weight:900;color:var(--primary);white-space:nowrap;text-align:center}
+.lb-xp-cell small{display:block;font-size:.62rem;color:var(--muted);font-weight:700}
+.lb-badge-mini{font-size:.66rem;font-weight:800;padding:5px 11px;border-radius:100px;background:var(--primary-soft);color:var(--primary);white-space:nowrap}
+.lb-badge-mini.gold{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff}
+.lb-badge-mini.silver{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
+.lb-badge-mini.bronze{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
+.lb-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.lb-empty i{font-size:3rem;opacity:.35;color:var(--primary);margin-bottom:12px;display:block}
+.lb-empty h3{font-size:1.05rem;font-weight:800;margin-bottom:6px;color:var(--text)}
+.lb-empty p{font-size:.85rem}
+
+/* ===== الملف الشخصي ===== */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:960px;margin:0 auto}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 26px;box-shadow:var(--shadow);text-align:center;position:relative;overflow:hidden}
+.profile-card::before{content:"";position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(120deg,var(--primary),var(--primary-2));opacity:.14;pointer-events:none}
+.profile-avatar-wrap{position:relative;width:140px;height:140px;margin:0 auto 18px;z-index:2}
+.profile-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:3rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;border:5px solid var(--card);box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.profile-avatar:hover{transform:scale(1.03);box-shadow:0 20px 55px rgba(var(--primary-rgb),.55)}
+.profile-avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;display:grid;place-items:center;color:#fff;font-size:1.6rem;transition:.25s;border-radius:50%}
+.profile-avatar:hover .profile-avatar-overlay{opacity:1}
+.profile-cam{position:absolute;bottom:4px;left:4px;width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;display:grid;place-items:center;font-size:1rem;box-shadow:0 8px 20px rgba(var(--primary-rgb),.5);border:3px solid var(--card);cursor:pointer;transition:.25s;z-index:3}
+.profile-cam:hover{transform:scale(1.1) rotate(-8deg)}
+.profile-name-big{font-size:1.45rem;font-weight:900;margin-bottom:6px;position:relative;z-index:2}
+.profile-email-small{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:18px;position:relative;z-index:2;word-break:break-all}
+.profile-badges-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:relative;z-index:2}
+.profile-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;z-index:2}
+.profile-stat{text-align:center}
+.profile-stat b{display:block;font-size:1.5rem;font-weight:900;color:var(--primary);line-height:1}
+.profile-stat small{display:block;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:6px}
+.profile-form{display:flex;flex-direction:column;gap:14px;text-align:right;position:relative;z-index:2}
+.profile-form label{font-size:.82rem;font-weight:800;color:var(--muted);display:block;margin-bottom:6px}
+.profile-form input[type=text],.profile-form input[type=email]{width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:.25s}
+.profile-form input[type=text]:focus,.profile-form input[type=email]:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.profile-form input[type=email]:disabled{opacity:.7;cursor:not-allowed}
+.profile-actions{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.profile-tips{background:linear-gradient(140deg,var(--primary-soft),transparent);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:right;font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.85;margin-top:14px;position:relative;z-index:2}
+.profile-tips i{color:var(--primary);margin-left:6px}
+.profile-xp-card{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);margin-bottom:18px}
+.profile-xp-card .xp-num{font-size:2.6rem;font-weight:900;line-height:1;margin-bottom:6px}
+.profile-xp-card small{font-size:.8rem;opacity:.9;font-weight:700}
+.profile-xp-card .xp-breakdown{display:flex;justify-content:center;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.25);flex-wrap:wrap}
+.profile-xp-card .xp-breakdown span{font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+
 @media (max-width:1200px){
   .hero-big-in{grid-template-columns:1fr;padding:28px 26px;gap:20px}
   .hero-right{display:flex;justify-content:center}
@@ -517,10 +673,11 @@ input,textarea,select,button{font-family:inherit}
   .user-card{justify-content:center;padding:8px}
   .main{padding:20px 18px 80px}
   .users-table .thead,.users-table .trow{grid-template-columns:1.5fr 2fr 1.2fr;gap:8px;padding:12px 14px}
-  .users-table .email-cell{display:none}
+  .users-table .email-cell,.users-table .status-cell,.users-table .pw-cell{display:none}
   .auth-container{max-width:520px;min-height:auto}
   .auth-image-side{display:none}
   .auth-form-side{padding:28px 24px}
+  .profile-grid{grid-template-columns:1fr}
 }
 @media (max-width:720px){
   .sidebar{position:fixed;bottom:0;right:0;left:0;top:auto;width:100%;height:calc(62px + var(--safe-b));flex-direction:row;padding:6px 6px calc(6px + var(--safe-b));border-left:none;border-top:1px solid var(--border);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(20,35,80,.1)}
@@ -594,144 +751,6 @@ input,textarea,select,button{font-family:inherit}
   .search-box input{font-size:1rem}
   .top-actions{gap:8px}
   .icon-btn{width:42px;height:42px;border-radius:13px}
-}
-@media (max-width:420px){
-  .files-grid{grid-template-columns:1fr}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .nav-btn span:not(.ic){font-size:.55rem}
-}
-@media (hover:none){
-  .file-card:hover{transform:none}
-  .feat-new:hover{transform:none}
-}
-@media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
-
-/* ===== الرسم ===== */
-.draw-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:linear-gradient(100deg,var(--card-2),var(--card));border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
-.draw-bar::-webkit-scrollbar{display:none}
-.draw-bar.on{display:flex}
-.draw-tools{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:11px;border:1px solid var(--border);flex-shrink:0}
-.dtool{width:36px;height:34px;border-radius:9px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:.88rem;transition:.2s;flex-shrink:0}
-.dtool:hover{color:var(--primary);background:var(--card)}
-.dtool.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 6px 14px rgba(var(--primary-rgb),.35)}
-.color-dots{display:flex;gap:5px;flex-shrink:0}
-.color-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--cc);cursor:pointer;padding:0;transition:.2s;flex-shrink:0;position:relative}
-.color-dot:hover{transform:scale(1.12)}
-.color-dot.on{border-color:var(--primary);transform:scale(1.15);box-shadow:0 0 0 3px var(--primary-soft)}
-.color-dot.on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.68rem;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-.size-dots{display:flex;gap:4px;align-items:center;flex-shrink:0}
-.size-dot{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0;transition:.2s;flex-shrink:0}
-.size-dot i{display:block;background:var(--text);border-radius:50%}
-.size-dot.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px var(--primary-soft)}
-.size-dot.on i{background:var(--primary)}
-.pdf-page .pg-draw{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:none}
-.reader-body.draw-on .pdf-page .pg-draw{pointer-events:auto;cursor:crosshair}
-.reader-body.draw-on .pdf-page{cursor:crosshair}
-.wb-panel{width:0;flex-shrink:0;overflow:hidden;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s ease;position:relative}
-.wb-panel.open{width:min(460px,44%)}
-.wb-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
-.wb-head b{flex:1;font-size:.86rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:7px}
-.wb-head b i{color:var(--primary)}
-.wb-stage{flex:1;position:relative;overflow:hidden;background:#ffffff}
-.wb-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;background:#ffffff;display:block}
-[data-theme="dark"] .wb-stage,[data-theme="dark"] .wb-canvas,[data-theme="dark"] .wb-panel{background:#161a24}
-.wb-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:.82rem;font-weight:700;pointer-events:none;text-align:center;padding:20px}
-.wb-empty i{font-size:2rem;opacity:.35}
-.mobile-user-btn{display:none !important;position:relative}
-.mobile-user-btn .avatar-mini{font-weight:900;font-size:.86rem;background-size:cover;background-position:center;width:100%;height:100%;display:grid;place-items:center;border-radius:inherit}
-.mobile-user-btn .dot{position:absolute;top:6px;left:6px;width:9px;height:9px;border-radius:50%;background:var(--success);border:2px solid var(--card)}
-.mobile-user-btn .dot.pending{background:var(--accent)}
-.mobile-user-btn .dot.off{background:var(--danger)}
-.mobile-user-menu{position:fixed;top:72px;left:12px;width:280px;max-width:calc(100vw - 24px);background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:16px;z-index:8500;display:none;animation:viewIn .25s ease}
-.mobile-user-menu.open{display:block}
-.mum-head{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px}
-.mum-avatar{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:1.1rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));box-shadow:0 6px 16px rgba(var(--primary-rgb),.35);background-size:cover;background-position:center}
-.mum-info{min-width:0;flex:1}
-.mum-info b{display:block;font-size:.9rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mum-info small{display:block;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.mum-badge{display:flex;justify-content:center;margin-bottom:12px}
-.mum-actions{display:flex;flex-direction:column;gap:8px}
-.mum-btn{font-family:inherit;font-size:.86rem;font-weight:700;padding:11px 14px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:9px;transition:.2s;text-align:right}
-.mum-btn:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
-.mum-btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,var(--border))}
-.mum-btn.danger:hover{background:color-mix(in srgb,var(--danger) 12%,transparent);border-color:var(--danger);color:var(--danger)}
-.mum-btn i{width:18px;text-align:center}
-
-/* ============================================================
-   ★ جديد: قائمة المتصدرين + الملف الشخصي
-============================================================ */
-.lb-hero{background:linear-gradient(120deg,var(--primary) 0%,var(--primary-2) 55%,#a855f7 100%);border-radius:22px;padding:34px 38px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 22px 60px rgba(var(--primary-rgb),.45)}
-.lb-hero::before{content:"";position:absolute;top:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
-.lb-hero::after{content:"";position:absolute;bottom:-100px;right:15%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
-.lb-hero-in{position:relative;z-index:2;display:flex;align-items:center;gap:30px;flex-wrap:wrap}
-.lb-hero-txt{flex:1;min-width:250px}
-.lb-hero-txt .tag{display:inline-block;font-size:.76rem;font-weight:800;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:100px;margin-bottom:12px}
-.lb-hero-txt h2{font-size:clamp(1.3rem,2.5vw,1.75rem);font-weight:900;line-height:1.4;margin-bottom:10px;letter-spacing:-.5px}
-.lb-hero-txt p{font-size:.9rem;line-height:1.9;color:rgba(255,255,255,.85);max-width:520px}
-.lb-hero-count{display:flex;align-items:center;justify-content:center;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(10px);flex-shrink:0;flex-direction:column}
-.lb-hero-count b{font-size:2.6rem;font-weight:900;line-height:1}
-.lb-hero-count span{font-size:.74rem;font-weight:700;color:rgba(255,255,255,.85);margin-top:4px}
-
-.lb-podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:26px;align-items:end}
-.lb-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:24px 16px 20px;text-align:center;box-shadow:var(--shadow);position:relative;transition:.35s cubic-bezier(.2,.8,.2,1);overflow:visible}
-.lb-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
-.lb-card.rank1{background:linear-gradient(160deg,#fffbe6 0%,#fff4bf 60%,#fde68a 100%);border:2px solid #f7b32b;box-shadow:0 24px 60px rgba(247,179,43,.4);transform:translateY(-16px);padding:34px 18px 24px}
-.lb-card.rank1:hover{transform:translateY(-22px)}
-[data-theme="dark"] .lb-card.rank1{background:linear-gradient(160deg,#2a2205 0%,#3d3108 60%,#4a3a08 100%);border-color:#f7b32b}
-.lb-card.rank2{background:linear-gradient(160deg,#f7f8fa 0%,#e8ecf3 100%);border:2px solid #c0c8d4;box-shadow:0 18px 44px rgba(192,200,212,.4)}
-[data-theme="dark"] .lb-card.rank2{background:linear-gradient(160deg,#1c222e 0%,#252c3a 100%)}
-.lb-card.rank3{background:linear-gradient(160deg,#fdf0e2 0%,#f5d9b8 100%);border:2px solid #cd7f32;box-shadow:0 18px 44px rgba(205,127,50,.35)}
-[data-theme="dark"] .lb-card.rank3{background:linear-gradient(160deg,#2a1e0f 0%,#3a2815 100%)}
-.lb-avatar-wrap{position:relative;width:86px;height:86px;margin:0 auto 12px;display:grid;place-items:center}
-.lb-card.rank1 .lb-avatar-wrap{width:118px;height:118px}
-.lb-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:2rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));border:4px solid var(--card);box-shadow:0 10px 26px rgba(0,0,0,.15);background-size:cover;background-position:center;overflow:hidden}
-.lb-card.rank1 .lb-avatar{border-color:#f7b32b;box-shadow:0 16px 40px rgba(247,179,43,.55)}
-.lb-card.rank2 .lb-avatar{border-color:#c0c8d4;box-shadow:0 12px 30px rgba(148,163,184,.4)}
-.lb-card.rank3 .lb-avatar{border-color:#cd7f32;box-shadow:0 12px 30px rgba(205,127,50,.4)}
-.lb-crown{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:2.4rem;color:#f7b32b;filter:drop-shadow(0 6px 14px rgba(247,179,43,.7));animation:crownFloat 2.6s ease-in-out infinite;z-index:3}
-@keyframes crownFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-5deg)}50%{transform:translateX(-50%) translateY(-7px) rotate(5deg)}}
-.lb-medal{position:absolute;bottom:-8px;right:-8px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:.9rem;color:#fff;border:3px solid var(--card);box-shadow:0 6px 14px rgba(0,0,0,.2);z-index:4}
-.lb-card.rank1 .lb-medal{background:linear-gradient(140deg,#f7b32b,#d97706);width:46px;height:46px;font-size:1.1rem;border-width:4px}
-.lb-card.rank2 .lb-medal{background:linear-gradient(140deg,#c0c8d4,#94a3b8)}
-.lb-card.rank3 .lb-medal{background:linear-gradient(140deg,#cd7f32,#a05a20)}
-.lb-name{font-size:1rem;font-weight:900;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
-.lb-card.rank1 .lb-name{font-size:1.2rem;color:#8a5a00}
-[data-theme="dark"] .lb-card.rank1 .lb-name{color:#f7b32b}
-.lb-xp{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;font-weight:900;padding:6px 14px;border-radius:100px;background:var(--primary-soft);color:var(--primary);margin-bottom:8px}
-.lb-card.rank1 .lb-xp{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff;font-size:1rem;box-shadow:0 6px 16px rgba(247,179,43,.5)}
-.lb-card.rank2 .lb-xp{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
-.lb-card.rank3 .lb-xp{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
-.lb-stats-mini{display:flex;justify-content:center;gap:10px;font-size:.7rem;color:var(--muted);font-weight:700;flex-wrap:wrap;margin-top:6px}
-.lb-stats-mini span{display:inline-flex;align-items:center;gap:4px}
-.lb-stats-mini i{color:var(--primary);font-size:.66rem}
-.lb-card.rank1 .lb-stats-mini{color:#8a5a00}
-[data-theme="dark"] .lb-card.rank1 .lb-stats-mini{color:#d4a548}
-
-.lb-list{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm)}
-.lb-row{display:grid;grid-template-columns:60px 1fr auto auto auto;gap:14px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);transition:.22s}
-.lb-row:hover{background:var(--card-2)}
-.lb-row:last-child{border-bottom:none}
-.lb-row.me{background:linear-gradient(100deg,var(--primary-soft),transparent);border-right:4px solid var(--primary)}
-.lb-rank-num{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:1rem;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
-.lb-rank-num.g1{background:linear-gradient(140deg,#f7b32b,#d97706);color:#fff;border:none;box-shadow:0 6px 16px rgba(247,179,43,.4)}
-.lb-rank-num.g2{background:linear-gradient(140deg,#c0c8d4,#94a3b8);color:#fff;border:none}
-.lb-rank-num.g3{background:linear-gradient(140deg,#cd7f32,#a05a20);color:#fff;border:none}
-.lb-user-cell{display:flex;align-items:center;gap:11px;min-width:0}
-.lb-user-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;box-shadow:0 4px 12px rgba(0,0,0,.15);border:2px solid var(--card)}
-.lb-user-cell b{font-size:.9rem;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-user-cell small{font-size:.7rem;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-xp-cell{font-size:1rem;font-weight:900;color:var(--primary);white-space:nowrap;text-align:center}
-.lb-xp-cell small{display:block;font-size:.62rem;color:var(--muted);font-weight:700}
-.lb-badge-mini{font-size:.66rem;font-weight:800;padding:5px 11px;border-radius:100px;background:var(--primary-soft);color:var(--primary);white-space:nowrap}
-.lb-badge-mini.gold{background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff}
-.lb-badge-mini.silver{background:linear-gradient(120deg,#c0c8d4,#94a3b8);color:#fff}
-.lb-badge-mini.bronze{background:linear-gradient(120deg,#cd7f32,#a05a20);color:#fff}
-.lb-empty{text-align:center;padding:60px 20px;color:var(--muted)}
-.lb-empty i{font-size:3rem;opacity:.35;color:var(--primary);margin-bottom:12px;display:block}
-.lb-empty h3{font-size:1.05rem;font-weight:800;margin-bottom:6px;color:var(--text)}
-.lb-empty p{font-size:.85rem}
-
-@media (max-width:720px){
   .lb-podium{grid-template-columns:1fr;gap:14px}
   .lb-card.rank1{transform:none;order:-1}
   .lb-card.rank1:hover{transform:translateY(-4px)}
@@ -746,39 +765,16 @@ input,textarea,select,button{font-family:inherit}
   .lb-hero-count{width:90px;height:90px}
   .lb-hero-count b{font-size:2rem}
 }
-
-/* ===== الملف الشخصي ===== */
-.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:960px;margin:0 auto}
-@media (max-width:820px){.profile-grid{grid-template-columns:1fr}}
-.profile-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 26px;box-shadow:var(--shadow);text-align:center;position:relative;overflow:hidden}
-.profile-card::before{content:"";position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(120deg,var(--primary),var(--primary-2));opacity:.14;pointer-events:none}
-.profile-avatar-wrap{position:relative;width:140px;height:140px;margin:0 auto 18px;z-index:2}
-.profile-avatar{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:3rem;font-weight:900;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));background-size:cover;background-position:center;border:5px solid var(--card);box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);cursor:pointer;transition:.3s;position:relative;overflow:hidden}
-.profile-avatar:hover{transform:scale(1.03);box-shadow:0 20px 55px rgba(var(--primary-rgb),.55)}
-.profile-avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;display:grid;place-items:center;color:#fff;font-size:1.6rem;transition:.25s;border-radius:50%}
-.profile-avatar:hover .profile-avatar-overlay{opacity:1}
-.profile-cam{position:absolute;bottom:4px;left:4px;width:44px;height:44px;border-radius:50%;background:linear-gradient(140deg,var(--primary),var(--primary-2));color:#fff;display:grid;place-items:center;font-size:1rem;box-shadow:0 8px 20px rgba(var(--primary-rgb),.5);border:3px solid var(--card);cursor:pointer;transition:.25s;z-index:3}
-.profile-cam:hover{transform:scale(1.1) rotate(-8deg)}
-.profile-name-big{font-size:1.45rem;font-weight:900;margin-bottom:6px;position:relative;z-index:2}
-.profile-email-small{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:18px;position:relative;z-index:2;word-break:break-all}
-.profile-badges-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:relative;z-index:2}
-.profile-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;z-index:2}
-.profile-stat{text-align:center}
-.profile-stat b{display:block;font-size:1.5rem;font-weight:900;color:var(--primary);line-height:1}
-.profile-stat small{display:block;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:6px}
-.profile-form{display:flex;flex-direction:column;gap:14px;text-align:right;position:relative;z-index:2}
-.profile-form label{font-size:.82rem;font-weight:800;color:var(--muted);display:block;margin-bottom:6px}
-.profile-form input[type=text],.profile-form input[type=email]{width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;transition:.25s}
-.profile-form input[type=text]:focus,.profile-form input[type=email]:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
-.profile-form input[type=email]:disabled{opacity:.7;cursor:not-allowed}
-.profile-actions{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
-.profile-tips{background:linear-gradient(140deg,var(--primary-soft),transparent);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:right;font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.85;margin-top:14px;position:relative;z-index:2}
-.profile-tips i{color:var(--primary);margin-left:6px}
-.profile-xp-card{background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 14px 40px rgba(var(--primary-rgb),.4);margin-bottom:18px}
-.profile-xp-card .xp-num{font-size:2.6rem;font-weight:900;line-height:1;margin-bottom:6px}
-.profile-xp-card small{font-size:.8rem;opacity:.9;font-weight:700}
-.profile-xp-card .xp-breakdown{display:flex;justify-content:center;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.25);flex-wrap:wrap}
-.profile-xp-card .xp-breakdown span{font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+@media (max-width:420px){
+  .files-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .nav-btn span:not(.ic){font-size:.55rem}
+}
+@media (hover:none){
+  .file-card:hover{transform:none}
+  .feat-new:hover{transform:none}
+}
+@media print{body *{display:none !important;visibility:hidden !important}body::after{content:"محتوى محمي — العباقرة للقدرات";visibility:visible;display:block;font-size:2rem;text-align:center;padding-top:40vh;font-family:Tajawal,sans-serif}}
 </style>
 </head>
 <body>
@@ -1076,7 +1072,6 @@ input,textarea,select,button{font-family:inherit}
       <div class="badges-row" id="badgesAll"></div>
     </section>
 
-    <!-- ★ جديد: قائمة المتصدرين -->
     <section class="view" id="view-leaderboard">
       <div class="lb-hero">
         <div class="lb-hero-in">
@@ -1096,7 +1091,6 @@ input,textarea,select,button{font-family:inherit}
       <div class="lb-list" id="lbList"></div>
     </section>
 
-    <!-- ★ جديد: الملف الشخصي -->
     <section class="view" id="view-profile">
       <div class="sec-title"><i class="fas fa-user-circle" style="color:var(--primary)"></i> ملفي الشخصي</div>
       <div class="profile-grid">
@@ -1574,10 +1568,21 @@ input,textarea,select,button{font-family:inherit}
 ============================================================ */
 const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// استخدام sessionStorage: كل تبويب له جلسة مستقلة (لحل مشكلة تكرار نفس الجهاز)
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    storage: window.sessionStorage,
+    storageKey: 'sb-auth-session',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    flowType: 'pkce'
+  }
+});
 
 const sbTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { storageKey: 'sb-temp-signup-' + Date.now(), persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  auth: { storage: window.sessionStorage, storageKey: 'sb-temp-' + Date.now(), persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
 
 const $  = s => document.querySelector(s);
@@ -1661,38 +1666,69 @@ function defaultUD(){
 }
 function resetUD(){ userData = defaultUD(); }
 function prefsKey(){ if(!session) return 'abdq_prefs_guest'; return 'abdq_prefs_' + session.user.id; }
+
+// استخراج الحقول المحلية (تُخزّن في sessionStorage + قاعدة البيانات)
+function pickLocalFields(ud){
+  return {
+    favs: ud.favs, tasks: ud.tasks, notes: ud.notes,
+    theme: ud.theme, darkMode: ud.darkMode, font: ud.font,
+    reduceMotion: ud.reduceMotion, focus: ud.focus, brk: ud.brk,
+    longBrk: ud.longBrk, autoStart: ud.autoStart, sound: ud.sound,
+    goalPages: ud.goalPages, goalMinutes: ud.goalMinutes,
+    readTheme: ud.readTheme, snap: ud.snap, showMarks: ud.showMarks,
+    defaultZoom: ud.defaultZoom, autoResume: ud.autoResume,
+    log: ud.log, opened: ud.opened, minutes: ud.minutes, sessions: ud.sessions,
+    badges: ud.badges
+  };
+}
+
+let prefsSaveTimer = null;
+
 function savePrefs(){
   if(!session) return;
-  const localOnly = {
-    favs: userData.favs, tasks: userData.tasks, notes: userData.notes,
-    theme: userData.theme, darkMode: userData.darkMode, font: userData.font,
-    reduceMotion: userData.reduceMotion, focus: userData.focus, brk: userData.brk,
-    longBrk: userData.longBrk, autoStart: userData.autoStart, sound: userData.sound,
-    goalPages: userData.goalPages, goalMinutes: userData.goalMinutes,
-    readTheme: userData.readTheme, snap: userData.snap, showMarks: userData.showMarks,
-    defaultZoom: userData.defaultZoom, autoResume: userData.autoResume,
-    log: userData.log, opened: userData.opened, minutes: userData.minutes, sessions: userData.sessions
-  };
-  try{ localStorage.setItem(prefsKey(), JSON.stringify(localOnly)); }catch(e){}
+  // نسخة سريعة في sessionStorage (للتبويب الحالي فقط)
+  try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
+  // حفظ في قاعدة البيانات (debounced)
+  clearTimeout(prefsSaveTimer);
+  prefsSaveTimer = setTimeout(pushUserDataToDB, 900);
 }
+
+async function pushUserDataToDB(){
+  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  try{
+    const payload = pickLocalFields(userData);
+    const { error } = await sb.from('profiles').update({ user_data: payload }).eq('id', currentUserObj.id);
+    if(error) console.warn('user_data sync failed:', error.message);
+  }catch(e){}
+}
+
 function loadPrefs(){
   resetUD();
   try{
-    const raw = localStorage.getItem(prefsKey());
+    const raw = sessionStorage.getItem(prefsKey());
     if(raw){
       const d = JSON.parse(raw);
       if(d && typeof d === 'object'){
         Object.assign(userData, d);
-        if(!userData.log || typeof userData.log !== 'object') userData.log = {};
-        if(!Array.isArray(userData.favs)) userData.favs = [];
-        if(!Array.isArray(userData.tasks)) userData.tasks = [];
-        if(!Array.isArray(userData.badges)) userData.badges = [];
-        if(!Array.isArray(userData.opened)) userData.opened = [];
-        if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
-        if(!userData.drawings || typeof userData.drawings !== 'object') userData.drawings = {};
       }
     }
   }catch(e){}
+}
+
+function loadPrefsFromDB(){
+  try{
+    if(currentUserObj && currentUserObj.user_data && typeof currentUserObj.user_data === 'object'){
+      Object.assign(userData, currentUserObj.user_data);
+    }
+  }catch(e){}
+  // تأمين الأنواع
+  if(!userData.log || typeof userData.log !== 'object') userData.log = {};
+  if(!Array.isArray(userData.favs)) userData.favs = [];
+  if(!Array.isArray(userData.tasks)) userData.tasks = [];
+  if(!Array.isArray(userData.badges)) userData.badges = [];
+  if(!Array.isArray(userData.opened)) userData.opened = [];
+  if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
+  if(!userData.drawings || typeof userData.drawings !== 'object') userData.drawings = {};
 }
 
 /* ============================================================
@@ -1797,7 +1833,7 @@ $('#themeBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   3) التنقل
+   3) التنقل مع الروابط (#hash routing)
 ============================================================ */
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
@@ -1809,21 +1845,38 @@ const TITLES = {
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
-function go(view){
+
+function go(view, skipHash){
+  if(!TITLES[view]) view = 'home';
+  if(!skipHash && location.hash.slice(1) !== view){
+    try{ history.replaceState(null, '', '#' + view); }catch(e){ location.hash = view; }
+  }
   $$('.view').forEach(v => v.classList.remove('active'));
   const t = document.getElementById('view-' + view);
   if(t) t.classList.add('active');
   $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  const meta = TITLES[view] || ['',''];
+  const meta = TITLES[view];
   $('#pageTitle').textContent = meta[0];
   $('#pageSub').textContent = meta[1];
   $('#mainScroll').scrollTop = 0;
+  document.title = meta[0] + ' — العباقرة للقدرات';
   if(view === 'progress') renderProgress();
   if(view === 'admin') renderAdmin();
   if(view === 'files') renderFiles();
   if(view === 'leaderboard') renderLeaderboard();
   if(view === 'profile') renderProfile();
 }
+
+window.addEventListener('hashchange', () => {
+  const v = location.hash.slice(1) || 'home';
+  if(TITLES[v]) go(v, true);
+});
+
+function goFromHash(){
+  const v = (location.hash.slice(1) || 'home');
+  go(TITLES[v] ? v : 'home', true);
+}
+
 $$('.nav-btn').forEach(btn => btn.addEventListener('click', () => go(btn.dataset.view)));
 
 /* ============================================================
@@ -2014,10 +2067,11 @@ window.toggleFav = (id, ev) => {
 };
 
 /* ============================================================
-   6) قارئ PDF
+   6) قارئ PDF — محسّن للتعامل مع الملفات الضخمة
 ============================================================ */
 const RS = {
-  doc:null, file:null, numPages:0, dims:[], offsets:[],
+  doc:null, file:null, numPages:0,
+  pageW: 612, pageH: 792,
   zoom:1, baseWidth:800, token:0, current:1,
   rendered:new Set(), rendering:new Set(), inView:new Set(),
   pageEls:[], observer:null, restoring:false, clockId:null
@@ -2025,7 +2079,7 @@ const RS = {
 let currentFile = null;
 const rdBody = $('#rdBody');
 function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
-function pageHeight(i){ const d = RS.dims[i]; if(!d) return 600; return Math.round(d.h * (pageWidth() / d.w)); }
+function pageHeight(){ return Math.round(RS.pageH * (pageWidth() / RS.pageW)); }
 function showLoading(txt, pct){
   const l = $('#rdLoading'); if(!l) return;
   l.style.display = 'flex';
@@ -2057,36 +2111,32 @@ async function openFile(id){
   showLoading('جاري تحميل الملف من السحابة...', 10);
   $('#rdStage').innerHTML = '';
   RS.baseWidth = Math.max(220, Math.min(980, rdBody.clientWidth - 30));
+
   try{
     const { data: blob, error } = await sb.storage.from('pdfs').download(f.storage_path);
     if(error) throw new Error(error.message);
     if(token !== RS.token) return;
-    showLoading('جاري تجهيز الصفحات...', 30);
+    showLoading('جاري تجهيز القارئ...', 40);
     const ab = await blob.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true }).promise;
+    const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true, disableStream:false }).promise;
     if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
     RS.doc = doc; RS.numPages = doc.numPages;
+
+    // قراءة أبعاد أول صفحة فقط — لتفادي استهلاك الذاكرة في الملفات الضخمة
+    const p1 = await doc.getPage(1);
+    const vp0 = p1.getViewport({ scale: 1 });
+    RS.pageW = vp0.width || 612;
+    RS.pageH = vp0.height || 792;
+    try{ p1.cleanup(); }catch(e){}
+
     if(f.page_count !== RS.numPages){ f.page_count = RS.numPages; }
     $('#rdMeta').textContent = `PDF • ${f.category} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
     $('#rdPagesTotal').textContent = RS.numPages;
     $('#rdPageInput').max = RS.numPages;
-    RS.dims = new Array(RS.numPages);
-    const batch = 12;
-    for(let i = 0; i < RS.numPages; i += batch){
-      if(token !== RS.token) return;
-      const nums = [];
-      for(let j = i; j < Math.min(i + batch, RS.numPages); j++) nums.push(j + 1);
-      const pages = await Promise.all(nums.map(n => doc.getPage(n).catch(()=>null)));
-      pages.forEach((p, k) => {
-        const idx = i + k;
-        if(p){ const vp = p.getViewport({ scale: 1 }); RS.dims[idx] = { w: vp.width, h: vp.height }; try{ p.cleanup(); }catch(e){} }
-        else RS.dims[idx] = { w: 612, h: 792 };
-      });
-      showLoading('جاري تجهيز الصفحات...', 30 + Math.round((i / RS.numPages) * 60));
-    }
-    if(token !== RS.token) return;
+
     buildPages();
     hideLoading();
+
     const prog = userData.progress[id];
     let startPage = 1;
     if(userData.autoResume && prog && typeof prog === 'object'){
@@ -2102,10 +2152,10 @@ async function openFile(id){
     if(!userData.badges.includes('first')){ userData.badges.push('first'); savePrefs(); setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700); renderBadges(); }
     startReadClock();
     refreshAll();
-    try{ refreshDrawSurface(); }catch(e){}
+    loadDrawingsForFile(f.id).then(() => redrawVisiblePdfDrawings());
   }catch(err){
     console.error(err); hideLoading();
-    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex"><i class="fas fa-circle-exclamation" style="color:var(--danger)"></i><p>تعذّر تحميل الملف</p><small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small></div>`;
+    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex"><i class="fas fa-circle-exclamation" style="color:var(--danger)"></i><p>تعذّر تحميل الملف</p><small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openFile('${id}')"><i class="fas fa-rotate"></i> إعادة المحاولة</button></div>`;
     toast('تعذّر تحميل الملف: ' + err.message, 'err');
   }
 }
@@ -2118,43 +2168,51 @@ function teardownReader(closeUI){
   stopReadClock();
   if(closeUI){
     if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
-    RS.doc = null; RS.file = null; RS.numPages = 0; RS.dims = []; currentFile = null;
+    RS.doc = null; RS.file = null; RS.numPages = 0; currentFile = null;
   }
 }
+
 function buildPages(){
   const stage = $('#rdStage');
   stage.innerHTML = ''; RS.pageEls = [];
-  stage.style.width = pageWidth() + 'px';
+  const w = pageWidth();
+  const h = pageHeight();
+  stage.style.width = w + 'px';
   const frag = document.createDocumentFragment();
+  // نُنشئ فقط حاويات الصفحات — لا canvases هنا
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
     el.className = 'pdf-page';
     el.dataset.page = String(i + 1);
-    el.style.width = pageWidth() + 'px';
-    el.style.height = pageHeight(i) + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
     el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
     frag.appendChild(el); RS.pageEls.push(el);
   }
   stage.appendChild(frag);
-  RS.pageEls.forEach((el, i) => {
-    const c = document.createElement('canvas');
-    c.className = 'pg-draw';
-    c.dataset.page = String(i + 1);
-    el.appendChild(c);
-    attachPdfDrawEvents(c, i + 1);
-  });
+
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
-      if(en.isIntersecting){ RS.inView.add(idx); renderPage(idx); } else RS.inView.delete(idx);
+      if(en.isIntersecting){
+        RS.inView.add(idx);
+        renderPage(idx);
+        ensureDrawCanvasIfNeeded(idx);
+      } else RS.inView.delete(idx);
     });
-  }, { root: rdBody, rootMargin: '800px 0px' });
+  }, { root: rdBody, rootMargin: '1200px 0px', threshold: 0 });
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
-  requestAnimationFrame(() => redrawAllPdfDrawings());
 }
-function computeOffsets(){ RS.offsets = RS.pageEls.map(el => el.offsetTop); }
+
+function computeOffsets(){
+  RS.offsets = RS.pageEls.map(el => {
+    const r = el.getBoundingClientRect();
+    return r.top + rdBody.scrollTop;
+  });
+}
+
 async function renderPage(num){
   const holder = RS.pageEls[num - 1];
   if(!holder || holder.dataset.done === '1') return;
@@ -2165,10 +2223,9 @@ async function renderPage(num){
   try{
     const page = await RS.doc.getPage(num);
     if(token !== RS.token) return;
-    const d = RS.dims[num - 1] || { w: 612, h: 792 };
     const cssW = pageWidth();
-    const scale = cssW / d.w;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const scale = cssW / RS.pageW;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const vp = page.getViewport({ scale: scale * dpr });
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.floor(vp.width));
@@ -2184,11 +2241,13 @@ async function renderPage(num){
   }catch(e){ console.warn(e); }
   finally{ RS.rendering.delete(num); }
 }
+
 function cleanupFarPages(){
+  if(!RS.file) return;
   const cur = RS.current;
   RS.pageEls.forEach((el, i) => {
     const n = i + 1;
-    if(Math.abs(n - cur) <= 5) return;
+    if(Math.abs(n - cur) <= 6) return;
     if(RS.inView.has(n)) return;
     if(el.dataset.done === '1'){
       const inner = el.querySelector('.pg-inner');
@@ -2196,12 +2255,22 @@ function cleanupFarPages(){
       el.dataset.done = '0';
       RS.rendered.delete(n);
     }
+    // احذف canvas الرسم إن لم يكن هناك رسم فعلي (توفير ذاكرة)
+    const c = el.querySelector('.pg-draw');
+    if(c){
+      const key = drawKeyPdf(RS.file.id, n);
+      const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
+      if(!has) c.remove();
+    }
   });
 }
+
 function rebuildPageSizes(){
+  const w = pageWidth();
+  const h = pageHeight();
   RS.pageEls.forEach((el, i) => {
-    el.style.width = pageWidth() + 'px';
-    el.style.height = pageHeight(i) + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
     if(el.dataset.done === '1'){
       const inner = el.querySelector('.pg-inner');
       if(inner) inner.innerHTML = '';
@@ -2210,11 +2279,12 @@ function rebuildPageSizes(){
     }
   });
   const stage = $('#rdStage');
-  if(stage) stage.style.width = pageWidth() + 'px';
+  if(stage) stage.style.width = w + 'px';
   computeOffsets();
-  RS.pageEls.forEach((el, i) => { const n = i + 1; if(RS.inView.has(n)) renderPage(n); });
-  requestAnimationFrame(() => redrawAllPdfDrawings());
+  RS.inView.forEach(n => renderPage(n));
+  redrawVisiblePdfDrawings();
 }
+
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
   const el = RS.pageEls[num - 1]; if(!el) return;
@@ -2225,13 +2295,18 @@ function scrollToPage(num, smooth){
   $('#rdPageInput').value = num;
   updateReaderUI(); highlightThumb(num);
 }
+
 function pageFromScroll(){
   const st = rdBody.scrollTop + 60;
   let page = 1;
-  const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
+  const offs = RS.pageEls.map(el => {
+    const r = el.getBoundingClientRect();
+    return r.top + rdBody.scrollTop;
+  });
   for(let i = 0; i < offs.length; i++){ if(offs[i] <= st) page = i + 1; else break; }
   return page;
 }
+
 function updateReaderUI(){
   if(!RS.file || !RS.numPages) return;
   const pct = Math.max(getPct(RS.file.id), Math.round((RS.current / RS.numPages) * 100));
@@ -2244,6 +2319,7 @@ function updateReaderUI(){
   const fab = $('#rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
 }
+
 let scrollTick = null;
 rdBody.addEventListener('scroll', () => {
   if(!RS.doc){ updateReaderUI(); return; }
@@ -2289,7 +2365,6 @@ async function flushProgressSync(){
   if(!rows.length) return;
   const { error } = await sb.from('user_progress').upsert(rows, { onConflict: 'user_id,file_id' });
   if(error) console.warn('progress sync failed', error);
-  // حدّث نقطة XP في الملف الشخصي
   try{ syncMyXp(); }catch(e){}
 }
 
@@ -2348,6 +2423,7 @@ function startReadClock(){
   }, 30000);
 }
 function stopReadClock(){ if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; } }
+
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){ savePrefs(); flushProgressSync(); saveDrawings(); }
 });
@@ -2442,9 +2518,9 @@ function setZoom(z){
   rebuildPageSizes();
   updateZoomLabel();
   scrollToPage(cur, false);
-  setTimeout(() => { RS.pageEls.forEach((el, i) => { const n = i + 1; if(RS.inView.has(n)) renderPage(n); }); }, 60);
 }
 function updateZoomLabel(){ const el = $('#rdZoomVal'); if(el) el.textContent = Math.round(RS.zoom * 100) + '%'; }
+
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   if(!$('#reader').classList.contains('open') || !RS.numPages) return;
@@ -2740,7 +2816,7 @@ segHandler('#fontSeg', b => { userData.font = parseFloat(b.dataset.f); savePrefs
 segHandler('#readThemeSeg', b => { userData.readTheme = b.dataset.r; savePrefs(); applyReaderTheme(); });
 segHandler('#snapSeg', b => { userData.snap = b.dataset.s === '1'; savePrefs(); applySnapClass(); });
 segHandler('#zoomSeg', b => { userData.defaultZoom = parseFloat(b.dataset.z); savePrefs(); });
-segHandler('#focusSeg', b => { userData.focus = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); updateTimerUI(); } updateTimerUI(); });
+segHandler('#focusSeg', b => { userData.focus = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'focus'){ TIMER.remain = timerTotalSec('focus'); } updateTimerUI(); });
 segHandler('#breakSeg', b => { userData.brk = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'break'){ TIMER.remain = timerTotalSec('break'); } updateTimerUI(); });
 segHandler('#longSeg', b => { userData.longBrk = parseInt(b.dataset.m, 10); savePrefs(); if(!TIMER.running && TIMER.mode === 'long'){ TIMER.remain = timerTotalSec('long'); } updateTimerUI(); });
 $('#setAnim').addEventListener('change', e => { userData.reduceMotion = e.target.checked; savePrefs(); applyTheme(); });
@@ -2824,29 +2900,44 @@ $('#changePassBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   12) Supabase: تحميل البيانات
+   12) Supabase: تحميل البيانات (مع إعادة المحاولة)
 ============================================================ */
-async function loadProfilesAndFiles(){
-  const { data: filesData, error: filesErr } = await sb.from('files').select('*').order('created_at', { ascending: false });
-  if(filesErr) console.warn('load files failed', filesErr);
-  DB.files = filesData || [];
+async function loadProfilesAndFiles(retry = 3){
+  try{
+    const { data, error } = await sb.from('files').select('*').order('created_at', { ascending: false });
+    if(error) throw error;
+    DB.files = data || [];
+  }catch(err){
+    console.warn('load files failed:', err && err.message);
+    if(retry > 0){
+      await new Promise(r => setTimeout(r, 400 * (4 - retry)));
+      return loadProfilesAndFiles(retry - 1);
+    }
+    DB.files = [];
+  }
+
   if(currentUserObj && currentUserObj.role === 'admin'){
-    const { data: usersData, error: usersErr } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-    if(usersErr) console.warn('load users failed', usersErr);
-    DB.users = (usersData || []).filter(u => u.role !== 'admin');
+    try{
+      const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+      DB.users = (usersData || []).filter(u => u.role !== 'admin');
+    }catch(e){}
   }
   renderFiles(); renderRecent(); renderHomeStats(); renderAdmin();
+  const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
 }
+
 async function loadMyProgress(){
-  if(!currentUserObj || currentUserObj.role === 'admin'){ userData.progress = {}; return; }
-  const { data, error } = await sb.from('user_progress').select('*').eq('user_id', currentUserObj.id);
-  if(error){ console.warn('progress load failed', error); return; }
-  userData.progress = {};
-  (data || []).forEach(r => {
-    userData.progress[r.file_id] = { pct: r.pct || 0, maxPage: r.max_page || 0, lastPage: r.last_page || 1 };
-  });
-  savePrefs();
-  refreshAll();
+  if(!currentUserObj || currentUserObj.role === 'admin'){ return; }
+  try{
+    const { data, error } = await sb.from('user_progress').select('*').eq('user_id', currentUserObj.id);
+    if(error) throw error;
+    userData.progress = {};
+    (data || []).forEach(r => {
+      userData.progress[r.file_id] = { pct: r.pct || 0, maxPage: r.max_page || 0, lastPage: r.last_page || 1 };
+    });
+    savePrefs();
+    refreshAll();
+  }catch(e){ console.warn('progress load failed', e); }
 }
 
 /* ============================================================
@@ -2955,12 +3046,13 @@ async function enterApp(){
   if(error || !data){ toast('تعذّر تحميل الملف الشخصي', 'err'); return; }
   currentUserObj = data;
   loadPrefs();
+  loadPrefsFromDB();
   loadDrawings();
   applyTheme();
   applyUserUI();
   $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
-  go('home');
+  goFromHash();
   await loadProfilesAndFiles();
   await loadMyProgress();
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
@@ -2971,6 +3063,7 @@ async function enterApp(){
   applyReaderTheme(); applySnapClass(); syncSettingsUI();
   renderDrawToolbar();
   try{ syncMyXp(); }catch(e){}
+  try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
   setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 400);
   subscribeMyProfile();
   subscribeFiles();
@@ -2978,7 +3071,7 @@ async function enterApp(){
 }
 
 /* ============================================================
-   ★★★ دوال XP والمتصدرين والملف الشخصي ★★★
+   ★ XP والمتصدرين والملف الشخصي
 ============================================================ */
 function calcXp(pages, completed, sessions, badges){
   return (pages * 2) + (completed * 100) + (sessions * 25) + ((badges || 0) * 15);
@@ -3010,7 +3103,7 @@ async function syncMyXp(){
     currentUserObj.xp_points = s.xp;
     currentUserObj.focus_sessions = s.sessions;
     currentUserObj.completed_files = s.completed;
-  }catch(e){ /* الأعمدة غير موجودة بعد */ }
+  }catch(e){}
 }
 
 function avatarStyleFor(p){
@@ -3036,7 +3129,6 @@ async function renderLeaderboard(){
     profilesData = r1.data || [];
   }catch(e){}
   if(!profilesData.length){
-    // fallback: حاول بدون أعمدة XP
     try{
       const r1 = await sb.from('profiles').select('id, name, email, role, status').neq('role', 'admin');
       profilesData = r1.data || [];
@@ -3052,7 +3144,7 @@ async function renderLeaderboard(){
     let pages = 0, completed = 0;
     prog.forEach(r => { pages += (r.max_page || 0); if((r.pct || 0) >= 100) completed++; });
     const sessions = p.focus_sessions || 0;
-    const badges = 0; // لا نحتفظ بها على السيرفر
+    const badges = 0;
     let xp = p.xp_points;
     if(typeof xp !== 'number') xp = calcXp(pages, completed, sessions, badges);
     return { id: p.id, name: p.name || 'طالب', avatar_url: p.avatar_url, xp, pages, completed, sessions };
@@ -3069,7 +3161,6 @@ async function renderLeaderboard(){
   const myIdx = users.findIndex(u => currentUserObj && u.id === currentUserObj.id);
   if(myRankBox) myRankBox.textContent = myIdx >= 0 ? '#' + (myIdx + 1) : '—';
 
-  // منصة التتويج
   const top3 = users.slice(0, 3);
   function podiumCard(u, rank){
     const av = avatarStyleFor(u);
@@ -3090,14 +3181,12 @@ async function renderLeaderboard(){
       </div>
     </div>`;
   }
-  // ترتيب منصة التتويج: 2 - 1 - 3
   const ordered = [];
   if(top3[1]) ordered.push(podiumCard(top3[1], 2));
   if(top3[0]) ordered.push(podiumCard(top3[0], 1));
   if(top3[2]) ordered.push(podiumCard(top3[2], 3));
   podiumBox.innerHTML = ordered.join('');
 
-  // القائمة العامة
   listBox.innerHTML = users.map((u, i) => {
     const rank = i + 1;
     const av = avatarStyleFor(u);
@@ -3139,7 +3228,6 @@ function renderProfile(){
   const xpP = $('#pXpPages'); if(xpP) xpP.textContent = s.pages;
   const xpF = $('#pXpFiles'); if(xpF) xpF.textContent = s.completed;
   const xpS = $('#pXpSessions'); if(xpS) xpS.textContent = s.sessions;
-  // شارات مختصرة
   const badgesRow = $('#profileBadgesRow');
   if(badgesRow){
     const owned = BADGES.filter(bd => userData.badges.includes(bd.id)).slice(0, 4);
@@ -3150,8 +3238,8 @@ function renderProfile(){
   renderBadges();
 }
 
-/* رفع الصورة */
-async function resizeImageToDataUrl(file, maxSize = 300, quality = 0.82){
+/* رفع الصورة إلى Supabase Storage */
+async function resizeImageToBlob(file, maxSize, quality){
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -3163,33 +3251,68 @@ async function resizeImageToDataUrl(file, maxSize = 300, quality = 0.82){
         const c = document.createElement('canvas');
         c.width = w; c.height = h;
         const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        try{ resolve(c.toDataURL('image/jpeg', quality)); }
-        catch(e){ reject(e); }
+        c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', quality || 0.85);
       };
-      img.onerror = reject;
+      img.onerror = () => reject(new Error('تعذّر قراءة الصورة'));
       img.src = reader.result;
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('تعذّر فتح الملف'));
     reader.readAsDataURL(file);
   });
 }
+
 async function uploadAvatar(file){
   if(!file) return;
+  if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
   if(!file.type.startsWith('image/')){ toast('اختر صورة صحيحة', 'warn'); return; }
   if(file.size > 5 * 1024 * 1024){ toast('حجم الصورة كبير (الحد 5 ميجا)', 'warn'); return; }
   try{
-    const dataUrl = await resizeImageToDataUrl(file);
-    const { error } = await sb.from('profiles').update({ avatar_url: dataUrl }).eq('id', currentUserObj.id);
-    if(error){
-      toast('فشل الحفظ: تأكد من إضافة العمود avatar_url', 'err');
-      return;
-    }
-    currentUserObj.avatar_url = dataUrl;
-    applyUserUI();
-    renderProfile();
-    toast('تم تحديث الصورة بنجاح', 'ok');
-  }catch(e){ toast('فشل معالجة الصورة: ' + e.message, 'err'); }
+    const blob = await resizeImageToBlob(file, 400, 0.85);
+    const path = currentUserObj.id + '/avatar_' + Date.now() + '.jpg';
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
+      cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
+    });
+    if(upErr){ toast('فشل رفع الصورة: ' + upErr.message, 'err'); return; }
+    try{
+      const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
+      if(list && list.length){
+        const olds = list.filter(f => f.name !== path.split('/').pop()).map(f => currentUserObj.id + '/' + f.name);
+        if(olds.length) await sb.storage.from('avatars').remove(olds);
+      }
+    }catch(e){}
+    const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
+    const url = urlData && urlData.publicUrl ? urlData.publicUrl + '?t=' + Date.now() : '';
+    const { error: dbErr } = await sb.from('profiles').update({ avatar_url: url }).eq('id', currentUserObj.id);
+    if(dbErr){ toast('فشل حفظ الرابط: ' + dbErr.message, 'err'); return; }
+    currentUserObj.avatar_url = url;
+    applyUserUI(); renderProfile();
+    try{ updateMobileUserMenu(); }catch(e){}
+    toast('تم تحديث الصورة بنجاح ✓', 'ok');
+  }catch(e){
+    console.error(e);
+    toast('خطأ: ' + (e.message || 'غير معروف'), 'err');
+  }
+}
+
+async function removeAvatar(){
+  if(!currentUserObj) return;
+  confirmBox('حذف الصورة', 'هل تريد حذف صورتك الشخصية؟', async () => {
+    try{
+      const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
+      if(list && list.length){
+        const paths = list.map(f => currentUserObj.id + '/' + f.name);
+        await sb.storage.from('avatars').remove(paths);
+      }
+    }catch(e){}
+    try{ await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUserObj.id); }catch(e){}
+    currentUserObj.avatar_url = null;
+    applyUserUI(); renderProfile();
+    try{ updateMobileUserMenu(); }catch(e){}
+    toast('تم حذف الصورة', 'ok');
+  }, true);
 }
 
 async function saveProfile(){
@@ -3205,24 +3328,10 @@ async function saveProfile(){
   btn.innerHTML = orig;
   if(error){ toast('فشل الحفظ: ' + error.message, 'err'); return; }
   currentUserObj.name = name;
-  applyUserUI();
-  renderProfile();
+  applyUserUI(); renderProfile();
   toast('تم حفظ التعديلات', 'ok');
 }
 
-async function removeAvatar(){
-  if(!currentUserObj) return;
-  confirmBox('حذف الصورة', 'هل تريد حذف صورتك الشخصية؟', async () => {
-    const { error } = await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUserObj.id);
-    if(error){ toast('فشل: ' + error.message, 'err'); return; }
-    currentUserObj.avatar_url = null;
-    applyUserUI();
-    renderProfile();
-    toast('تم حذف الصورة', 'ok');
-  }, true);
-}
-
-// ربط أزرار الملف الشخصي
 $('#profileCamBtn').addEventListener('click', () => $('#avatarInput').click());
 $('#profileAvatar').addEventListener('click', () => $('#avatarInput').click());
 $('#avatarInput').addEventListener('change', e => {
@@ -3266,12 +3375,12 @@ function updateMobileUserMenu(){
   if(!currentUserObj) return;
   const nm = currentUserObj.name || '—';
   const init = String(nm).trim().charAt(0) || '؟';
-  const av = avatarStyleFor(currentUserObj);
+  const av = currentUserObj.avatar_url || '';
   const avEl = document.getElementById('mumAvatar');
   const mb = document.getElementById('mobileUserAvatar');
   const dot = document.getElementById('mobileUserDot');
-  if(avEl){ avEl.textContent = av ? '' : init; avEl.style.cssText = av; }
-  if(mb){ mb.textContent = av ? '' : init; mb.style.backgroundImage = av ? `url('${currentUserObj.avatar_url}')` : ''; }
+  if(avEl){ avEl.textContent = av ? '' : init; avEl.style.cssText = av ? `background-image:url('${av}')` : ''; }
+  if(mb){ mb.textContent = av ? '' : init; mb.style.backgroundImage = av ? `url('${av}')` : ''; }
   const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
   const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
   let badge = '';
@@ -3323,7 +3432,7 @@ $('#mumSettings').addEventListener('click', () => { $('#mobileUserMenu').classLi
 $('#mumLogout').addEventListener('click', () => { $('#mobileUserMenu').classList.remove('open'); $('#logoutBtn').click(); });
 
 /* ============================================================
-   16) Realtime
+   16) Realtime — قنوات فريدة لكل جلسة
 ============================================================ */
 function cleanupChannels(){
   try{ if(myProfileChannel) sb.removeChannel(myProfileChannel); }catch(e){}
@@ -3336,7 +3445,8 @@ function subscribeMyProfile(){
   try{
     if(myProfileChannel) sb.removeChannel(myProfileChannel);
     const uid = session.user.id;
-    myProfileChannel = sb.channel('my-prof-' + uid + '-' + Date.now())
+    const chName = 'my-prof-' + uid + '-' + Date.now();
+    myProfileChannel = sb.channel(chName)
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'profiles', filter: 'id=eq.' + uid }, payload => {
         const oldStatus = currentUserObj ? currentUserObj.status : null;
         const oldRole = currentUserObj ? currentUserObj.role : null;
@@ -3352,15 +3462,21 @@ function subscribeMyProfile(){
   }catch(e){}
 }
 function subscribeFiles(){
-  if(filesChannel) return;
-  filesChannel = sb.channel('files-all')
+  try{ if(filesChannel){ sb.removeChannel(filesChannel); filesChannel = null; } }catch(e){}
+  const chName = 'files-live-' + (session ? session.user.id.slice(0,8) : 'g') + '-' + Date.now();
+  filesChannel = sb.channel(chName)
     .on('postgres_changes', { event:'*', schema:'public', table:'files' }, () => { loadProfilesAndFiles(); })
-    .subscribe();
+    .subscribe(status => {
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+        setTimeout(() => { try{ subscribeFiles(); }catch(e){} }, 3000);
+      }
+    });
 }
 function subscribeProfilesForAdmin(){
   if(!currentUserObj || currentUserObj.role !== 'admin') return;
   if(profilesChannel) return;
-  profilesChannel = sb.channel('profiles-admin')
+  const chName = 'profiles-admin-' + Date.now();
+  profilesChannel = sb.channel(chName)
     .on('postgres_changes', { event:'*', schema:'public', table:'profiles' }, () => {
       if(currentUserObj && currentUserObj.role === 'admin'){
         sb.from('profiles').select('*').order('created_at', { ascending: false }).then(({ data }) => {
@@ -3373,7 +3489,7 @@ function subscribeProfilesForAdmin(){
 }
 
 /* ============================================================
-   17) لوحة الأدمن
+   17) لوحة الأدمن — كامل مع تعديل/حذف المستخدم
 ============================================================ */
 function renderAdmin(){
   if(!currentUserObj || currentUserObj.role !== 'admin') return;
@@ -3387,6 +3503,7 @@ function renderAdmin(){
   renderUsersTable();
   renderAdminFiles();
 }
+
 function renderUsersTable(){
   const box = $('#usersTable'); if(!box) return;
   const q = ($('#userSearch') ? $('#userSearch').value : '').trim().toLowerCase();
@@ -3396,23 +3513,31 @@ function renderUsersTable(){
   if(filter === 'pending') list = list.filter(u => u.status === 'pending');
   else if(filter === 'sub') list = list.filter(u => u.status === 'approved');
   else if(filter === 'off') list = list.filter(u => u.status !== 'approved');
+
   list.sort((a,b) => {
     const ap = a.status === 'pending' ? 0 : 1;
     const bp = b.status === 'pending' ? 0 : 1;
     return ap - bp || new Date(b.created_at||0) - new Date(a.created_at||0);
   });
+
   if(!list.length){
     box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>سيظهر هنا كل من يسجّل حساباً جديداً</p></div>';
     return;
   }
+
   box.innerHTML = `
-    <div class="thead"><div>المستخدم</div><div>البريد الإلكتروني</div><div>الحالة</div><div style="text-align:left">إجراءات</div></div>
+    <div class="thead">
+      <div>المستخدم</div><div>البريد الإلكتروني</div><div>كلمة السر</div><div>الحالة</div><div style="text-align:left">إجراءات</div>
+    </div>
     ${list.map(u => {
       let statusBadge;
       if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
-      else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> طلب معلّق</span>';
+      else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
       else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> مرفوض</span>';
       const avStyle = u.avatar_url ? `background-image:url('${u.avatar_url}')` : '';
+      const pwHtml = u.password_hint
+        ? `<code onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')" title="اضغط للنسخ" style="background:var(--bg);padding:3px 8px;border-radius:6px;font-size:.74rem;direction:ltr;display:inline-block;cursor:pointer;border:1px solid var(--border)">${escapeHtml(u.password_hint)}</code>`
+        : '<span style="font-size:.72rem;color:var(--muted)">عيّنها بنفسه</span>';
       return `<div class="trow">
         <div class="user-cell">
           <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
@@ -3421,16 +3546,23 @@ function renderUsersTable(){
             <small>${u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—'}</small>
           </div>
         </div>
-        <div class="email-cell">${escapeHtml(u.email)}</div>
+        <div class="email-cell" style="direction:ltr;text-align:right">${escapeHtml(u.email)}</div>
+        <div class="pw-cell">${pwHtml}</div>
         <div class="status-cell">${statusBadge}</div>
         <div class="actions-cell">
-          ${u.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')"><i class="fas fa-check"></i> تفعيل</button>` : ''}
-          ${u.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')"><i class="fas fa-ban"></i> رفض</button>` : ''}
+          ${u.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>` : ''}
+          ${u.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إعادة تعيين كلمة السر"><i class="fas fa-key"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
         </div>
       </div>`;
     }).join('')}
   `;
 }
+
+window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت كلمة السر', 'ok'); }catch(e){} };
+
 window.approveUser = async id => {
   const { error } = await sb.from('profiles').update({ status:'approved' }).eq('id', id);
   if(error){ toast('فشل التحديث: ' + error.message, 'err'); return; }
@@ -3441,6 +3573,65 @@ window.rejectUser = async id => {
   if(error){ toast('فشل التحديث: ' + error.message, 'err'); return; }
   toast('تم رفض المستخدم', 'warn');
 };
+
+window.editUser = id => {
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  openModal({
+    title:'تعديل المستخدم',
+    text:'عدّل بيانات المستخدم ثم اضغط حفظ.',
+    bodyHTML:`
+      <div class="form-group"><label>الاسم</label><input type="text" id="euName" value="${escapeHtml(u.name||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+      <div class="form-group"><label>البريد</label><input type="email" id="euEmail" value="${escapeHtml(u.email||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+      <div class="form-group"><label>كلمة السر (تلميح)</label><input type="text" id="euPw" value="${escapeHtml(u.password_hint||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+      <div class="form-group"><label>الحالة</label>
+        <select id="euStatus" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="approved" ${u.status==='approved'?'selected':''}>مشترك</option>
+          <option value="pending" ${u.status==='pending'?'selected':''}>معلّق</option>
+          <option value="rejected" ${u.status==='rejected'?'selected':''}>مرفوض</option>
+        </select>
+      </div>
+    `,
+    okText:'حفظ',
+    onOk: async () => {
+      const upd = {
+        name: document.getElementById('euName').value.trim() || u.name,
+        email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email,
+        password_hint: document.getElementById('euPw').value.trim() || null,
+        status: document.getElementById('euStatus').value
+      };
+      const { error } = await sb.from('profiles').update(upd).eq('id', id);
+      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      Object.assign(u, upd);
+      renderUsersTable();
+      toast('تم تحديث بيانات المستخدم', 'ok');
+    }
+  });
+};
+
+window.resetUserPassword = id => {
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('إعادة تعيين كلمة السر', `سيتم إرسال رابط إعادة تعيين كلمة السر إلى: ${escapeHtml(u.email)}`, async () => {
+    try{
+      const { error } = await sb.auth.resetPasswordForEmail(u.email, { redirectTo: window.location.origin + window.location.pathname });
+      if(error){ toast('فشل الإرسال: ' + error.message, 'err'); return; }
+      toast('تم إرسال رابط إعادة التعيين', 'ok');
+    }catch(e){ toast('خطأ: ' + e.message, 'err'); }
+  });
+};
+
+window.deleteUser = id => {
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('حذف المستخدم', `سيتم حذف الحساب «${escapeHtml(u.name)}» (${escapeHtml(u.email)}) نهائيًا مع كل تقدمه. متأكد؟`, async () => {
+    try{ await sb.from('user_progress').delete().eq('user_id', id); }catch(e){}
+    try{ await sb.from('user_drawings').delete().eq('user_id', id); }catch(e){}
+    const { error } = await sb.from('profiles').delete().eq('id', id);
+    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
+    DB.users = DB.users.filter(x => x.id !== id);
+    renderUsersTable(); renderAdmin();
+    toast('تم حذف المستخدم', 'ok');
+  }, true);
+};
+
 $('#userSearch').addEventListener('input', renderUsersTable);
 $('#userFilter').addEventListener('change', renderUsersTable);
 
@@ -3564,7 +3755,7 @@ $$('.admin-tabs button').forEach(b => {
   });
 });
 
-/* إضافة مستخدم من لوحة الأدمن */
+/* إضافة مستخدم من لوحة الأدمن — مع تخزين password_hint */
 (function bindAdminCreateUser(){
   const btn = document.getElementById('nuCreateBtn'); if(!btn) return;
   btn.addEventListener('click', async () => {
@@ -3582,10 +3773,12 @@ $$('.admin-tabs button').forEach(b => {
     try{
       const { data, error } = await sbTemp.auth.signUp({ email, password: pass, options: { data: { name } } });
       if(error){ toast('فشل الإنشاء: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
-      if(approve && data && data.user){
+      if(data && data.user){
         await new Promise(r => setTimeout(r, 800));
-        const { error: upErr } = await sb.from('profiles').update({ status:'approved', name }).eq('id', data.user.id);
-        if(upErr) console.warn('auto approve failed', upErr);
+        const upd = { name, password_hint: pass };
+        if(approve) upd.status = 'approved';
+        const { error: upErr } = await sb.from('profiles').update(upd).eq('id', data.user.id);
+        if(upErr) console.warn('auto update failed', upErr);
       }
       toast('تم إنشاء الحساب بنجاح', 'ok');
       $('#nuName').value = ''; $('#nuEmail').value = '';
@@ -3752,10 +3945,14 @@ function showWelcome(){
   $('#auth').classList.remove('open');
   $('#app').classList.remove('open');
 }
-window.addEventListener('beforeunload', () => { savePrefs(); saveDrawings(); flushProgressSync(); });
+window.addEventListener('beforeunload', () => {
+  clearTimeout(prefsSaveTimer);
+  try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
+  saveDrawings(); flushProgressSync();
+});
 
 /* ============================================================
-   21) الرسم على الملف والصبورة
+   21) الرسم على الملف والصبورة — canvas on demand
 ============================================================ */
 const DRAW_COLORS = [
   { c:'#ef4444', n:'أحمر' }, { c:'#f97316', n:'برتقالي' }, { c:'#facc15', n:'أصفر' },
@@ -3771,14 +3968,53 @@ const DRAW = {
 function drawKeyPdf(fileId, page){ return 'pdf:' + fileId + ':' + page; }
 function drawKeyWb(fileId){ return 'wb:' + (fileId || 'default'); }
 function drawingsKey(){ if(!session) return 'abdq_draw_guest'; return 'abdq_draw_' + session.user.id; }
+
+// الرسومات تُخزّن في user_drawings في قاعدة البيانات
+let drawingsCache = {}; // ذاكرة محلية
+let drawingsLoadedFor = null;
+let drawingsSaveTimer = null;
+
 function loadDrawings(){
-  userData.drawings = {};
+  // لا نحمل من localStorage — نستخدم قاعدة البيانات
+  if(!drawingsCache || typeof drawingsCache !== 'object') drawingsCache = {};
+  userData.drawings = drawingsCache;
+}
+
+async function loadDrawingsForFile(fileId){
+  if(!currentUserObj || currentUserObj.role === 'admin'){ userData.drawings = {}; return; }
+  if(drawingsLoadedFor === fileId){ userData.drawings = drawingsCache; return; }
   try{
-    const raw = localStorage.getItem(drawingsKey());
-    if(raw){ const d = JSON.parse(raw); if(d && typeof d === 'object') userData.drawings = d; }
+    const { data, error } = await sb.from('user_drawings').select('key, strokes').eq('user_id', currentUserObj.id);
+    if(error) throw error;
+    drawingsCache = {};
+    (data || []).forEach(r => { drawingsCache[r.key] = r.strokes || []; });
+    userData.drawings = drawingsCache;
+    drawingsLoadedFor = fileId;
+  }catch(e){ console.warn('drawings load failed', e); userData.drawings = drawingsCache; }
+}
+
+function saveDrawings(){
+  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  clearTimeout(drawingsSaveTimer);
+  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 900);
+}
+
+async function pushDrawingsToDB(){
+  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  const cache = userData.drawings || {};
+  const keys = Object.keys(cache);
+  if(!keys.length) return;
+  const rows = keys.map(k => ({
+    user_id: currentUserObj.id,
+    key: k,
+    strokes: cache[k] || [],
+    updated_at: new Date().toISOString()
+  }));
+  try{
+    const { error } = await sb.from('user_drawings').upsert(rows, { onConflict: 'user_id,key' });
+    if(error) console.warn('drawings save failed', error);
   }catch(e){}
 }
-function saveDrawings(){ try{ localStorage.setItem(drawingsKey(), JSON.stringify(userData.drawings)); }catch(e){} }
 
 function drawStrokeOnCtx(ctx, s, w, h){
   if(!s.points || s.points.length < 1) return;
@@ -3813,7 +4049,33 @@ function redrawCanvas(canvas, key, includeCurrent){
 }
 function redrawAllPdfDrawings(){
   if(!RS.file) return;
-  RS.pageEls.forEach((el, i) => { const c = el.querySelector('.pg-draw'); if(c) redrawCanvas(c, drawKeyPdf(RS.file.id, i + 1), false); });
+  RS.inView.forEach(n => ensureDrawCanvasIfNeeded(n));
+}
+function redrawVisiblePdfDrawings(){
+  if(!RS.file) return;
+  RS.inView.forEach(n => ensureDrawCanvasIfNeeded(n));
+  if(RS.current) ensureDrawCanvasIfNeeded(RS.current);
+}
+function ensureDrawCanvasIfNeeded(pageNum){
+  if(!RS.file) return;
+  const key = drawKeyPdf(RS.file.id, pageNum);
+  const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
+  if(!has) return;
+  ensureDrawCanvas(RS.pageEls[pageNum - 1], pageNum);
+  const c = RS.pageEls[pageNum - 1] ? RS.pageEls[pageNum - 1].querySelector('.pg-draw') : null;
+  if(c) redrawCanvas(c, key, false);
+}
+function ensureDrawCanvas(pageEl, pageNum){
+  if(!pageEl) return null;
+  let c = pageEl.querySelector('.pg-draw');
+  if(!c){
+    c = document.createElement('canvas');
+    c.className = 'pg-draw';
+    c.dataset.page = String(pageNum);
+    pageEl.appendChild(c);
+    attachPdfDrawEvents(c, pageNum);
+  }
+  return c;
 }
 function redrawWhiteboard(){
   const c = $('#wbCanvas'); if(!c) return;
@@ -3826,7 +4088,7 @@ function updateWbEmpty(){
   const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
   empty.style.display = has ? 'none' : 'flex';
 }
-function refreshDrawSurface(){ redrawAllPdfDrawings(); redrawWhiteboard(); }
+function refreshDrawSurface(){ redrawVisiblePdfDrawings(); redrawWhiteboard(); }
 
 function attachPdfDrawEvents(canvas, pageNum){
   canvas.addEventListener('pointerdown', e => {
@@ -3906,10 +4168,14 @@ function clearDraw(){
   if(!key){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
   const arr = userData.drawings[key];
   if(!arr || !arr.length){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
-  confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', () => {
+  confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', async () => {
     delete userData.drawings[key];
     saveDrawings(); redrawSurfaceByKey(key);
     if(key.startsWith('wb:')) updateWbEmpty();
+    // احذف من قاعدة البيانات
+    if(currentUserObj && currentUserObj.role !== 'admin'){
+      try{ await sb.from('user_drawings').delete().eq('user_id', currentUserObj.id).eq('key', key); }catch(e){}
+    }
     toast('تم مسح الرسم', 'ok');
   }, true);
 }
@@ -3952,7 +4218,14 @@ function toggleDrawMode(){
   const btn = $('#rdDraw'); if(btn) btn.classList.toggle('on', DRAW.active);
   if(rdBody) rdBody.classList.toggle('draw-on', DRAW.active);
   updateDrawBarVisibility();
-  if(DRAW.active) toast('وضع الرسم مُفعّل — ارسم على الصفحة', 'ok');
+  if(DRAW.active){
+    RS.inView.forEach(n => {
+      ensureDrawCanvas(RS.pageEls[n - 1], n);
+      const c = RS.pageEls[n - 1].querySelector('.pg-draw');
+      if(c) redrawCanvas(c, drawKeyPdf(RS.file.id, n), false);
+    });
+    toast('وضع الرسم مُفعّل — ارسم على الصفحة', 'ok');
+  }
 }
 function toggleWhiteboard(){
   DRAW.wb = !DRAW.wb;
@@ -3985,187 +4258,6 @@ function setupDrawUI(){
     wbResizeTimer = setTimeout(() => redrawWhiteboard(), 220);
   });
 }
-
-
-/* ===== PATCH: رفع الصورة الشخصية إلى Supabase Storage ===== */
-(function patchAvatarStorage(){
-  function publicUrl(path){
-    try{
-      const { data } = sb.storage.from('avatars').getPublicUrl(path);
-      return (data && data.publicUrl) ? data.publicUrl + '?t=' + Date.now() : '';
-    }catch(e){ return ''; }
-  }
-
-  // اجعل ستايل الصورة يقرأ من الرابط مباشرة
-  window.avatarStyleFor = function(p){
-    if(p && p.avatar_url) return "background-image:url('" + p.avatar_url + "')";
-    return '';
-  };
-
-  // رفع الصورة إلى Storage ثم حفظ الرابط في قاعدة البيانات
-  window.uploadAvatar = async function(file){
-    if(!file) return;
-    if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
-    if(!file.type.startsWith('image/')){ toast('اختر صورة صحيحة', 'warn'); return; }
-    if(file.size > 5 * 1024 * 1024){ toast('حجم الصورة كبير (الحد 5 ميجا)', 'warn'); return; }
-
-    const btn = document.getElementById('profileCamBtn');
-    if(btn) btn.disabled = true;
-    toast('جاري رفع الصورة...');
-
-    try{
-      // اضغط الصورة إلى 400×400 JPEG لتقليل الحجم
-      const blob = await resizeImageToBlob(file, 400, 0.85);
-      const ext = 'jpg';
-      const path = currentUserObj.id + '/avatar_' + Date.now() + '.' + ext;
-
-      // رفع الملف
-      const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: 'image/jpeg'
-      });
-      if(upErr){ toast('فشل رفع الصورة: ' + upErr.message, 'err'); if(btn) btn.disabled = false; return; }
-
-      // حاول نحذف الصور القديمة (اختياري - نتجاهل الأخطاء)
-      try{
-        const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
-        if(list && list.length){
-          const olds = list.filter(f => f.name !== path.split('/').pop()).map(f => currentUserObj.id + '/' + f.name);
-          if(olds.length) await sb.storage.from('avatars').remove(olds);
-        }
-      }catch(e){}
-
-      // احصل على الرابط العام
-      const url = publicUrl(path);
-
-      // احفظ الرابط في قاعدة البيانات
-      const { error: dbErr } = await sb.from('profiles').update({ avatar_url: url }).eq('id', currentUserObj.id);
-      if(dbErr){ toast('فشل حفظ الرابط: ' + dbErr.message, 'err'); if(btn) btn.disabled = false; return; }
-
-      currentUserObj.avatar_url = url;
-      applyUserUI();
-      renderProfile();
-      try{ updateMobileUserMenu(); }catch(e){}
-      toast('تم تحديث الصورة بنجاح ✓', 'ok');
-    }catch(e){
-      console.error(e);
-      toast('خطأ: ' + (e.message || 'غير معروف'), 'err');
-    }
-    if(btn) btn.disabled = false;
-  };
-
-  // حذف الصورة من Storage ومن قاعدة البيانات
-  window.removeAvatar = async function(){
-    if(!currentUserObj) return;
-    confirmBox('حذف الصورة', 'هل تريد حذف صورتك الشخصية؟', async () => {
-      try{
-        const { data: list } = await sb.storage.from('avatars').list(currentUserObj.id);
-        if(list && list.length){
-          const paths = list.map(f => currentUserObj.id + '/' + f.name);
-          await sb.storage.from('avatars').remove(paths);
-        }
-      }catch(e){}
-      try{ await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUserObj.id); }catch(e){}
-      currentUserObj.avatar_url = null;
-      applyUserUI();
-      renderProfile();
-      try{ updateMobileUserMenu(); }catch(e){}
-      toast('تم حذف الصورة', 'ok');
-    }, true);
-  };
-
-  // حول الصورة إلى Blob مضغوط (JPEG)
-  window.resizeImageToBlob = function(file, maxSize, quality){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1);
-          const w = Math.max(1, Math.round(img.width * ratio));
-          const h = Math.max(1, Math.round(img.height * ratio));
-          const c = document.createElement('canvas');
-          c.width = w; c.height = h;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-          c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', quality || 0.85);
-        };
-        img.onerror = () => reject(new Error('تعذّر قراءة الصورة'));
-        img.src = reader.result;
-      };
-      reader.onerror = () => reject(new Error('تعذّر فتح الملف'));
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // قائمة الجوال تقرأ الصورة من الرابط
-  window.updateMobileUserMenu = function(){
-    if(!currentUserObj) return;
-    const nm = currentUserObj.name || '—';
-    const init = String(nm).trim().charAt(0) || '؟';
-    const avUrl = currentUserObj.avatar_url || '';
-    const avEl = document.getElementById('mumAvatar');
-    const mb = document.getElementById('mobileUserAvatar');
-    const dot = document.getElementById('mobileUserDot');
-    if(avEl){ avEl.textContent = avUrl ? '' : init; avEl.style.cssText = avUrl ? "background-image:url('" + avUrl + "')" : ''; }
-    if(mb){ mb.textContent = avUrl ? '' : init; mb.style.backgroundImage = avUrl ? "url('" + avUrl + "')" : ''; }
-    const nm2 = document.getElementById('mumName'); if(nm2) nm2.textContent = nm;
-    const em = document.getElementById('mumEmail'); if(em) em.textContent = currentUserObj.email || '';
-    let badge = '';
-    if(currentUserObj.role === 'admin') badge = '<span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
-    else if(currentUserObj.status === 'approved') badge = '<span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
-    else if(currentUserObj.status === 'pending') badge = '<span class="sub-badge pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
-    else badge = '<span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626)"><i class="fas fa-ban"></i> غير مفعّل</span>';
-    const bd = document.getElementById('mumBadge'); if(bd) bd.innerHTML = badge;
-    if(dot){
-      dot.classList.remove('pending','off');
-      if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){ }
-      else if(currentUserObj.status === 'pending') dot.classList.add('pending');
-      else dot.classList.add('off');
-    }
-  };
-
-  // أعد ربط زر حذف الصورة بالدالة الجديدة
-  const rb = document.getElementById('profileRemoveAvatar');
-  if(rb){
-    const clone = rb.cloneNode(true);
-    rb.parentNode.replaceChild(clone, rb);
-    clone.addEventListener('click', function(){ window.removeAvatar(); });
-  }
-
-  // عند الدخول: لو فيه صورة قديمة مخزنة كـ base64 في قاعدة البيانات، نرفعها تلقائياً إلى Storage
-  window.migrateAvatarIfNeeded = async function(){
-    try{
-      if(!currentUserObj || !currentUserObj.avatar_url) return;
-      const u = currentUserObj.avatar_url;
-      if(!u.startsWith('data:')) return; // ليست base64، لا حاجة للترحيل
-      // حوّلها إلى blob وارفعها
-      const res = await fetch(u);
-      const blob = await res.blob();
-      const uid = (session && session.user && session.user.id) ? session.user.id : currentUserObj.id;
-      const path = uid + '/avatar_' + Date.now() + '.' + ext;
-      const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
-        cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
-      });
-      if(upErr) return;
-      const { data } = sb.storage.from('avatars').getPublicUrl(path);
-      const url = data && data.publicUrl ? data.publicUrl : '';
-      if(url){
-        await sb.from('profiles').update({ avatar_url: url }).eq('id', currentUserObj.id);
-        currentUserObj.avatar_url = url;
-        applyUserUI(); renderProfile(); updateMobileUserMenu();
-      }
-    }catch(e){ console.warn('avatar migration skipped', e); }
-  };
-  setTimeout(() => { try{ window.migrateAvatarIfNeeded(); }catch(e){} }, 1500);
-
-  // حدث الصور الحالية
-  try{ if(currentUserObj){ applyUserUI(); renderProfile(); updateMobileUserMenu(); } }catch(e){}
-})();
-
 </script>
 </body>
 </html>
