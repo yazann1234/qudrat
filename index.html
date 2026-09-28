@@ -96,6 +96,8 @@ input,textarea,select,button{font-family:inherit}
 .input-group input::placeholder{color:rgba(255,255,255,.4)}
 .input-group input:focus{border-color:rgba(139,92,246,.6);background:rgba(255,255,255,.1);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
 .input-group .ic{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:.9rem;color:rgba(255,255,255,.5);pointer-events:none}
+.input-group .eye-btn{position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:.9rem;padding:6px;z-index:2;transition:.2s}
+.input-group .eye-btn:hover{color:#fff}
 .auth-btn{font-family:inherit;font-weight:800;font-size:.88rem;padding:12px;border:none;border-radius:11px;cursor:pointer;background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 10px 26px rgba(var(--primary-rgb),.45);transition:.25s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
 .auth-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(var(--primary-rgb),.6)}
 .auth-btn:disabled{opacity:.6;cursor:wait;transform:none}
@@ -828,7 +830,11 @@ input,textarea,select,button{font-family:inherit}
       </div>
       <div class="auth-form on" id="form-login">
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="loginEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
-        <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password"></div>
+        <div class="input-group">
+          <i class="fas fa-lock ic"></i>
+          <input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password" style="padding-left:44px">
+          <button type="button" class="eye-btn" onclick="togglePassVis('loginPass',this)" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>
+        </div>
         <div class="auth-msg" id="loginMsg"></div>
         <button class="auth-btn" id="loginBtn"><i class="fas fa-right-to-bracket"></i> تسجيل الدخول</button>
         <button class="forgot-link" type="button" id="forgotLink">نسيت كلمة المرور؟</button>
@@ -837,14 +843,22 @@ input,textarea,select,button{font-family:inherit}
       <div class="auth-form" id="form-register">
         <div class="input-group"><i class="fas fa-user ic"></i><input type="text" id="regName" placeholder="الاسم الكامل" autocomplete="name"></div>
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
-        <div class="input-group"><i class="fas fa-lock ic"></i><input type="password" id="regPass" placeholder="كلمة المرور (6+ أحرف)" autocomplete="new-password"></div>
+        <div class="input-group">
+          <i class="fas fa-lock ic"></i>
+          <input type="password" id="regPass" placeholder="كلمة المرور (6+ أحرف)" autocomplete="new-password" style="padding-left:44px">
+          <button type="button" class="eye-btn" onclick="togglePassVis('regPass',this)" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>
+        </div>
         <div class="auth-msg" id="regMsg"></div>
         <button class="auth-btn" id="regBtn"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
         <div class="auth-hint">بعد التسجيل، حسابك ينتظر موافقة الأدمن</div>
       </div>
       <div class="auth-form" id="form-admin">
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="adminEmail" placeholder="بريد الأدمن" autocomplete="email"></div>
-        <div class="input-group"><i class="fas fa-key ic"></i><input type="password" id="adminPass" placeholder="كلمة مرور الأدمن" autocomplete="current-password"></div>
+        <div class="input-group">
+          <i class="fas fa-key ic"></i>
+          <input type="password" id="adminPass" placeholder="كلمة مرور الأدمن" autocomplete="current-password" style="padding-left:44px">
+          <button type="button" class="eye-btn" onclick="togglePassVis('adminPass',this)" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>
+        </div>
         <div class="auth-msg" id="adminMsg"></div>
         <button class="auth-btn admin" id="adminBtn"><i class="fas fa-shield-halved"></i> دخول لوحة التحكم</button>
         <div class="auth-hint">للدخول، استخدم حساب الأدمن المسجّل في Supabase</div>
@@ -1371,11 +1385,16 @@ input,textarea,select,button{font-family:inherit}
           <h3><i class="fas fa-user-plus"></i> إنشاء حساب مستخدم جديد</h3>
           <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
             أنشئ حسابات مباشرة لطلابك دون الحاجة لأن يسجلوا بأنفسهم. لن تتأثر جلستك كأدمن.
-            <br><b style="color:var(--accent)">ملاحظة:</b> إذا كان «تأكيد البريد» مُفعّلاً في إعدادات Supabase، سيصل للطالب بريد تأكيد. عطّله لإنشاء مستخدمين غير محدود.
           </p>
           <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="nuName" placeholder="مثال: محمد أحمد"></div>
           <div class="form-group"><label>البريد الإلكتروني *</label><input type="email" id="nuEmail" placeholder="student@email.com"></div>
-          <div class="form-group"><label>كلمة المرور *</label><input type="text" id="nuPass" placeholder="6 أحرف على الأقل" value="123456" autocomplete="off"></div>
+          <div class="form-group">
+            <label>كلمة المرور *</label>
+            <div style="position:relative">
+              <input type="text" id="nuPass" placeholder="6 أحرف على الأقل" value="123456" autocomplete="off" style="padding-left:44px">
+              <button type="button" onclick="togglePassVis('nuPass',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
           <label class="checkbox-row">
             <input type="checkbox" id="nuApprove" checked>
             <span><i class="fas fa-circle-check"></i> تفعيل الاشتراك مباشرة (بدون انتظار موافقة)</span>
@@ -1569,7 +1588,10 @@ input,textarea,select,button{font-family:inherit}
 const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
 
-// استخدام sessionStorage: كل تبويب له جلسة مستقلة (لحل مشكلة تكرار نفس الجهاز)
+// ⭐ رابط Edge Function لتغيير كلمة السر
+const CHANGE_PASS_URL = SUPABASE_URL + '/functions/v1/change-user-password';
+
+// استخدام sessionStorage: كل تبويب له جلسة مستقلة (حل مشكلة نفس الجهاز)
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.sessionStorage,
@@ -1595,6 +1617,24 @@ if (window.pdfjsLib) {
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function uuidv4(){
+  if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+    return v.toString(16);
+  });
+}
+function togglePassVis(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+  const icon = btn.querySelector('i');
+  if(icon){ icon.className = isPass ? 'fas fa-eye-slash' : 'fas fa-eye'; }
+}
+window.togglePassVis = togglePassVis;
+
 function toast(msg, type=''){
   const box = $('#toast'); if(!box) return;
   const el = document.createElement('div');
@@ -1667,7 +1707,6 @@ function defaultUD(){
 function resetUD(){ userData = defaultUD(); }
 function prefsKey(){ if(!session) return 'abdq_prefs_guest'; return 'abdq_prefs_' + session.user.id; }
 
-// استخراج الحقول المحلية (تُخزّن في sessionStorage + قاعدة البيانات)
 function pickLocalFields(ud){
   return {
     favs: ud.favs, tasks: ud.tasks, notes: ud.notes,
@@ -1686,9 +1725,7 @@ let prefsSaveTimer = null;
 
 function savePrefs(){
   if(!session) return;
-  // نسخة سريعة في sessionStorage (للتبويب الحالي فقط)
   try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
-  // حفظ في قاعدة البيانات (debounced)
   clearTimeout(prefsSaveTimer);
   prefsSaveTimer = setTimeout(pushUserDataToDB, 900);
 }
@@ -1706,12 +1743,7 @@ function loadPrefs(){
   resetUD();
   try{
     const raw = sessionStorage.getItem(prefsKey());
-    if(raw){
-      const d = JSON.parse(raw);
-      if(d && typeof d === 'object'){
-        Object.assign(userData, d);
-      }
-    }
+    if(raw){ const d = JSON.parse(raw); if(d && typeof d === 'object') Object.assign(userData, d); }
   }catch(e){}
 }
 
@@ -1721,7 +1753,6 @@ function loadPrefsFromDB(){
       Object.assign(userData, currentUserObj.user_data);
     }
   }catch(e){}
-  // تأمين الأنواع
   if(!userData.log || typeof userData.log !== 'object') userData.log = {};
   if(!Array.isArray(userData.favs)) userData.favs = [];
   if(!Array.isArray(userData.tasks)) userData.tasks = [];
@@ -1833,7 +1864,7 @@ $('#themeBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   3) التنقل مع الروابط (#hash routing)
+   3) التنقل مع الروابط + حماية #admin
 ============================================================ */
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
@@ -1846,8 +1877,24 @@ const TITLES = {
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
 
+// ⭐ حماية: هل يملك صلاحية الوصول لهذه الصفحة؟
+function canAccess(view){
+  if(view !== 'admin') return true;
+  return currentUserObj && currentUserObj.role === 'admin';
+}
+
 function go(view, skipHash){
   if(!TITLES[view]) view = 'home';
+
+  // ⭐ حماية ثغرة #admin
+  if(!canAccess(view)){
+    toast('هذه الصفحة للأدمن فقط', 'err');
+    if(location.hash.slice(1) === 'admin'){
+      try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
+    }
+    view = 'home';
+  }
+
   if(!skipHash && location.hash.slice(1) !== view){
     try{ history.replaceState(null, '', '#' + view); }catch(e){ location.hash = view; }
   }
@@ -1866,14 +1913,26 @@ function go(view, skipHash){
   if(view === 'leaderboard') renderLeaderboard();
   if(view === 'profile') renderProfile();
 }
+window.go = go;
 
 window.addEventListener('hashchange', () => {
   const v = location.hash.slice(1) || 'home';
+  if(v === 'admin' && !canAccess('admin')){
+    try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
+    toast('هذه الصفحة للأدمن فقط', 'err');
+    go('home', true);
+    return;
+  }
   if(TITLES[v]) go(v, true);
 });
 
 function goFromHash(){
   const v = (location.hash.slice(1) || 'home');
+  if(v === 'admin' && !canAccess('admin')){
+    try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
+    go('home', true);
+    return;
+  }
   go(TITLES[v] ? v : 'home', true);
 }
 
@@ -2067,14 +2126,15 @@ window.toggleFav = (id, ev) => {
 };
 
 /* ============================================================
-   6) قارئ PDF — محسّن للتعامل مع الملفات الضخمة
+   6) قارئ PDF — Streaming للملفات الضخمة
 ============================================================ */
 const RS = {
   doc:null, file:null, numPages:0,
   pageW: 612, pageH: 792,
   zoom:1, baseWidth:800, token:0, current:1,
   rendered:new Set(), rendering:new Set(), inView:new Set(),
-  pageEls:[], observer:null, restoring:false, clockId:null
+  pageEls:[], observer:null, restoring:false, clockId:null,
+  signedUrl: null
 };
 let currentFile = null;
 const rdBody = $('#rdBody');
@@ -2108,21 +2168,36 @@ async function openFile(id){
   applyReaderTheme(); applySnapClass();
   RS.token++; const token = RS.token;
   teardownReader(false);
-  showLoading('جاري تحميل الملف من السحابة...', 10);
+  showLoading('جاري تجهيز القارئ...', 15);
   $('#rdStage').innerHTML = '';
   RS.baseWidth = Math.max(220, Math.min(980, rdBody.clientWidth - 30));
 
   try{
-    const { data: blob, error } = await sb.storage.from('pdfs').download(f.storage_path);
-    if(error) throw new Error(error.message);
+    // ⭐ إنشاء رابط موقّع — Streaming مباشر من Supabase بدون تحميل كامل
+    const { data: signed, error: sErr } = await sb.storage
+      .from('pdfs')
+      .createSignedUrl(f.storage_path, 3600);
+    if(sErr || !signed || !signed.signedUrl){
+      throw new Error(sErr ? sErr.message : 'تعذّر إنشاء رابط الملف');
+    }
     if(token !== RS.token) return;
-    showLoading('جاري تجهيز القارئ...', 40);
-    const ab = await blob.arrayBuffer();
-    const doc = await pdfjsLib.getDocument({ data: ab, disableAutoFetch:true, disableStream:false }).promise;
+    RS.signedUrl = signed.signedUrl;
+    showLoading('جاري تجهيز القارئ...', 35);
+
+    // pdf.js يحمّل الأجزاء المطلوبة فقط (chunks) — مثالي للملفات الضخمة
+    const doc = await pdfjsLib.getDocument({
+      url: signed.signedUrl,
+      disableAutoFetch: true,
+      disableStream: false,
+      rangeChunkSize: 262144,
+      disableRange: false,
+      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+      cMapPacked: true
+    }).promise;
     if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
     RS.doc = doc; RS.numPages = doc.numPages;
 
-    // قراءة أبعاد أول صفحة فقط — لتفادي استهلاك الذاكرة في الملفات الضخمة
+    // قراءة أبعاد أول صفحة فقط — لا نحمل كل الأبعاد
     const p1 = await doc.getPage(1);
     const vp0 = p1.getViewport({ scale: 1 });
     RS.pageW = vp0.width || 612;
@@ -2169,6 +2244,7 @@ function teardownReader(closeUI){
   if(closeUI){
     if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
     RS.doc = null; RS.file = null; RS.numPages = 0; currentFile = null;
+    RS.signedUrl = null;
   }
 }
 
@@ -2179,7 +2255,6 @@ function buildPages(){
   const h = pageHeight();
   stage.style.width = w + 'px';
   const frag = document.createDocumentFragment();
-  // نُنشئ فقط حاويات الصفحات — لا canvases هنا
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
     el.className = 'pdf-page';
@@ -2200,7 +2275,7 @@ function buildPages(){
         ensureDrawCanvasIfNeeded(idx);
       } else RS.inView.delete(idx);
     });
-  }, { root: rdBody, rootMargin: '1200px 0px', threshold: 0 });
+  }, { root: rdBody, rootMargin: '800px 0px', threshold: 0 });
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
@@ -2225,7 +2300,9 @@ async function renderPage(num){
     if(token !== RS.token) return;
     const cssW = pageWidth();
     const scale = cssW / RS.pageW;
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    // ⭐ دقة أقل للملفات الضخمة لتسريع الرسم
+    const dprCap = RS.numPages > 200 ? 1.2 : (RS.numPages > 100 ? 1.4 : 1.6);
+    const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
     const vp = page.getViewport({ scale: scale * dpr });
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.floor(vp.width));
@@ -2255,7 +2332,6 @@ function cleanupFarPages(){
       el.dataset.done = '0';
       RS.rendered.delete(n);
     }
-    // احذف canvas الرسم إن لم يكن هناك رسم فعلي (توفير ذاكرة)
     const c = el.querySelector('.pg-draw');
     if(c){
       const key = drawKeyPdf(RS.file.id, n);
@@ -2900,7 +2976,7 @@ $('#changePassBtn').addEventListener('click', () => {
 });
 
 /* ============================================================
-   12) Supabase: تحميل البيانات (مع إعادة المحاولة)
+   12) Supabase: تحميل البيانات
 ============================================================ */
 async function loadProfilesAndFiles(retry = 3){
   try{
@@ -2979,6 +3055,13 @@ $('#regBtn').addEventListener('click', async () => {
   btn.disabled = false;
   if(error){ showMsg('regMsg', error.message); return; }
   showMsg('regMsg','تم إنشاء حسابك بنجاح! في انتظار موافقة الأدمن...', 'ok');
+  // ⭐ حفظ password_hint (للعرض للأدمن)
+  try{
+    if(data && data.user){
+      await new Promise(r => setTimeout(r, 600));
+      await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
+    }
+  }catch(e){}
   if(!(data && data.session)){
     setTimeout(() => showMsg('regMsg','تفقّد بريدك لتأكيد الحساب، ثم سجّل الدخول', 'ok'), 1500);
   }
@@ -3053,8 +3136,16 @@ async function enterApp(){
   $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
   goFromHash();
-  await loadProfilesAndFiles();
-  await loadMyProgress();
+
+  // ⭐ حمّل الملفات فقط إذا كان مشتركاً أو أدمن
+  if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
+    await loadProfilesAndFiles();
+    await loadMyProgress();
+  } else {
+    DB.files = [];
+    renderFiles(); renderRecent();
+  }
+
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
   notesArea.value = userData.notes || '';
   TIMER.mode = 'focus';
@@ -3238,7 +3329,6 @@ function renderProfile(){
   renderBadges();
 }
 
-/* رفع الصورة إلى Supabase Storage */
 async function resizeImageToBlob(file, maxSize, quality){
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -3367,7 +3457,12 @@ function applyUserUI(){
       : currentUserObj.status === 'pending'
         ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
         : '<span style="color:var(--danger)"><i class="fas fa-ban"></i> مرفوض</span>';
-  $('#adminNav').style.display = currentUserObj.role === 'admin' ? 'flex' : 'none';
+  // ⭐ إظهار/إخفاء رابط الأدمن بصرامة
+  const adminNav = $('#adminNav');
+  if(adminNav){
+    if(currentUserObj.role === 'admin') adminNav.style.display = 'flex';
+    else adminNav.style.display = 'none';
+  }
   updateMobileUserMenu();
 }
 
@@ -3432,7 +3527,7 @@ $('#mumSettings').addEventListener('click', () => { $('#mobileUserMenu').classLi
 $('#mumLogout').addEventListener('click', () => { $('#mobileUserMenu').classList.remove('open'); $('#logoutBtn').click(); });
 
 /* ============================================================
-   16) Realtime — قنوات فريدة لكل جلسة
+   16) Realtime
 ============================================================ */
 function cleanupChannels(){
   try{ if(myProfileChannel) sb.removeChannel(myProfileChannel); }catch(e){}
@@ -3454,7 +3549,19 @@ function subscribeMyProfile(){
         applyUserUI();
         if($('#view-profile').classList.contains('active')) renderProfile();
         if(currentUserObj.role === 'admin' && oldRole !== 'admin'){ $('#adminNav').style.display = 'flex'; subscribeProfilesForAdmin(); }
-        if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){ toast('🎉 تمت الموافقة على حسابك!', 'ok'); renderSubBanners(); renderFiles(); }
+        // ⭐ عند الموافقة: أعد تحميل الملفات فوراً
+        if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){
+          toast('🎉 تمت الموافقة على حسابك! جاري تحميل الملفات...', 'ok');
+          renderSubBanners();
+          setTimeout(async () => {
+            try{
+              await loadProfilesAndFiles();
+              await loadMyProgress();
+              renderFiles(); renderRecent(); renderHomeStats(); updateSidebar();
+              toast('تم تحميل الملفات بنجاح ✓', 'ok');
+            }catch(e){ console.warn('auto-reload failed', e); }
+          }, 400);
+        }
         else if(currentUserObj.status === 'rejected' && oldStatus !== 'rejected'){ toast('تم رفض طلبك', 'warn'); renderSubBanners(); }
         else if(currentUserObj.status === 'pending'){ renderSubBanners(); }
       })
@@ -3489,7 +3596,7 @@ function subscribeProfilesForAdmin(){
 }
 
 /* ============================================================
-   17) لوحة الأدمن — كامل مع تعديل/حذف المستخدم
+   17) لوحة الأدمن — كامل مع تعديل/حذف المستخدم وتغيير كلمة السر
 ============================================================ */
 function renderAdmin(){
   if(!currentUserObj || currentUserObj.role !== 'admin') return;
@@ -3553,7 +3660,7 @@ function renderUsersTable(){
           ${u.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>` : ''}
           ${u.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
-          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إعادة تعيين كلمة السر"><i class="fas fa-key"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إرسال رابط إعادة تعيين"><i class="fas fa-key"></i></button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
         </div>
       </div>`;
@@ -3574,15 +3681,22 @@ window.rejectUser = async id => {
   toast('تم رفض المستخدم', 'warn');
 };
 
+/* ⭐ تعديل المستخدم — مع تغيير كلمة السر فعلياً عبر Edge Function */
 window.editUser = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
   openModal({
     title:'تعديل المستخدم',
-    text:'عدّل بيانات المستخدم ثم اضغط حفظ.',
+    text:'عدّل بيانات المستخدم. تغيير كلمة السر سيُطبَّق فوراً على حساب المستخدم.',
     bodyHTML:`
       <div class="form-group"><label>الاسم</label><input type="text" id="euName" value="${escapeHtml(u.name||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
       <div class="form-group"><label>البريد</label><input type="email" id="euEmail" value="${escapeHtml(u.email||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
-      <div class="form-group"><label>كلمة السر (تلميح)</label><input type="text" id="euPw" value="${escapeHtml(u.password_hint||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+      <div class="form-group">
+        <label>كلمة المرور ${u.password_hint ? '<span style="color:var(--success);font-weight:600">(الحالية: ' + escapeHtml(u.password_hint) + ')</span>' : ''}</label>
+        <div style="position:relative">
+          <input type="password" id="euPw" value="${escapeHtml(u.password_hint||'')}" placeholder="اتركها فارغة لعدم التغيير" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <button type="button" onclick="togglePassVis('euPw',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
       <div class="form-group"><label>الحالة</label>
         <select id="euStatus" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
           <option value="approved" ${u.status==='approved'?'selected':''}>مشترك</option>
@@ -3593,17 +3707,45 @@ window.editUser = id => {
     `,
     okText:'حفظ',
     onOk: async () => {
+      const newPw = document.getElementById('euPw').value.trim();
       const upd = {
         name: document.getElementById('euName').value.trim() || u.name,
         email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email,
-        password_hint: document.getElementById('euPw').value.trim() || null,
         status: document.getElementById('euStatus').value
       };
+
       const { error } = await sb.from('profiles').update(upd).eq('id', id);
-      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      if(error){ toast('فشل التحديث: ' + error.message, 'err'); return; }
+
+      if(newPw && newPw !== u.password_hint){
+        if(newPw.length < 6){ toast('كلمة السر 6 أحرف على الأقل', 'err'); return; }
+        try{
+          const { data: { session: curSess } } = await sb.auth.getSession();
+          const res = await fetch(CHANGE_PASS_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '')
+            },
+            body: JSON.stringify({ userId: id, newPassword: newPw })
+          });
+          const result = await res.json();
+          if(!res.ok || result.error){
+            toast('فشل تغيير كلمة السر: ' + (result.error || 'خطأ في الخدمة'), 'err');
+            return;
+          }
+          upd.password_hint = newPw;
+          toast('تم تحديث البيانات وكلمة السر ✓ (المستخدم سيدخل بها الجديدة)', 'ok');
+        }catch(e){
+          toast('فشل الاتصال بالخدمة: ' + e.message + ' — تأكد من نشر Edge Function', 'err');
+          return;
+        }
+      } else {
+        toast('تم تحديث بيانات المستخدم', 'ok');
+      }
+
       Object.assign(u, upd);
       renderUsersTable();
-      toast('تم تحديث بيانات المستخدم', 'ok');
     }
   });
 };
@@ -3717,7 +3859,7 @@ $('#saveFileBtn').addEventListener('click', async () => {
   if(!currentPdfBlob){ toast('اختر ملف PDF أولاً', 'warn'); return; }
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
-  const id = (crypto.randomUUID ? crypto.randomUUID() : ('f_' + Date.now() + '_' + Math.random().toString(36).slice(2,9)));
+  const id = uuidv4();
   const safeName = currentPdfBlob.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
   const storagePath = currentUserObj.id + '/' + id + '_' + safeName;
   let pages = 0;
@@ -3755,7 +3897,7 @@ $$('.admin-tabs button').forEach(b => {
   });
 });
 
-/* إضافة مستخدم من لوحة الأدمن — مع تخزين password_hint */
+/* إضافة مستخدم من لوحة الأدمن */
 (function bindAdminCreateUser(){
   const btn = document.getElementById('nuCreateBtn'); if(!btn) return;
   btn.addEventListener('click', async () => {
@@ -3952,7 +4094,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 /* ============================================================
-   21) الرسم على الملف والصبورة — canvas on demand
+   21) الرسم على الملف والصبورة
 ============================================================ */
 const DRAW_COLORS = [
   { c:'#ef4444', n:'أحمر' }, { c:'#f97316', n:'برتقالي' }, { c:'#facc15', n:'أصفر' },
@@ -3967,52 +4109,56 @@ const DRAW = {
 };
 function drawKeyPdf(fileId, page){ return 'pdf:' + fileId + ':' + page; }
 function drawKeyWb(fileId){ return 'wb:' + (fileId || 'default'); }
-function drawingsKey(){ if(!session) return 'abdq_draw_guest'; return 'abdq_draw_' + session.user.id; }
 
-// الرسومات تُخزّن في user_drawings في قاعدة البيانات
-let drawingsCache = {}; // ذاكرة محلية
+/* بنية user_drawings: صف واحد لكل مستخدم، data = { key: [strokes] } */
+let drawingsCache = {};
 let drawingsLoadedFor = null;
 let drawingsSaveTimer = null;
 
 function loadDrawings(){
-  // لا نحمل من localStorage — نستخدم قاعدة البيانات
   if(!drawingsCache || typeof drawingsCache !== 'object') drawingsCache = {};
   userData.drawings = drawingsCache;
 }
 
 async function loadDrawingsForFile(fileId){
-  if(!currentUserObj || currentUserObj.role === 'admin'){ userData.drawings = {}; return; }
-  if(drawingsLoadedFor === fileId){ userData.drawings = drawingsCache; return; }
+  if(!currentUserObj || currentUserObj.role === 'admin'){
+    drawingsCache = {}; userData.drawings = drawingsCache; return;
+  }
+  if(drawingsLoadedFor === 'ALL'){ userData.drawings = drawingsCache; return; }
   try{
-    const { data, error } = await sb.from('user_drawings').select('key, strokes').eq('user_id', currentUserObj.id);
+    const { data, error } = await sb
+      .from('user_drawings')
+      .select('data')
+      .eq('user_id', currentUserObj.id)
+      .maybeSingle();
     if(error) throw error;
-    drawingsCache = {};
-    (data || []).forEach(r => { drawingsCache[r.key] = r.strokes || []; });
+    drawingsCache = (data && data.data && typeof data.data === 'object') ? data.data : {};
     userData.drawings = drawingsCache;
-    drawingsLoadedFor = fileId;
-  }catch(e){ console.warn('drawings load failed', e); userData.drawings = drawingsCache; }
+    drawingsLoadedFor = 'ALL';
+  }catch(e){
+    console.warn('drawings load failed:', e && e.message);
+    drawingsCache = drawingsCache || {};
+    userData.drawings = drawingsCache;
+  }
 }
 
 function saveDrawings(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
   clearTimeout(drawingsSaveTimer);
-  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 900);
+  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 1000);
 }
 
 async function pushDrawingsToDB(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
-  const cache = userData.drawings || {};
-  const keys = Object.keys(cache);
-  if(!keys.length) return;
-  const rows = keys.map(k => ({
-    user_id: currentUserObj.id,
-    key: k,
-    strokes: cache[k] || [],
-    updated_at: new Date().toISOString()
-  }));
+  const payload = userData.drawings || {};
   try{
-    const { error } = await sb.from('user_drawings').upsert(rows, { onConflict: 'user_id,key' });
-    if(error) console.warn('drawings save failed', error);
+    const { error } = await sb
+      .from('user_drawings')
+      .upsert(
+        { user_id: currentUserObj.id, data: payload, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+    if(error) console.warn('drawings save failed:', error.message);
   }catch(e){}
 }
 
@@ -4168,14 +4314,10 @@ function clearDraw(){
   if(!key){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
   const arr = userData.drawings[key];
   if(!arr || !arr.length){ toast('لا يوجد رسم لمسحه', 'warn'); return; }
-  confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', async () => {
+  confirmBox('مسح الرسم', 'سيتم مسح كل الرسم على هذه الصفحة/الصبورة. هل أنت متأكد؟', () => {
     delete userData.drawings[key];
     saveDrawings(); redrawSurfaceByKey(key);
     if(key.startsWith('wb:')) updateWbEmpty();
-    // احذف من قاعدة البيانات
-    if(currentUserObj && currentUserObj.role !== 'admin'){
-      try{ await sb.from('user_drawings').delete().eq('user_id', currentUserObj.id).eq('key', key); }catch(e){}
-    }
     toast('تم مسح الرسم', 'ok');
   }, true);
 }
