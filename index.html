@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
+<link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
 
@@ -26,7 +27,11 @@
       <div class="ring r2"></div>
       <div class="ring r3"></div>
       <div class="glow"></div>
-      <div class="core"><i class="fas fa-brain"></i></div>
+      <div class="core">
+  <img src="assets/logo.png" alt="العباقرة للقدرات" class="welcome-logo-img" id="welcomeLogo"
+       onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+  <i class="fas fa-brain" style="display:none;font-size:56px"></i>
+</div>
       <div class="floating f1"><i class="fas fa-book"></i></div>
       <div class="floating f2"><i class="fas fa-award"></i></div>
       <div class="floating f3"><i class="fas fa-chart-line"></i></div>
@@ -156,6 +161,35 @@
         </button>
       </div>
     </div>
+
+    <section class="view" id="view-store">
+  <div class="store-hero">
+    <div class="store-hero-inner">
+      <div class="store-hero-badge"><i class="fas fa-crown"></i> المتجر</div>
+      <h1>اختر <em>رحلتك</em> نحو التفوق</h1>
+      <p>فعّل اشتراكك بسهولة، وابدأ التعلم فور الموافقة</p>
+      <div class="store-steps">
+        <div class="store-step">
+          <div class="step-num">1</div>
+          <div><b>اختر الدورة</b><small>المناسبة لك</small></div>
+        </div>
+        <div class="store-step-arrow"><i class="fas fa-arrow-left"></i></div>
+        <div class="store-step">
+          <div class="step-num">2</div>
+          <div><b>حوّل المبلغ</b><small>على الآيبان</small></div>
+        </div>
+        <div class="store-step-arrow"><i class="fas fa-arrow-left"></i></div>
+        <div class="store-step">
+          <div class="step-num">3</div>
+          <div><b>أرفق الإيصال</b><small>وأرسل للدعم</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> الدورات المتاحة</div>
+  <div class="products-grid" id="productsGrid"></div>
+</section>
 
     <section class="view active" id="view-home">
       <div id="homeSubBanner"></div>
@@ -765,6 +799,88 @@
   </main>
 </div>
 
+  <div class="modal" id="purchaseModal">
+  <div class="modal-box purchase-box">
+    <div class="purchase-header">
+      <div class="purchase-icon"><i class="fas fa-credit-card"></i></div>
+      <h3>إتمام عملية الشراء</h3>
+      <p>حوّل المبلغ ثم أرفق الإيصال لإرساله للدعم</p>
+    </div>
+
+    <div class="purchase-product" id="purchaseProduct"></div>
+
+    <div class="purchase-section">
+      <h4><i class="fas fa-user-circle"></i> بيانات الحساب</h4>
+      <div class="purchase-info-grid">
+        <div class="purchase-info-item">
+          <small>الاسم</small>
+          <b id="puName">—</b>
+        </div>
+        <div class="purchase-info-item">
+          <small>البريد الإلكتروني</small>
+          <b id="puEmail" style="direction:ltr;text-align:left">—</b>
+        </div>
+        <div class="purchase-info-item">
+          <small>كلمة المرور</small>
+          <b id="puPass" style="direction:ltr;text-align:left">—</b>
+        </div>
+      </div>
+      <div class="purchase-note">
+        <i class="fas fa-info-circle"></i>
+        هذه البيانات ستُرسل مع طلبك للأدمن لتفعيل حسابك
+      </div>
+    </div>
+
+    <div class="purchase-section">
+      <h4><i class="fas fa-university"></i> التحويل البنكي</h4>
+      <div class="iban-box">
+        <div class="iban-text-row">
+          <span class="iban-label">رقم الآيبان:</span>
+          <code id="ibanCode">—</code>
+          <button class="iban-copy" id="ibanCopyBtn" title="نسخ">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+        <div class="iban-image-wrap" id="ibanImageWrap" style="display:none">
+          <img id="ibanImage" src="" alt="IBAN">
+        </div>
+      </div>
+    </div>
+
+    <div class="purchase-section">
+      <h4><i class="fas fa-receipt"></i> إرفاق الإيصال</h4>
+      <label class="receipt-upload" id="receiptUpload">
+        <input type="file" id="receiptInput" accept="image/*" hidden>
+        <div class="receipt-inner">
+          <i class="fas fa-cloud-arrow-up"></i>
+          <b>اضغط لاختيار صورة الإيصال</b>
+          <small>PNG، JPG — الحد 5 ميجا</small>
+        </div>
+      </label>
+      <div class="receipt-preview" id="receiptPreview" style="display:none">
+        <img id="receiptPreviewImg" src="" alt="معاينة">
+        <div class="receipt-file-info">
+          <i class="fas fa-circle-check" style="color:var(--success)"></i>
+          <span id="receiptFileName">—</span>
+        </div>
+        <button class="receipt-remove" id="receiptRemove"><i class="fas fa-trash"></i> حذف</button>
+      </div>
+    </div>
+
+    <div class="purchase-actions">
+      <button class="btn btn-ghost" id="purchaseCancel">إلغاء</button>
+      <button class="btn btn-primary purchase-submit" id="purchaseSubmit">
+        <i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم
+      </button>
+    </div>
+
+    <div class="purchase-foot">
+      <i class="fas fa-shield-halved"></i>
+      بعد الإرسال، سيتم فتح الواتساب لإرسال الإيصال للدعم الفني. حسابك قيد التفعيل.
+    </div>
+  </div>
+</div>
+
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
@@ -909,6 +1025,8 @@
   </div>
 </div>
 
+  
+
 <div class="modal" id="filePickerModal">
   <div class="modal-box" style="max-width:640px">
     <h3><i class="fas fa-folder-open"></i> اختر ملفاً لفتحه بجانب الفيديو</h3>
@@ -988,5 +1106,6 @@
 <script src="js/20-protection.js"></script>
 <script src="js/21-app.js"></script>
 <script src="js/22-videos.js"></script>
+<script src="js/23-store.js"></script>
 </body>
 </html>
