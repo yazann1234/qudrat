@@ -40,11 +40,19 @@ $('#regBtn').addEventListener('click', async () => {
   btn.disabled = false;
   if(error){ showMsg('regMsg', error.message); return; }
   showMsg('regMsg','تم إنشاء حسابك بنجاح! في انتظار موافقة الأدمن...', 'ok');
-  try{
+    try{
     if(data && data.user){
-      await new Promise(r => setTimeout(r, 600));
-      await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
+      // احفظها في sessionStorage و localStorage و DB
+      try{ sessionStorage.setItem('pending_pass_' + data.user.id, pass); }catch(e){}
+      try{ localStorage.setItem('pending_pass_' + data.user.id, pass); }catch(e){}
+
+      await new Promise(r => setTimeout(r, 800));
+      const { error: hintErr } = await sb.from('profiles')
+        .update({ password_hint: pass })
+        .eq('id', data.user.id);
+      if(hintErr) console.warn('password_hint save failed:', hintErr.message);
     }
+  }catch(e){ console.warn('save pass error:', e); }
   }catch(e){}
   if(!(data && data.session)){
     setTimeout(() => showMsg('regMsg','تفقّد بريدك لتأكيد الحساب، ثم سجّل الدخول', 'ok'), 1500);
