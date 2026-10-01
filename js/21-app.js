@@ -17,15 +17,13 @@ async function loadProfilesAndFiles(retry = 3){
     if(retry > 0){ await new Promise(r => setTimeout(r, 400 * (4 - retry))); return loadProfilesAndFiles(retry - 1); }
     DB.files = [];
   }
-  if(currentUserObj && currentUserObj.role === 'admin'){
+    if(typeof isPrivileged === 'function' && isPrivileged()){
     try{
       const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-      DB.users = (usersData || []).filter(u => u.role !== 'admin');
+      /* ⭐ اعرض المستخدمين + الأدمنز + owner */
+      DB.users = usersData || [];
     }catch(e){}
   }
-  try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
-  const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
-}
 
 async function loadVideos(retry = 3){
   try{
