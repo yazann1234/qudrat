@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -38,7 +39,7 @@
     <div class="w-chips">
       <div class="chip" style="animation-delay:.4s"><i class="fas fa-user-shield"></i> حساب آمن</div>
       <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i> قارئ PDF ذكي</div>
-      <div class="chip" style="animation-delay:.5s"><i class="fas fa-pen-ruler"></i> رسم وملاحظات</div>
+      <div class="chip" style="animation-delay:.5s"><i class="fas fa-video"></i> دروس فيديو</div>
       <div class="chip" style="animation-delay:.55s"><i class="fas fa-chart-simple"></i> تتبع تلقائي</div>
       <div class="chip" style="animation-delay:.6s"><i class="fas fa-trophy"></i> قائمة المتصدرين</div>
       <div class="chip" style="animation-delay:.65s"><i class="fas fa-palette"></i> ثيمات</div>
@@ -78,7 +79,7 @@
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
         <div class="input-group">
           <i class="fas fa-lock ic"></i>
-          <input type="password" id="regPass" placeholder="كلمة المرور (6+ أحرف)" autocomplete="new-password" style="padding-left:44px">
+          <input type="password" id="regPass" placeholder="كلمة المرور (8+ أحرف)" autocomplete="new-password" style="padding-left:44px">
           <button type="button" class="eye-btn" onclick="togglePassVis('regPass',this)" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>
         </div>
         <div class="auth-msg" id="regMsg"></div>
@@ -105,7 +106,7 @@
         <ul class="features-list">
           <li><i class="fas fa-check"></i> ارسم على الملف أو الصبورة البيضاء</li>
           <li><i class="fas fa-check"></i> تتبع تلقائي لتقدمك في كل ملف</li>
-          <li><i class="fas fa-check"></i> قائمة متصدرين بنظام النقاط XP</li>
+          <li><i class="fas fa-check"></i> دروس فيديو بتجربة مشاهدة متقدمة</li>
         </ul>
       </div>
     </div>
@@ -129,6 +130,7 @@
     <nav class="nav" id="navMain">
       <button class="nav-btn active" data-view="home"><span class="ic"><i class="fas fa-house"></i></span><span>الرئيسية</span></button>
       <button class="nav-btn" data-view="files"><span class="ic"><i class="fas fa-folder"></i></span><span>الملفات</span><span class="badge-n" id="navCount">0</span></button>
+      <button class="nav-btn" data-view="videos"><span class="ic"><i class="fas fa-video"></i></span><span>الفيديوهات</span><span class="badge-n" id="navVideoCount">0</span></button>
       <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
       <button class="nav-btn" data-view="leaderboard"><span class="ic"><i class="fas fa-trophy"></i></span><span>المتصدرون</span></button>
       <button class="nav-btn" data-view="profile"><span class="ic"><i class="fas fa-user-circle"></i></span><span>ملفي</span></button>
@@ -166,7 +168,7 @@
             <p>افتح أي ملف PDF وسيتابع النظام تقدمك تلقائياً مع كل صفحة تمرّ عليها.</p>
             <div class="hero-cta">
               <button class="btn-hero primary" onclick="go('files')"><i class="fas fa-book-open"></i> ابدأ المذاكرة</button>
-              <button class="btn-hero ghost" onclick="go('leaderboard')"><i class="fas fa-trophy"></i> قائمة المتصدرين</button>
+              <button class="btn-hero ghost" onclick="go('videos')"><i class="fas fa-video"></i> شاهد الفيديوهات</button>
             </div>
           </div>
           <div class="hero-right">
@@ -284,6 +286,38 @@
       <div class="files-grid" id="filesGrid"></div>
     </section>
 
+    <section class="view" id="view-videos">
+      <div class="hero-big" style="min-height:280px">
+        <div class="hero-bg"></div>
+        <div class="hero-big-in" style="grid-template-columns:1fr">
+          <div class="hero-left">
+            <div class="tag"><i class="fas fa-video"></i> مكتبة الفيديو</div>
+            <h2>تعلّم بالمشاهدة، واربح النقاط</h2>
+            <p>شاهد الدروس المرئية داخل المنصة، تابع تقدمك تلقائياً، واكسب XP مع كل فيديو تُكمله.</p>
+            <div class="hero-cta" style="margin-top:14px">
+              <button class="btn-hero primary" onclick="document.getElementById('videosGrid').scrollIntoView({behavior:'smooth'})"><i class="fas fa-play"></i> ابدأ المشاهدة</button>
+              <button class="btn-hero ghost" onclick="go('files')"><i class="fas fa-book-open"></i> اقرأ الملفات</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-film" style="color:var(--primary)"></i> الفيديوهات التعليمية <span class="sub" id="videosCountLabel">0 فيديو</span></div>
+      <div class="filter-row">
+        <button class="filter-chip on" data-vcat="all">الكل</button>
+        <button class="filter-chip" data-vcat="كمي">كمي</button>
+        <button class="filter-chip" data-vcat="لفظي">لفظي</button>
+        <button class="filter-chip" data-vcat="عام">عام</button>
+        <button class="filter-chip" data-vcat="مراجعة">مراجعة</button>
+        <select class="sort-select" id="videoSortSelect">
+          <option value="new">الأحدث</option>
+          <option value="old">الأقدم</option>
+          <option value="alpha">أبجدياً</option>
+        </select>
+      </div>
+      <div class="videos-grid" id="videosGrid"></div>
+    </section>
+
     <section class="view" id="view-progress">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
@@ -325,7 +359,7 @@
           <div class="lb-hero-txt">
             <div class="tag"><i class="fas fa-trophy"></i> لوحة الشرف</div>
             <h2>قائمة المتصدرين 🏆</h2>
-            <p>النقاط تُحسب من: الصفحات المقروءة (+٢ لكل صفحة) + الملفات المكتملة (+١٠٠) + جلسات التركيز (+٢٥). اجمع النقاط واحتلّ القمة!</p>
+            <p>النقاط تُحسب من: الصفحات المقروءة (+٢ لكل صفحة) + الملفات المكتملة (+١٠٠) + جلسات التركيز (+٢٥) + إكمال الفيديوهات (+٥٠). اجمع النقاط واحتلّ القمة!</p>
           </div>
           <div class="lb-hero-count"><b id="lbMyRank">—</b><span>ترتيبك</span></div>
         </div>
@@ -400,6 +434,7 @@
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> اقرأ صفحة جديدة = <b style="color:var(--primary)">+٢ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أنهِ ملفاً كاملاً = <b style="color:var(--primary)">+١٠٠ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أتمم جلسة تركيز = <b style="color:var(--primary)">+٢٥ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أكمل فيديو = <b style="color:var(--primary)">+٥٠ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> احصل على شارة = <b style="color:var(--primary)">+١٥ نقطة</b></div>
             </div>
           </div>
@@ -572,7 +607,8 @@
           <p>استخدم هذه الاختصارات للتنقل بسرعة.</p>
           <div class="set-row"><div class="lbl">فتح البحث</div><b style="color:var(--primary);direction:ltr">Ctrl + K</b></div>
           <div class="set-row"><div class="lbl">الرئيسية / الملفات / إنجازي</div><b style="color:var(--primary);direction:ltr">1 / 2 / 3</b></div>
-          <div class="set-row"><div class="lbl">المتصدرون / ملفي / المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">L / P / 4 / 5</b></div>
+          <div class="set-row"><div class="lbl">الفيديوهات / المتصدرون / ملفي</div><b style="color:var(--primary);direction:ltr">V / L / P</b></div>
+          <div class="set-row"><div class="lbl">المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">4 / 5</b></div>
           <div class="set-row"><div class="lbl">القارئ: تكبير / تصغير</div><b style="color:var(--primary);direction:ltr">+ / -</b></div>
           <div class="set-row"><div class="lbl">القارئ: رسم / صبورة</div><b style="color:var(--primary);direction:ltr">P / W</b></div>
           <div class="set-row"><div class="lbl">إغلاق النافذة</div><b style="color:var(--primary);direction:ltr">Esc</b></div>
@@ -588,6 +624,7 @@
         <div class="admin-stat" style="--sc:#f7b32b"><h3 id="adPending">0</h3><p>طلبات قيد الانتظار</p></div>
         <div class="admin-stat" style="--sc:#22c55e"><h3 id="adSubscribed">0</h3><p>المشتركون</p></div>
         <div class="admin-stat" style="--sc:#8b5cf6"><h3 id="adFiles">0</h3><p>إجمالي الملفات</p></div>
+        <div class="admin-stat" style="--sc:#ef4444"><h3 id="adVideos">0</h3><p>إجمالي الفيديوهات</p></div>
         <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adImportant">0</h3><p>ملفات مميزة</p></div>
       </div>
       <div class="admin-tabs">
@@ -595,6 +632,8 @@
         <button data-panel="adduser"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
         <button data-panel="files"><i class="fas fa-folder"></i> الملفات</button>
         <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
+        <button data-panel="videos"><i class="fas fa-video"></i> الفيديوهات</button>
+        <button data-panel="addvideo"><i class="fas fa-plus-circle"></i> إضافة فيديو</button>
       </div>
 
       <div class="admin-panel on" id="panel-users">
@@ -624,7 +663,7 @@
           <div class="form-group">
             <label>كلمة المرور *</label>
             <div style="position:relative">
-              <input type="text" id="nuPass" placeholder="6 أحرف على الأقل" value="123456" autocomplete="off" style="padding-left:44px">
+              <input type="text" id="nuPass" placeholder="8 أحرف على الأقل" value="12345678" autocomplete="off" style="padding-left:44px">
               <button type="button" onclick="togglePassVis('nuPass',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
             </div>
           </div>
@@ -676,6 +715,49 @@
           <div class="form-actions">
             <button class="btn btn-primary" id="saveFileBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الملف</button>
             <button class="btn btn-ghost" id="clearFileBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-videos">
+        <div class="videos-admin-grid" id="adminVideosGrid"></div>
+      </div>
+
+      <div class="admin-panel" id="panel-addvideo">
+        <div class="card-basic">
+          <h3><i class="fas fa-video"></i> إضافة فيديو جديد</h3>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
+            الصق رابط يوتيوب وسيُشغّل داخل المنصة مباشرة — مع تتبع تلقائي للتقدم ومنح XP عند الإكمال.
+          </p>
+
+          <div class="form-group">
+            <label>رابط يوتيوب *</label>
+            <input type="text" id="avUrl" placeholder="https://www.youtube.com/watch?v=... أو https://youtu.be/...">
+            <div id="avUrlPreview" style="display:none;margin-top:10px;padding:10px;border-radius:10px;background:var(--card-2);border:1px solid var(--border);font-size:.78rem;font-weight:700;color:var(--success)">
+              <i class="fas fa-circle-check"></i> <span id="avUrlPreviewText"></span>
+            </div>
+          </div>
+
+          <div class="form-group"><label>عنوان الفيديو *</label><input type="text" id="avTitle" placeholder="مثال: شرح أساسيات الهندسة"></div>
+
+          <div class="form-group">
+            <label>التصنيف *</label>
+            <select id="avCat">
+              <option value="كمي">كمي</option><option value="لفظي">لفظي</option>
+              <option value="عام">عام</option><option value="مراجعة">مراجعة</option>
+            </select>
+          </div>
+
+          <div class="form-group"><label>وصف مختصر</label><textarea id="avDesc" placeholder="وصف قصير يظهر في بطاقة الفيديو..."></textarea></div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="avImportant">
+            <span><i class="fas fa-star"></i> تمييز كفيديو مهم</span>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" id="saveVideoBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الفيديو</button>
+            <button class="btn btn-ghost" id="clearVideoBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
           </div>
         </div>
       </div>
@@ -773,6 +855,75 @@
   </div>
 </div>
 
+<div id="videoPlayer">
+  <div class="vp-box">
+    <div class="vp-head">
+      <button class="rh-btn danger" id="vpClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
+      <div class="rh-icon" id="vpIcon"><i class="fas fa-video"></i></div>
+      <div class="rh-info">
+        <h3 id="vpTitle">عنوان الفيديو</h3>
+        <small id="vpMeta">—</small>
+      </div>
+      <div class="rh-tools">
+        <button class="rh-btn" id="vpOpenFileBtn" title="فتح ملف بجانب الفيديو"><i class="fas fa-file-pdf"></i> <span class="vp-tool-label">ملف</span></button>
+        <button class="rh-btn" id="vpSplitToggle" title="تبديل العرض المنقسم" style="display:none"><i class="fas fa-table-columns"></i></button>
+      </div>
+    </div>
+
+    <div class="vp-progress-bar"><i id="vpBarTop"></i></div>
+
+    <div class="vp-main">
+      <div class="vp-pane vp-pane-video" id="vpVideoPane">
+        <div class="vp-video-wrap">
+          <div id="ytPlayerMount"></div>
+        </div>
+
+        <div class="vp-controls">
+          <button class="vp-ctl" id="vpBack10" title="رجوع 10 ثوان"><i class="fas fa-rotate-left"></i><span>10</span></button>
+          <button class="vp-ctl" id="vpPlayPause" title="تشغيل/إيقاف"><i class="fas fa-play"></i></button>
+          <button class="vp-ctl" id="vpFwd10" title="تقديم 10 ثوان"><i class="fas fa-rotate-right"></i><span>10</span></button>
+          <span class="vp-sep"></span>
+          <span class="vp-time"><b id="vpTimeNow">0:00</b> / <span id="vpTimeTotal">0:00</span></span>
+          <span class="vp-sep"></span>
+          <button class="vp-ctl" id="vpMute" title="كتم/تشغيل الصوت"><i class="fas fa-volume-high"></i></button>
+          <button class="vp-ctl" id="vpSpeed" title="سرعة التشغيل"><span id="vpSpeedLabel">1x</span></button>
+          <button class="vp-ctl" id="vpFullscreen" title="ملء الشاشة"><i class="fas fa-expand"></i></button>
+          <div class="vp-vprogress" id="vpVProgress"><i id="vpVProgressFill"></i><span id="vpVProgressDot"></span></div>
+        </div>
+
+        <div class="vp-xp-banner" id="vpXpBanner">
+          <i class="fas fa-star"></i>
+          <span>شاهد الفيديو كاملاً لتربح <b id="vpXpAmount">50</b> XP</span>
+        </div>
+      </div>
+
+      <div class="vp-pane vp-pane-file" id="vpFilePane" style="display:none">
+        <div class="vp-file-head">
+          <i class="fas fa-file-pdf" style="color:var(--danger)"></i>
+          <span id="vpFileName">—</span>
+          <button class="btn btn-danger btn-sm" id="vpCloseFile" style="margin-right:auto"><i class="fas fa-xmark"></i> إغلاق الملف</button>
+        </div>
+        <div class="vp-file-body" id="vpFileBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="filePickerModal">
+  <div class="modal-box" style="max-width:640px">
+    <h3><i class="fas fa-folder-open"></i> اختر ملفاً لفتحه بجانب الفيديو</h3>
+    <p style="margin-bottom:14px">ستتمكن من متابعة الفيديو وكتابة الملاحظات على الملف في نفس الوقت.</p>
+    <div class="search-box" style="margin-bottom:12px;min-width:100%">
+      <i class="fas fa-magnifying-glass"></i>
+      <input type="text" id="fpSearch" placeholder="ابحث في الملفات...">
+    </div>
+    <div id="fpList" class="fp-list"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" id="fpCancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <div class="mobile-user-menu" id="mobileUserMenu">
   <div class="mum-head">
     <div class="mum-avatar" id="mumAvatar">؟</div>
@@ -813,11 +964,8 @@
 
 <div id="toast"></div>
 
-<!-- Supabase + pdf.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-<!-- ملفات المشروع بالترتيب -->
 <script src="js/01-config.js"></script>
 <script src="js/02-utils.js"></script>
 <script src="js/03-state.js"></script>
@@ -839,5 +987,6 @@
 <script src="js/19-realtime.js"></script>
 <script src="js/20-protection.js"></script>
 <script src="js/21-app.js"></script>
+<script src="js/22-videos.js"></script>
 </body>
 </html>
