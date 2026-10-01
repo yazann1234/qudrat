@@ -17,7 +17,8 @@ const TITLES = {
 
 function canAccess(view){
   if(view !== 'admin') return true;
-  return currentUserObj && currentUserObj.role === 'admin';
+  /* ⭐ admin أو owner */
+  return currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'owner');
 }
   // ⭐ منع الانتقال خارج المتجر في وضع المتجر فقط
   
