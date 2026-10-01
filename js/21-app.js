@@ -122,6 +122,8 @@ function hideAllScreens(){
 
 async function showWelcome(){
   try{
+     window._appInitialized = false;
+    window._lastInitializedUserId = null;
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
     const w = document.getElementById('welcome');
@@ -153,6 +155,10 @@ window.showAuthScreen = showAuthScreen;
 ============================================================ */
 async function enterApp(){
   try{
+     if(session && session.user){
+      window._lastInitializedUserId = session.user.id;
+      window._appInitialized = true;
+    }
     hideAllScreens();
 
     if(!session){ await showWelcome(); return false; }
@@ -407,15 +413,46 @@ window.bindEmergencyButtons = bindEmergencyButtons;
       session = null;
     }
 
+        /* ⭐ تتبع آخر مستخدم تم تهيئته — لمنع إعادة التحميل */
+    window._lastInitializedUserId = null;
+    window._appInitialized = false;
+
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
+
+      /* 📌 استعادة كلمة المرور */
       if(event === 'PASSWORD_RECOVERY'){
         setTimeout(() => {
           if(typeof showRecoveryModal === 'function') showRecoveryModal();
         }, 600);
         return;
       }
+
+      /* 📌 تسجيل الخروج */
+      if(event === 'SIGNED_OUT'){
+        window._lastInitializedUserId = null;
+        window._appInitialized = false;
+        currentUserObj = null;
+        session = null;
+        try{ cleanupChannels(); }catch(e){}
+        showWelcome();
+        return;
+      }
+
+      /* 📌 تسجيل الدخول */
       if(event === 'SIGNED_IN' && newSession){
+        const uid = newSession.user ? newSession.user.id : null;
+
+        /* ⭐ إذا نفس المستخدم ونفس الجلسة → تجاهل */
+        if(window._appInitialized && window._lastInitializedUserId === uid){
+          console.log('⏭️ نفس المستخدم — تم تجاهل إعادة التحميل');
+          return;
+        }
+
+        /* ⭐ مستخدم جديد → هيّئ التطبيق */
+        window._lastInitializedUserId = uid;
+        window._appInitialized = true;
+
         try{
           await Promise.race([
             enterApp(),
@@ -424,14 +461,23 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         }catch(e){
           console.error('SIGNED_IN error:', e);
           try{ await sb.auth.signOut(); }catch(err){}
+          window._appInitialized = false;
+          window._lastInitializedUserId = null;
           showWelcome();
         }
+        return;
       }
-      else if(event === 'SIGNED_OUT'){
-        currentUserObj = null;
-        session = null;
-        try{ cleanupChannels(); }catch(e){}
-        showWelcome();
+
+      /* 📌 TOKEN_REFRESHED وأحداث أخرى — فقط حدّث الجلسة بدون إعادة تحميل */
+      if(event === 'TOKEN_REFRESHED'){
+        console.log('🔄 تم تحديث التوكن — لا حاجة لإعادة التحميل');
+        return;
+      }
+
+      /* 📌 USER_UPDATED */
+      if(event === 'USER_UPDATED'){
+        console.log('👤 تم تحديث بيانات المستخدم');
+        return;
       }
     });
 
