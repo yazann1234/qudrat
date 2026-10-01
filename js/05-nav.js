@@ -21,6 +21,7 @@ function canAccess(view){
 }
 
 function go(view, skipHash){
+   if(view === 'store' && typeof renderProducts === 'function') renderProducts();
   if(!TITLES[view]) view = 'home';
 
   // حماية #admin
