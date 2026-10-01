@@ -12,6 +12,10 @@ function renderAdmin(){
   setTxt('adFiles', DB.files.length);
   setTxt('adImportant', DB.files.filter(f => f.important).length);
   renderUsersTable();
+   /* إخفاء/إظهار خيار "إضافة مستخدم" و"الأدمن" للـ owner فقط */
+const ownerOnlyBtns = document.querySelectorAll('.admin-tabs button[data-panel="adduser"]');
+const isOwner = currentUserObj && currentUserObj.role === 'owner';
+ownerOnlyBtns.forEach(b => b.style.display = isOwner ? '' : 'none');
   renderAdminFiles();
 }
 
