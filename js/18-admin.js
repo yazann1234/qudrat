@@ -156,35 +156,35 @@ window.rejectUser = async id => {
 ============================================================ */
 window.editUser = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
+  const isOwner = currentUserObj && currentUserObj.role === 'owner';
+  const isTargetAdmin = u.role === 'admin';
 
-  // تحقق من توفّر Edge Function (اختبار سريع)
-  const edgeEnabled = !!CHANGE_PASS_URL;
+  /* الأدمن لا يعدل admins آخرين */
+  if(!isOwner && isTargetAdmin){
+    toast('لا تملك صلاحية تعديل الأدمنز', 'err');
+    return;
+  }
 
   openModal({
-    title:'تعديل المستخدم',
-    text: edgeEnabled
-      ? 'عدّل البيانات. تغيير كلمة المرور يتم مباشرة عبر خدمة آمنة، وإن لم تتوفر فسيُرسل رابط بريدي تلقائياً.'
-      : 'عدّل البيانات. لتغيير كلمة المرور سيُرسل رابط آمن إلى بريد المستخدم.',
-    bodyHTML:`
+    title: 'تعديل المستخدم',
+    text: isOwner
+      ? 'رئيس المنصة يمكنه تعديل كل شيء: الاسم، البريد، كلمة المرور، الدور.'
+      : 'عدّل البيانات الأساسية. تغيير كلمة السر يتم عبر خدمة آمنة.',
+    bodyHTML: `
       <div class="form-group" style="margin-bottom:12px">
-        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">الاسم</label>
+        <label>الاسم</label>
         <input type="text" id="euName" value="${escapeHtml(u.name||'')}"
           style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
       </div>
 
       <div class="form-group" style="margin-bottom:12px">
-        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">البريد الإلكتروني</label>
+        <label>البريد الإلكتروني</label>
         <input type="email" id="euEmail" value="${escapeHtml(u.email||'')}"
           style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
       </div>
 
       <div class="form-group" style="margin-bottom:12px">
-        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">
-          كلمة المرور الجديدة
-          ${u.password_hint
-            ? `<span style="color:var(--muted);font-weight:600;font-size:.76rem">(الحالية: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;direction:ltr;display:inline-block;cursor:pointer" onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')">${escapeHtml(u.password_hint)}</code>)</span>`
-            : '<span style="color:var(--muted);font-weight:600;font-size:.76rem">(غير محددة)</span>'}
-        </label>
+        <label>كلمة المرور الجديدة ${u.password_hint ? `<span style="color:var(--muted);font-weight:600;font-size:.76rem">(الحالية: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;direction:ltr;display:inline-block;cursor:pointer" onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')">${escapeHtml(u.password_hint)}</code>)</span>` : ''}</label>
         <div style="position:relative">
           <input type="password" id="euPw" value="" placeholder="اتركها فارغة لعدم التغيير"
             style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
@@ -193,16 +193,22 @@ window.editUser = id => {
             <i class="fas fa-eye"></i>
           </button>
         </div>
-        <div style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.75;padding:8px 10px;border-radius:8px;background:var(--card-2);border:1px solid var(--border)">
-          <i class="fas fa-circle-info" style="color:var(--primary)"></i>
-          ${edgeEnabled
-            ? 'سيُطبَّق التغيير مباشرة. إن فشل الاتصال بالخدمة، سيُرسل رابط بالبريد تلقائياً.'
-            : 'سيُرسل رابط آمن إلى بريد المستخدم لتعيين كلمة المرور الجديدة.'}
-        </div>
       </div>
 
+      ${isOwner && !isTargetAdmin ? `
       <div class="form-group" style="margin-bottom:12px">
-        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">حالة الحساب</label>
+        <label>الدور</label>
+        <select id="euRole"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="user" ${u.role==='user'?'selected':''}>👤 مستخدم عادي</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>🛡️ أدمن</option>
+        </select>
+      </div>
+      ` : ''}
+
+      ${!isTargetAdmin ? `
+      <div class="form-group" style="margin-bottom:12px">
+        <label>حالة الحساب</label>
         <select id="euStatus"
           style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
           <option value="approved" ${u.status==='approved'?'selected':''}>✅ مشترك</option>
@@ -210,14 +216,16 @@ window.editUser = id => {
           <option value="rejected" ${u.status==='rejected'?'selected':''}>❌ مرفوض</option>
         </select>
       </div>
+      ` : ''}
 
       <div id="euStatusBar" style="display:none;padding:10px 12px;border-radius:10px;font-size:.78rem;font-weight:700;text-align:center;margin-top:8px"></div>
     `,
-    okText:'حفظ',
+    okText: 'حفظ',
     onOk: async () => {
       const newPw = document.getElementById('euPw').value.trim();
       const statusBar = document.getElementById('euStatusBar');
       const showBar = (kind, html) => {
+        if(!statusBar) return;
         statusBar.style.display = 'block';
         if(kind === 'ok'){ statusBar.style.background = 'rgba(34,197,94,.14)'; statusBar.style.color = '#16a34a'; }
         else if(kind === 'warn'){ statusBar.style.background = 'rgba(247,179,43,.16)'; statusBar.style.color = '#d97706'; }
@@ -227,100 +235,66 @@ window.editUser = id => {
 
       const upd = {
         name: document.getElementById('euName').value.trim() || u.name,
-        email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email,
-        status: document.getElementById('euStatus').value
+        email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email
       };
 
-      // 1) حدّث البيانات الأساسية
+      const statusEl = document.getElementById('euStatus');
+      if(statusEl) upd.status = statusEl.value;
+
+      const roleEl = document.getElementById('euRole');
+      if(roleEl) upd.role = roleEl.value;
+
       const { error } = await sb.from('profiles').update(upd).eq('id', id);
-      if(error){
-        showBar('err', '<i class="fas fa-circle-xmark"></i> فشل التحديث: ' + error.message);
-        return;
-      }
+      if(error){ showBar('err', '<i class="fas fa-circle-xmark"></i> فشل التحديث: ' + error.message); return; }
 
-      // 2) لا تغيير في كلمة السر
-      if(!newPw || newPw === u.password_hint){
-        Object.assign(u, upd);
-        renderUsersTable();
-        toast('تم تحديث البيانات', 'ok');
-        return;
-      }
+      /* تغيير كلمة المرور */
+      if(newPw && newPw !== u.password_hint){
+        if(newPw.length < 8){ showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور 8 أحرف على الأقل'); return; }
+        showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري تحديث كلمة المرور...');
 
-      // 3) تحقق من صحة كلمة السر الجديدة
-      if(newPw.length < 8){
-        showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور يجب أن تكون 8 أحرف على الأقل');
-        return;
-      }
-
-      // 4) جرّب Edge Function مباشرة
-      showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري تحديث كلمة المرور...');
-      let directSuccess = false;
-
-      if(edgeEnabled){
+        let success = false;
         try{
           const { data: { session: curSess } } = await sb.auth.getSession();
-          const ctrl = new AbortController();
-          const timeoutId = setTimeout(() => ctrl.abort(), 15000);
-
           const res = await fetch(CHANGE_PASS_URL, {
             method: 'POST',
-            signal: ctrl.signal,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '')
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '') },
             body: JSON.stringify({ userId: id, newPassword: newPw })
           });
-          clearTimeout(timeoutId);
+          if(res.ok){ const r = await res.json(); if(r && r.success) success = true; }
+        }catch(e){}
 
-          if(res.ok){
-            const result = await res.json().catch(() => ({}));
-            if(result && result.success){
-              directSuccess = true;
-            }
-          }
+        if(success){
+          try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
+          upd.password_hint = newPw;
+          Object.assign(u, upd);
+          renderUsersTable();
+          showBar('ok', '<i class="fas fa-circle-check"></i> ✅ تم التحديث وكلمة المرور مباشرة');
+          toast('✓ تم تغيير كلمة المرور', 'ok');
+          setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 1500);
+          return;
+        }
+
+        try{
+          const { error: eErr } = await sb.auth.resetPasswordForEmail(upd.email, {
+            redirectTo: window.location.origin + window.location.pathname
+          });
+          if(eErr) throw eErr;
+          try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
+          upd.password_hint = newPw;
+          Object.assign(u, upd);
+          renderUsersTable();
+          showBar('ok', '<i class="fas fa-circle-check"></i> تم إرسال رابط إعادة تعيين للمستخدم');
+          setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 2000);
+          return;
         }catch(e){
-          console.warn('Edge Function failed, using fallback:', e.message);
+          showBar('err', '<i class="fas fa-circle-xmark"></i> فشل: ' + escapeHtml(e.message));
+          return;
         }
       }
 
-      // 5) إذا نجح التغيير المباشر
-      if(directSuccess){
-        try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
-        upd.password_hint = newPw;
-        Object.assign(u, upd);
-        renderUsersTable();
-        showBar('ok', '<i class="fas fa-circle-check"></i> ✅ تم تحديث البيانات وكلمة المرور مباشرة');
-        toast('✅ تم تغيير كلمة المرور فوراً', 'ok');
-        setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 1500);
-        return;
-      }
-
-      // 6) Fallback: أرسل رابط إعادة تعيين بالبريد
-      showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري إرسال رابط الاستعادة بالبريد...');
-      try{
-        const email = upd.email || u.email;
-        const { error: eErr } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + window.location.pathname
-        });
-        if(eErr) throw eErr;
-
-        // احفظ التلميح
-        try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
-        upd.password_hint = newPw;
-        Object.assign(u, upd);
-        renderUsersTable();
-
-        showBar('ok', `
-          <div style="margin-bottom:4px"><i class="fas fa-circle-check"></i> ✅ تم التحديث + إرسال رابط الاستعادة</div>
-          <div style="font-size:.72rem;opacity:.85;font-weight:500">أُرسل الرابط إلى: <b style="direction:ltr;display:inline-block">${escapeHtml(email)}</b></div>
-          <div style="font-size:.72rem;opacity:.75;font-weight:500;margin-top:4px">سيضبط المستخدم كلمة المرور الجديدة عند الضغط على الرابط.</div>
-        `);
-        toast('📧 أُرسل رابط الاستعادة للمستخدم', 'ok');
-        setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 2500);
-      }catch(e){
-        showBar('err', '<i class="fas fa-circle-xmark"></i> فشل إرسال الرابط: ' + escapeHtml(e.message || 'خطأ'));
-      }
+      Object.assign(u, upd);
+      renderUsersTable();
+      toast('✓ تم تحديث البيانات', 'ok');
     }
   });
 };
