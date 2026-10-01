@@ -431,6 +431,10 @@ async function flushProgressSync(){
 }
 
 /* ================= BUTTONS ================= */
+const rdAiHelp = document.getElementById('rdAiHelp');
+if(rdAiHelp) rdAiHelp.addEventListener('click', () => {
+  if(typeof openFileAiHelp === 'function') openFileAiHelp();
+});
 function updateFavBtn(){
   const b = $('#rdFav'); if(!b || !RS.file) return;
   const on = userData.favs.includes(RS.file.id);
