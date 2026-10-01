@@ -1,5 +1,5 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع + تحميل البيانات (محسّن ضد التعليق)
+   21) APP — نقطة الإقلاع + تحميل البيانات (نسخة نهائية آمنة)
 ============================================================ */
 
 async function loadProfilesAndFiles(retry = 3){
@@ -22,7 +22,7 @@ async function loadProfilesAndFiles(retry = 3){
       DB.users = (usersData || []).filter(u => u.role !== 'admin');
     }catch(e){}
   }
-  renderFiles(); renderRecent(); renderHomeStats(); renderAdmin();
+  try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
   const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
 }
 
@@ -108,67 +108,116 @@ async function loadMyVideoProgress(){
 }
 
 /* ============================================================
-   إخفاء كل الشاشات — دوال آمنة
+   دوال التحكم بالشاشات — آمنة ومستقلة
 ============================================================ */
+
+/* إخفاء كل الشاشات */
 function hideAllScreens(){
-  try{ const w = $('#welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
-  try{ const a = $('#auth'); if(a) a.classList.remove('open'); }catch(e){}
-  try{ const ap = $('#app'); if(ap) ap.classList.remove('open'); }catch(e){}
+  try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
+  try{ const a = document.getElementById('auth'); if(a) a.classList.remove('open'); }catch(e){}
+  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); } }catch(e){}
 }
 
-async function enterApp(){
+/* عرض شاشة الترحيب فقط */
+async function showWelcome(){
   try{
-    /* ⭐ الأهم: اخفِ كل الشاشات فوراً */
-    hideAllScreens();
+    // أخفِ الباقي
+    const a = document.getElementById('auth'); if(a) a.classList.remove('open');
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
 
-    if(!session){
-      showWelcome();
-      return;
+    // اعرض الترحيب
+    const w = document.getElementById('welcome');
+    if(w){
+      w.style.display = 'flex';
+      w.classList.remove('exit');
     }
 
-    /* جلب الملف الشخصي */
+    // زر الخروج الاحتياطي: أظهره فقط لو فيه جلسة
+    const welcomeLogout = document.getElementById('welcomeLogout');
+    if(welcomeLogout){
+      try{
+        const { data: { session: s } } = await sb.auth.getSession();
+        welcomeLogout.style.display = s ? 'inline-flex' : 'none';
+      }catch(e){
+        welcomeLogout.style.display = 'none';
+      }
+    }
+  }catch(e){ console.warn('showWelcome error:', e); }
+}
+window.showWelcome = showWelcome;
+
+/* عرض شاشة تسجيل الدخول فقط */
+function showAuthScreen(){
+  try{
+    const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+    const a = document.getElementById('auth'); if(a) a.classList.add('open');
+    if(typeof showAuthForm === 'function') showAuthForm('login');
+  }catch(e){ console.warn('showAuthScreen error:', e); }
+}
+window.showAuthScreen = showAuthScreen;
+
+/* ============================================================
+   enterApp — ترجع true عند النجاح، false عند الفشل
+============================================================ */
+async function enterApp(){
+  try{
+    /* 1) أخفِ كل الشاشات فوراً */
+    hideAllScreens();
+
+    /* 2) لا توجد جلسة → اعرض الترحيب */
+    if(!session){
+      await showWelcome();
+      return false;
+    }
+
+    /* 3) جلب الملف الشخصي */
     let profileData = null;
     try{
       const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
       if(error) throw error;
       profileData = data;
     }catch(err){
-      console.error('profile fetch error:', err);
-      toast('تعذّر تحميل الملف الشخصي — جاري تسجيل الخروج', 'err');
+      console.error('❌ profile fetch error:', err);
+      try{ toast('تعذّر تحميل الملف الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
-      setTimeout(() => { showWelcome(); showAuth(); }, 600);
-      return;
+      session = null;
+      currentUserObj = null;
+      await showWelcome();
+      return false;
     }
 
     if(!profileData){
-      toast('لم يتم العثور على ملفك الشخصي', 'err');
+      try{ toast('لم يتم العثور على ملفك الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
-      setTimeout(() => { showWelcome(); showAuth(); }, 600);
-      return;
+      session = null;
+      currentUserObj = null;
+      await showWelcome();
+      return false;
     }
 
     currentUserObj = profileData;
 
-    /* حمّل التفضيلات */
+    /* 4) حمّل التفضيلات */
     try{ loadPrefs(); }catch(e){ console.warn('loadPrefs failed', e); }
     try{ loadPrefsFromDB(); }catch(e){ console.warn('loadPrefsFromDB failed', e); }
     try{ loadDrawings(); }catch(e){ console.warn('loadDrawings failed', e); }
 
-    /* طبّق الثيمات والواجهة */
+    /* 5) طبّق الثيمات */
     try{ applyTheme(); }catch(e){}
     try{ applyUserUI(); }catch(e){ console.warn('applyUserUI failed', e); }
 
-    /* ⭐ افتح التطبيق */
-    const appEl = $('#app');
+    /* 6) افتح التطبيق */
+    const appEl = document.getElementById('app');
     if(appEl) appEl.classList.add('open');
-    const mainScroll = $('#mainScroll');
+    const mainScroll = document.getElementById('mainScroll');
     if(mainScroll) mainScroll.scrollTop = 0;
 
-    /* حمّل إعدادات المتجر والمنتجات دائماً */
+    /* 7) حمّل إعدادات المتجر والمنتجات */
     try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){ console.warn(e); }
     try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){ console.warn(e); }
 
-    /* حمّل حسب حالة الحساب */
+    /* 8) حمّل حسب حالة الحساب */
     if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
       try{ await loadProfilesAndFiles(); }catch(e){ console.warn(e); }
       try{ await loadMyProgress(); }catch(e){ console.warn(e); }
@@ -179,7 +228,7 @@ async function enterApp(){
       try{ renderFiles(); renderRecent(); }catch(e){}
     }
 
-    /* هل نعرض المتجر؟ */
+    /* 9) هل نعرض المتجر فقط؟ */
     const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
@@ -187,21 +236,18 @@ async function enterApp(){
     console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
 
     if(_showStore && storeEl && titlesOk){
-      /* وضع المتجر فقط */
       if(appEl) appEl.classList.add('store-only');
       try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
       try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
       try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
       try{ go('store'); }catch(e){}
-      setTimeout(() => {
-        try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){}
-      }, 800);
+      setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){} }, 800);
     } else {
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){ console.warn('goFromHash failed', e); }
     }
 
-    /* باقي التهيئة */
+    /* 10) باقي التهيئة */
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
@@ -225,18 +271,16 @@ async function enterApp(){
     try{ syncMyXp(); }catch(e){}
     try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
 
-    setTimeout(() => {
-      try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){}
-    }, 400);
+    setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 400);
 
-    /* اشتراكات realtime */
+    /* 11) Realtime */
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
     try{ if(currentUserObj.role === 'admin') subscribeProfilesForAdmin(); }catch(e){}
 
-    /* فتح فيديو من الرابط */
+    /* 12) فتح فيديو من الرابط */
     const m = location.hash.match(/^#watch=(.+)$/);
     if(m && m[1]){
       const vid = m[1];
@@ -250,47 +294,32 @@ async function enterApp(){
       }, 700);
     }
 
+    return true;
+
   }catch(err){
-    /* ⭐ أي خطأ غير متوقع — لا تترك المستخدم معلقاً */
     console.error('❌ enterApp fatal error:', err);
-    toast('حدث خطأ غير متوقع: ' + (err.message || 'غير معروف'), 'err');
-
-    /* جرّب الإصلاح التلقائي */
-    try{
-      await sb.auth.signOut();
-    }catch(e){}
-
-    setTimeout(() => {
-      try{ showWelcome(); showAuth(); }catch(e){}
-    }, 800);
+    try{ toast('حدث خطأ غير متوقع', 'err'); }catch(e){}
+    try{ await sb.auth.signOut(); }catch(e){}
+    session = null;
+    currentUserObj = null;
+    await showWelcome();
+    return false;
   }
 }
 
+/* ============================================================
+   تحديث شامل
+============================================================ */
 function refreshAll(){
-  renderFiles(); renderHomeStats(); updateSidebar();
-  if($('#view-progress').classList.contains('active')) renderProgress();
-  checkBadges();
-}
-
-function showWelcome(){
   try{
-    const w = $('#welcome');
-    if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
-    const a = $('#auth'); if(a) a.classList.remove('open');
-    const ap = $('#app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
-  }catch(e){ console.warn('showWelcome error', e); }
+    renderFiles(); renderHomeStats(); updateSidebar();
+    if($('#view-progress').classList.contains('active')) renderProgress();
+    checkBadges();
+  }catch(e){}
 }
-window.showWelcome = showWelcome;
-
-window.addEventListener('beforeunload', () => {
-  clearTimeout(prefsSaveTimer);
-  try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
-  saveDrawings(); flushProgressSync();
-  if(typeof pushVideoProgress === 'function'){ try{ pushVideoProgress(); }catch(e){} }
-});
 
 /* ============================================================
-   شارة بيانات المستخدم في وضع المتجر فقط
+   شارة المستخدم في وضع المتجر
 ============================================================ */
 function renderStoreUserBadge(){
   if(!currentUserObj) return;
@@ -310,15 +339,98 @@ function renderStoreUserBadge(){
 }
 window.renderStoreUserBadge = renderStoreUserBadge;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const fab = document.getElementById('storeLogoutFab');
-  if(fab){
-    fab.addEventListener('click', () => {
-      const btn = document.getElementById('logoutBtn');
-      if(btn) btn.click();
-    });
-  }
-});
+/* ============================================================
+   زر «ابدأ رحلتك»
+============================================================ */
+function bindEnterButton(){
+  const enterBtn = document.getElementById('enterBtn');
+  if(!enterBtn) return;
+  if(enterBtn.dataset.bound === '1') return;
+  enterBtn.dataset.bound = '1';
+
+  enterBtn.addEventListener('click', async () => {
+    if(enterBtn.disabled) return;
+    enterBtn.disabled = true;
+    const orig = enterBtn.innerHTML;
+    enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+
+    let navigated = false;
+
+    try{
+      /* 1) هل هناك جلسة؟ */
+      let s = null;
+      try{
+        const r = await sb.auth.getSession();
+        s = r.data.session;
+      }catch(e){}
+
+      /* 2) نعم → جرّب الدخول مباشرة */
+      if(s){
+        session = s;
+        const ok = await enterApp();
+        if(ok){ navigated = true; return; }
+        // enterApp فشلت → ستُظهر الشاشة الترحيبية تلقائياً
+        navigated = true;
+        return;
+      }
+
+      /* 3) لا → اعرض شاشة تسجيل الدخول */
+      const w = document.getElementById('welcome');
+      if(w){
+        w.classList.add('exit');
+        setTimeout(() => {
+          if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+          showAuthScreen();
+        }, 500);
+      } else {
+        showAuthScreen();
+      }
+      navigated = true;
+
+    }catch(e){
+      console.error('start journey error:', e);
+      /* أي خطأ → اعرض شاشة الدخول فوراً */
+      try{
+        const w = document.getElementById('welcome');
+        if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+        showAuthScreen();
+      }catch(err){}
+      navigated = true;
+
+    }finally{
+      // أعد الزر لشكله الأصلي بعد فترة
+      setTimeout(() => {
+        try{
+          enterBtn.disabled = false;
+          enterBtn.innerHTML = orig;
+        }catch(e){}
+      }, 1200);
+    }
+  });
+}
+
+/* ============================================================
+   زر الخروج الاحتياطي في شاشة الترحيب
+============================================================ */
+function bindWelcomeLogout(){
+  const btn = document.getElementById('welcomeLogout');
+  if(!btn) return;
+  if(btn.dataset.bound === '1') return;
+  btn.dataset.bound = '1';
+
+  btn.addEventListener('click', async () => {
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{ await sb.auth.signOut(); }catch(e){}
+    currentUserObj = null;
+    session = null;
+    try{ cleanupChannels(); }catch(e){}
+    try{ sessionStorage.clear(); }catch(e){}
+    try{ localStorage.removeItem('sb-auth-session'); }catch(e){}
+    toast('تم تسجيل الخروج بنجاح ✓', 'ok');
+    setTimeout(() => location.reload(), 500);
+  });
+}
 
 /* ============================================================
    الإقلاع
@@ -328,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userData = defaultUD();
     applyTheme();
 
-    /* اجلب الجلسة */
+    /* جلب الجلسة */
     try{
       const { data: { session: s } } = await sb.auth.getSession();
       session = s;
@@ -351,24 +463,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       else if(event === 'SIGNED_OUT'){
         currentUserObj = null;
+        session = null;
         try{ cleanupChannels(); }catch(e){}
-        try{
-          const ap = $('#app');
-          if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
-        }catch(e){}
-        showWelcome();
+        await showWelcome();
       }
     });
 
     /* ⭐ قرر العرض الأولي */
     if(session){
-      try{ await enterApp(); }
-      catch(e){
+      try{
+        const ok = await enterApp();
+        if(!ok) await showWelcome();
+      }catch(e){
         console.error('init enterApp failed:', e);
-        showWelcome();
+        await showWelcome();
       }
     } else {
-      showWelcome();
+      await showWelcome();
     }
 
     /* رابط استعادة كلمة المرور */
@@ -378,86 +489,45 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 900);
     }
 
-    /* زر الدخول */
-    const enterBtn = $('#enterBtn');
-    if(enterBtn){
-      enterBtn.addEventListener('click', async () => {
-        /* ⭐ إذا كانت هناك جلسة محفوظة، حاول الدخول مباشرة */
-        if(session){
-          try{
-            const { data: { session: s } } = await sb.auth.getSession();
-            if(s){
-              session = s;
-              await enterApp();
-              return;
-            }
-          }catch(e){ console.warn('retry enterApp failed', e); }
-        }
-        /* وإلا، اعرض شاشة تسجيل الدخول */
-        const w = $('#welcome');
-        if(w) w.classList.add('exit');
-        setTimeout(() => {
-          if(w) w.style.display = 'none';
-          showAuth();
-          showAuthForm('login');
-        }, 900);
-      });
-    }
+    /* اربط الأزرار */
+    bindEnterButton();
+    bindWelcomeLogout();
 
     /* Enter للدخول */
     document.addEventListener('keydown', function onEnter(e){
       if(e.key === 'Enter'){
-        const w = $('#welcome');
+        const w = document.getElementById('welcome');
         if(w && w.style.display !== 'none' && !w.classList.contains('exit')){
-          const btn = $('#enterBtn');
-          if(btn) btn.click();
+          const btn = document.getElementById('enterBtn');
+          if(btn && !btn.disabled) btn.click();
         }
       }
     });
 
+    /* Orientation */
     let rotTimer = null;
     window.addEventListener('orientationchange', () => {
       clearTimeout(rotTimer);
       rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
     });
 
-         /* ⭐ زر خروج احتياطي في شاشة الترحيب */
-    const welcomeLogout = document.getElementById('welcomeLogout');
-    if(welcomeLogout){
-      welcomeLogout.addEventListener('click', async () => {
-        try{
-          await sb.auth.signOut();
-        }catch(e){}
-        currentUserObj = null;
-        session = null;
-        try{ cleanupChannels(); }catch(e){}
-        try{
-          sessionStorage.clear();
-        }catch(e){}
-        toast('تم تسجيل الخروج بنجاح', 'ok');
-        setTimeout(() => location.reload(), 500);
-      });
-    }
-
-    /* تحقق: هل هناك جلسة؟ اظهر الزر */
-    async function checkAndShowLogout(){
-      try{
-        const { data: { session: s } } = await sb.auth.getSession();
-        if(s && welcomeLogout){
-          welcomeLogout.style.display = 'inline-flex';
-        } else if(welcomeLogout){
-          welcomeLogout.style.display = 'none';
-        }
-      }catch(e){}
-    }
-    checkAndShowLogout();
-    setInterval(checkAndShowLogout, 3000);
-
     setupDrawUI();
 
   }catch(err){
     console.error('❌ init fatal error:', err);
-    /* ⭐ لا تترك المستخدم معلقاً */
-    try{ showWelcome(); }catch(e){}
+    try{ await showWelcome(); }catch(e){}
   }
 })();
+
+/* ============================================================
+   beforeunload
+============================================================ */
+window.addEventListener('beforeunload', () => {
+  try{
+    clearTimeout(prefsSaveTimer);
+    sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData)));
+  }catch(e){}
+  try{ saveDrawings(); }catch(e){}
+  try{ flushProgressSync(); }catch(e){}
+  try{ if(typeof pushVideoProgress === 'function') pushVideoProgress(); }catch(e){}
+});
