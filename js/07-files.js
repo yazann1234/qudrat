@@ -13,6 +13,7 @@ function fileCard(f){
   const icon = f.icon || 'fa-book';
   const color = f.color || '#5b6cff';
   const cat = f.category || 'عام';
+  const hasExplanation = f.explanation_video_id && (DB.videos || []).some(v => v.id === f.explanation_video_id);
   return `
   <div class="file-card ${f.important ? 'important' : ''} ${locked ? 'locked' : ''}" style="--fc:${color}">
     <div class="fc-head">
@@ -34,6 +35,7 @@ function fileCard(f){
         ? `<button class="btn btn-ghost" style="flex:1" onclick="showLockMessage()"><i class="fas fa-lock"></i> يتطلب اشتراك</button>`
         : `<button class="btn btn-primary" onclick="openFile('${f.id}')"><i class="fas fa-book-open"></i> ${done ? 'مراجعة' : pct > 0 ? 'متابعة' : 'فتح'}</button>`}
     </div>
+    ${!locked && hasExplanation ? `<button class="fc-explain" onclick="event.stopPropagation();openVideo('${f.explanation_video_id}')"><i class="fas fa-circle-play"></i> شرح الملف بالفيديو</button>` : ''}
   </div>`;
 }
 
