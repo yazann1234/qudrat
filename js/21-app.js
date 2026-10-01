@@ -26,6 +26,21 @@ async function loadProfilesAndFiles(retry = 3){
   const nc = $('#navCount'); if(nc) nc.textContent = DB.files.length;
 }
 
+async function loadVideos(retry = 3){
+  try{
+    const { data, error } = await sb.from('videos').select('*').order('created_at', { ascending: false });
+    if(error) throw error;
+    DB.videos = data || [];
+  }catch(err){
+    console.warn('load videos failed:', err && err.message);
+    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadVideos(retry - 1); }
+    DB.videos = [];
+  }
+  if(typeof renderVideos === 'function') renderVideos();
+  if(typeof renderAdminVideos === 'function') renderAdminVideos();
+  if(typeof renderFiles === 'function' && DB.files.length) renderFiles(); // لتحديث زر «شرح الملف»
+}
+
 async function loadMyProgress(){
   if(!currentUserObj || currentUserObj.role === 'admin'){ return; }
   try{
@@ -38,6 +53,27 @@ async function loadMyProgress(){
     savePrefs();
     refreshAll();
   }catch(e){ console.warn('progress load failed', e); }
+}
+
+async function loadMyVideoProgress(){
+  if(!currentUserObj || currentUserObj.role === 'admin'){ userData.videoProgress = {}; return; }
+  try{
+    const { data, error } = await sb.from('video_progress').select('*').eq('user_id', currentUserObj.id);
+    if(error) throw error;
+    userData.videoProgress = {};
+    (data || []).forEach(r => {
+      userData.videoProgress[r.video_id] = {
+        last_position: r.last_position || 0,
+        pct: r.pct || 0,
+        max_watched: r.last_position || 0,
+        completed: !!r.completed
+      };
+      if(r.completed){
+        if(!userData.awardedVideoXp) userData.awardedVideoXp = {};
+        userData.awardedVideoXp[r.video_id] = true;
+      }
+    });
+  }catch(e){ userData.videoProgress = userData.videoProgress || {}; }
 }
 
 async function enterApp(){
@@ -59,6 +95,8 @@ async function enterApp(){
   if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
     await loadProfilesAndFiles();
     await loadMyProgress();
+    await loadVideos();
+    await loadMyVideoProgress();
   } else {
     DB.files = [];
     renderFiles(); renderRecent();
@@ -76,7 +114,20 @@ async function enterApp(){
   setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 400);
   subscribeMyProfile();
   subscribeFiles();
+  if(typeof subscribeVideos === 'function') subscribeVideos();
   if(currentUserObj.role === 'admin') subscribeProfilesForAdmin();
+
+  // فتح فيديو من الرابط #watch=...
+  const m = location.hash.match(/^#watch=(.+)$/);
+  if(m && m[1]){
+    const vid = m[1];
+    setTimeout(() => {
+      if((DB.videos || []).some(v => v.id === vid)){
+        go('videos', true);
+        if(typeof openVideo === 'function') openVideo(vid);
+      }
+    }, 700);
+  }
 }
 
 function refreshAll(){
@@ -96,6 +147,7 @@ window.addEventListener('beforeunload', () => {
   clearTimeout(prefsSaveTimer);
   try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
   saveDrawings(); flushProgressSync();
+  if(typeof pushVideoProgress === 'function'){ try{ pushVideoProgress(); }catch(e){} }
 });
 
 /* ===== الإقلاع ===== */
@@ -108,20 +160,7 @@ window.addEventListener('beforeunload', () => {
     session = newSession;
     if(event === 'PASSWORD_RECOVERY'){
       setTimeout(() => {
-        openModal({
-          title: 'تعيين كلمة مرور جديدة',
-          text: 'أدخل كلمة المرور الجديدة لحسابك.',
-          bodyHTML: `<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="npPass" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
-          okText: 'حفظ كلمة المرور',
-          onOk: async () => {
-            const p = document.getElementById('npPass').value;
-            if(!p || p.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
-            const { error } = await sb.auth.updateUser({ password: p });
-            if(error){ toast('فشل: ' + error.message, 'err'); return; }
-            toast('تم تحديث كلمة المرور بنجاح', 'ok');
-            try{ history.replaceState(null, '', window.location.pathname); }catch(e){}
-          }
-        });
+        if(typeof showRecoveryModal === 'function') showRecoveryModal();
       }, 600);
       return;
     }
@@ -131,22 +170,10 @@ window.addEventListener('beforeunload', () => {
 
   if(session){ await enterApp(); } else { showWelcome(); }
 
+  // إذا في رابط استعادة في الـ hash
   if(window.location.hash && window.location.hash.includes('type=recovery')){
     setTimeout(() => {
-      openModal({
-        title: 'تعيين كلمة مرور جديدة',
-        text: 'أدخل كلمة المرور الجديدة لحسابك.',
-        bodyHTML: `<div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="npPass2" placeholder="6 أحرف على الأقل" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>`,
-        okText: 'حفظ كلمة المرور',
-        onOk: async () => {
-          const p = document.getElementById('npPass2').value;
-          if(!p || p.length < 6){ toast('كلمة المرور قصيرة', 'err'); return; }
-          const { error } = await sb.auth.updateUser({ password: p });
-          if(error){ toast('فشل: ' + error.message, 'err'); return; }
-          toast('تم تحديث كلمة المرور بنجاح', 'ok');
-          try{ history.replaceState(null, '', window.location.pathname); }catch(e){}
-        }
-      });
+      if(typeof showRecoveryModal === 'function') showRecoveryModal();
     }, 900);
   }
 
