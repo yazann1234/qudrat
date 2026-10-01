@@ -883,53 +883,107 @@
       </div>
 
       <div class="admin-panel" id="panel-storesettings">
-        <div class="card-basic">
-          <h3><i class="fas fa-cog"></i> إعدادات المتجر</h3>
-          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
-            هذه البيانات تظهر للطلاب في صفحة الشراء (رقم الآيبان، صورة الحساب، ورقم الدعم الفني).
-          </p>
+  <div class="store-settings-header">
+    <div class="store-settings-icon"><i class="fas fa-cog"></i></div>
+    <div>
+      <h3>إعدادات المتجر</h3>
+      <p>هذه البيانات تظهر للطلاب في صفحة الشراء — تأكد من دقتها</p>
+    </div>
+  </div>
 
-          <div class="form-group">
-            <label>رقم الآيبان *</label>
-            <input type="text" id="ssIban" placeholder="SA0000000000000000000000" style="direction:ltr;text-align:left;font-family:'Courier New',monospace">
-          </div>
+  <div class="store-settings-grid">
 
-          <div class="form-group">
-            <label>اسم صاحب الحساب <small style="color:var(--muted);font-weight:600">(اختياري)</small></label>
-            <input type="text" id="ssHolder" placeholder="مثال: محمد أحمد">
-          </div>
-
-          <div class="form-group">
-            <label>صورة حساب الآيبان</label>
-            <div id="ssIbanImageWrap"></div>
-            <input type="file" id="ssIbanImageInput" accept="image/*" hidden>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ssIbanImageInput').click()">
-                <i class="fas fa-upload"></i> <span id="ssIbanUploadLabel">اختيار صورة</span>
-              </button>
-              <button class="btn btn-danger btn-sm" id="ssIbanImageRemove" style="display:none">
-                <i class="fas fa-trash"></i> حذف الصورة
-              </button>
-            </div>
-          </div>
-
-          <div class="two-col">
-            <div class="form-group">
-              <label>رقم الدعم الفني (للعرض)</label>
-              <input type="text" id="ssPhone" placeholder="0538470160" style="direction:ltr;text-align:left">
-            </div>
-            <div class="form-group">
-              <label>رقم واتساب للدعم <small style="color:var(--muted);font-weight:600">(دولي بدون +)</small></label>
-              <input type="text" id="ssWhatsApp" placeholder="966538470160" style="direction:ltr;text-align:left">
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn btn-primary" id="ssSave" style="flex:1;padding:14px">
-              <i class="fas fa-floppy-disk"></i> حفظ الإعدادات
-            </button>
-          </div>
+    <!-- 1) معلومات الحساب البنكي -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-icon" style="background:rgba(34,197,94,.15);color:#16a34a">
+          <i class="fas fa-university"></i>
         </div>
+        <div>
+          <h4>الحساب البنكي</h4>
+          <small>بيانات التحويل البنكي</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-hashtag" style="color:var(--primary);margin-left:5px"></i> رقم الآيبان *</label>
+        <div style="position:relative">
+          <input type="text" id="ssIban" placeholder="SA0000000000000000000000"
+            style="direction:ltr;text-align:left;font-family:'Courier New',monospace;letter-spacing:1.5px;padding-left:44px">
+          <button type="button" class="field-copy-btn" onclick="copyFieldValue('ssIban')" title="نسخ">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+        <small class="field-hint"><i class="fas fa-info-circle"></i> يبدأ بـ SA ويتكون من 24 خانة</small>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-user" style="color:var(--primary);margin-left:5px"></i> اسم صاحب الحساب</label>
+        <input type="text" id="ssHolder" placeholder="مثال: محمد أحمد">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-image" style="color:var(--primary);margin-left:5px"></i> صورة الآيبان (اختياري)</label>
+        <div id="ssIbanImageWrap" class="settings-image-wrap"></div>
+        <input type="file" id="ssIbanImageInput" accept="image/*" hidden>
+        <div class="settings-image-actions">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ssIbanImageInput').click()">
+            <i class="fas fa-upload"></i> <span id="ssIbanUploadLabel">اختيار صورة</span>
+          </button>
+          <button class="btn btn-danger btn-sm" id="ssIbanImageRemove" style="display:none">
+            <i class="fas fa-trash"></i> حذف
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2) الدعم الفني -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-icon" style="background:rgba(37,211,102,.15);color:#25D366">
+          <i class="fab fa-whatsapp"></i>
+        </div>
+        <div>
+          <h4>الدعم الفني</h4>
+          <small>أرقام التواصل مع الطلاب</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fas fa-phone" style="color:var(--primary);margin-left:5px"></i> رقم الدعم (للعرض)</label>
+        <input type="tel" id="ssPhone" placeholder="0538470160" style="direction:ltr;text-align:left">
+        <small class="field-hint"><i class="fas fa-info-circle"></i> يظهر للطالب كنص</small>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fab fa-whatsapp" style="color:#25D366;margin-left:5px"></i> رقم واتساب للطلبات *</label>
+        <input type="tel" id="ssWhatsApp" placeholder="966538470160" style="direction:ltr;text-align:left">
+        <small class="field-hint"><i class="fas fa-info-circle"></i> بالصيغة الدولية بدون + أو مسافات</small>
+        <div id="waPreview" class="wa-preview"></div>
+      </div>
+
+      <div class="whatsapp-info">
+        <i class="fas fa-lightbulb" style="color:#f59e0b"></i>
+        <div>
+          <b>كيف يعمل؟</b>
+          <p>عندما يضغط الطالب "إتمام الدفع"، يُفتح واتساب برسالة جاهزة تحتوي بياناته ونوع الدورة، ثم يُرفق صورة الإيصال.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- زر الحفظ -->
+  <div class="store-settings-save-bar">
+    <div class="store-settings-status" id="storeSettingsStatus">
+      <i class="fas fa-circle-info"></i>
+      <span>لا توجد تغييرات غير محفوظة</span>
+    </div>
+    <button class="btn btn-primary btn-lg" id="ssSave" style="padding:16px 40px">
+      <i class="fas fa-floppy-disk"></i> حفظ جميع الإعدادات
+    </button>
+  </div>
+</div>
       </div>
     </section>
   </main>
