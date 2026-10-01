@@ -4,7 +4,7 @@
 
 let session = null;
 let currentUserObj = null;
-let DB = { users: [], files: [], videos: [] };
+let DB = { users: [], files: [], videos: [], products: [], storeSettings: null };
 let userData = null;
 let myProfileChannel = null, filesChannel = null, profilesChannel = null;
 
@@ -86,12 +86,17 @@ function loadPrefsFromDB(){
 
 /* ================= هل يجب عرض المتجر؟ ================= */
 function shouldShowStore(){
-  if(!currentUserObj) return false;
-  if(currentUserObj.role === 'admin') return false;
-  if(currentUserObj.status === 'approved') return false;
-  if(currentUserObj.purchase_submitted === true) return false;
-  const lsKey = 'purchase_submitted_' + currentUserObj.id;
-  if(localStorage.getItem(lsKey)) return false;
-  return true;
+  try{
+    if(!currentUserObj) return false;
+    if(currentUserObj.role === 'admin') return false;
+    if(currentUserObj.status === 'approved') return false;
+    if(currentUserObj.purchase_submitted === true) return false;
+    const lsKey = 'purchase_submitted_' + currentUserObj.id;
+    if(localStorage.getItem(lsKey)) return false;
+    return true;
+  }catch(e){
+    console.warn('shouldShowStore error:', e);
+    return false;
+  }
 }
 window.shouldShowStore = shouldShowStore;
