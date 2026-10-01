@@ -12,13 +12,18 @@ function applyUserUI(){
     const ua = document.getElementById('userAvatar');
     if(ua){ ua.textContent = av ? '' : init; ua.style.cssText = av; }
 
+    /* ⭐ الشارات: owner > admin > مشترك > معلّق */
     let badgeHTML = '';
-    if(currentUserObj.role === 'admin'){
+    if(currentUserObj.role === 'owner'){
+      badgeHTML = ' <span class="sub-badge" style="background:linear-gradient(120deg,#f7b32b,#d97706);color:#fff"><i class="fas fa-crown"></i> رئيس المنصة</span>';
+    } else if(currentUserObj.role === 'admin'){
       badgeHTML = ' <span class="sub-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
     } else if(currentUserObj.status === 'approved'){
       badgeHTML = ' <span class="sub-badge"><i class="fas fa-circle-check"></i> مشترك</span>';
     } else if(currentUserObj.status === 'pending'){
       badgeHTML = ' <span class="sub-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
+    } else if(currentUserObj.status === 'rejected'){
+      badgeHTML = ' <span class="sub-badge" style="background:linear-gradient(120deg,#ef4444,#dc2626);color:#fff"><i class="fas fa-ban"></i> مرفوض</span>';
     }
 
     const un = document.getElementById('userName'); if(un) un.innerHTML = escapeHtml(nm) + badgeHTML;
@@ -28,17 +33,24 @@ function applyUserUI(){
 
     const ss = document.getElementById('setSub');
     if(ss){
-      ss.innerHTML = currentUserObj.role === 'admin'
-        ? '<span style="color:var(--danger)"><i class="fas fa-shield-halved"></i> أدمن</span>'
-        : currentUserObj.status === 'approved'
-          ? '<span style="color:var(--success)"><i class="fas fa-circle-check"></i> مشترك</span>'
-          : currentUserObj.status === 'pending'
-            ? '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>'
-            : '<span style="color:var(--danger)"><i class="fas fa-ban"></i> مرفوض</span>';
+      if(currentUserObj.role === 'owner'){
+        ss.innerHTML = '<span style="color:#d97706"><i class="fas fa-crown"></i> رئيس المنصة</span>';
+      } else if(currentUserObj.role === 'admin'){
+        ss.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-shield-halved"></i> أدمن</span>';
+      } else if(currentUserObj.status === 'approved'){
+        ss.innerHTML = '<span style="color:var(--success)"><i class="fas fa-circle-check"></i> مشترك</span>';
+      } else if(currentUserObj.status === 'pending'){
+        ss.innerHTML = '<span style="color:var(--accent)"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+      } else {
+        ss.innerHTML = '<span style="color:var(--danger)"><i class="fas fa-ban"></i> مرفوض</span>';
+      }
     }
 
+    /* ⭐ زر لوحة الأدمن: admin أو owner */
     const adminNav = document.getElementById('adminNav');
-    if(adminNav) adminNav.style.display = currentUserObj.role === 'admin' ? 'flex' : 'none';
+    if(adminNav){
+      adminNav.style.display = isPrivileged() ? 'flex' : 'none';
+    }
 
     try{
       if(currentUserObj.password_hint && currentUserObj.id){
@@ -51,7 +63,6 @@ function applyUserUI(){
     if(typeof updateMobileUserMenu === 'function') updateMobileUserMenu();
   }catch(e){ console.warn('applyUserUI error:', e); }
 }
-window.applyUserUI = applyUserUI;
 
 /* ============================================================
    قائمة الجوال
