@@ -197,13 +197,14 @@ async function enterApp(){
       try{ renderFiles(); renderRecent(); }catch(e){}
     }
 
-    const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
+        const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
 
-    console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
+    console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status, '| role:', currentUserObj.role);
 
     if(_showStore && storeEl && titlesOk){
+      /* ⭐ مستخدم جديد pending → أظهر المتجر فقط */
       if(appEl) appEl.classList.add('store-only');
       try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
       try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
@@ -211,8 +212,18 @@ async function enterApp(){
       try{ go('store'); }catch(e){}
       setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){} }, 800);
     } else {
+      /* ⭐ مشترك أو admin أو owner → المنصة الكاملة */
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){}
+
+      /* رسالة توضيحية */
+      if(!isPrivileged() && currentUserObj.status !== 'approved'){
+        setTimeout(() => {
+          if(currentUserObj.purchase_submitted || localStorage.getItem('purchase_submitted_' + currentUserObj.id)){
+            try{ toast('⏳ حسابك قيد المراجعة — سيتم تفعيله قريباً', 'warn'); }catch(e){}
+          }
+        }, 1200);
+      }
     }
 
     try{ renderTasks(); }catch(e){}
