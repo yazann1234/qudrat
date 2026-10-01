@@ -5,6 +5,7 @@
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
   files:['الملفات','مكتبتك التعليمية الكاملة'],
+  videos:['الفيديوهات','مكتبة الدروس المرئية'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
   leaderboard:['قائمة المتصدرين','ترتيب الطلاب حسب نقاط XP'],
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
@@ -21,7 +22,7 @@ function canAccess(view){
 function go(view, skipHash){
   if(!TITLES[view]) view = 'home';
 
-  // حماية ثغرة #admin
+  // حماية #admin
   if(!canAccess(view)){
     toast('هذه الصفحة للأدمن فقط', 'err');
     if(location.hash.slice(1) === 'admin'){
@@ -45,6 +46,7 @@ function go(view, skipHash){
   if(view === 'progress' && typeof renderProgress === 'function') renderProgress();
   if(view === 'admin' && typeof renderAdmin === 'function') renderAdmin();
   if(view === 'files' && typeof renderFiles === 'function') renderFiles();
+  if(view === 'videos' && typeof renderVideos === 'function') renderVideos();
   if(view === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
   if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
 }
@@ -52,6 +54,7 @@ window.go = go;
 
 window.addEventListener('hashchange', () => {
   const v = location.hash.slice(1) || 'home';
+  if(v.startsWith('watch=')) return; // لا تتدخل بروابط الفيديو
   if(v === 'admin' && !canAccess('admin')){
     try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
     toast('هذه الصفحة للأدمن فقط', 'err');
@@ -63,6 +66,7 @@ window.addEventListener('hashchange', () => {
 
 function goFromHash(){
   const v = (location.hash.slice(1) || 'home');
+  if(v.startsWith('watch=')){ go('videos', true); return; }
   if(v === 'admin' && !canAccess('admin')){
     try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
     go('home', true);
