@@ -3,20 +3,25 @@
 ============================================================ */
 
 function renderAdmin(){
-  if(!currentUserObj || currentUserObj.role !== 'admin') return;
-  const nonAdmins = DB.users.filter(u => u.role !== 'admin');
+  /* ⭐ admin أو owner */
+  if(!isPrivileged()) return;
+
+  const nonAdmins = DB.users.filter(u => u.role !== 'admin' && u.role !== 'owner');
   const setTxt = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   setTxt('adUsers', nonAdmins.length);
   setTxt('adPending', nonAdmins.filter(u => u.status === 'pending').length);
   setTxt('adSubscribed', nonAdmins.filter(u => u.status === 'approved').length);
   setTxt('adFiles', DB.files.length);
   setTxt('adImportant', DB.files.filter(f => f.important).length);
+  setTxt('adVideos', (DB.videos || []).length);
+  setTxt('adProducts', (DB.products || []).filter(p => p.active).length);
+  setTxt('adPurchases', nonAdmins.filter(u => u.purchase_submitted).length);
+
   renderUsersTable();
-   /* إخفاء/إظهار خيار "إضافة مستخدم" و"الأدمن" للـ owner فقط */
-const ownerOnlyBtns = document.querySelectorAll('.admin-tabs button[data-panel="adduser"]');
-const isOwner = currentUserObj && currentUserObj.role === 'owner';
-ownerOnlyBtns.forEach(b => b.style.display = isOwner ? '' : 'none');
   renderAdminFiles();
+  if(typeof renderAdminVideos === 'function') renderAdminVideos();
+  if(typeof renderAdminProducts === 'function') renderAdminProducts();
+  if(typeof renderStoreSettings === 'function') renderStoreSettings();
 }
 
 function renderUsersTable(){
