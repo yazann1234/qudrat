@@ -1,7 +1,12 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع + تحميل البيانات (نسخة نهائية آمنة)
+   21) APP — نقطة الإقلاع + ربط كل الأزرار مركزياً
+   Version 2.0 — Event Delegation (يعمل دائماً)
 ============================================================ */
+window._appVersion = '2.0.0';
 
+/* ============================================================
+   تحميل البيانات
+============================================================ */
 async function loadProfilesAndFiles(retry = 3){
   try{
     const { data, error } = await sb.from('files').select('*').order('created_at', { ascending: false });
@@ -9,13 +14,9 @@ async function loadProfilesAndFiles(retry = 3){
     DB.files = data || [];
   }catch(err){
     console.warn('load files failed:', err && err.message);
-    if(retry > 0){
-      await new Promise(r => setTimeout(r, 400 * (4 - retry)));
-      return loadProfilesAndFiles(retry - 1);
-    }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 400 * (4 - retry))); return loadProfilesAndFiles(retry - 1); }
     DB.files = [];
   }
-
   if(currentUserObj && currentUserObj.role === 'admin'){
     try{
       const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
@@ -32,7 +33,6 @@ async function loadVideos(retry = 3){
     if(error) throw error;
     DB.videos = data || [];
   }catch(err){
-    console.warn('load videos failed:', err && err.message);
     if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadVideos(retry - 1); }
     DB.videos = [];
   }
@@ -44,13 +44,10 @@ async function loadVideos(retry = 3){
 async function loadProducts(retry = 2){
   try{
     const { data, error } = await sb.from('products')
-      .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false });
+      .select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
     if(error) throw error;
     DB.products = data || [];
   }catch(err){
-    console.warn('load products failed:', err && err.message);
     if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadProducts(retry - 1); }
     DB.products = [];
   }
@@ -64,7 +61,6 @@ async function loadStoreSettings(retry = 2){
     if(error) throw error;
     DB.storeSettings = data || null;
   }catch(err){
-    console.warn('load store_settings failed:', err && err.message);
     if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadStoreSettings(retry - 1); }
     DB.storeSettings = null;
   }
@@ -108,45 +104,32 @@ async function loadMyVideoProgress(){
 }
 
 /* ============================================================
-   دوال التحكم بالشاشات — آمنة ومستقلة
+   دوال التحكم بالشاشات
 ============================================================ */
-
-/* إخفاء كل الشاشات */
 function hideAllScreens(){
   try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
   try{ const a = document.getElementById('auth'); if(a) a.classList.remove('open'); }catch(e){}
   try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); } }catch(e){}
 }
 
-/* عرض شاشة الترحيب فقط */
 async function showWelcome(){
   try{
-    // أخفِ الباقي
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
-
-    // اعرض الترحيب
     const w = document.getElementById('welcome');
-    if(w){
-      w.style.display = 'flex';
-      w.classList.remove('exit');
-    }
+    if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
 
-    // زر الخروج الاحتياطي: أظهره فقط لو فيه جلسة
     const welcomeLogout = document.getElementById('welcomeLogout');
     if(welcomeLogout){
       try{
-        const { data: { session: s } } = await sb.auth.getSession();
-        welcomeLogout.style.display = s ? 'inline-flex' : 'none';
-      }catch(e){
-        welcomeLogout.style.display = 'none';
-      }
+        const r = await sb.auth.getSession();
+        welcomeLogout.style.display = r.data.session ? 'inline-flex' : 'none';
+      }catch(e){ welcomeLogout.style.display = 'none'; }
     }
   }catch(e){ console.warn('showWelcome error:', e); }
 }
 window.showWelcome = showWelcome;
 
-/* عرض شاشة تسجيل الدخول فقط */
 function showAuthScreen(){
   try{
     const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
@@ -158,31 +141,24 @@ function showAuthScreen(){
 window.showAuthScreen = showAuthScreen;
 
 /* ============================================================
-   enterApp — ترجع true عند النجاح، false عند الفشل
+   enterApp
 ============================================================ */
 async function enterApp(){
   try{
-    /* 1) أخفِ كل الشاشات فوراً */
     hideAllScreens();
 
-    /* 2) لا توجد جلسة → اعرض الترحيب */
-    if(!session){
-      await showWelcome();
-      return false;
-    }
+    if(!session){ await showWelcome(); return false; }
 
-    /* 3) جلب الملف الشخصي */
     let profileData = null;
     try{
-      const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-      if(error) throw error;
-      profileData = data;
+      const r = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+      if(r.error) throw r.error;
+      profileData = r.data;
     }catch(err){
-      console.error('❌ profile fetch error:', err);
+      console.error('profile fetch error:', err);
       try{ toast('تعذّر تحميل الملف الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
-      session = null;
-      currentUserObj = null;
+      session = null; currentUserObj = null;
       await showWelcome();
       return false;
     }
@@ -190,45 +166,37 @@ async function enterApp(){
     if(!profileData){
       try{ toast('لم يتم العثور على ملفك الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
-      session = null;
-      currentUserObj = null;
+      session = null; currentUserObj = null;
       await showWelcome();
       return false;
     }
 
     currentUserObj = profileData;
 
-    /* 4) حمّل التفضيلات */
-    try{ loadPrefs(); }catch(e){ console.warn('loadPrefs failed', e); }
-    try{ loadPrefsFromDB(); }catch(e){ console.warn('loadPrefsFromDB failed', e); }
-    try{ loadDrawings(); }catch(e){ console.warn('loadDrawings failed', e); }
-
-    /* 5) طبّق الثيمات */
+    try{ loadPrefs(); }catch(e){}
+    try{ loadPrefsFromDB(); }catch(e){}
+    try{ loadDrawings(); }catch(e){}
     try{ applyTheme(); }catch(e){}
-    try{ applyUserUI(); }catch(e){ console.warn('applyUserUI failed', e); }
+    try{ applyUserUI(); }catch(e){}
 
-    /* 6) افتح التطبيق */
     const appEl = document.getElementById('app');
     if(appEl) appEl.classList.add('open');
     const mainScroll = document.getElementById('mainScroll');
     if(mainScroll) mainScroll.scrollTop = 0;
 
-    /* 7) حمّل إعدادات المتجر والمنتجات */
-    try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){ console.warn(e); }
-    try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){ console.warn(e); }
+    try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){}
+    try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){}
 
-    /* 8) حمّل حسب حالة الحساب */
     if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
-      try{ await loadProfilesAndFiles(); }catch(e){ console.warn(e); }
-      try{ await loadMyProgress(); }catch(e){ console.warn(e); }
-      try{ await loadVideos(); }catch(e){ console.warn(e); }
-      try{ await loadMyVideoProgress(); }catch(e){ console.warn(e); }
+      try{ await loadProfilesAndFiles(); }catch(e){}
+      try{ await loadMyProgress(); }catch(e){}
+      try{ await loadVideos(); }catch(e){}
+      try{ await loadMyVideoProgress(); }catch(e){}
     } else {
       DB.files = [];
       try{ renderFiles(); renderRecent(); }catch(e){}
     }
 
-    /* 9) هل نعرض المتجر فقط؟ */
     const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
@@ -244,43 +212,34 @@ async function enterApp(){
       setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){} }, 800);
     } else {
       if(appEl) appEl.classList.remove('store-only');
-      try{ goFromHash(); }catch(e){ console.warn('goFromHash failed', e); }
+      try{ goFromHash(); }catch(e){}
     }
 
-    /* 10) باقي التهيئة */
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
     try{ renderThemesGrid(); }catch(e){}
-
     if(typeof notesArea !== 'undefined' && notesArea) notesArea.value = userData.notes || '';
-
     try{
       if(typeof TIMER !== 'undefined'){
-        TIMER.mode = 'focus';
-        TIMER.remain = timerTotalSec('focus');
-        updateTimerUI();
+        TIMER.mode = 'focus'; TIMER.remain = timerTotalSec('focus'); updateTimerUI();
       }
     }catch(e){}
-
     try{ applyReaderTheme(); }catch(e){}
     try{ applySnapClass(); }catch(e){}
     try{ syncSettingsUI(); }catch(e){}
     try{ renderDrawToolbar(); }catch(e){}
-
     try{ syncMyXp(); }catch(e){}
     try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
 
     setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 400);
 
-    /* 11) Realtime */
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
     try{ if(currentUserObj.role === 'admin') subscribeProfilesForAdmin(); }catch(e){}
 
-    /* 12) فتح فيديو من الرابط */
     const m = location.hash.match(/^#watch=(.+)$/);
     if(m && m[1]){
       const vid = m[1];
@@ -295,21 +254,16 @@ async function enterApp(){
     }
 
     return true;
-
   }catch(err){
-    console.error('❌ enterApp fatal error:', err);
+    console.error('enterApp fatal error:', err);
     try{ toast('حدث خطأ غير متوقع', 'err'); }catch(e){}
     try{ await sb.auth.signOut(); }catch(e){}
-    session = null;
-    currentUserObj = null;
+    session = null; currentUserObj = null;
     await showWelcome();
     return false;
   }
 }
 
-/* ============================================================
-   تحديث شامل
-============================================================ */
 function refreshAll(){
   try{
     renderFiles(); renderHomeStats(); updateSidebar();
@@ -326,7 +280,6 @@ function renderStoreUserBadge(){
   const av = document.getElementById('subUserAv');
   const nm = document.getElementById('subUserName');
   if(!av || !nm) return;
-
   const initial = String(currentUserObj.name || '؟').trim().charAt(0) || '؟';
   if(currentUserObj.avatar_url){
     av.textContent = '';
@@ -340,97 +293,364 @@ function renderStoreUserBadge(){
 window.renderStoreUserBadge = renderStoreUserBadge;
 
 /* ============================================================
-   زر «ابدأ رحلتك»
+   ⭐ معالجات الأزرار المركزية (Event Delegation)
 ============================================================ */
-function bindEnterButton(){
-  const enterBtn = document.getElementById('enterBtn');
-  if(!enterBtn) return;
-  if(enterBtn.dataset.bound === '1') return;
-  enterBtn.dataset.bound = '1';
 
-  enterBtn.addEventListener('click', async () => {
-    if(enterBtn.disabled) return;
-    enterBtn.disabled = true;
-    const orig = enterBtn.innerHTML;
-    enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+/* --- زر «ابدأ رحلتك» --- */
+async function handleEnterBtn(){
+  const btn = document.getElementById('enterBtn');
+  if(!btn || btn.disabled) return;
 
-    let navigated = false;
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
 
+  try{
+    let s = null;
     try{
-      /* 1) هل هناك جلسة؟ */
-      let s = null;
-      try{
-        const r = await sb.auth.getSession();
-        s = r.data.session;
-      }catch(e){}
+      const r = await sb.auth.getSession();
+      s = r.data.session;
+    }catch(e){}
 
-      /* 2) نعم → جرّب الدخول مباشرة */
-      if(s){
-        session = s;
-        const ok = await enterApp();
-        if(ok){ navigated = true; return; }
-        // enterApp فشلت → ستُظهر الشاشة الترحيبية تلقائياً
-        navigated = true;
+    if(s){
+      session = s;
+      const ok = await enterApp();
+      if(!ok) await showWelcome();
+      return;
+    }
+
+    /* لا جلسة → شاشة الدخول */
+    const w = document.getElementById('welcome');
+    if(w){
+      w.classList.add('exit');
+      setTimeout(() => {
+        if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+        showAuthScreen();
+      }, 400);
+    } else {
+      showAuthScreen();
+    }
+  }catch(e){
+    console.error('enterBtn error:', e);
+    showAuthScreen();
+  }finally{
+    setTimeout(() => {
+      if(btn){ btn.disabled = false; btn.innerHTML = orig; }
+    }, 1000);
+  }
+}
+
+/* --- زر خروج احتياطي في الترحيب --- */
+async function handleWelcomeLogout(){
+  try{
+    await sb.auth.signOut();
+  }catch(e){}
+  currentUserObj = null;
+  session = null;
+  try{ cleanupChannels(); }catch(e){}
+  try{ sessionStorage.clear(); }catch(e){}
+  try{ localStorage.clear(); }catch(e){}
+  try{ toast('تم تسجيل الخروج بنجاح ✓', 'ok'); }catch(e){}
+  setTimeout(() => location.reload(), 500);
+}
+
+/* --- تسجيل الدخول --- */
+async function handleLogin(){
+  const btn = document.getElementById('loginBtn');
+  if(!btn || btn.disabled) return;
+
+  const emailEl = document.getElementById('loginEmail');
+  const passEl = document.getElementById('loginPass');
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass = passEl ? passEl.value : '';
+
+  if(!email || !pass){
+    showMsg('loginMsg', 'أدخل البريد وكلمة المرور');
+    return;
+  }
+
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الدخول...';
+
+  try{
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error){
+      const m = error.message === 'Invalid login credentials'
+        ? 'البريد أو كلمة المرور غير صحيحة'
+        : (error.message || 'خطأ في تسجيل الدخول');
+      showMsg('loginMsg', m);
+      return;
+    }
+    showMsg('loginMsg', 'تم تسجيل الدخول ✓', 'ok');
+    /* onAuthStateChange سيتولى الباقي */
+  }catch(e){
+    showMsg('loginMsg', e.message || 'خطأ غير متوقع');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+/* --- إنشاء حساب جديد --- */
+async function handleRegister(){
+  const btn = document.getElementById('regBtn');
+  if(!btn || btn.disabled) return;
+
+  const nameEl = document.getElementById('regName');
+  const emailEl = document.getElementById('regEmail');
+  const passEl = document.getElementById('regPass');
+
+  const name = (nameEl ? nameEl.value : '').trim();
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass = passEl ? passEl.value : '';
+
+  if(!name || name.length < 2){ showMsg('regMsg', 'أدخل اسماً صحيحاً (حرفان على الأقل)'); return; }
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg', 'أدخل بريداً إلكترونياً صحيحاً'); return; }
+  if(!pass || pass.length < 8){ showMsg('regMsg', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+
+  try{
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass, options: { data: { name } }
+    });
+
+    if(error){ showMsg('regMsg', error.message); return; }
+
+    showMsg('regMsg', 'تم إنشاء حسابك! بانتظار موافقة الأدمن...', 'ok');
+
+    /* احفظ كلمة السر */
+    try{
+      if(data && data.user){
+        sessionStorage.setItem('pending_pass_' + data.user.id, pass);
+        localStorage.setItem('pending_pass_' + data.user.id, pass);
+        await new Promise(r => setTimeout(r, 800));
+        await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
+      }
+    }catch(e){ console.warn('save pass:', e); }
+
+    if(!(data && data.session)){
+      setTimeout(() => showMsg('regMsg', 'تفقّد بريدك لتأكيد الحساب', 'ok'), 1500);
+    }
+  }catch(e){
+    showMsg('regMsg', e.message || 'خطأ غير متوقع');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+/* --- دخول الأدمن --- */
+async function handleAdminLogin(){
+  const btn = document.getElementById('adminBtn');
+  if(!btn || btn.disabled) return;
+
+  const emailEl = document.getElementById('adminEmail');
+  const passEl = document.getElementById('adminPass');
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass = passEl ? passEl.value : '';
+
+  if(!email || !pass){ showMsg('adminMsg', 'أدخل البريد وكلمة المرور'); return; }
+
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+
+  try{
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error){ showMsg('adminMsg', 'بيانات الدخول غير صحيحة'); return; }
+
+    const { data: prof, error: pErr } = await sb.from('profiles').select('role').eq('id', data.user.id).single();
+    if(pErr || !prof || prof.role !== 'admin'){
+      await sb.auth.signOut();
+      showMsg('adminMsg', 'هذا الحساب ليس حساب أدمن');
+      return;
+    }
+    showMsg('adminMsg', 'مرحباً بك أيها المدير ✓', 'ok');
+  }catch(e){
+    showMsg('adminMsg', e.message || 'خطأ غير متوقع');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+/* --- نسيت كلمة المرور --- */
+function handleForgotPassword(){
+  openModal({
+    title: 'استعادة كلمة المرور',
+    text: '',
+    bodyHTML: `
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="width:72px;height:72px;margin:0 auto 12px;border-radius:22px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary) 14%,transparent);border:1px solid color-mix(in srgb,var(--primary) 28%,transparent)">
+          <i class="fas fa-key" style="font-size:1.7rem;color:var(--primary)"></i>
+        </div>
+        <p style="font-size:.86rem;color:var(--muted);line-height:1.9;margin:0">أدخل بريدك المسجّل، وسنرسل لك رابطاً آمناً لإعادة تعيين كلمة المرور.</p>
+      </div>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">البريد الإلكتروني</label>
+        <input type="email" id="fpEmail" placeholder="example@email.com" autocomplete="email"
+          style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+
+      <button type="button" id="fpSendBtn" class="btn btn-primary" style="width:100%;padding:13px;font-size:.88rem">
+        <i class="fas fa-paper-plane"></i> إرسال رابط الاستعادة
+      </button>
+
+      <div id="fpStatus" style="display:none;margin-top:12px;padding:13px 15px;border-radius:12px;font-size:.82rem;line-height:1.85;font-weight:600;text-align:center"></div>
+    `,
+    okText: 'إغلاق',
+    onOk: () => {}
+  });
+
+  setTimeout(() => {
+    const btn = document.getElementById('fpSendBtn');
+    const inp = document.getElementById('fpEmail');
+    const status = document.getElementById('fpStatus');
+    if(!btn || !inp) return;
+
+    const loginEmail = document.getElementById('loginEmail');
+    if(loginEmail && loginEmail.value && !inp.value){
+      inp.value = loginEmail.value.trim().toLowerCase();
+    }
+
+    let cooldownTimer = null;
+
+    function showStatus(kind, html){
+      status.style.display = 'block';
+      if(kind === 'ok'){ status.style.background = 'rgba(34,197,94,.12)'; status.style.color = '#16a34a'; status.style.border = '1px solid rgba(34,197,94,.28)'; }
+      else if(kind === 'err'){ status.style.background = 'rgba(239,68,68,.12)'; status.style.color = '#dc2626'; status.style.border = '1px solid rgba(239,68,68,.28)'; }
+      else { status.style.background = 'var(--bg)'; status.style.color = 'var(--text)'; status.style.border = '1px solid var(--border)'; }
+      status.innerHTML = html;
+    }
+
+    async function sendReset(){
+      const email = inp.value.trim().toLowerCase();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        showStatus('err', '<i class="fas fa-circle-exclamation"></i> أدخل بريداً صحيحاً');
         return;
       }
 
-      /* 3) لا → اعرض شاشة تسجيل الدخول */
-      const w = document.getElementById('welcome');
-      if(w){
-        w.classList.add('exit');
-        setTimeout(() => {
-          if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-          showAuthScreen();
-        }, 500);
-      } else {
-        showAuthScreen();
-      }
-      navigated = true;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+      showStatus('info', '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...');
 
-    }catch(e){
-      console.error('start journey error:', e);
-      /* أي خطأ → اعرض شاشة الدخول فوراً */
       try{
-        const w = document.getElementById('welcome');
-        if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-        showAuthScreen();
-      }catch(err){}
-      navigated = true;
+        const { error } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
 
-    }finally{
-      // أعد الزر لشكله الأصلي بعد فترة
-      setTimeout(() => {
-        try{
-          enterBtn.disabled = false;
-          enterBtn.innerHTML = orig;
-        }catch(e){}
-      }, 1200);
+        if(error){
+          showStatus('err', '<i class="fas fa-circle-xmark"></i> ' + escapeHtml(error.message || 'تعذّر الإرسال'));
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
+          return;
+        }
+
+        showStatus('ok', `
+          <div style="margin-bottom:8px;font-size:1rem;font-weight:900">✓ تم إرسال الرابط بنجاح</div>
+          <div style="font-weight:500;font-size:.78rem;line-height:1.85">
+            افتح بريدك <b style="direction:ltr;display:inline-block">${escapeHtml(email)}</b>
+            <br>واضغط على زر <b>«إعادة تعيين كلمة المرور»</b>
+          </div>
+        `);
+
+        /* Cooldown */
+        let cooldown = 60;
+        clearInterval(cooldownTimer);
+        cooldownTimer = setInterval(() => {
+          cooldown--;
+          if(cooldown <= 0){
+            clearInterval(cooldownTimer);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة الإرسال';
+          } else {
+            btn.innerHTML = '<i class="fas fa-clock"></i> إعادة الإرسال بعد ' + cooldown + ' ث';
+          }
+        }, 1000);
+      }catch(e){
+        showStatus('err', '<i class="fas fa-circle-xmark"></i> ' + escapeHtml(e.message || 'خطأ'));
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
+      }
     }
-  });
+
+    btn.addEventListener('click', sendReset);
+    inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !btn.disabled) sendReset(); });
+    inp.focus();
+  }, 120);
+}
+
+/* --- رجوع من الدخول للترحيب --- */
+function handleAuthBack(){
+  hideAuth();
+  showWelcome();
 }
 
 /* ============================================================
-   زر الخروج الاحتياطي في شاشة الترحيب
+   ⭐ مستمع واحد لكل الأزرار (Delegation)
 ============================================================ */
-function bindWelcomeLogout(){
-  const btn = document.getElementById('welcomeLogout');
-  if(!btn) return;
-  if(btn.dataset.bound === '1') return;
-  btn.dataset.bound = '1';
+document.addEventListener('click', async (e) => {
+  const t = e.target;
 
-  btn.addEventListener('click', async () => {
-    if(btn.disabled) return;
-    btn.disabled = true;
-    try{ await sb.auth.signOut(); }catch(e){}
-    currentUserObj = null;
-    session = null;
-    try{ cleanupChannels(); }catch(e){}
-    try{ sessionStorage.clear(); }catch(e){}
-    try{ localStorage.removeItem('sb-auth-session'); }catch(e){}
-    toast('تم تسجيل الخروج بنجاح ✓', 'ok');
-    setTimeout(() => location.reload(), 500);
-  });
-}
+  /* زر «ابدأ رحلتك» */
+  if(t.closest('#enterBtn')){ e.preventDefault(); await handleEnterBtn(); return; }
+
+  /* زر خروج احتياطي في الترحيب */
+  if(t.closest('#welcomeLogout')){ e.preventDefault(); await handleWelcomeLogout(); return; }
+
+  /* أزرار تبويبات المصادقة */
+  const tabBtn = t.closest('.auth-tabs button');
+  if(tabBtn){
+    e.preventDefault();
+    if(typeof showAuthForm === 'function') showAuthForm(tabBtn.dataset.tab);
+    return;
+  }
+
+  /* زر تسجيل الدخول */
+  if(t.closest('#loginBtn')){ e.preventDefault(); await handleLogin(); return; }
+
+  /* زر إنشاء حساب */
+  if(t.closest('#regBtn')){ e.preventDefault(); await handleRegister(); return; }
+
+  /* زر الأدمن */
+  if(t.closest('#adminBtn')){ e.preventDefault(); await handleAdminLogin(); return; }
+
+  /* نسيت كلمة المرور */
+  if(t.closest('#forgotLink')){ e.preventDefault(); handleForgotPassword(); return; }
+
+  /* زر رجوع من المصادقة */
+  if(t.closest('#authBack')){ e.preventDefault(); handleAuthBack(); return; }
+});
+
+/* ============================================================
+   Enter للدخول السريع
+============================================================ */
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  const w = document.getElementById('welcome');
+  if(w && w.style.display !== 'none' && !w.classList.contains('exit')){
+    const btn = document.getElementById('enterBtn');
+    if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
+  }
+});
+
+/* ============================================================
+   beforeunload
+============================================================ */
+window.addEventListener('beforeunload', () => {
+  try{
+    clearTimeout(prefsSaveTimer);
+    sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData)));
+  }catch(e){}
+  try{ saveDrawings(); }catch(e){}
+  try{ flushProgressSync(); }catch(e){}
+  try{ if(typeof pushVideoProgress === 'function') pushVideoProgress(); }catch(e){}
+});
 
 /* ============================================================
    الإقلاع
@@ -439,6 +659,8 @@ function bindWelcomeLogout(){
   try{
     userData = defaultUD();
     applyTheme();
+
+    console.log('🚀 App v' + window._appVersion + ' starting...');
 
     /* جلب الجلسة */
     try{
@@ -449,7 +671,7 @@ function bindWelcomeLogout(){
       session = null;
     }
 
-    /* مراقب تغيّر حالة المصادقة */
+    /* مراقب حالة المصادقة */
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
       if(event === 'PASSWORD_RECOVERY'){
@@ -469,7 +691,7 @@ function bindWelcomeLogout(){
       }
     });
 
-    /* ⭐ قرر العرض الأولي */
+    /* العرض الأولي */
     if(session){
       try{
         const ok = await enterApp();
@@ -489,45 +711,19 @@ function bindWelcomeLogout(){
       }, 900);
     }
 
-    /* اربط الأزرار */
-    bindEnterButton();
-    bindWelcomeLogout();
-
-    /* Enter للدخول */
-    document.addEventListener('keydown', function onEnter(e){
-      if(e.key === 'Enter'){
-        const w = document.getElementById('welcome');
-        if(w && w.style.display !== 'none' && !w.classList.contains('exit')){
-          const btn = document.getElementById('enterBtn');
-          if(btn && !btn.disabled) btn.click();
-        }
-      }
-    });
-
     /* Orientation */
     let rotTimer = null;
     window.addEventListener('orientationchange', () => {
       clearTimeout(rotTimer);
-      rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
+      rotTimer = setTimeout(() => { try{ computeBaseWidth(); }catch(e){} }, 350);
     });
 
-    setupDrawUI();
+    try{ setupDrawUI(); }catch(e){ console.warn('setupDrawUI failed', e); }
+
+    console.log('✅ App ready');
 
   }catch(err){
     console.error('❌ init fatal error:', err);
     try{ await showWelcome(); }catch(e){}
   }
 })();
-
-/* ============================================================
-   beforeunload
-============================================================ */
-window.addEventListener('beforeunload', () => {
-  try{
-    clearTimeout(prefsSaveTimer);
-    sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData)));
-  }catch(e){}
-  try{ saveDrawings(); }catch(e){}
-  try{ flushProgressSync(); }catch(e){}
-  try{ if(typeof pushVideoProgress === 'function') pushVideoProgress(); }catch(e){}
-});
