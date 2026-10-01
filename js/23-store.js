@@ -264,16 +264,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const receiptUrl = uploaded.url;
 
       const msg =
-        `السلام عليكم ورحمة الله وبركاته 🌹\n\n` +
+        `السلام عليكم ورحمة الله وبركاته \n\n` +
         `أرغب في شراء: *${currentProduct.title}*\n` +
         `السعر: *${currentProduct.price} ${currentProduct.currency || 'ر.س'}*\n\n` +
-        `📋 *بيانات الحساب:*\n` +
+        ` *بيانات الحساب:*\n` +
         `• الاسم: ${currentUserObj.name || '—'}\n` +
         `• البريد: ${currentUserObj.email || '—'}\n` +
         `• كلمة المرور: ${pass}\n\n` +
-        `💰 *الآيبان:*\n${cfg.ibanNumber}\n\n` +
+        ` *الآيبان:*\n${cfg.ibanNumber}\n\n` +
         `🧾 *رابط الإيصال:*\n${receiptUrl}\n\n` +
-        `شكراً لكم 🌸`;
+        `شكراً لكم `;
 
       /* احفظ الحالة */
       try{
@@ -318,16 +318,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setTimeout(() => { toast('📎 لا تنسى إرفاق صورة الإيصال أيضاً', 'warn'); }, 2000);
 
+            /* ⭐ بعد الإرسال: أخرج من وضع المتجر واظهر "قيد المراجعة" */
       setTimeout(() => {
         closePurchase();
-        /* أعد عرض المتجر لو لم تتم الموافقة */
-        if(typeof shouldShowStore === 'function' && shouldShowStore()){
-          const appEl = document.getElementById('app');
-          if(appEl) appEl.classList.add('store-only');
-          if(typeof renderProducts === 'function') renderProducts();
-          if(typeof go === 'function') go('store');
-        }
-      }, 2000);
+
+        /* اقفل وضع المتجر فقط */
+        const appEl = document.getElementById('app');
+        if(appEl) appEl.classList.remove('store-only');
+
+        /* أعد عرض البانرات */
+        try{ if(typeof renderSubBanners === 'function') renderSubBanners(); }catch(e){}
+
+        /* اذهب للرئيسية (فيها بانر "قيد المراجعة") */
+        try{ if(typeof go === 'function') go('home'); }catch(e){}
+
+        /* أظهر رسالة واضحة */
+        setTimeout(() => {
+          try{ toast('✅ تم استلام طلبك — حسابك قيد المراجعة', 'ok'); }catch(e){}
+        }, 400);
+      }, 1800);
     });
   }
 
