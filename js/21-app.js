@@ -1,5 +1,5 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع + تحميل البيانات
+   21) APP — نقطة الإقلاع + تحميل البيانات (محسّن ضد التعليق)
 ============================================================ */
 
 async function loadProfilesAndFiles(retry = 3){
@@ -38,7 +38,38 @@ async function loadVideos(retry = 3){
   }
   if(typeof renderVideos === 'function') renderVideos();
   if(typeof renderAdminVideos === 'function') renderAdminVideos();
-  if(typeof renderFiles === 'function' && DB.files.length) renderFiles(); // لتحديث زر «شرح الملف»
+  if(typeof renderFiles === 'function' && DB.files.length) renderFiles();
+}
+
+async function loadProducts(retry = 2){
+  try{
+    const { data, error } = await sb.from('products')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+    if(error) throw error;
+    DB.products = data || [];
+  }catch(err){
+    console.warn('load products failed:', err && err.message);
+    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadProducts(retry - 1); }
+    DB.products = [];
+  }
+  if(typeof renderProducts === 'function') renderProducts();
+  if(typeof renderAdminProducts === 'function') renderAdminProducts();
+}
+
+async function loadStoreSettings(retry = 2){
+  try{
+    const { data, error } = await sb.from('store_settings').select('*').eq('id', 1).maybeSingle();
+    if(error) throw error;
+    DB.storeSettings = data || null;
+  }catch(err){
+    console.warn('load store_settings failed:', err && err.message);
+    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadStoreSettings(retry - 1); }
+    DB.storeSettings = null;
+  }
+  if(typeof applyStoreSettings === 'function') applyStoreSettings();
+  if(typeof renderStoreSettings === 'function') renderStoreSettings();
 }
 
 async function loadMyProgress(){
@@ -76,81 +107,162 @@ async function loadMyVideoProgress(){
   }catch(e){ userData.videoProgress = userData.videoProgress || {}; }
 }
 
+/* ============================================================
+   إخفاء كل الشاشات — دوال آمنة
+============================================================ */
+function hideAllScreens(){
+  try{ const w = $('#welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
+  try{ const a = $('#auth'); if(a) a.classList.remove('open'); }catch(e){}
+  try{ const ap = $('#app'); if(ap) ap.classList.remove('open'); }catch(e){}
+}
+
 async function enterApp(){
-  hideAuth();
-  $('#welcome').style.display = 'none';
-  if(!session){ showAuth(); return; }
-  const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-  if(error || !data){ toast('تعذّر تحميل الملف الشخصي', 'err'); return; }
-  currentUserObj = data;
-  loadPrefs();
-  loadPrefsFromDB();
-  loadDrawings();
-  applyTheme();
-  applyUserUI();
-  $('#app').classList.add('open');
-  $('#mainScroll').scrollTop = 0;
+  try{
+    /* ⭐ الأهم: اخفِ كل الشاشات فوراً */
+    hideAllScreens();
 
-  // حمّل إعدادات المتجر والمنتجات دائماً
-  try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){ console.warn(e); }
-  try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){ console.warn(e); }
+    if(!session){
+      showWelcome();
+      return;
+    }
 
-  if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
-    await loadProfilesAndFiles();
-    await loadMyProgress();
-    await loadVideos();
-    await loadMyVideoProgress();
-  } else {
-    DB.files = [];
-    renderFiles(); renderRecent();
-  }
+    /* جلب الملف الشخصي */
+    let profileData = null;
+    try{
+      const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+      if(error) throw error;
+      profileData = data;
+    }catch(err){
+      console.error('profile fetch error:', err);
+      toast('تعذّر تحميل الملف الشخصي — جاري تسجيل الخروج', 'err');
+      try{ await sb.auth.signOut(); }catch(e){}
+      setTimeout(() => { showWelcome(); showAuth(); }, 600);
+      return;
+    }
 
-  // هل نعرض المتجر؟
-  const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
-  const storeEl = document.getElementById('view-store');
-  const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
+    if(!profileData){
+      toast('لم يتم العثور على ملفك الشخصي', 'err');
+      try{ await sb.auth.signOut(); }catch(e){}
+      setTimeout(() => { showWelcome(); showAuth(); }, 600);
+      return;
+    }
 
-  console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
+    currentUserObj = profileData;
 
-  if(_showStore && storeEl && titlesOk){
-    // ⭐ فعّل وضع المتجر فقط
-    document.getElementById('app').classList.add('store-only');
-    if(typeof renderProducts === 'function') renderProducts();
-    if(typeof applyStoreSettings === 'function') applyStoreSettings();
-    if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge();
-    go('store');
-    setTimeout(() => {
-      toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok');
-    }, 800);
-  } else {
-    document.getElementById('app').classList.remove('store-only');
-    goFromHash();
-  }
-  renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
-  notesArea.value = userData.notes || '';
-  TIMER.mode = 'focus';
-  TIMER.remain = timerTotalSec('focus');
-  updateTimerUI();
-  applyReaderTheme(); applySnapClass(); syncSettingsUI();
-  renderDrawToolbar();
-  try{ syncMyXp(); }catch(e){}
-  try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
-  setTimeout(() => toast(`أهلاً بك ${currentUserObj.name}`, 'ok'), 400);
-  subscribeMyProfile();
-  subscribeFiles();
-  if(typeof subscribeVideos === 'function') subscribeVideos();
-  if(currentUserObj.role === 'admin') subscribeProfilesForAdmin();
+    /* حمّل التفضيلات */
+    try{ loadPrefs(); }catch(e){ console.warn('loadPrefs failed', e); }
+    try{ loadPrefsFromDB(); }catch(e){ console.warn('loadPrefsFromDB failed', e); }
+    try{ loadDrawings(); }catch(e){ console.warn('loadDrawings failed', e); }
 
-  // فتح فيديو من الرابط #watch=...
-  const m = location.hash.match(/^#watch=(.+)$/);
-  if(m && m[1]){
-    const vid = m[1];
-    setTimeout(() => {
-      if((DB.videos || []).some(v => v.id === vid)){
-        go('videos', true);
-        if(typeof openVideo === 'function') openVideo(vid);
+    /* طبّق الثيمات والواجهة */
+    try{ applyTheme(); }catch(e){}
+    try{ applyUserUI(); }catch(e){ console.warn('applyUserUI failed', e); }
+
+    /* ⭐ افتح التطبيق */
+    const appEl = $('#app');
+    if(appEl) appEl.classList.add('open');
+    const mainScroll = $('#mainScroll');
+    if(mainScroll) mainScroll.scrollTop = 0;
+
+    /* حمّل إعدادات المتجر والمنتجات دائماً */
+    try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){ console.warn(e); }
+    try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){ console.warn(e); }
+
+    /* حمّل حسب حالة الحساب */
+    if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
+      try{ await loadProfilesAndFiles(); }catch(e){ console.warn(e); }
+      try{ await loadMyProgress(); }catch(e){ console.warn(e); }
+      try{ await loadVideos(); }catch(e){ console.warn(e); }
+      try{ await loadMyVideoProgress(); }catch(e){ console.warn(e); }
+    } else {
+      DB.files = [];
+      try{ renderFiles(); renderRecent(); }catch(e){}
+    }
+
+    /* هل نعرض المتجر؟ */
+    const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
+    const storeEl = document.getElementById('view-store');
+    const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
+
+    console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
+
+    if(_showStore && storeEl && titlesOk){
+      /* وضع المتجر فقط */
+      if(appEl) appEl.classList.add('store-only');
+      try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
+      try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
+      try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
+      try{ go('store'); }catch(e){}
+      setTimeout(() => {
+        try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){}
+      }, 800);
+    } else {
+      if(appEl) appEl.classList.remove('store-only');
+      try{ goFromHash(); }catch(e){ console.warn('goFromHash failed', e); }
+    }
+
+    /* باقي التهيئة */
+    try{ renderTasks(); }catch(e){}
+    try{ renderBadges(); }catch(e){}
+    try{ renderFeatures(); }catch(e){}
+    try{ renderThemesGrid(); }catch(e){}
+
+    if(typeof notesArea !== 'undefined' && notesArea) notesArea.value = userData.notes || '';
+
+    try{
+      if(typeof TIMER !== 'undefined'){
+        TIMER.mode = 'focus';
+        TIMER.remain = timerTotalSec('focus');
+        updateTimerUI();
       }
-    }, 700);
+    }catch(e){}
+
+    try{ applyReaderTheme(); }catch(e){}
+    try{ applySnapClass(); }catch(e){}
+    try{ syncSettingsUI(); }catch(e){}
+    try{ renderDrawToolbar(); }catch(e){}
+
+    try{ syncMyXp(); }catch(e){}
+    try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
+
+    setTimeout(() => {
+      try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){}
+    }, 400);
+
+    /* اشتراكات realtime */
+    try{ subscribeMyProfile(); }catch(e){}
+    try{ subscribeFiles(); }catch(e){}
+    try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
+    try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
+    try{ if(currentUserObj.role === 'admin') subscribeProfilesForAdmin(); }catch(e){}
+
+    /* فتح فيديو من الرابط */
+    const m = location.hash.match(/^#watch=(.+)$/);
+    if(m && m[1]){
+      const vid = m[1];
+      setTimeout(() => {
+        try{
+          if((DB.videos || []).some(v => v.id === vid)){
+            go('videos', true);
+            if(typeof openVideo === 'function') openVideo(vid);
+          }
+        }catch(e){}
+      }, 700);
+    }
+
+  }catch(err){
+    /* ⭐ أي خطأ غير متوقع — لا تترك المستخدم معلقاً */
+    console.error('❌ enterApp fatal error:', err);
+    toast('حدث خطأ غير متوقع: ' + (err.message || 'غير معروف'), 'err');
+
+    /* جرّب الإصلاح التلقائي */
+    try{
+      await sb.auth.signOut();
+    }catch(e){}
+
+    setTimeout(() => {
+      try{ showWelcome(); showAuth(); }catch(e){}
+    }, 800);
   }
 }
 
@@ -161,11 +273,14 @@ function refreshAll(){
 }
 
 function showWelcome(){
-  $('#welcome').style.display = 'flex';
-  $('#welcome').classList.remove('exit');
-  $('#auth').classList.remove('open');
-  $('#app').classList.remove('open');
+  try{
+    const w = $('#welcome');
+    if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
+    const a = $('#auth'); if(a) a.classList.remove('open');
+    const ap = $('#app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+  }catch(e){ console.warn('showWelcome error', e); }
 }
+window.showWelcome = showWelcome;
 
 window.addEventListener('beforeunload', () => {
   clearTimeout(prefsSaveTimer);
@@ -195,7 +310,6 @@ function renderStoreUserBadge(){
 }
 window.renderStoreUserBadge = renderStoreUserBadge;
 
-/* زر الخروج العائم */
 document.addEventListener('DOMContentLoaded', () => {
   const fab = document.getElementById('storeLogoutFab');
   if(fab){
@@ -206,44 +320,144 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* ===== الإقلاع ===== */
+/* ============================================================
+   الإقلاع
+============================================================ */
 (async function init(){
-  userData = defaultUD();
-  applyTheme();
-  try{ const { data: { session: s } } = await sb.auth.getSession(); session = s; }catch(e){ session = null; }
+  try{
+    userData = defaultUD();
+    applyTheme();
 
-  sb.auth.onAuthStateChange(async (event, newSession) => {
-    session = newSession;
-    if(event === 'PASSWORD_RECOVERY'){
+    /* اجلب الجلسة */
+    try{
+      const { data: { session: s } } = await sb.auth.getSession();
+      session = s;
+    }catch(e){
+      console.warn('getSession failed', e);
+      session = null;
+    }
+
+    /* مراقب تغيّر حالة المصادقة */
+    sb.auth.onAuthStateChange(async (event, newSession) => {
+      session = newSession;
+      if(event === 'PASSWORD_RECOVERY'){
+        setTimeout(() => {
+          if(typeof showRecoveryModal === 'function') showRecoveryModal();
+        }, 600);
+        return;
+      }
+      if(event === 'SIGNED_IN' && newSession){
+        try{ await enterApp(); }catch(e){ console.error('SIGNED_IN error', e); }
+      }
+      else if(event === 'SIGNED_OUT'){
+        currentUserObj = null;
+        try{ cleanupChannels(); }catch(e){}
+        try{
+          const ap = $('#app');
+          if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+        }catch(e){}
+        showWelcome();
+      }
+    });
+
+    /* ⭐ قرر العرض الأولي */
+    if(session){
+      try{ await enterApp(); }
+      catch(e){
+        console.error('init enterApp failed:', e);
+        showWelcome();
+      }
+    } else {
+      showWelcome();
+    }
+
+    /* رابط استعادة كلمة المرور */
+    if(window.location.hash && window.location.hash.includes('type=recovery')){
       setTimeout(() => {
         if(typeof showRecoveryModal === 'function') showRecoveryModal();
-      }, 600);
-      return;
+      }, 900);
     }
-    if(event === 'SIGNED_IN' && newSession){ await enterApp(); }
-    else if(event === 'SIGNED_OUT'){ currentUserObj = null; cleanupChannels(); $('#app').classList.remove('open'); showWelcome(); }
-  });
 
-  if(session){ await enterApp(); } else { showWelcome(); }
+    /* زر الدخول */
+    const enterBtn = $('#enterBtn');
+    if(enterBtn){
+      enterBtn.addEventListener('click', async () => {
+        /* ⭐ إذا كانت هناك جلسة محفوظة، حاول الدخول مباشرة */
+        if(session){
+          try{
+            const { data: { session: s } } = await sb.auth.getSession();
+            if(s){
+              session = s;
+              await enterApp();
+              return;
+            }
+          }catch(e){ console.warn('retry enterApp failed', e); }
+        }
+        /* وإلا، اعرض شاشة تسجيل الدخول */
+        const w = $('#welcome');
+        if(w) w.classList.add('exit');
+        setTimeout(() => {
+          if(w) w.style.display = 'none';
+          showAuth();
+          showAuthForm('login');
+        }, 900);
+      });
+    }
 
-  // إذا في رابط استعادة في الـ hash
-  if(window.location.hash && window.location.hash.includes('type=recovery')){
-    setTimeout(() => {
-      if(typeof showRecoveryModal === 'function') showRecoveryModal();
-    }, 900);
+    /* Enter للدخول */
+    document.addEventListener('keydown', function onEnter(e){
+      if(e.key === 'Enter'){
+        const w = $('#welcome');
+        if(w && w.style.display !== 'none' && !w.classList.contains('exit')){
+          const btn = $('#enterBtn');
+          if(btn) btn.click();
+        }
+      }
+    });
+
+    let rotTimer = null;
+    window.addEventListener('orientationchange', () => {
+      clearTimeout(rotTimer);
+      rotTimer = setTimeout(() => { computeBaseWidth(); }, 350);
+    });
+
+         /* ⭐ زر خروج احتياطي في شاشة الترحيب */
+    const welcomeLogout = document.getElementById('welcomeLogout');
+    if(welcomeLogout){
+      welcomeLogout.addEventListener('click', async () => {
+        try{
+          await sb.auth.signOut();
+        }catch(e){}
+        currentUserObj = null;
+        session = null;
+        try{ cleanupChannels(); }catch(e){}
+        try{
+          sessionStorage.clear();
+        }catch(e){}
+        toast('تم تسجيل الخروج بنجاح', 'ok');
+        setTimeout(() => location.reload(), 500);
+      });
+    }
+
+    /* تحقق: هل هناك جلسة؟ اظهر الزر */
+    async function checkAndShowLogout(){
+      try{
+        const { data: { session: s } } = await sb.auth.getSession();
+        if(s && welcomeLogout){
+          welcomeLogout.style.display = 'inline-flex';
+        } else if(welcomeLogout){
+          welcomeLogout.style.display = 'none';
+        }
+      }catch(e){}
+    }
+    checkAndShowLogout();
+    setInterval(checkAndShowLogout, 3000);
+
+    setupDrawUI();
+
+  }catch(err){
+    console.error('❌ init fatal error:', err);
+    /* ⭐ لا تترك المستخدم معلقاً */
+    try{ showWelcome(); }catch(e){}
   }
-
-  $('#enterBtn').addEventListener('click', () => {
-    const w = $('#welcome'); w.classList.add('exit');
-    setTimeout(() => { w.style.display = 'none'; showAuth(); showAuthForm('login'); }, 900);
-  });
-
-  document.addEventListener('keydown', function onEnter(e){
-    if(e.key === 'Enter' && $('#welcome').style.display !== 'none' && !$('#welcome').classList.contains('exit')){ $('#enterBtn').click(); }
-  });
-
-  let rotTimer = null;
-  window.addEventListener('orientationchange', () => { clearTimeout(rotTimer); rotTimer = setTimeout(() => { computeBaseWidth(); }, 350); });
-
-  setupDrawUI();
 })();
