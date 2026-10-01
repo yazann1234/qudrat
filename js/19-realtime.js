@@ -25,15 +25,23 @@ function subscribeMyProfile(){
         applyUserUI();
         if($('#view-profile').classList.contains('active')) renderProfile();
         if(currentUserObj.role === 'admin' && oldRole !== 'admin'){ $('#adminNav').style.display = 'flex'; subscribeProfilesForAdmin(); }
-        if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){
+                if(currentUserObj.status === 'approved' && oldStatus !== 'approved'){
           toast('🎉 تمت الموافقة على حسابك! جاري تحميل الملفات...', 'ok');
           renderSubBanners();
+
+          // ⭐ أخرج من وضع المتجر فقط
+          const appEl = document.getElementById('app');
+          if(appEl) appEl.classList.remove('store-only');
+
           setTimeout(async () => {
             try{
               await loadProfilesAndFiles();
               await loadMyProgress();
+              await loadVideos();
+              await loadMyVideoProgress();
               renderFiles(); renderRecent(); renderHomeStats(); updateSidebar();
-              toast('تم تحميل الملفات بنجاح ✓', 'ok');
+              go('home');
+              toast('✅ تم تحميل الملفات بنجاح — أهلاً بك في المنصة!', 'ok');
             }catch(e){ console.warn('auto-reload failed', e); }
           }, 400);
         }
