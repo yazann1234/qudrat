@@ -4,6 +4,7 @@
 
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
+  store:['المتجر','اختر دورتك وفعّل اشتراكك'],
   files:['الملفات','مكتبتك التعليمية الكاملة'],
   videos:['الفيديوهات','مكتبة الدروس المرئية'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
@@ -11,7 +12,6 @@ const TITLES = {
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
   features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
-   store:['المتجر','اختر دورتك وفعّل اشتراكك'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
 
@@ -21,7 +21,6 @@ function canAccess(view){
 }
 
 function go(view, skipHash){
-   if(view === 'store' && typeof renderProducts === 'function') renderProducts();
   if(!TITLES[view]) view = 'home';
 
   // حماية #admin
@@ -49,6 +48,8 @@ function go(view, skipHash){
   if(view === 'admin' && typeof renderAdmin === 'function') renderAdmin();
   if(view === 'files' && typeof renderFiles === 'function') renderFiles();
   if(view === 'videos' && typeof renderVideos === 'function') renderVideos();
+  if(view === 'store' && typeof renderProducts === 'function') renderProducts();
+  if(view === 'store' && typeof applyStoreSettings === 'function') applyStoreSettings();
   if(view === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
   if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
 }
@@ -56,7 +57,7 @@ window.go = go;
 
 window.addEventListener('hashchange', () => {
   const v = location.hash.slice(1) || 'home';
-  if(v.startsWith('watch=')) return; // لا تتدخل بروابط الفيديو
+  if(v.startsWith('watch=')) return;
   if(v === 'admin' && !canAccess('admin')){
     try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
     toast('هذه الصفحة للأدمن فقط', 'err');
