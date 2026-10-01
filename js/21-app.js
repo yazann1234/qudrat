@@ -88,7 +88,7 @@ async function enterApp(){
   loadDrawings();
   applyTheme();
   applyUserUI();
-   $('#app').classList.add('open');
+  $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
 
   // حمّل إعدادات المتجر والمنتجات دائماً
@@ -113,13 +113,17 @@ async function enterApp(){
   console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
 
   if(_showStore && storeEl && titlesOk){
+    // ⭐ فعّل وضع المتجر فقط
+    document.getElementById('app').classList.add('store-only');
     if(typeof renderProducts === 'function') renderProducts();
     if(typeof applyStoreSettings === 'function') applyStoreSettings();
+    if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge();
     go('store');
     setTimeout(() => {
       toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok');
     }, 800);
   } else {
+    document.getElementById('app').classList.remove('store-only');
     goFromHash();
   }
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
