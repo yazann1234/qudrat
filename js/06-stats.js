@@ -74,6 +74,12 @@ function checkBadges(){
   if(st >= 7) add('streak7');
   const t = todayLog();
   if(userData.goalPages && t.pages >= userData.goalPages) add('goal');
+
+  // شارة الفيديوهات
+  const vp = userData.videoProgress || {};
+  const watchedCount = Object.values(vp).filter(p => p && p.completed).length;
+  if(watchedCount >= 5) add('videos5');
+
   savePrefs();
 }
 
