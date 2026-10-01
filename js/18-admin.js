@@ -594,3 +594,30 @@ if(_avUrl){
     }
   });
 }
+
+/* ============================================================
+   عرض الإيصال (المودال)
+============================================================ */
+window.viewReceipt = (url) => {
+  if(!url) return;
+  openModal({
+    title: '🧾 إيصال التحويل',
+    text: 'رابط صورة الإيصال المرفقة من المستخدم.',
+    bodyHTML: `
+      <div style="text-align:center;margin-bottom:12px">
+        <img src="${escapeHtml(url)}" alt="الإيصال" style="max-width:100%;max-height:60vh;border-radius:12px;border:1px solid var(--border);background:#fff" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <p style="display:none;color:var(--danger);font-weight:700;font-size:.84rem">تعذّر تحميل الصورة — الرابط قد يكون منتهياً</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="${escapeHtml(url)}" target="_blank" class="btn btn-primary" style="flex:1;text-decoration:none;justify-content:center">
+          <i class="fas fa-external-link-alt"></i> فتح في نافذة جديدة
+        </a>
+        <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${escapeHtml(url).replace(/'/g,'&#39;')}');toast('نُسخ الرابط','ok')">
+          <i class="fas fa-copy"></i> نسخ الرابط
+        </button>
+      </div>
+    `,
+    okText: 'إغلاق',
+    onOk: () => {}
+  });
+};
