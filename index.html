@@ -937,6 +937,7 @@
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
+      <button class="rh-btn" id="rdAiHelp" title="اسأل الذكاء الاصطناعي"><i class="fas fa-robot"></i></button>
       <button class="rh-btn danger" id="rdClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
       <div class="rh-icon" id="rdIcon"><i class="fas fa-file-pdf"></i></div>
       <div class="rh-info">
@@ -1216,6 +1217,57 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- زر الذكاء الاصطناعي العائم -->
+<button id="aiFabBtn" class="ai-fab-btn" title="المساعد الذكي">
+  <i class="fas fa-robot"></i>
+  <span class="ai-fab-pulse"></span>
+</button>
+
+<!-- نافذة المحادثة -->
+<div id="aiChatPanel" class="ai-chat-panel">
+  <div class="ai-chat-head">
+    <div class="ai-chat-avatar"><i class="fas fa-robot"></i></div>
+    <div class="ai-chat-title">
+      <b>العبقري 🤖</b>
+      <small id="aiChatStatus">متصل • جاهز للمساعدة</small>
+    </div>
+    <button class="ai-chat-close" id="aiChatClose"><i class="fas fa-xmark"></i></button>
+  </div>
+
+  <div class="ai-chat-body" id="aiChatBody"></div>
+
+  <div class="ai-chat-suggestions" id="aiChatSuggestions">
+    <button data-q="كيف أشاهد الفيديو والملف في نفس الوقت؟"><i class="fas fa-video"></i> فيديو + ملف</button>
+    <button data-q="كيف أزيد نقاط XP؟"><i class="fas fa-star"></i> زيادة XP</button>
+    <button data-q="كيف أرسم على الملف؟"><i class="fas fa-pen"></i> الرسم على الملف</button>
+    <button data-q="كيف أشتري دورة؟"><i class="fas fa-shopping-bag"></i> شراء دورة</button>
+  </div>
+
+  <div class="ai-chat-input-wrap">
+    <textarea id="aiChatInput" placeholder="اسألني عن أي شيء في المنصة..." rows="1"></textarea>
+    <button id="aiChatSend" class="ai-chat-send"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- زر الذكاء الاصطناعي في شاشة القارئ -->
+<div class="modal" id="aiFileHelpModal">
+  <div class="modal-box" style="max-width:600px">
+    <h3><i class="fas fa-robot" style="color:var(--primary)"></i> مساعدة ذكية في هذا الملف</h3>
+    <p id="aiFileHelpIntro" style="font-size:.86rem;color:var(--muted);line-height:1.9;margin-bottom:16px"></p>
+    <div id="aiFileHelpQuick" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div class="form-group">
+      <label>أو اكتب سؤالك:</label>
+      <textarea id="aiFileHelpInput" placeholder="مثال: اشرح لي المفهوم الأساسي في هذه الصفحة..." style="min-height:80px"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="aiFileHelpCancel">إلغاء</button>
+      <button class="btn btn-primary" id="aiFileHelpSend" style="flex:1"><i class="fas fa-paper-plane"></i> اسأل العبقري</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/24-ai.js"></script>
 
 <script src="js/01-config.js"></script>
 <script src="js/02-utils.js"></script>
