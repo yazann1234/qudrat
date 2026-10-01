@@ -85,70 +85,176 @@ window.rejectUser = async id => {
   toast('تم رفض المستخدم', 'warn');
 };
 
+/* ============================================================
+   ⭐ تعديل المستخدم + تغيير كلمة السر (مع Fallback ذكي)
+============================================================ */
 window.editUser = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
+
+  // تحقق من توفّر Edge Function (اختبار سريع)
+  const edgeEnabled = !!CHANGE_PASS_URL;
+
   openModal({
     title:'تعديل المستخدم',
-    text:'عدّل بيانات المستخدم. تغيير كلمة السر سيُطبَّق فوراً على حساب المستخدم.',
+    text: edgeEnabled
+      ? 'عدّل البيانات. تغيير كلمة المرور يتم مباشرة عبر خدمة آمنة، وإن لم تتوفر فسيُرسل رابط بريدي تلقائياً.'
+      : 'عدّل البيانات. لتغيير كلمة المرور سيُرسل رابط آمن إلى بريد المستخدم.',
     bodyHTML:`
-      <div class="form-group"><label>الاسم</label><input type="text" id="euName" value="${escapeHtml(u.name||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
-      <div class="form-group"><label>البريد</label><input type="email" id="euEmail" value="${escapeHtml(u.email||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
-      <div class="form-group">
-        <label>كلمة المرور ${u.password_hint ? '<span style="color:var(--success);font-weight:600">(الحالية: ' + escapeHtml(u.password_hint) + ')</span>' : ''}</label>
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">الاسم</label>
+        <input type="text" id="euName" value="${escapeHtml(u.name||'')}"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">البريد الإلكتروني</label>
+        <input type="email" id="euEmail" value="${escapeHtml(u.email||'')}"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">
+          كلمة المرور الجديدة
+          ${u.password_hint
+            ? `<span style="color:var(--muted);font-weight:600;font-size:.76rem">(الحالية: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;direction:ltr;display:inline-block;cursor:pointer" onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')">${escapeHtml(u.password_hint)}</code>)</span>`
+            : '<span style="color:var(--muted);font-weight:600;font-size:.76rem">(غير محددة)</span>'}
+        </label>
         <div style="position:relative">
-          <input type="password" id="euPw" value="${escapeHtml(u.password_hint||'')}" placeholder="اتركها فارغة لعدم التغيير" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button type="button" onclick="togglePassVis('euPw',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+          <input type="password" id="euPw" value="" placeholder="اتركها فارغة لعدم التغيير"
+            style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <button type="button" onclick="togglePassVis('euPw',this)"
+            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div style="margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.75;padding:8px 10px;border-radius:8px;background:var(--card-2);border:1px solid var(--border)">
+          <i class="fas fa-circle-info" style="color:var(--primary)"></i>
+          ${edgeEnabled
+            ? 'سيُطبَّق التغيير مباشرة. إن فشل الاتصال بالخدمة، سيُرسل رابط بالبريد تلقائياً.'
+            : 'سيُرسل رابط آمن إلى بريد المستخدم لتعيين كلمة المرور الجديدة.'}
         </div>
       </div>
-      <div class="form-group"><label>الحالة</label>
-        <select id="euStatus" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <option value="approved" ${u.status==='approved'?'selected':''}>مشترك</option>
-          <option value="pending" ${u.status==='pending'?'selected':''}>معلّق</option>
-          <option value="rejected" ${u.status==='rejected'?'selected':''}>مرفوض</option>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">حالة الحساب</label>
+        <select id="euStatus"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="approved" ${u.status==='approved'?'selected':''}>✅ مشترك</option>
+          <option value="pending" ${u.status==='pending'?'selected':''}>⏳ معلّق</option>
+          <option value="rejected" ${u.status==='rejected'?'selected':''}>❌ مرفوض</option>
         </select>
       </div>
+
+      <div id="euStatusBar" style="display:none;padding:10px 12px;border-radius:10px;font-size:.78rem;font-weight:700;text-align:center;margin-top:8px"></div>
     `,
     okText:'حفظ',
     onOk: async () => {
       const newPw = document.getElementById('euPw').value.trim();
+      const statusBar = document.getElementById('euStatusBar');
+      const showBar = (kind, html) => {
+        statusBar.style.display = 'block';
+        if(kind === 'ok'){ statusBar.style.background = 'rgba(34,197,94,.14)'; statusBar.style.color = '#16a34a'; }
+        else if(kind === 'warn'){ statusBar.style.background = 'rgba(247,179,43,.16)'; statusBar.style.color = '#d97706'; }
+        else { statusBar.style.background = 'rgba(239,68,68,.14)'; statusBar.style.color = '#dc2626'; }
+        statusBar.innerHTML = html;
+      };
+
       const upd = {
         name: document.getElementById('euName').value.trim() || u.name,
         email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email,
         status: document.getElementById('euStatus').value
       };
 
+      // 1) حدّث البيانات الأساسية
       const { error } = await sb.from('profiles').update(upd).eq('id', id);
-      if(error){ toast('فشل التحديث: ' + error.message, 'err'); return; }
+      if(error){
+        showBar('err', '<i class="fas fa-circle-xmark"></i> فشل التحديث: ' + error.message);
+        return;
+      }
 
-      if(newPw && newPw !== u.password_hint){
-        if(newPw.length < 6){ toast('كلمة السر 6 أحرف على الأقل', 'err'); return; }
+      // 2) لا تغيير في كلمة السر
+      if(!newPw || newPw === u.password_hint){
+        Object.assign(u, upd);
+        renderUsersTable();
+        toast('تم تحديث البيانات', 'ok');
+        return;
+      }
+
+      // 3) تحقق من صحة كلمة السر الجديدة
+      if(newPw.length < 6){
+        showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        return;
+      }
+
+      // 4) جرّب Edge Function مباشرة
+      showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري تحديث كلمة المرور...');
+      let directSuccess = false;
+
+      if(edgeEnabled){
         try{
           const { data: { session: curSess } } = await sb.auth.getSession();
+          const ctrl = new AbortController();
+          const timeoutId = setTimeout(() => ctrl.abort(), 15000);
+
           const res = await fetch(CHANGE_PASS_URL, {
             method: 'POST',
+            signal: ctrl.signal,
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '')
             },
             body: JSON.stringify({ userId: id, newPassword: newPw })
           });
-          const result = await res.json();
-          if(!res.ok || result.error){
-            toast('فشل تغيير كلمة السر: ' + (result.error || 'خطأ في الخدمة'), 'err');
-            return;
+          clearTimeout(timeoutId);
+
+          if(res.ok){
+            const result = await res.json().catch(() => ({}));
+            if(result && result.success){
+              directSuccess = true;
+            }
           }
-          upd.password_hint = newPw;
-          toast('تم تحديث البيانات وكلمة السر ✓ (المستخدم سيدخل بها الجديدة)', 'ok');
         }catch(e){
-          toast('فشل الاتصال بالخدمة: ' + e.message + ' — تأكد من نشر Edge Function', 'err');
-          return;
+          console.warn('Edge Function failed, using fallback:', e.message);
         }
-      } else {
-        toast('تم تحديث بيانات المستخدم', 'ok');
       }
 
-      Object.assign(u, upd);
-      renderUsersTable();
+      // 5) إذا نجح التغيير المباشر
+      if(directSuccess){
+        try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
+        upd.password_hint = newPw;
+        Object.assign(u, upd);
+        renderUsersTable();
+        showBar('ok', '<i class="fas fa-circle-check"></i> ✅ تم تحديث البيانات وكلمة المرور مباشرة');
+        toast('✅ تم تغيير كلمة المرور فوراً', 'ok');
+        setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 1500);
+        return;
+      }
+
+      // 6) Fallback: أرسل رابط إعادة تعيين بالبريد
+      showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري إرسال رابط الاستعادة بالبريد...');
+      try{
+        const email = upd.email || u.email;
+        const { error: eErr } = await sb.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+        if(eErr) throw eErr;
+
+        // احفظ التلميح
+        try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
+        upd.password_hint = newPw;
+        Object.assign(u, upd);
+        renderUsersTable();
+
+        showBar('ok', `
+          <div style="margin-bottom:4px"><i class="fas fa-circle-check"></i> ✅ تم التحديث + إرسال رابط الاستعادة</div>
+          <div style="font-size:.72rem;opacity:.85;font-weight:500">أُرسل الرابط إلى: <b style="direction:ltr;display:inline-block">${escapeHtml(email)}</b></div>
+          <div style="font-size:.72rem;opacity:.75;font-weight:500;margin-top:4px">سيضبط المستخدم كلمة المرور الجديدة عند الضغط على الرابط.</div>
+        `);
+        toast('📧 أُرسل رابط الاستعادة للمستخدم', 'ok');
+        setTimeout(() => { const m = $('#modal'); if(m) m.classList.remove('open'); }, 2500);
+      }catch(e){
+        showBar('err', '<i class="fas fa-circle-xmark"></i> فشل إرسال الرابط: ' + escapeHtml(e.message || 'خطأ'));
+      }
     }
   });
 };
