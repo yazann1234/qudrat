@@ -69,3 +69,13 @@ function subscribeProfilesForAdmin(){
     })
     .subscribe();
 }
+
+function subscribeVideos(){
+  try{ if(window._videosChannel){ sb.removeChannel(window._videosChannel); } }catch(e){}
+  const chName = 'videos-live-' + (session ? session.user.id.slice(0,8) : 'g') + '-' + Date.now();
+  window._videosChannel = sb.channel(chName)
+    .on('postgres_changes', { event:'*', schema:'public', table:'videos' }, () => {
+      if(typeof loadVideos === 'function') loadVideos();
+    })
+    .subscribe();
+}
