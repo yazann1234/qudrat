@@ -6,6 +6,8 @@ function cleanupChannels(){
   try{ if(myProfileChannel) sb.removeChannel(myProfileChannel); }catch(e){}
   try{ if(filesChannel) sb.removeChannel(filesChannel); }catch(e){}
   try{ if(profilesChannel) sb.removeChannel(profilesChannel); }catch(e){}
+  try{ if(window._videosChannel) sb.removeChannel(window._videosChannel); }catch(e){}
+window._videosChannel = null;
   myProfileChannel = filesChannel = profilesChannel = null;
 }
 
