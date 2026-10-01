@@ -12,7 +12,13 @@ function overallProgress(){
 }
 function completedCount(){ return DB.files.filter(f => getPct(f.id) >= 100).length; }
 function totalPagesRead(){ return DB.files.reduce((a,f)=> a + getMaxPage(f.id), 0); }
-function isSubscribed(){ return currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.status === 'approved'); }
+function isSubscribed(){
+  return currentUserObj && (
+    currentUserObj.role === 'admin' ||
+    currentUserObj.role === 'owner' ||
+    currentUserObj.status === 'approved'
+  );
+}
 function isPending(){ return currentUserObj && currentUserObj.role !== 'admin' && currentUserObj.status === 'pending'; }
 
 function todayLog(){
