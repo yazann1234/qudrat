@@ -2,7 +2,7 @@
    24) AI — المساعد الذكي (Gemini)
 ============================================================ */
 
-const AI_CHAT_URL = SUPABASE_URL + '/functions/v1/ai-chat';
+const AI_CHAT_URL = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : 'https://turhxyetqlxrfizggtaf.supabase.co') + '/functions/v1/ai-chat';
 
 const AI = {
   open: false,
