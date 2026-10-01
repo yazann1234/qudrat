@@ -669,9 +669,11 @@ window.addEventListener('beforeunload', () => {
     userData = defaultUD();
     applyTheme();
 
-    console.log('🚀 App v' + window._appVersion + ' starting...');
+    console.log('🚀 App starting...');
 
-    /* جلب الجلسة */
+    /* ⭐ اربط الأزرار الطارئة أولاً — قبل أي شيء */
+    bindEmergencyButtons();
+
     try{
       const { data: { session: s } } = await sb.auth.getSession();
       session = s;
@@ -680,7 +682,6 @@ window.addEventListener('beforeunload', () => {
       session = null;
     }
 
-    /* مراقب حالة المصادقة */
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
       if(event === 'PASSWORD_RECOVERY'){
@@ -690,49 +691,139 @@ window.addEventListener('beforeunload', () => {
         return;
       }
       if(event === 'SIGNED_IN' && newSession){
-        try{ await enterApp(); }catch(e){ console.error('SIGNED_IN error', e); }
+        try{
+          await Promise.race([
+            enterApp(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+          ]);
+        }catch(e){
+          console.error('SIGNED_IN error:', e);
+          try{ await sb.auth.signOut(); }catch(err){}
+          showWelcome();
+        }
       }
       else if(event === 'SIGNED_OUT'){
         currentUserObj = null;
         session = null;
         try{ cleanupChannels(); }catch(e){}
-        await showWelcome();
+        showWelcome();
       }
     });
 
-    /* العرض الأولي */
     if(session){
       try{
-        const ok = await enterApp();
-        if(!ok) await showWelcome();
+        /* ⭐ timeout 10 ثواني */
+        await Promise.race([
+          enterApp(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+        ]);
       }catch(e){
-        console.error('init enterApp failed:', e);
-        await showWelcome();
+        console.error('init enterApp failed/timeout:', e);
+        try{ await sb.auth.signOut(); }catch(err){}
+        session = null;
+        currentUserObj = null;
+        showWelcome();
       }
     } else {
-      await showWelcome();
+      showWelcome();
     }
 
-    /* رابط استعادة كلمة المرور */
     if(window.location.hash && window.location.hash.includes('type=recovery')){
       setTimeout(() => {
         if(typeof showRecoveryModal === 'function') showRecoveryModal();
       }, 900);
     }
 
-    /* Orientation */
     let rotTimer = null;
     window.addEventListener('orientationchange', () => {
       clearTimeout(rotTimer);
       rotTimer = setTimeout(() => { try{ computeBaseWidth(); }catch(e){} }, 350);
     });
 
-    try{ setupDrawUI(); }catch(e){ console.warn('setupDrawUI failed', e); }
+    try{ setupDrawUI(); }catch(e){}
 
     console.log('✅ App ready');
-
   }catch(err){
-    console.error('❌ init fatal error:', err);
-    try{ await showWelcome(); }catch(e){}
+    console.error('❌ init fatal:', err);
+    bindEmergencyButtons();
+    showWelcome();
   }
 })();
+
+/* ⭐ الأزرار الطارئة */
+function bindEmergencyButtons(){
+  const btn = document.getElementById('emergencyReset');
+  if(btn && !btn.dataset.bound){
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', async () => {
+      if(!confirm('سيتم مسح كل الجلسات والبيانات المحلية. متابعة؟')) return;
+      try{ await sb.auth.signOut(); }catch(e){}
+      try{ sessionStorage.clear(); }catch(e){}
+      try{ localStorage.clear(); }catch(e){}
+      try{ indexedDB.databases && indexedDB.databases().then(dbs => dbs.forEach(d => indexedDB.deleteDatabase(d.name))); }catch(e){}
+      setTimeout(() => location.reload(), 300);
+    });
+  }
+
+  const enterBtn = document.getElementById('enterBtn');
+  if(enterBtn && !enterBtn.dataset.bound){
+    enterBtn.dataset.bound = '1';
+    enterBtn.addEventListener('click', async () => {
+      if(enterBtn.disabled) return;
+      enterBtn.disabled = true;
+      const orig = enterBtn.innerHTML;
+      enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+
+      try{
+        let s = null;
+        try{ const r = await sb.auth.getSession(); s = r.data.session; }catch(e){}
+
+        if(s){
+          session = s;
+          try{
+            await Promise.race([
+              enterApp(),
+              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+            ]);
+          }catch(err){
+            console.error('enterApp failed:', err);
+            try{ await sb.auth.signOut(); }catch(e){}
+            session = null; currentUserObj = null;
+            showAuthScreen();
+          }
+        } else {
+          const w = document.getElementById('welcome');
+          if(w){
+            w.classList.add('exit');
+            setTimeout(() => {
+              if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+              showAuthScreen();
+            }, 400);
+          } else {
+            showAuthScreen();
+          }
+        }
+      }catch(e){
+        console.error('enterBtn error:', e);
+        showAuthScreen();
+      }finally{
+        setTimeout(() => {
+          if(enterBtn){ enterBtn.disabled = false; enterBtn.innerHTML = orig; }
+        }, 1000);
+      }
+    });
+  }
+
+  const wl = document.getElementById('welcomeLogout');
+  if(wl && !wl.dataset.bound){
+    wl.dataset.bound = '1';
+    wl.addEventListener('click', async () => {
+      try{ await sb.auth.signOut(); }catch(e){}
+      try{ sessionStorage.clear(); }catch(e){}
+      try{ localStorage.clear(); }catch(e){}
+      toast('تم تسجيل الخروج', 'ok');
+      setTimeout(() => location.reload(), 400);
+    });
+  }
+}
+window.bindEmergencyButtons = bindEmergencyButtons;
