@@ -1755,3 +1755,140 @@ input,textarea,select,button{font-family:inherit}
 /* زر المساعدة في القارئ */
 #rdAiHelp{background:linear-gradient(135deg,#5b6cff,#a855f7);color:#fff;border:none}
 #rdAiHelp:hover{background:linear-gradient(135deg,#4a5ce8,#9333ea)}
+
+/* ============================================================
+   تحسين لوحة الأدمن
+============================================================ */
+#view-admin .sec-title{
+  font-size:1.35rem;
+  margin-bottom:24px;
+  padding-bottom:16px;
+  border-bottom:2px solid var(--border);
+}
+#view-admin .admin-stats{
+  gap:16px;
+  margin-bottom:26px;
+}
+#view-admin .admin-stat{
+  padding:22px;
+  border-radius:20px;
+  transition:.3s;
+  box-shadow:0 4px 18px rgba(48,70,150,.08);
+}
+#view-admin .admin-stat:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 30px rgba(48,70,150,.15);
+}
+#view-admin .admin-stat::before{
+  width:5px;
+  border-radius:0 100px 100px 0;
+}
+#view-admin .admin-stat h3{
+  font-size:1.85rem;
+  letter-spacing:-1.5px;
+}
+#view-admin .admin-stat p{
+  font-size:.82rem;
+  font-weight:700;
+  color:var(--muted);
+}
+#view-admin .admin-tabs{
+  padding:8px;
+  gap:6px;
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(48,70,150,.08);
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:var(--card);
+  backdrop-filter:blur(10px);
+}
+#view-admin .admin-tabs button{
+  padding:12px 18px;
+  border-radius:11px;
+  font-size:.86rem;
+  font-weight:800;
+  transition:.25s;
+}
+#view-admin .admin-tabs button.on{
+  transform:translateY(-1px);
+}
+#view-admin .users-table{
+  border-radius:22px;
+  box-shadow:0 8px 30px rgba(48,70,150,.1);
+}
+#view-admin .users-table .thead{
+  padding:18px 22px;
+  background:linear-gradient(100deg,var(--card-2),var(--card));
+  border-bottom:2px solid var(--border);
+  font-size:.76rem;
+  letter-spacing:.8px;
+}
+#view-admin .users-table .trow{
+  padding:18px 22px;
+  transition:.2s;
+}
+#view-admin .users-table .trow:hover{
+  background:linear-gradient(100deg,var(--primary-soft),transparent);
+  transform:translateX(-2px);
+}
+#view-admin .card-basic{
+  border-radius:22px;
+  padding:26px;
+  box-shadow:0 6px 24px rgba(48,70,150,.08);
+}
+#view-admin .card-basic h3{
+  font-size:1.05rem;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:18px;
+}
+#view-admin .form-group label{
+  font-size:.84rem;
+  color:var(--text);
+  font-weight:800;
+  margin-bottom:8px;
+}
+#view-admin .form-group input,
+#view-admin .form-group select,
+#view-admin .form-group textarea{
+  border-radius:14px;
+  padding:13px 16px;
+  font-size:.9rem;
+  transition:.25s;
+}
+#view-admin .form-group input:focus,
+#view-admin .form-group select:focus,
+#view-admin .form-group textarea:focus{
+  transform:translateY(-1px);
+  box-shadow:0 0 0 4px var(--primary-soft),0 4px 12px rgba(var(--primary-rgb),.15);
+}
+#view-admin .upload-zone{
+  border-radius:20px;
+  transition:.3s;
+}
+#view-admin .upload-zone:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 30px rgba(var(--primary-rgb),.15);
+}
+
+/* شارة الدور الجديدة */
+.role-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:.64rem;
+  font-weight:900;
+  padding:3px 9px;
+  border-radius:100px;
+  margin-right:6px;
+}
+.role-badge.owner{
+  background:linear-gradient(120deg,#f7b32b,#d97706);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(247,179,43,.4);
+}
+.role-badge.admin{
+  background:linear-gradient(120deg,#ef4444,#dc2626);
+  color:#fff;
+}
