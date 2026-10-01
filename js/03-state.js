@@ -100,3 +100,43 @@ function shouldShowStore(){
   }
 }
 window.shouldShowStore = shouldShowStore;
+
+/* ============================================================
+   ⭐ دوال مساعدة للصلاحيات
+============================================================ */
+function isOwner(){
+  return currentUserObj && currentUserObj.role === 'owner';
+}
+
+function isAdmin(){
+  return currentUserObj && currentUserObj.role === 'admin';
+}
+
+function isPrivileged(){
+  return currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'owner');
+}
+
+window.isOwner = isOwner;
+window.isAdmin = isAdmin;
+window.isPrivileged = isPrivileged;
+
+/* ⭐ هل يجب عرض المتجر؟ (فقط للمستخدم الجديد pending) */
+function shouldShowStore(){
+  try{
+    if(!currentUserObj) return false;
+    /* الإداريون و owner لا يرون المتجر أبداً */
+    if(isPrivileged()) return false;
+    /* المشترك المعتمد لا يراه */
+    if(currentUserObj.status === 'approved') return false;
+    /* من أرسل طلب شراء من قبل لا يراه */
+    if(currentUserObj.purchase_submitted === true) return false;
+    const lsKey = 'purchase_submitted_' + currentUserObj.id;
+    if(localStorage.getItem(lsKey)) return false;
+    /* الباقي فقط (pending جديد) */
+    return true;
+  }catch(e){
+    console.warn('shouldShowStore error:', e);
+    return false;
+  }
+}
+window.shouldShowStore = shouldShowStore;
