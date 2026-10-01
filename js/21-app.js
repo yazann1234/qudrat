@@ -187,7 +187,7 @@ async function enterApp(){
     try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){}
     try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){}
 
-    if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
+        if(isPrivileged() || currentUserObj.status === 'approved'){
       try{ await loadProfilesAndFiles(); }catch(e){}
       try{ await loadMyProgress(); }catch(e){}
       try{ await loadVideos(); }catch(e){}
