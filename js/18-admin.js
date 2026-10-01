@@ -19,20 +19,25 @@ function renderUsersTable(){
   const box = $('#usersTable'); if(!box) return;
   const q = ($('#userSearch') ? $('#userSearch').value : '').trim().toLowerCase();
   const filter = $('#userFilter') ? $('#userFilter').value : 'all';
-  let list = DB.users.filter(u => u.role !== 'admin');
+  const isOwner = currentUserObj && currentUserObj.role === 'owner';
+
+  let list = DB.users;
   if(q) list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
   if(filter === 'pending') list = list.filter(u => u.status === 'pending');
   else if(filter === 'sub') list = list.filter(u => u.status === 'approved');
   else if(filter === 'off') list = list.filter(u => u.status !== 'approved');
+  else if(filter === 'admins') list = list.filter(u => u.role === 'admin' || u.role === 'owner');
 
+  /* الترتيب: pending أولاً، ثم owner، ثم admin، ثم user */
   list.sort((a,b) => {
-    const ap = a.status === 'pending' ? 0 : 1;
-    const bp = b.status === 'pending' ? 0 : 1;
-    return ap - bp || new Date(b.created_at||0) - new Date(a.created_at||0);
+    const rank = u => u.role === 'owner' ? 0 : u.role === 'admin' ? 1 : (u.status === 'pending' ? 2 : 3);
+    const ra = rank(a), rb = rank(b);
+    if(ra !== rb) return ra - rb;
+    return new Date(b.created_at||0) - new Date(a.created_at||0);
   });
 
   if(!list.length){
-    box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>سيظهر هنا كل من يسجّل حساباً جديداً</p></div>';
+    box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3></div>';
     return;
   }
 
@@ -42,13 +47,54 @@ function renderUsersTable(){
     </div>
     ${list.map(u => {
       let statusBadge;
-      if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
+      if(u.role === 'owner') statusBadge = '<span class="role-badge owner"><i class="fas fa-crown"></i> رئيس المنصة</span>';
+      else if(u.role === 'admin') statusBadge = '<span class="role-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+      else if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
       else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
       else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> مرفوض</span>';
+
       const avStyle = u.avatar_url ? `background-image:url('${u.avatar_url}')` : '';
       const pwHtml = u.password_hint
         ? `<code onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')" title="اضغط للنسخ" style="background:var(--bg);padding:3px 8px;border-radius:6px;font-size:.74rem;direction:ltr;display:inline-block;cursor:pointer;border:1px solid var(--border)">${escapeHtml(u.password_hint)}</code>`
-        : '<span style="font-size:.72rem;color:var(--muted)">عيّنها بنفسه</span>';
+        : '<span style="font-size:.72rem;color:var(--muted)">—</span>';
+
+      /* أزرار حسب الدور */
+      const isTargetOwner = u.role === 'owner';
+      const isTargetAdmin = u.role === 'admin';
+
+      let actions = '';
+
+      if(!isTargetOwner){
+        /* الأدمن والمشرف العام يمكنهم التفعيل/الرفض */
+        if(u.status !== 'approved' && u.role !== 'admin'){
+          actions += `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
+        }
+        if(u.status !== 'rejected' && u.role !== 'admin'){
+          actions += `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>`;
+        }
+
+        /* زر التعديل: owner يمكنه تعديل الكل، admin لا يعدل admins آخرين */
+        if(isOwner || !isTargetAdmin){
+          actions += `<button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل بيانات"><i class="fas fa-pen"></i></button>`;
+        }
+
+        /* إعادة تعيين كلمة المرور بالبريد */
+        if(isOwner || !isTargetAdmin){
+          actions += `<button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إرسال رابط إعادة تعيين"><i class="fas fa-key"></i></button>`;
+        }
+
+        /* ⭐ owner فقط: ترقية إلى أدمن / تنزيل من أدمن */
+        if(isOwner){
+          if(u.role === 'admin'){
+            actions += `<button class="btn btn-ghost btn-sm" onclick="demoteAdmin('${u.id}')" title="إزالة صلاحية الأدمن" style="background:rgba(247,179,43,.15);color:#d97706;border-color:rgba(247,179,43,.3)"><i class="fas fa-arrow-down"></i></button>`;
+          } else {
+            actions += `<button class="btn btn-ghost btn-sm" onclick="promoteToAdmin('${u.id}')" title="ترقية إلى أدمن" style="background:rgba(239,68,68,.12);color:#dc2626;border-color:rgba(239,68,68,.28)"><i class="fas fa-user-shield"></i></button>`;
+          }
+          /* owner فقط: حذف */
+          actions += `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف نهائي"><i class="fas fa-trash"></i></button>`;
+        }
+      }
+
       return `<div class="trow">
         <div class="user-cell">
           <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
@@ -60,19 +106,38 @@ function renderUsersTable(){
         <div class="email-cell" style="direction:ltr;text-align:right">${escapeHtml(u.email)}</div>
         <div class="pw-cell">${pwHtml}</div>
         <div class="status-cell">${statusBadge}</div>
-        <div class="actions-cell">
-          ${u.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>` : ''}
-          ${u.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>` : ''}
-          ${u.purchase_receipt_url ? `<button class="btn btn-ghost btn-sm" onclick="viewReceipt('${escapeHtml(u.purchase_receipt_url)}')" title="عرض الإيصال" style="background:rgba(247,179,43,.15);color:#b45309;border-color:rgba(247,179,43,.3)"><i class="fas fa-receipt"></i></button>` : ''}
-          <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
-          <button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إرسال رابط إعادة تعيين"><i class="fas fa-key"></i></button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف"><i class="fas fa-trash"></i></button>
-        </div>
+        <div class="actions-cell">${actions || '<span style="font-size:.72rem;color:var(--muted)">—</span>'}</div>
       </div>`;
     }).join('')}
   `;
 }
 
+/* ============================================================
+   دوال رئيس المنصة (Owner)
+============================================================ */
+window.promoteToAdmin = (id) => {
+  if(!currentUserObj || currentUserObj.role !== 'owner'){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('ترقية إلى أدمن', `ترقية «${escapeHtml(u.name)}» إلى صلاحيات أدمن كاملة؟`, async () => {
+    const { error } = await sb.from('profiles').update({ role: 'admin' }).eq('id', id);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    u.role = 'admin';
+    renderUsersTable();
+    toast('✓ تم ترقية المستخدم إلى أدمن', 'ok');
+  });
+};
+
+window.demoteAdmin = (id) => {
+  if(!currentUserObj || currentUserObj.role !== 'owner'){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('إزالة صلاحية الأدمن', `إزالة صلاحيات الأدمن من «${escapeHtml(u.name)}»؟`, async () => {
+    const { error } = await sb.from('profiles').update({ role: 'user' }).eq('id', id);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    u.role = 'user';
+    renderUsersTable();
+    toast('تمت إزالة صلاحية الأدمن', 'warn');
+  }, true);
+};
 window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت كلمة السر', 'ok'); }catch(e){} };
 
 window.approveUser = async id => {
