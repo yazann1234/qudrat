@@ -1327,3 +1327,178 @@ input,textarea,select,button{font-family:inherit}
   .purchase-info-item b{text-align:right;width:100%}
   .purchase-actions{flex-direction:column-reverse}
 }
+
+/* ============================================================
+   وضع المتجر فقط (للمستخدمين غير المفعّلين)
+============================================================ */
+#app.store-only .sidebar{display:none !important}
+#app.store-only .topbar{display:none !important}
+#app.store-only .main{
+  padding:24px 20px 80px;
+  max-width:1280px;
+  margin:0 auto;
+  width:100%;
+}
+#app.store-only .view:not(#view-store){display:none !important}
+#app.store-only #view-store{display:block !important}
+#app.store-only .sec-title::before{display:none}
+#app.store-only .sec-title{justify-content:center;text-align:center;font-size:1.3rem;margin:36px 0 24px}
+
+/* توسيع بطاقات المنتجات في وضع المتجر */
+#app.store-only .products-grid{
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:24px;
+  max-width:900px;
+  margin:0 auto;
+}
+
+/* زر خروج عائم */
+.store-logout-fab{
+  display:none;
+  position:fixed;
+  top:16px;
+  left:16px;
+  z-index:1000;
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:inherit;
+  font-size:.82rem;
+  font-weight:800;
+  padding:10px 16px;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow:var(--shadow);
+  align-items:center;
+  gap:8px;
+  transition:.2s;
+}
+.store-logout-fab:hover{
+  background:var(--danger);
+  color:#fff;
+  border-color:var(--danger);
+  transform:translateY(-2px);
+}
+#app.store-only .store-logout-fab{display:inline-flex}
+
+/* شارة بيانات المستخدم */
+.store-user-badge{
+  display:none;
+  position:fixed;
+  top:16px;
+  right:16px;
+  z-index:1000;
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:8px 14px 8px 8px;
+  border-radius:100px;
+  box-shadow:var(--shadow);
+  align-items:center;
+  gap:10px;
+}
+#app.store-only .store-user-badge{display:inline-flex}
+.store-user-badge .sub-av{
+  width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;
+  font-weight:900;font-size:.9rem;color:#fff;
+  background:linear-gradient(140deg,var(--primary),var(--primary-2));
+  background-size:cover;background-position:center;
+  flex-shrink:0;
+}
+.store-user-badge .sub-info{min-width:0;padding-left:4px}
+.store-user-badge .sub-info b{
+  display:block;font-size:.82rem;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:140px;line-height:1.2;
+}
+.store-user-badge .sub-info small{
+  display:block;font-size:.68rem;color:var(--accent);
+  font-weight:800;margin-top:2px;
+}
+
+/* ============================================================
+   نافذة الشراء — أكبر + قابلة للتمرير
+============================================================ */
+.purchase-box{
+  max-width:740px !important;
+  padding:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  max-height:94vh !important;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+}
+.purchase-box::-webkit-scrollbar{width:8px}
+.purchase-box::-webkit-scrollbar-track{background:transparent}
+.purchase-box::-webkit-scrollbar-thumb{
+  background:var(--border);border-radius:100px;
+}
+.purchase-box::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+
+.purchase-header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  padding:28px 28px 22px;
+  backdrop-filter:blur(10px);
+}
+.purchase-icon{width:72px;height:72px;border-radius:22px;font-size:1.8rem;margin-bottom:14px}
+.purchase-header h3{font-size:1.3rem;margin-bottom:7px}
+.purchase-header p{font-size:.86rem}
+
+.purchase-product{padding:18px 28px;gap:14px}
+.purchase-product .pp-icon{width:56px;height:56px;border-radius:15px;font-size:1.35rem}
+.purchase-product .pp-info b{font-size:1rem}
+.purchase-product .pp-info small{font-size:.78rem}
+.purchase-product .pp-price{font-size:1.25rem}
+
+.purchase-section{padding:22px 28px}
+.purchase-section h4{font-size:.92rem;margin-bottom:14px}
+
+.purchase-info-item{padding:11px 14px;border-radius:12px}
+.purchase-info-item small{font-size:.78rem}
+.purchase-info-item b{font-size:.88rem}
+
+.purchase-note{padding:12px 14px;font-size:.78rem;border-radius:12px}
+
+.iban-box{padding:16px;border-radius:16px}
+.iban-text-row{padding:12px 14px;border-radius:12px}
+.iban-text-row code{font-size:1rem;letter-spacing:1.5px}
+.iban-copy{width:40px;height:40px;border-radius:11px}
+
+.receipt-upload{padding:34px 24px;border-radius:16px}
+.receipt-inner i{font-size:2.4rem;margin-bottom:12px}
+.receipt-inner b{font-size:.96rem}
+.receipt-inner small{font-size:.76rem}
+
+.receipt-preview{padding:14px;border-radius:16px}
+.receipt-preview img{max-height:280px}
+
+.purchase-actions{
+  position:sticky;
+  bottom:0;
+  background:var(--card);
+  padding:18px 28px 16px;
+  z-index:10;
+  box-shadow:0 -8px 24px rgba(0,0,0,.06);
+}
+.purchase-actions .btn{padding:16px;font-size:.94rem}
+
+.purchase-foot{padding:0 28px 22px;font-size:.76rem}
+
+/* على الجوال */
+@media (max-width:640px){
+  #app.store-only .main{padding:80px 14px 60px}
+  #app.store-only .products-grid{grid-template-columns:1fr;max-width:100%}
+  .store-logout-fab{top:12px;left:12px;padding:9px 13px;font-size:.76rem}
+  .store-user-badge{top:12px;right:12px;padding:6px 12px 6px 6px}
+  .store-user-badge .sub-info b{max-width:90px;font-size:.76rem}
+  .purchase-box{max-width:100% !important;max-height:100vh !important;border-radius:20px 20px 0 0 !important;margin-top:auto !important}
+  .purchase-header{padding:22px 18px 16px}
+  .purchase-header h3{font-size:1.1rem}
+  .purchase-icon{width:60px;height:60px;font-size:1.5rem}
+  .purchase-section{padding:18px 18px}
+  .purchase-product{padding:14px 18px}
+  .purchase-actions{padding:14px 18px}
+  .purchase-foot{padding:0 18px 18px}
+}
