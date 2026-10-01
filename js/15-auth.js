@@ -34,7 +34,7 @@ $('#regBtn').addEventListener('click', async () => {
   const pass = $('#regPass').value;
   if(!name || name.length < 2){ showMsg('regMsg','أدخل اسماً صحيحاً (حرفان على الأقل)'); return; }
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg','أدخل بريداً إلكترونياً صحيحاً'); return; }
-  if(!pass || pass.length < 6){ showMsg('regMsg','كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+  if(!pass || pass.length < 8){ showMsg('regMsg','كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
   btn.disabled = true;
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { name } } });
   btn.disabled = false;
@@ -228,7 +228,7 @@ function showRecoveryModal(){
       <div class="form-group" style="margin-bottom:12px">
         <label style="display:block;font-size:.82rem;font-weight:800;margin-bottom:6px">كلمة المرور الجديدة</label>
         <div style="position:relative">
-          <input type="password" id="npPass" placeholder="6 أحرف على الأقل" autocomplete="new-password"
+          <input type="password" id="npPass" placeholder="8 أحرف على الأقل" autocomplete="new-password"
             style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
           <button type="button" onclick="togglePassVis('npPass',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
         </div>
@@ -299,7 +299,7 @@ function showRecoveryModal(){
     p1.addEventListener('input', () => {
       const v = p1.value;
       let score = 0;
-      if(v.length >= 6) score++;
+      if(v.length >= 8) score++;
       if(v.length >= 10) score++;
       if(/[A-Z]/.test(v)) score++;
       if(/[0-9]/.test(v)) score++;
