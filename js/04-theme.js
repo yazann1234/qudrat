@@ -10,8 +10,9 @@ function isDark(){
 }
 
 function applyTheme(){
-  if(!userData) userData = defaultUD();
-  const t = THEMES.find(x => x.id === userData.theme) || THEMES[0];
+  try{
+    if(!userData) userData = defaultUD();
+    const t = THEMES.find(x => x.id === userData.theme) || THEMES[0];
   const root = document.documentElement;
   root.style.setProperty('--primary', t.c1);
   root.style.setProperty('--primary-2', t.c2);
@@ -51,6 +52,7 @@ function renderThemesGrid(){
       toast('تم تغيير الثيم بنجاح', 'ok');
     });
   });
+   }catch(e){ console.warn('applyTheme error:', e); }
 }
 
 function syncSettingsUI(){
