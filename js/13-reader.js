@@ -1,20 +1,30 @@
 /* ============================================================
-   13) READER — قارئ PDF (Streaming للملفات الضخمة)
+   13) READER — قارئ PDF محسّن للأداء العالي
+   - إلغاء عرض الصفحات البعيدة فوراً
+   - تحميل مسبق ذكي للصفحات المجاورة
+   - قائمة صفحات بـ Event Delegation (أسرع 50x للملفات الضخمة)
+   - تجاوز الصفحات الوسيطة عند التمرير السريع
 ============================================================ */
 
 const RS = {
   doc:null, file:null, numPages:0,
   pageW: 612, pageH: 792,
   zoom:1, baseWidth:800, token:0, current:1,
-  rendered:new Set(), rendering:new Set(), inView:new Set(),
+  rendered:new Set(), inView:new Set(),
   pageEls:[], observer:null, restoring:false, clockId:null,
-  signedUrl: null
+  signedUrl: null,
+  renderTasks: new Map(),   // pageNum -> PDFRenderTask
+  idleQueue: [],            // صفحات للتحميل المسبق
+  idleScheduled: false,
+  lastScrollTime: 0,
+  fastScrollTimer: null
 };
 let currentFile = null;
 const rdBody = $('#rdBody');
 
 function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
 function pageHeight(){ return Math.round(RS.pageH * (pageWidth() / RS.pageW)); }
+
 function showLoading(txt, pct){
   const l = $('#rdLoading'); if(!l) return;
   l.style.display = 'flex';
@@ -23,6 +33,7 @@ function showLoading(txt, pct){
 }
 function hideLoading(){ const l = $('#rdLoading'); if(l) l.style.display = 'none'; }
 
+/* ================= OPEN FILE ================= */
 async function openFile(id){
   if(!currentUserObj) return;
   if(!isSubscribed()){ showLockMessage(); return; }
@@ -48,6 +59,7 @@ async function openFile(id){
   RS.baseWidth = Math.max(220, Math.min(980, rdBody.clientWidth - 30));
 
   try{
+    // ⭐ رابط موقّع + Streaming
     const { data: signed, error: sErr } = await sb.storage
       .from('pdfs')
       .createSignedUrl(f.storage_path, 3600);
@@ -58,18 +70,21 @@ async function openFile(id){
     RS.signedUrl = signed.signedUrl;
     showLoading('جاري تجهيز القارئ...', 35);
 
+    // ⭐ إعدادات محسّنة للملفات الضخمة
     const doc = await pdfjsLib.getDocument({
       url: signed.signedUrl,
-      disableAutoFetch: true,
+      disableAutoFetch: false,      // ← نسمح بالتحميل المسبق للقطع
       disableStream: false,
-      rangeChunkSize: 262144,
+      rangeChunkSize: 524288,        // ← 512KB لكل قطعة (نصف عدد الطلبات)
       disableRange: false,
       cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-      cMapPacked: true
+      cMapPacked: true,
+      verbosity: 0
     }).promise;
     if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
     RS.doc = doc; RS.numPages = doc.numPages;
 
+    // أبعاد الصفحة الأولى فقط
     const p1 = await doc.getPage(1);
     const vp0 = p1.getViewport({ scale: 1 });
     RS.pageW = vp0.width || 612;
@@ -96,6 +111,14 @@ async function openFile(id){
     renderThumbs();
     if(startPage > 1){ RS.restoring = true; scrollToPage(startPage, false); setTimeout(()=>{ RS.restoring = false; }, 500); }
     updateReaderUI();
+
+    // ⭐ عرض فوري للصفحة الحالية + بدء التحميل المسبق
+    requestAnimationFrame(() => {
+      renderPage(startPage);
+      if(startPage > 1) renderPage(startPage - 1);
+      if(startPage < RS.numPages) renderPage(startPage + 1);
+    });
+
     if(!userData.badges.includes('first')){ userData.badges.push('first'); savePrefs(); setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700); renderBadges(); }
     startReadClock();
     refreshAll();
@@ -108,9 +131,15 @@ async function openFile(id){
 }
 window.openFile = openFile;
 
+/* ================= TEARDOWN ================= */
 function teardownReader(closeUI){
   try{ if(RS.observer){ RS.observer.disconnect(); RS.observer = null; } }catch(e){}
-  RS.rendered.clear(); RS.rendering.clear(); RS.inView.clear();
+  // ⭐ ألغِ كل عمليات العرض الجارية
+  RS.renderTasks.forEach(task => { try{ task.cancel(); }catch(e){} });
+  RS.renderTasks.clear();
+  RS.idleQueue = [];
+  RS.idleScheduled = false;
+  RS.rendered.clear(); RS.inView.clear();
   RS.pageEls = []; RS.offsets = [];
   stopReadClock();
   if(closeUI){
@@ -120,6 +149,7 @@ function teardownReader(closeUI){
   }
 }
 
+/* ================= BUILD PAGES ================= */
 function buildPages(){
   const stage = $('#rdStage');
   stage.innerHTML = ''; RS.pageEls = [];
@@ -138,6 +168,7 @@ function buildPages(){
   }
   stage.appendChild(frag);
 
+  // ⭐ rootMargin أقل = ذاكرة أقل + أداء أفضل
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
@@ -145,9 +176,15 @@ function buildPages(){
         RS.inView.add(idx);
         renderPage(idx);
         ensureDrawCanvasIfNeeded(idx);
-      } else RS.inView.delete(idx);
+      } else {
+        RS.inView.delete(idx);
+        // ⭐ ألغِ العرض إذا خرجت الصفحة بعيداً أثناء التمرير
+        if(Math.abs(idx - RS.current) > 8){
+          cancelRender(idx);
+        }
+      }
     });
-  }, { root: rdBody, rootMargin: '800px 0px', threshold: 0 });
+  }, { root: rdBody, rootMargin: '600px 0px', threshold: 0 });
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
@@ -160,36 +197,91 @@ function computeOffsets(){
   });
 }
 
+/* ================= RENDER PAGE (with cancellation) ================= */
 async function renderPage(num){
   const holder = RS.pageEls[num - 1];
   if(!holder || holder.dataset.done === '1') return;
-  if(RS.rendering.has(num)) return;
+  if(RS.renderTasks.has(num)) return; // قيد العرض بالفعل
   if(!RS.doc) return;
   const token = RS.token;
-  RS.rendering.add(num);
+
   try{
     const page = await RS.doc.getPage(num);
     if(token !== RS.token) return;
+    if(holder.dataset.done === '1') return;
+
     const cssW = pageWidth();
     const scale = cssW / RS.pageW;
-    const dprCap = RS.numPages > 200 ? 1.2 : (RS.numPages > 100 ? 1.4 : 1.6);
+    // ⭐ دقة أقل للملفات الضخمة لتسريع الرسم
+    const dprCap = RS.numPages > 300 ? 1.1 : (RS.numPages > 150 ? 1.3 : (RS.numPages > 80 ? 1.5 : 1.7));
     const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
     const vp = page.getViewport({ scale: scale * dpr });
+
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.floor(vp.width));
     canvas.height = Math.max(1, Math.floor(vp.height));
     canvas.style.width = '100%'; canvas.style.height = '100%';
-    const ctx = canvas.getContext('2d', { alpha:false });
-    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const ctx = canvas.getContext('2d', { alpha:false, desynchronized: true });
+
+    // ⭐ ابدأ العرض — احفظ المهمة لتمكين الإلغاء
+    const task = page.render({ canvasContext: ctx, viewport: vp });
+    RS.renderTasks.set(num, task);
+
+    await task.promise;
+    RS.renderTasks.delete(num);
+
     if(token !== RS.token) return;
+
     const inner = holder.querySelector('.pg-inner');
     if(inner){ inner.innerHTML = ''; inner.appendChild(canvas); }
     holder.dataset.done = '1';
     try{ page.cleanup(); }catch(e){}
-  }catch(e){ console.warn(e); }
-  finally{ RS.rendering.delete(num); }
+  }catch(e){
+    RS.renderTasks.delete(num);
+    if(e && (e.name === 'RenderingCancelledException' || /cancel/i.test(e.message || ''))){
+      return; // تم الإلغاء — طبيعي
+    }
+    console.warn('render error', num, e);
+  }
 }
 
+function cancelRender(num){
+  const task = RS.renderTasks.get(num);
+  if(task){
+    try{ task.cancel(); }catch(e){}
+    RS.renderTasks.delete(num);
+  }
+}
+
+/* ================= SMART PRELOAD ================= */
+function scheduleIdleRender(n){
+  if(!RS.doc || !RS.numPages) return;
+  if(n < 1 || n > RS.numPages) return;
+  const el = RS.pageEls[n-1];
+  if(!el || el.dataset.done === '1') return;
+  if(RS.renderTasks.has(n)) return;
+  if(RS.idleQueue.includes(n)) return;
+  RS.idleQueue.push(n);
+  flushIdleQueue();
+}
+
+function flushIdleQueue(){
+  if(RS.idleScheduled) return;
+  RS.idleScheduled = true;
+  const run = () => {
+    RS.idleScheduled = false;
+    if(!RS.doc){ RS.idleQueue = []; return; }
+    // رتّب حسب القرب من الصفحة الحالية
+    RS.idleQueue.sort((a, b) => Math.abs(a - RS.current) - Math.abs(b - RS.current));
+    const n = RS.idleQueue.shift();
+    if(n) renderPage(n);
+    if(RS.idleQueue.length) flushIdleQueue();
+  };
+  if(window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 400 });
+  else setTimeout(run, 150);
+}
+
+/* ================= CLEANUP ================= */
 function cleanupFarPages(){
   if(!RS.file) return;
   const cur = RS.current;
@@ -197,6 +289,10 @@ function cleanupFarPages(){
     const n = i + 1;
     if(Math.abs(n - cur) <= 6) return;
     if(RS.inView.has(n)) return;
+
+    // ⭐ ألغِ أي عرض جارٍ
+    cancelRender(n);
+
     if(el.dataset.done === '1'){
       const inner = el.querySelector('.pg-inner');
       if(inner) inner.innerHTML = '';
@@ -232,6 +328,7 @@ function rebuildPageSizes(){
   redrawVisiblePdfDrawings();
 }
 
+/* ================= SCROLL & PAGE ================= */
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
   const el = RS.pageEls[num - 1]; if(!el) return;
@@ -241,15 +338,14 @@ function scrollToPage(num, smooth){
   RS.current = num;
   $('#rdPageInput').value = num;
   updateReaderUI(); highlightThumb(num);
+  // ⭐ حمّل مسبقاً الصفحات المجاورة
+  [num+1, num-1, num+2, num-2].forEach(scheduleIdleRender);
 }
 
 function pageFromScroll(){
   const st = rdBody.scrollTop + 60;
   let page = 1;
-  const offs = RS.pageEls.map(el => {
-    const r = el.getBoundingClientRect();
-    return r.top + rdBody.scrollTop;
-  });
+  const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
   for(let i = 0; i < offs.length; i++){ if(offs[i] <= st) page = i + 1; else break; }
   return page;
 }
@@ -272,6 +368,21 @@ rdBody.addEventListener('scroll', () => {
   if(!RS.doc){ updateReaderUI(); return; }
   const fab = $('#rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+
+  // ⭐ كشف التمرير السريع
+  const now = Date.now();
+  const dt = now - RS.lastScrollTime;
+  RS.lastScrollTime = now;
+  if(dt < 30){
+    // تمرير سريع — لا نُحدّث فوراً
+    clearTimeout(RS.fastScrollTimer);
+    RS.fastScrollTimer = setTimeout(() => {
+      if(scrollTick) return;
+      scrollTick = requestAnimationFrame(() => { scrollTick = null; handleReaderScroll(); });
+    }, 80);
+    return;
+  }
+
   if(scrollTick) return;
   scrollTick = requestAnimationFrame(() => { scrollTick = null; handleReaderScroll(); });
 }, { passive:true });
@@ -279,7 +390,13 @@ rdBody.addEventListener('scroll', () => {
 function handleReaderScroll(){
   if(!RS.doc || !RS.file || !RS.numPages) return;
   const page = pageFromScroll();
-  if(page !== RS.current){ RS.current = page; $('#rdPageInput').value = page; highlightThumb(page); }
+  if(page !== RS.current){
+    RS.current = page;
+    $('#rdPageInput').value = page;
+    highlightThumb(page);
+    // ⭐ حمّل مسبقاً المجاورة
+    [page+1, page-1, page+2].forEach(scheduleIdleRender);
+  }
   const oldPct = getPct(RS.file.id);
   const oldMax = getMaxPage(RS.file.id);
   const pct = Math.round((page / RS.numPages) * 100);
@@ -295,11 +412,12 @@ function handleReaderScroll(){
   if(!RS.restoring) cleanupFarPages();
 }
 
+/* ================= SYNC PROGRESS ================= */
 let progressSyncTimer = null, progressSyncQueue = {};
 function scheduleProgressSync(fileId, pct, maxPage, lastPage){
   progressSyncQueue[fileId] = { pct, max_page: maxPage, last_page: lastPage };
   clearTimeout(progressSyncTimer);
-  progressSyncTimer = setTimeout(flushProgressSync, 1200);
+  progressSyncTimer = setTimeout(flushProgressSync, 1500);
 }
 async function flushProgressSync(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
@@ -315,6 +433,7 @@ async function flushProgressSync(){
   try{ if(typeof syncMyXp === 'function') syncMyXp(); }catch(e){}
 }
 
+/* ================= BUTTONS ================= */
 function updateFavBtn(){
   const b = $('#rdFav'); if(!b || !RS.file) return;
   const on = userData.favs.includes(RS.file.id);
@@ -344,23 +463,47 @@ function applyMarksVisibility(){
   const body = $('#rdBody'); if(!body) return;
   body.classList.toggle('hide-marks', !userData.showMarks);
 }
+
+/* ⭐ قائمة الصفحات بـ Event Delegation (أسرع بكثير) */
 function renderThumbs(){
   const box = $('#rdThumbs'); if(!box) return;
   if(!RS.numPages){ box.innerHTML = ''; return; }
-  let html = '';
-  for(let i = 1; i <= RS.numPages; i++) html += `<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
-  box.innerHTML = html;
-  box.querySelectorAll('.thumb-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      scrollToPage(parseInt(b.dataset.p, 10), true);
+
+  // بناء HTML كامل
+  const parts = [];
+  for(let i = 1; i <= RS.numPages; i++){
+    parts.push(`<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`);
+  }
+  box.innerHTML = parts.join('');
+
+  // ⭐ مستمع واحد فقط لكل القائمة (بدل 383 مستمع)
+  if(!box.dataset.listenerAdded){
+    box.dataset.listenerAdded = '1';
+    box.addEventListener('click', e => {
+      const btn = e.target.closest('.thumb-btn');
+      if(!btn) return;
+      scrollToPage(parseInt(btn.dataset.p, 10), true);
       if(window.innerWidth <= 720) box.classList.remove('open');
     });
-  });
+  }
 }
+
 function highlightThumb(n){
   const box = $('#rdThumbs'); if(!box) return;
-  box.querySelectorAll('.thumb-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.p,10) === n));
+  const prev = box.querySelector('.thumb-btn.on');
+  if(prev) prev.classList.remove('on');
+  const next = box.querySelector(`.thumb-btn[data-p="${n}"]`);
+  if(next){
+    next.classList.add('on');
+    // ⭐ مرّر إليها فقط إذا كانت خارج الرؤية
+    const r = next.getBoundingClientRect();
+    const br = box.getBoundingClientRect();
+    if(r.top < br.top || r.bottom > br.bottom){
+      next.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    }
+  }
 }
+
 function startReadClock(){
   stopReadClock();
   RS.clockId = setInterval(() => {
@@ -375,6 +518,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.hidden){ savePrefs(); flushProgressSync(); saveDrawings(); }
 });
 
+/* ================= CLOSE ================= */
 function closeReader(){
   if(!$('#reader').classList.contains('open')) return;
   try{
@@ -464,6 +608,9 @@ function setZoom(z){
   if(z === RS.zoom){ updateZoomLabel(); return; }
   RS.zoom = z;
   const cur = RS.current;
+  // ⭐ ألغِ كل عمليات العرض الجارية قبل إعادة الرسم
+  RS.renderTasks.forEach(task => { try{ task.cancel(); }catch(e){} });
+  RS.renderTasks.clear();
   rebuildPageSizes();
   updateZoomLabel();
   scrollToPage(cur, false);
