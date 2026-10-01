@@ -1,7 +1,13 @@
 /* ============================================================
    21) APP — نقطة الإقلاع (نسخة نظيفة مصححة)
 ============================================================ */
-window._appVersion = '2.1.0';
+window._appVersion = '2.2.0';
+
+/* ============================================================
+   تتبع الجلسة — لمنع إعادة التحميل
+============================================================ */
+window._lastInitializedUserId = null;
+window._appInitialized = false;
 
 /* ============================================================
    تحميل البيانات
@@ -122,8 +128,10 @@ function hideAllScreens(){
 
 async function showWelcome(){
   try{
-     window._appInitialized = false;
+    /* ⭐ أعد تعيين العلامات عند الخروج */
+    window._appInitialized = false;
     window._lastInitializedUserId = null;
+
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
     const w = document.getElementById('welcome');
@@ -155,10 +163,12 @@ window.showAuthScreen = showAuthScreen;
 ============================================================ */
 async function enterApp(){
   try{
-     if(session && session.user){
+    /* ⭐ علّم أن التطبيق تم تهيئته */
+    if(session && session.user){
       window._lastInitializedUserId = session.user.id;
       window._appInitialized = true;
     }
+
     hideAllScreens();
 
     if(!session){ await showWelcome(); return false; }
@@ -173,6 +183,8 @@ async function enterApp(){
       try{ toast('تعذّر تحميل الملف الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       session = null; currentUserObj = null;
+      window._appInitialized = false;
+      window._lastInitializedUserId = null;
       await showWelcome();
       return false;
     }
@@ -181,6 +193,8 @@ async function enterApp(){
       try{ toast('لم يتم العثور على ملفك الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       session = null; currentUserObj = null;
+      window._appInitialized = false;
+      window._lastInitializedUserId = null;
       await showWelcome();
       return false;
     }
@@ -282,6 +296,8 @@ async function enterApp(){
     try{ await sb.auth.signOut(); }catch(e){}
     session = null;
     currentUserObj = null;
+    window._appInitialized = false;
+    window._lastInitializedUserId = null;
     await showWelcome();
     return false;
   }
@@ -354,6 +370,8 @@ function bindEmergencyButtons(){
             console.error('enterApp failed:', err);
             try{ await sb.auth.signOut(); }catch(e){}
             session = null; currentUserObj = null;
+            window._appInitialized = false;
+            window._lastInitializedUserId = null;
             showAuthScreen();
           }
         } else {
@@ -386,6 +404,8 @@ function bindEmergencyButtons(){
       try{ await sb.auth.signOut(); }catch(e){}
       try{ sessionStorage.clear(); }catch(e){}
       try{ localStorage.clear(); }catch(e){}
+      window._appInitialized = false;
+      window._lastInitializedUserId = null;
       toast('تم تسجيل الخروج', 'ok');
       setTimeout(() => location.reload(), 400);
     });
@@ -401,7 +421,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     userData = defaultUD();
     applyTheme();
 
-    console.log('🚀 App starting...');
+    console.log('🚀 App v' + window._appVersion + ' starting...');
 
     bindEmergencyButtons();
 
@@ -413,14 +433,10 @@ window.bindEmergencyButtons = bindEmergencyButtons;
       session = null;
     }
 
-        /* ⭐ تتبع آخر مستخدم تم تهيئته — لمنع إعادة التحميل */
-    window._lastInitializedUserId = null;
-    window._appInitialized = false;
-
+    /* ⭐ منع إعادة التحميل عند نفس المستخدم */
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
 
-      /* 📌 استعادة كلمة المرور */
       if(event === 'PASSWORD_RECOVERY'){
         setTimeout(() => {
           if(typeof showRecoveryModal === 'function') showRecoveryModal();
@@ -428,7 +444,6 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         return;
       }
 
-      /* 📌 تسجيل الخروج */
       if(event === 'SIGNED_OUT'){
         window._lastInitializedUserId = null;
         window._appInitialized = false;
@@ -439,17 +454,15 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         return;
       }
 
-      /* 📌 تسجيل الدخول */
       if(event === 'SIGNED_IN' && newSession){
         const uid = newSession.user ? newSession.user.id : null;
 
-        /* ⭐ إذا نفس المستخدم ونفس الجلسة → تجاهل */
+        /* ⭐ إذا نفس المستخدم → تجاهل */
         if(window._appInitialized && window._lastInitializedUserId === uid){
           console.log('⏭️ نفس المستخدم — تم تجاهل إعادة التحميل');
           return;
         }
 
-        /* ⭐ مستخدم جديد → هيّئ التطبيق */
         window._lastInitializedUserId = uid;
         window._appInitialized = true;
 
@@ -468,13 +481,12 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         return;
       }
 
-      /* 📌 TOKEN_REFRESHED وأحداث أخرى — فقط حدّث الجلسة بدون إعادة تحميل */
+      /* ⭐ TOKEN_REFRESHED وأحداث أخرى — لا إعادة تحميل */
       if(event === 'TOKEN_REFRESHED'){
         console.log('🔄 تم تحديث التوكن — لا حاجة لإعادة التحميل');
         return;
       }
 
-      /* 📌 USER_UPDATED */
       if(event === 'USER_UPDATED'){
         console.log('👤 تم تحديث بيانات المستخدم');
         return;
@@ -492,6 +504,8 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         try{ await sb.auth.signOut(); }catch(err){}
         session = null;
         currentUserObj = null;
+        window._appInitialized = false;
+        window._lastInitializedUserId = null;
         showWelcome();
       }
     } else {
