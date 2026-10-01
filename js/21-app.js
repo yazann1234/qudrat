@@ -174,6 +174,38 @@ window.addEventListener('beforeunload', () => {
   if(typeof pushVideoProgress === 'function'){ try{ pushVideoProgress(); }catch(e){} }
 });
 
+/* ============================================================
+   شارة بيانات المستخدم في وضع المتجر فقط
+============================================================ */
+function renderStoreUserBadge(){
+  if(!currentUserObj) return;
+  const av = document.getElementById('subUserAv');
+  const nm = document.getElementById('subUserName');
+  if(!av || !nm) return;
+
+  const initial = String(currentUserObj.name || '؟').trim().charAt(0) || '؟';
+  if(currentUserObj.avatar_url){
+    av.textContent = '';
+    av.style.backgroundImage = `url('${currentUserObj.avatar_url}')`;
+  } else {
+    av.textContent = initial;
+    av.style.backgroundImage = '';
+  }
+  nm.textContent = currentUserObj.name || '—';
+}
+window.renderStoreUserBadge = renderStoreUserBadge;
+
+/* زر الخروج العائم */
+document.addEventListener('DOMContentLoaded', () => {
+  const fab = document.getElementById('storeLogoutFab');
+  if(fab){
+    fab.addEventListener('click', () => {
+      const btn = document.getElementById('logoutBtn');
+      if(btn) btn.click();
+    });
+  }
+});
+
 /* ===== الإقلاع ===== */
 (async function init(){
   userData = defaultUD();
