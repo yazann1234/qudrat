@@ -157,18 +157,18 @@ function buildPages(){
   const h = pageHeight();
   stage.style.width = w + 'px';
   const frag = document.createDocumentFragment();
+  const email = currentUserObj ? (currentUserObj.email || '') : '';
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
     el.className = 'pdf-page';
     el.dataset.page = String(i + 1);
     el.style.width = w + 'px';
     el.style.height = h + 'px';
-    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
+    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-diag-wm">${escapeHtml(email)}</div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
     frag.appendChild(el); RS.pageEls.push(el);
   }
   stage.appendChild(frag);
 
-  // ⭐ rootMargin أقل = ذاكرة أقل + أداء أفضل
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
@@ -178,10 +178,7 @@ function buildPages(){
         ensureDrawCanvasIfNeeded(idx);
       } else {
         RS.inView.delete(idx);
-        // ⭐ ألغِ العرض إذا خرجت الصفحة بعيداً أثناء التمرير
-        if(Math.abs(idx - RS.current) > 8){
-          cancelRender(idx);
-        }
+        if(Math.abs(idx - RS.current) > 8){ cancelRender(idx); }
       }
     });
   }, { root: rdBody, rootMargin: '600px 0px', threshold: 0 });
