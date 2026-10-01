@@ -88,9 +88,10 @@ async function enterApp(){
   loadDrawings();
   applyTheme();
   applyUserUI();
-  $('#app').classList.add('open');
+    $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
-  goFromHash();
+
+  const _showStore = typeof shouldShowStore === 'function' && shouldShowStore();
 
   if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
     await loadProfilesAndFiles();
@@ -100,6 +101,17 @@ async function enterApp(){
   } else {
     DB.files = [];
     renderFiles(); renderRecent();
+  }
+
+  // اختر العرض الأولي: المتجر أم الرئيسية
+  if(_showStore){
+    if(typeof renderProducts === 'function') renderProducts();
+    go('store');
+    setTimeout(() => {
+      toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok');
+    }, 800);
+  } else {
+    goFromHash();
   }
 
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
