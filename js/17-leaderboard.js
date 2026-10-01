@@ -18,8 +18,9 @@ function myStats(){
   }
   const sessions = userData.sessions || 0;
   const badges = (userData.badges || []).length;
-  const xp = calcXp(pages, completed, sessions, badges);
-  return { pages, completed, sessions, badges, xp };
+  const extraXp = userData.extraXp || 0;
+  const xp = calcXp(pages, completed, sessions, badges) + extraXp;
+  return { pages, completed, sessions, badges, xp, extraXp };
 }
 
 async function syncMyXp(){
