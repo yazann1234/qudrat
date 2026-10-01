@@ -444,3 +444,152 @@ $$('.admin-tabs button').forEach(b => {
   const clr = document.getElementById('nuClearBtn');
   if(clr) clr.addEventListener('click', () => { $('#nuName').value = ''; $('#nuEmail').value = ''; $('#nuPass').value = '123456'; $('#nuApprove').checked = true; });
 })();
+
+/* ============================================================
+   إدارة الفيديوهات في لوحة الأدمن
+============================================================ */
+
+function renderAdminVideos(){
+  const box = $('#adminVideosGrid'); if(!box) return;
+  const list = DB.videos || [];
+  if(!list.length){
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات</h3><p>اذهب لتبويب «إضافة فيديو» لإضافة أول فيديو</p></div>';
+    return;
+  }
+  box.innerHTML = list.map(v => `
+    <div class="admin-video-card">
+      <div class="admin-video-thumb" style="background-image:url('${v.thumbnail || youtubeThumb(v.youtube_id)}')">
+        <img src="${v.thumbnail || youtubeThumb(v.youtube_id)}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+      </div>
+      <div class="admin-video-body">
+        <h4>${escapeHtml(v.title)} ${v.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
+        <small>${escapeHtml(v.category || '')} • ${fmtDuration(v.duration || 0)}</small>
+        <div class="admin-video-actions">
+          <button class="btn btn-ghost btn-sm" onclick="toggleVideoImportant('${v.id}')"><i class="fas fa-star"></i> ${v.important ? 'إلغاء' : 'تمييز'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="linkVideoToFile('${v.id}')"><i class="fas fa-link"></i> ربط بملف</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.toggleVideoImportant = async id => {
+  const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
+  const { error } = await sb.from('videos').update({ important: !v.important }).eq('id', id);
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  toast(v.important ? 'أُزيل التمييز' : 'أصبح الفيديو مميزاً', 'ok');
+};
+
+window.deleteVideo = id => {
+  const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
+  confirmBox('حذف الفيديو', `حذف «${escapeHtml(v.title)}»؟`, async () => {
+    const { error } = await sb.from('videos').delete().eq('id', id);
+    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
+    toast('تم حذف الفيديو', 'ok');
+  }, true);
+};
+
+window.linkVideoToFile = (videoId) => {
+  const v = (DB.videos || []).find(x => x.id === videoId); if(!v) return;
+  const list = DB.files || [];
+  if(!list.length){ toast('لا توجد ملفات لربطها', 'warn'); return; }
+  openModal({
+    title: 'ربط الفيديو بملف كـ «شرح»',
+    text: 'اختر الملف الذي سيعرض هذا الفيديو كشرح له.',
+    bodyHTML: `
+      <div class="vp-pick-list">
+        ${list.map(f => `
+          <div class="vp-pick-item" onclick="doLinkVideo('${videoId}','${f.id}')">
+            <i class="fas ${f.icon || 'fa-book'}" style="font-size:1.4rem;color:${f.color || '#5b6cff'};margin:0 6px"></i>
+            <div style="flex:1;min-width:0">
+              <b>${escapeHtml(f.title)}</b>
+              <small>${escapeHtml(f.category || 'عام')}</small>
+            </div>
+            ${f.explanation_video_id === videoId ? '<i class="fas fa-circle-check" style="color:var(--success)"></i>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    `,
+    okText: 'إلغاء',
+    onOk: () => {}
+  });
+};
+
+window.doLinkVideo = async (videoId, fileId) => {
+  const f = DB.files.find(x => x.id === fileId); if(!f) return;
+  const { error } = await sb.from('files').update({ explanation_video_id: videoId }).eq('id', fileId);
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  f.explanation_video_id = videoId;
+  $('#modal').classList.remove('open');
+  toast('تم ربط الفيديو بالملف ✓', 'ok');
+  if(typeof renderAdminFiles === 'function') renderAdminFiles();
+  if(typeof renderFiles === 'function') renderFiles();
+};
+
+/* زر حفظ الفيديو */
+const _svBtn = document.getElementById('saveVideoBtn');
+if(_svBtn){
+  _svBtn.addEventListener('click', async () => {
+    if(!currentUserObj || currentUserObj.role !== 'admin'){ toast('غير مصرح', 'err'); return; }
+    const url = $('#avUrl').value.trim();
+    const title = $('#avTitle').value.trim();
+    const cat = $('#avCat').value;
+    const desc = $('#avDesc').value.trim();
+    const important = $('#avImportant').checked;
+    const ytId = extractYoutubeId(url);
+    if(!ytId){ toast('رابط يوتيوب غير صالح', 'err'); return; }
+    if(!title){ toast('أدخل عنوان الفيديو', 'warn'); return; }
+
+    const btn = $('#saveVideoBtn');
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+    const thumb = youtubeThumb(ytId);
+    const { error } = await sb.from('videos').insert({
+      title, description: desc, youtube_id: ytId, category: cat,
+      important, thumbnail: thumb, duration: 0, created_by: currentUserObj.id
+    });
+
+    btn.disabled = false;
+    btn.innerHTML = orig;
+    if(error){ toast('فشل الحفظ: ' + error.message, 'err'); return; }
+
+    $('#avUrl').value = ''; $('#avTitle').value = ''; $('#avDesc').value = ''; $('#avImportant').checked = false;
+    $('#avUrlPreview').style.display = 'none';
+    toast('تم إضافة الفيديو بنجاح ✓', 'ok');
+
+    document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
+    const tab = document.querySelector('.admin-tabs button[data-panel="videos"]');
+    if(tab) tab.classList.add('on');
+    const p = $('#panel-videos'); if(p) p.classList.add('on');
+    if(typeof loadVideos === 'function') loadVideos();
+  });
+}
+
+/* زر المسح */
+const _cvBtn = document.getElementById('clearVideoBtn');
+if(_cvBtn){
+  _cvBtn.addEventListener('click', () => {
+    $('#avUrl').value = ''; $('#avTitle').value = ''; $('#avDesc').value = ''; $('#avImportant').checked = false;
+    $('#avUrlPreview').style.display = 'none';
+  });
+}
+
+/* معاينة الرابط */
+const _avUrl = document.getElementById('avUrl');
+if(_avUrl){
+  _avUrl.addEventListener('input', e => {
+    const ytId = extractYoutubeId(e.target.value);
+    const prev = $('#avUrlPreview');
+    const txt = $('#avUrlPreviewText');
+    if(ytId){
+      prev.style.display = 'block';
+      txt.textContent = 'معرف الفيديو: ' + ytId;
+    } else {
+      prev.style.display = 'none';
+    }
+  });
+}
