@@ -1,11 +1,10 @@
 /* ============================================================
-   23) STORE — المتجر + صفحة الشراء (ديناميكي من DB)
+   23) STORE — المتجر + الشراء (إصلاح الواتساب + IBAN اختياري)
 ============================================================ */
 
-/* ================== إعدادات افتراضية ================== */
 const STORE_DEFAULTS = {
   ibanNumber: 'SA0000000000000000000000',
-  ibanImage: 'assets/iban.png',
+  ibanImage: '',
   ibanHolder: '',
   supportPhone: '0538470160',
   supportWhatsApp: '966538470160'
@@ -17,25 +16,16 @@ const DEFAULT_PRODUCTS = [
     title: 'دورة الأقسام',
     subtitle: 'الدورة الشاملة لاختبار القدرات',
     description: 'دورة متكاملة تغطي جميع أقسام اختبار القدرات بأسلوب مبسط ومنظم، مع ملفات وتمارين تفاعلية.',
-    price: 199,
-    currency: 'ر.س',
-    icon: 'fa-graduation-cap',
-    color: '#5b6cff',
-    features: [
-      'شرح تفصيلي لجميع الأقسام',
-      'ملفات PDF حصرية',
-      'دروس فيديو مسجلة',
-      'متابعة تقدمك أسبوعياً'
-    ],
-    popular: true,
-    active: true
+    price: 199, currency: 'ر.س',
+    icon: 'fa-graduation-cap', color: '#5b6cff',
+    features: ['شرح تفصيلي لجميع الأقسام','ملفات PDF حصرية','دروس فيديو مسجلة','متابعة تقدمك أسبوعياً'],
+    popular: true, active: true
   }
 ];
 
 let currentProduct = null;
 let receiptFile = null;
 
-/* ================== أدوات ================== */
 function getActiveProducts(){
   const dbList = (DB.products || []).filter(p => p.active !== false);
   if(dbList.length) return dbList;
@@ -53,29 +43,16 @@ function getStoreConfig(){
   };
 }
 
-/* ⭐ احصل على كلمة المرور الفعلية بأي طريقة ممكنة */
 function getActualPassword(){
-  // 1) من بيانات المستخدم (الأفضل - محفوظة في DB)
-  if(currentUserObj && currentUserObj.password_hint){
-    return currentUserObj.password_hint;
-  }
-  // 2) من sessionStorage (وقت التسجيل)
+  if(currentUserObj && currentUserObj.password_hint) return currentUserObj.password_hint;
   if(currentUserObj){
-    try{
-      const p = sessionStorage.getItem('pending_pass_' + currentUserObj.id);
-      if(p) return p;
-    }catch(e){}
-  }
-  // 3) من localStorage (احتياط)
-  if(currentUserObj){
-    try{
-      const p = localStorage.getItem('pending_pass_' + currentUserObj.id);
-      if(p) return p;
-    }catch(e){}
+    try{ const p = sessionStorage.getItem('pending_pass_' + currentUserObj.id); if(p) return p; }catch(e){}
+    try{ const p = localStorage.getItem('pending_pass_' + currentUserObj.id); if(p) return p; }catch(e){}
   }
   return '';
 }
 
+/* ⭐ IBAN اختياري — لا يُظهر 404 */
 function applyStoreSettings(){
   const cfg = getStoreConfig();
   const ibanCode = document.getElementById('ibanCode');
@@ -84,35 +61,26 @@ function applyStoreSettings(){
   const ibanImg = document.getElementById('ibanImage');
   const ibanWrap = document.getElementById('ibanImageWrap');
   if(ibanImg && ibanWrap){
-    if(cfg.ibanImage){
+    if(cfg.ibanImage && cfg.ibanImage.trim() && !cfg.ibanImage.includes('assets/iban.png')){
       ibanImg.onerror = () => { ibanWrap.style.display = 'none'; };
       ibanImg.onload = () => { ibanWrap.style.display = 'block'; };
       ibanImg.src = cfg.ibanImage;
     } else {
       ibanWrap.style.display = 'none';
+      ibanImg.removeAttribute('src');
     }
   }
 }
 window.applyStoreSettings = applyStoreSettings;
 
-/* ================== عرض المنتجات ================== */
 function renderProducts(){
   const grid = document.getElementById('productsGrid');
   if(!grid) return;
-
   const list = getActiveProducts();
   if(!list.length){
-    grid.innerHTML = `
-      <div style="grid-column:1/-1">
-        <div class="admin-empty">
-          <div class="em-ic"><i class="fas fa-shopping-bag"></i></div>
-          <h3>لا توجد دورات متاحة حالياً</h3>
-          <p>سيتم إضافة الدورات قريباً</p>
-        </div>
-      </div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-shopping-bag"></i></div><h3>لا توجد دورات متاحة</h3></div></div>`;
     return;
   }
-
   grid.innerHTML = list.map(p => `
     <div class="product-card ${p.popular ? 'popular' : ''}" style="--pc:${p.color || '#5b6cff'}">
       ${p.popular ? '<div class="product-popular"><i class="fas fa-fire"></i> الأكثر طلباً</div>' : ''}
@@ -120,41 +88,26 @@ function renderProducts(){
       <h3>${escapeHtml(p.title)}</h3>
       ${p.subtitle ? `<p class="product-sub">${escapeHtml(p.subtitle)}</p>` : ''}
       ${p.description ? `<p class="product-desc">${escapeHtml(p.description)}</p>` : ''}
-      ${(p.features && p.features.length) ? `
-        <ul class="product-features">
-          ${p.features.map(f => `<li><i class="fas fa-check"></i> ${escapeHtml(f)}</li>`).join('')}
-        </ul>` : ''}
-      <div class="product-price">
-        <b>${p.price}</b>
-        <span>${escapeHtml(p.currency || 'ر.س')}</span>
-      </div>
-      <button class="product-buy" onclick="startPurchase('${p.id}')">
-        <i class="fas fa-shopping-cart"></i> شراء الدورة
-      </button>
+      ${(p.features && p.features.length) ? `<ul class="product-features">${p.features.map(f => `<li><i class="fas fa-check"></i> ${escapeHtml(f)}</li>`).join('')}</ul>` : ''}
+      <div class="product-price"><b>${p.price}</b><span>${escapeHtml(p.currency || 'ر.س')}</span></div>
+      <button class="product-buy" onclick="startPurchase('${p.id}')"><i class="fas fa-shopping-cart"></i> شراء الدورة</button>
     </div>
   `).join('');
 }
 window.renderProducts = renderProducts;
 
-/* ================== بدء الشراء ================== */
 function startPurchase(productId){
   const list = getActiveProducts();
   const p = list.find(x => x.id === productId);
   if(!p) return;
   if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
-
   currentProduct = p;
 
-  /* بيانات المستخدم */
-  const nameEl = document.getElementById('puName');
-  const emailEl = document.getElementById('puEmail');
-  const passEl = document.getElementById('puPass');
+  const nameEl = document.getElementById('puName'); if(nameEl) nameEl.textContent = currentUserObj.name || '—';
+  const emailEl = document.getElementById('puEmail'); if(emailEl) emailEl.textContent = currentUserObj.email || '—';
 
-  if(nameEl) nameEl.textContent = currentUserObj.name || '—';
-  if(emailEl) emailEl.textContent = currentUserObj.email || '—';
-
-  /* ⭐ كلمة المرور الفعلية */
   const actualPass = getActualPassword();
+  const passEl = document.getElementById('puPass');
   if(passEl){
     if(actualPass){
       passEl.textContent = actualPass;
@@ -164,44 +117,33 @@ function startPurchase(productId){
     } else {
       passEl.textContent = 'غير متاحة — استخدم «نسيت كلمة المرور»';
       passEl.style.color = 'var(--danger)';
-      passEl.style.fontStyle = 'normal';
       passEl.style.fontWeight = '700';
       passEl.style.fontSize = '.78rem';
     }
   }
 
-  /* معلومات المنتج */
   const pp = document.getElementById('purchaseProduct');
   if(pp){
     pp.innerHTML = `
       <div class="pp-icon" style="background:color-mix(in srgb,${p.color || '#5b6cff'} 15%,transparent);color:${p.color || '#5b6cff'}">
         <i class="fas ${p.icon || 'fa-graduation-cap'}"></i>
       </div>
-      <div class="pp-info">
-        <b>${escapeHtml(p.title)}</b>
-        <small>${escapeHtml(p.subtitle || '')}</small>
-      </div>
-      <div class="pp-price"><b>${p.price}</b> <span>${escapeHtml(p.currency || 'ر.س')}</span></div>
-    `;
+      <div class="pp-info"><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.subtitle || '')}</small></div>
+      <div class="pp-price"><b>${p.price}</b> <span>${escapeHtml(p.currency || 'ر.س')}</span></div>`;
   }
 
   applyStoreSettings();
 
-  /* reset الإيصال */
   receiptFile = null;
-  const prev = document.getElementById('receiptPreview');
-  const up = document.getElementById('receiptUpload');
-  const inp = document.getElementById('receiptInput');
-  if(prev) prev.style.display = 'none';
-  if(up) up.style.display = 'block';
-  if(inp) inp.value = '';
+  const prev = document.getElementById('receiptPreview'); if(prev) prev.style.display = 'none';
+  const up = document.getElementById('receiptUpload'); if(up) up.style.display = 'block';
+  const inp = document.getElementById('receiptInput'); if(inp) inp.value = '';
 
   const modal = document.getElementById('purchaseModal');
   if(modal) modal.classList.add('open');
 }
 window.startPurchase = startPurchase;
 
-/* ================== إغلاق ================== */
 function closePurchase(){
   const modal = document.getElementById('purchaseModal');
   if(modal) modal.classList.remove('open');
@@ -210,7 +152,6 @@ function closePurchase(){
 }
 window.closePurchase = closePurchase;
 
-/* ================== رفع الإيصال إلى Supabase ================== */
 async function uploadReceipt(file){
   if(!currentUserObj) throw new Error('غير مسجل');
   if(!file) throw new Error('لا يوجد ملف');
@@ -219,33 +160,24 @@ async function uploadReceipt(file){
   const safeExt = ['jpg','jpeg','png','webp','pdf'].includes(ext) ? ext : 'jpg';
   const path = currentUserObj.id + '/receipt_' + Date.now() + '.' + safeExt;
 
-  // ارفع
   const { error: upErr } = await sb.storage
     .from('receipts')
-    .upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type || 'image/jpeg'
-    });
+    .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
 
-  if(upErr) throw new Error('فشل الرفع: ' + upErr.message);
+  if(upErr) throw new Error('فشل رفع الإيصال: ' + upErr.message);
 
-  // رابط موقع لمدة 30 يوم
   const { data: signed, error: sErr } = await sb.storage
     .from('receipts')
     .createSignedUrl(path, 60 * 60 * 24 * 30);
 
-  if(sErr || !signed || !signed.signedUrl){
-    throw new Error('فشل إنشاء رابط الإيصال');
-  }
+  if(sErr || !signed || !signed.signedUrl) throw new Error('فشل إنشاء رابط الإيصال');
 
-  return {
-    url: signed.signedUrl,
-    path: path
-  };
+  return { url: signed.signedUrl, path: path };
 }
 
-/* ================== الأحداث ================== */
+/* ============================================================
+   الأحداث
+============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('receiptInput');
   const uploadLabel = document.getElementById('receiptUpload');
@@ -258,26 +190,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('ibanCopyBtn');
   const modal = document.getElementById('purchaseModal');
 
-  /* رفع الإيصال */
   if(input){
     input.addEventListener('change', e => {
-      const f = e.target.files[0];
-      if(!f) return;
+      const f = e.target.files[0]; if(!f) return;
       const okTypes = ['image/jpeg','image/jpg','image/png','image/webp','application/pdf'];
-      if(!okTypes.includes(f.type) && !f.name.toLowerCase().endsWith('.pdf')){
-        toast('اختر صورة أو ملف PDF', 'warn'); return;
-      }
-      if(f.size > 5 * 1024 * 1024){ toast('حجم الملف كبير (الحد 5 ميجا)', 'warn'); return; }
-
+      if(!okTypes.includes(f.type) && !f.name.toLowerCase().endsWith('.pdf')){ toast('اختر صورة أو PDF', 'warn'); return; }
+      if(f.size > 5 * 1024 * 1024){ toast('حجم الملف كبير (5 ميجا)', 'warn'); return; }
       receiptFile = f;
       const reader = new FileReader();
       reader.onload = ev => {
         if(previewImg){
           if(f.type === 'application/pdf'){
             previewImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2VmNDQ0NCI+UERGPC90ZXh0Pjwvc3ZnPg==';
-          } else {
-            previewImg.src = ev.target.result;
-          }
+          } else { previewImg.src = ev.target.result; }
         }
         if(fileName) fileName.textContent = f.name;
         if(uploadLabel) uploadLabel.style.display = 'none';
@@ -287,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* حذف الإيصال */
   if(removeBtn){
     removeBtn.addEventListener('click', () => {
       receiptFile = null;
@@ -300,36 +224,32 @@ document.addEventListener('DOMContentLoaded', () => {
   if(cancelBtn) cancelBtn.addEventListener('click', closePurchase);
   if(modal) modal.addEventListener('click', e => { if(e.target === modal) closePurchase(); });
 
-  /* نسخ الآيبان */
   if(copyBtn){
     copyBtn.addEventListener('click', () => {
       const cfg = getStoreConfig();
-      const iban = cfg.ibanNumber;
-      if(!iban){ toast('لم يُضبط رقم الآيبان', 'warn'); return; }
       try{
-        navigator.clipboard.writeText(iban);
-        toast('تم نسخ رقم الآيبان ✓', 'ok');
+        navigator.clipboard.writeText(cfg.ibanNumber);
+        toast('✓ تم نسخ الآيبان', 'ok');
         copyBtn.innerHTML = '<i class="fas fa-check"></i>';
         setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
       }catch(e){ toast('تعذّر النسخ', 'err'); }
     });
   }
 
-  /* ⭐ إتمام الشراء مع رفع الإيصال */
+  /* ⭐ إتمام الشراء */
   if(submitBtn){
     submitBtn.addEventListener('click', async () => {
       if(!currentProduct){ toast('اختر منتجاً', 'warn'); return; }
-      if(!receiptFile){ toast('يرجى إرفاق صورة الإيصال أولاً', 'warn'); return; }
+      if(!receiptFile){ toast('أرفق صورة الإيصال أولاً', 'warn'); return; }
       if(!currentUserObj){ toast('سجل الدخول أولاً', 'err'); return; }
-
       if(submitBtn.disabled) return;
+
       submitBtn.disabled = true;
       const orig = submitBtn.innerHTML;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري رفع الإيصال...';
 
       let uploaded = null;
       try{
-        // ارفع الإيصال
         uploaded = await uploadReceipt(receiptFile);
       }catch(e){
         console.error('upload failed', e);
@@ -339,9 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // الآن ابنِ الرسالة مع الرابط
       const cfg = getStoreConfig();
-      const pass = getActualPassword() || '(لم تُحفظ — راجع كلمة المرور عند التسجيل)';
+      const pass = getActualPassword() || '(غير متاحة)';
       const receiptUrl = uploaded.url;
 
       const msg =
@@ -356,9 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `🧾 *رابط الإيصال:*\n${receiptUrl}\n\n` +
         `شكراً لكم 🌸`;
 
-      const wa = `https://wa.me/${cfg.supportWhatsApp}?text=${encodeURIComponent(msg)}`;
-
-      // احفظ الحالة
+      /* احفظ الحالة */
       try{
         localStorage.setItem('purchase_submitted_' + currentUserObj.id, new Date().toISOString());
         await sb.from('profiles').update({
@@ -368,22 +285,49 @@ document.addEventListener('DOMContentLoaded', () => {
           purchase_receipt_url: receiptUrl,
           purchase_receipt_path: uploaded.path
         }).eq('id', currentUserObj.id);
-
         currentUserObj.purchase_submitted = true;
         currentUserObj.purchase_receipt_url = receiptUrl;
       }catch(e){ console.warn('save failed', e); }
 
-      // افتح الواتساب
-      window.open(wa, '_blank');
+      const wa = 'https://wa.me/' + cfg.supportWhatsApp + '?text=' + encodeURIComponent(msg);
 
-      submitBtn.innerHTML = '<i class="fas fa-check"></i> تم الإرسال';
-      toast('✅ تم فتح الواتساب — الإيصال مرفق كرابط', 'ok');
-      setTimeout(() => { toast('📎 الرابط في الرسالة — اضغط إرسال', 'warn'); }, 1800);
+      /* ⭐ افتح الواتساب بطريقة مضمونة */
+      let opened = false;
+      try{
+        const link = document.createElement('a');
+        link.href = wa;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { try{ document.body.removeChild(link); }catch(e){} }, 100);
+        opened = true;
+      }catch(e){ console.warn('open link failed', e); }
+
+      /* Fallback */
+      if(!opened){
+        try{ window.open(wa, '_blank'); opened = true; }catch(e){}
+      }
+      if(!opened){
+        try{ window.location.href = wa; }catch(e){}
+      }
+
+      submitBtn.innerHTML = '<i class="fas fa-check"></i> تم الإرسال ✓';
+      toast('✅ تم فتح واتساب — أرسل الرسالة', 'ok');
+
+      setTimeout(() => { toast('📎 لا تنسى إرفاق صورة الإيصال أيضاً', 'warn'); }, 2000);
 
       setTimeout(() => {
         closePurchase();
-        try{ go('home'); }catch(e){}
-      }, 1500);
+        /* أعد عرض المتجر لو لم تتم الموافقة */
+        if(typeof shouldShowStore === 'function' && shouldShowStore()){
+          const appEl = document.getElementById('app');
+          if(appEl) appEl.classList.add('store-only');
+          if(typeof renderProducts === 'function') renderProducts();
+          if(typeof go === 'function') go('store');
+        }
+      }, 2000);
     });
   }
 
