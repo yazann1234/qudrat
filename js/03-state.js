@@ -83,3 +83,15 @@ function loadPrefsFromDB(){
   if(!userData.awardedVideoXp || typeof userData.awardedVideoXp !== 'object') userData.awardedVideoXp = {};
   if(typeof userData.extraXp !== 'number') userData.extraXp = 0;
 }
+
+/* ================= هل يجب عرض المتجر؟ ================= */
+function shouldShowStore(){
+  if(!currentUserObj) return false;
+  if(currentUserObj.role === 'admin') return false;
+  if(currentUserObj.status === 'approved') return false;
+  if(currentUserObj.purchase_submitted === true) return false;
+  const lsKey = 'purchase_submitted_' + currentUserObj.id;
+  if(localStorage.getItem(lsKey)) return false;
+  return true;
+}
+window.shouldShowStore = shouldShowStore;
