@@ -181,8 +181,8 @@ window.editUser = id => {
       }
 
       // 3) تحقق من صحة كلمة السر الجديدة
-      if(newPw.length < 6){
-        showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      if(newPw.length < 8){
+        showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور يجب أن تكون 8 أحرف على الأقل');
         return;
       }
 
@@ -417,7 +417,7 @@ $$('.admin-tabs button').forEach(b => {
     const approve = $('#nuApprove').checked;
     if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
     if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('أدخل بريداً صحيحاً', 'warn'); return; }
-    if(!pass || pass.length < 6){ toast('كلمة المرور 6 أحرف على الأقل', 'warn'); return; }
+    if(!pass || pass.length < 8){ toast('كلمة المرور 8 أحرف على الأقل', 'warn'); return; }
     btn.disabled = true;
     const orig = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
