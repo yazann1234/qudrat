@@ -88,10 +88,12 @@ async function enterApp(){
   loadDrawings();
   applyTheme();
   applyUserUI();
-    $('#app').classList.add('open');
+   $('#app').classList.add('open');
   $('#mainScroll').scrollTop = 0;
 
-  const _showStore = typeof shouldShowStore === 'function' && shouldShowStore();
+  // حمّل إعدادات المتجر والمنتجات دائماً
+  try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){ console.warn(e); }
+  try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){ console.warn(e); }
 
   if(currentUserObj.role === 'admin' || currentUserObj.status === 'approved'){
     await loadProfilesAndFiles();
@@ -103,9 +105,16 @@ async function enterApp(){
     renderFiles(); renderRecent();
   }
 
-  // اختر العرض الأولي: المتجر أم الرئيسية
-  if(_showStore){
+  // هل نعرض المتجر؟
+  const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
+  const storeEl = document.getElementById('view-store');
+  const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
+
+  console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status);
+
+  if(_showStore && storeEl && titlesOk){
     if(typeof renderProducts === 'function') renderProducts();
+    if(typeof applyStoreSettings === 'function') applyStoreSettings();
     go('store');
     setTimeout(() => {
       toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok');
@@ -113,7 +122,6 @@ async function enterApp(){
   } else {
     goFromHash();
   }
-
   renderTasks(); renderBadges(); renderFeatures(); renderThemesGrid();
   notesArea.value = userData.notes || '';
   TIMER.mode = 'focus';
