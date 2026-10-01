@@ -1,5 +1,5 @@
 /* ============================================================
-   16) USER — الملف الشخصي + الصورة + قائمة الجوال
+   16) USER — الملف الشخصي + الصورة + قائمة الجوال + تسجيل الخروج
 ============================================================ */
 
 function applyUserUI(){
@@ -40,7 +40,6 @@ function applyUserUI(){
     const adminNav = document.getElementById('adminNav');
     if(adminNav) adminNav.style.display = currentUserObj.role === 'admin' ? 'flex' : 'none';
 
-    /* احفظ كلمة المرور محلياً إن كانت متوفرة */
     try{
       if(currentUserObj.password_hint && currentUserObj.id){
         if(!sessionStorage.getItem('pending_pass_' + currentUserObj.id)){
@@ -212,19 +211,31 @@ async function saveProfile(){
 }
 
 /* ============================================================
-   أحداث
+   أحداث الملف الشخصي
 ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-  const cam = document.getElementById('profileCamBtn'); if(cam) cam.addEventListener('click', () => document.getElementById('avatarInput').click());
-  const pav = document.getElementById('profileAvatar'); if(pav) pav.addEventListener('click', () => document.getElementById('avatarInput').click());
+  const cam = document.getElementById('profileCamBtn');
+  if(cam) cam.addEventListener('click', () => document.getElementById('avatarInput').click());
+
+  const pav = document.getElementById('profileAvatar');
+  if(pav) pav.addEventListener('click', () => document.getElementById('avatarInput').click());
+
   const ai = document.getElementById('avatarInput');
-  if(ai) ai.addEventListener('change', e => { const f = e.target.files[0]; if(f) uploadAvatar(f); e.target.value = ''; });
-  const psb = document.getElementById('profileSaveBtn'); if(psb) psb.addEventListener('click', saveProfile);
-  const pra = document.getElementById('profileRemoveAvatar'); if(pra) pra.addEventListener('click', removeAvatar);
+  if(ai) ai.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(f) uploadAvatar(f);
+    e.target.value = '';
+  });
+
+  const psb = document.getElementById('profileSaveBtn');
+  if(psb) psb.addEventListener('click', saveProfile);
+
+  const pra = document.getElementById('profileRemoveAvatar');
+  if(pra) pra.addEventListener('click', removeAvatar);
 });
 
 /* ============================================================
-   قائمة الجوال — الأحداث (بـ Delegation)
+   قائمة الجوال
 ============================================================ */
 document.addEventListener('click', (e) => {
   if(e.target.closest('#mobileUserBtn')){
@@ -238,5 +249,139 @@ document.addEventListener('click', (e) => {
     if(!e.target.closest('#mobileUserMenu')){
       menu.classList.remove('open');
     }
+  }
+});
+
+/* ⭐ زر «ملفي» في قائمة الجوال */
+document.addEventListener('click', (e) => {
+  if(e.target.closest('#mumProfile')){
+    e.preventDefault();
+    const menu = document.getElementById('mobileUserMenu');
+    if(menu) menu.classList.remove('open');
+    if(typeof go === 'function') go('profile');
+  }
+  if(e.target.closest('#mumSettings')){
+    e.preventDefault();
+    const menu = document.getElementById('mobileUserMenu');
+    if(menu) menu.classList.remove('open');
+    if(typeof go === 'function') go('settings');
+  }
+});
+
+/* ============================================================
+   ⭐ تسجيل الخروج — معالج موحّد يعمل من كل الأزرار
+============================================================ */
+async function performLogout(skipConfirm){
+  const doLogout = async () => {
+    try{
+      /* احفظ التقدم */
+      try{ savePrefs(); }catch(e){}
+      try{ saveDrawings(); }catch(e){}
+      try{ flushProgressSync(); }catch(e){}
+      try{ if(typeof pushVideoProgress === 'function') pushVideoProgress(); }catch(e){}
+
+      /* اقفل الاتصالات */
+      try{ cleanupChannels(); }catch(e){}
+
+      /* سجّل الخروج من Supabase */
+      try{ await sb.auth.signOut(); }catch(e){ console.warn('signOut error', e); }
+
+      /* نظّف الحالة */
+      currentUserObj = null;
+      session = null;
+      DB = { users: [], files: [], videos: [], products: [], storeSettings: null };
+
+      /* اقفل القارئ والفيديو */
+      try{ if(typeof closeReader === 'function') closeReader(); }catch(e){}
+      try{ if(typeof closeVideoPlayer === 'function') closeVideoPlayer(); }catch(e){}
+
+      /* اقفل التطبيق */
+      try{
+        const ap = document.getElementById('app');
+        if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+      }catch(e){}
+
+      /* امسح sessionStorage و localStorage */
+      try{ sessionStorage.clear(); }catch(e){}
+      try{ localStorage.clear(); }catch(e){}
+
+      /* امسح الحقول */
+      ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+      });
+      ['loginMsg','adminMsg','regMsg'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el){ el.className = 'auth-msg'; el.textContent = ''; }
+      });
+
+      /* اقفل قائمة الجوال */
+      try{
+        const mum = document.getElementById('mobileUserMenu');
+        if(mum) mum.classList.remove('open');
+      }catch(e){}
+
+      /* ارجع لشاشة الترحيب */
+      try{
+        if(typeof showWelcome === 'function'){
+          await showWelcome();
+        } else {
+          const w = document.getElementById('welcome');
+          if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
+        }
+      }catch(e){}
+
+      /* أعِد شاشة الدخول */
+      try{
+        if(typeof showAuthForm === 'function') showAuthForm('login');
+        if(typeof showAuth === 'function') showAuth();
+      }catch(e){}
+
+      try{ toast('تم تسجيل الخروج بنجاح ✓', 'ok'); }catch(e){}
+    }catch(err){
+      console.error('logout error:', err);
+      try{ toast('حدث خطأ، جاري التحديث...', 'warn'); }catch(e){}
+      setTimeout(() => location.reload(), 800);
+    }
+  };
+
+  if(skipConfirm){
+    await doLogout();
+  } else {
+    confirmBox('تسجيل الخروج', 'هل تريد تسجيل الخروج من حسابك؟', doLogout);
+  }
+}
+window.performLogout = performLogout;
+
+/* ⭐ ربط الأزرار الأربعة عبر Delegation */
+document.addEventListener('click', (e) => {
+  if(e.target.closest('#logoutBtn')){
+    e.preventDefault();
+    e.stopPropagation();
+    performLogout(false);
+    return;
+  }
+
+  if(e.target.closest('#storeLogoutFab')){
+    e.preventDefault();
+    e.stopPropagation();
+    performLogout(false);
+    return;
+  }
+
+  if(e.target.closest('#welcomeLogout')){
+    e.preventDefault();
+    e.stopPropagation();
+    performLogout(true);
+    return;
+  }
+
+  if(e.target.closest('#mumLogout')){
+    e.preventDefault();
+    e.stopPropagation();
+    const mum = document.getElementById('mobileUserMenu');
+    if(mum) mum.classList.remove('open');
+    performLogout(false);
+    return;
   }
 });
