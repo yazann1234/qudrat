@@ -119,14 +119,14 @@ function subscribeProductsAndSettings(){
 }
 
 function subscribeProfilesForAdmin(){
-  if(!currentUserObj || currentUserObj.role !== 'admin') return;
+  if(!isPrivileged()) return;
   if(profilesChannel) return;
   const chName = 'profiles-admin-' + Date.now();
   profilesChannel = sb.channel(chName)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-      if(currentUserObj && currentUserObj.role === 'admin'){
+      if(isPrivileged()){
         sb.from('profiles').select('*').order('created_at', { ascending: false }).then(({ data }) => {
-          DB.users = (data || []).filter(u => u.role !== 'admin');
+          DB.users = data || [];  /* ⭐ يشمل الكل */
           safeCall('renderAdmin');
         });
       }
