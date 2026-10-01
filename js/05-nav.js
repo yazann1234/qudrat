@@ -19,6 +19,11 @@ function canAccess(view){
   if(view !== 'admin') return true;
   return currentUserObj && currentUserObj.role === 'admin';
 }
+  // ⭐ منع الانتقال خارج المتجر في وضع المتجر فقط
+  const appEl = document.getElementById('app');
+  if(appEl && appEl.classList.contains('store-only') && view !== 'store'){
+    view = 'store';
+  }
 
 function go(view, skipHash){
   if(!TITLES[view]) view = 'home';
