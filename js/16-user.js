@@ -29,6 +29,18 @@ function applyUserUI(){
     if(currentUserObj.role === 'admin') adminNav.style.display = 'flex';
     else adminNav.style.display = 'none';
   }
+
+     // ⭐ استرجع كلمة المرور من DB إذا لم تكن محفوظة محلياً
+  try{
+    if(currentUserObj.password_hint && currentUserObj.id){
+      if(!sessionStorage.getItem('pending_pass_' + currentUserObj.id)){
+        sessionStorage.setItem('pending_pass_' + currentUserObj.id, currentUserObj.password_hint);
+      }
+    }
+  }catch(e){}
+  
+  updateMobileUserMenu();
+}
   updateMobileUserMenu();
 }
 
