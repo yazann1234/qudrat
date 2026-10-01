@@ -4,7 +4,7 @@
 
 let session = null;
 let currentUserObj = null;
-let DB = { users: [], files: [] };
+let DB = { users: [], files: [], videos: [] };
 let userData = null;
 let myProfileChannel = null, filesChannel = null, profilesChannel = null;
 
@@ -16,7 +16,8 @@ function defaultUD(){
     focus:25, brk:5, longBrk:15, autoStart:false, sound:true,
     goalPages:10, goalMinutes:30,
     readTheme:'light', snap:false, showMarks:true, defaultZoom:1, autoResume:true,
-    log:{}, streak:0, drawings:{}
+    log:{}, streak:0, drawings:{},
+    videoProgress:{}, awardedVideoXp:{}, extraXp:0
   };
 }
 function resetUD(){ userData = defaultUD(); }
@@ -32,7 +33,10 @@ function pickLocalFields(ud){
     readTheme: ud.readTheme, snap: ud.snap, showMarks: ud.showMarks,
     defaultZoom: ud.defaultZoom, autoResume: ud.autoResume,
     log: ud.log, opened: ud.opened, minutes: ud.minutes, sessions: ud.sessions,
-    badges: ud.badges
+    badges: ud.badges,
+    videoProgress: ud.videoProgress,
+    awardedVideoXp: ud.awardedVideoXp,
+    extraXp: ud.extraXp
   };
 }
 
@@ -75,4 +79,7 @@ function loadPrefsFromDB(){
   if(!Array.isArray(userData.opened)) userData.opened = [];
   if(!userData.progress || typeof userData.progress !== 'object') userData.progress = {};
   if(!userData.drawings || typeof userData.drawings !== 'object') userData.drawings = {};
+  if(!userData.videoProgress || typeof userData.videoProgress !== 'object') userData.videoProgress = {};
+  if(!userData.awardedVideoXp || typeof userData.awardedVideoXp !== 'object') userData.awardedVideoXp = {};
+  if(typeof userData.extraXp !== 'number') userData.extraXp = 0;
 }
