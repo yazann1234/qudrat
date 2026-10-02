@@ -1,289 +1,204 @@
 /* ============================================================
-   20) PROTECTION — حماية شاملة
+   20) PROTECTION v2
+   - فتح أدوات المطوّر → الصفحة تصبح بيضاء بالكامل فوراً
+   - عند إغلاق الأدوات تُعاد الصفحة تلقائياً
+   - كشف متعدد الطرق (حجم + توقيت debugger + console)
+   - منع النسخ/الطباعة/الحفظ/المصدر/السحب/التحديد
+   - تعطيل console وإخفاء المعلومات
+   ملاحظة: حماية المتصفح تُصعّب الوصول ولا تلغيه 100%،
+   الحماية الحقيقية تكون في Supabase (RLS + bucket خاص + روابط قصيرة).
 ============================================================ */
+(function(){
+'use strict';
+
+let tripped = false;
+let cleanTicks = 0;
+const _dbg = console.debug.bind(console);   // نسخة أصلية للكشف قبل تعطيل الـ console
 
 const isEditable = el => {
   if(!el) return false;
-  const tag = (el.tagName || '').toLowerCase();
-  return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+  const t = (el.tagName || '').toLowerCase();
+  return t === 'input' || t === 'textarea' || t === 'select' || el.isContentEditable;
 };
+const warn = (m) => { try{ toast(m, 'warn'); }catch(e){} };
+const appOpen = () => { const a = document.getElementById('app'); return !!(a && a.classList.contains('open')); };
 
 /* ============================================================
-   1) منع قائمة السياق (Right-Click)
+   1) الصفحة البيضاء
+============================================================ */
+function goWhite(){
+  if(tripped) return;
+  tripped = true;
+  try{ if(window.RS && RS.clockId) clearInterval(RS.clockId); }catch(e){}
+  try{ sessionStorage.clear(); }catch(e){}
+  try{
+    const root = document.documentElement;
+    root.style.cssText = 'background:#fff!important;';
+    document.body.replaceChildren();
+    document.body.style.cssText = 'background:#fff!important;margin:0;overflow:hidden';
+    document.head.querySelectorAll('style,link[rel="stylesheet"]').forEach(n => n.remove());
+    document.title = ' ';
+  }catch(e){}
+  const block = e => { e.preventDefault(); e.stopImmediatePropagation(); };
+  ['keydown','click','contextmenu','mousedown','touchstart'].forEach(ev => window.addEventListener(ev, block, true));
+}
+window.triggerShield = goWhite;   // للتوافق مع بقية الملفات
+
+/* ============================================================
+   2) كشف أدوات المطوّر
+============================================================ */
+function bySize(){
+  if(window.innerWidth <= 820) return false;          // الجوال/التابلت: لا نعتمد على الحجم
+  const dpr = window.devicePixelRatio || 1;
+  const wd = window.outerWidth - window.innerWidth;
+  const hd = window.outerHeight - window.innerHeight;
+  return (wd > 200 * Math.max(1, dpr * 0.6)) || (hd > 230 * Math.max(1, dpr * 0.6));
+}
+
+function byTiming(){
+  const t = performance.now();
+  // eslint-disable-next-line no-debugger
+  debugger;
+  return performance.now() - t > 120;
+}
+
+function byConsole(){
+  let hit = false;
+  const probe = new Error();
+  Object.defineProperty(probe, 'stack', { configurable:true, get(){ hit = true; return ''; } });
+  try{ _dbg(probe); }catch(e){}
+  return hit;
+}
+
+function devtoolsOpen(){
+  return bySize() || byTiming() || byConsole();
+}
+
+function tick(){
+  const open = devtoolsOpen();
+  if(open){
+    cleanTicks = 0;
+    if(!tripped) goWhite();
+  } else if(tripped){
+    /* تأكد 3 مرات متتالية أن الأدوات أُغلقت ثم أعد التحميل */
+    if(++cleanTicks >= 3) location.reload();
+  }
+}
+/* المؤقت يعيش خارج الـ DOM فيستمر بعد مسح الصفحة */
+setInterval(tick, 700);
+window.addEventListener('resize', () => setTimeout(tick, 150));
+document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(tick, 200); });
+
+/* ============================================================
+   3) منع الأحداث
 ============================================================ */
 document.addEventListener('contextmenu', e => {
   if(isEditable(e.target)) return;
   e.preventDefault();
-  try{ toast('قائمة السياق معطّلة لحماية المحتوى', 'warn'); }catch(x){}
+});
+['dragstart','drop','selectstart','copy','cut'].forEach(ev => {
+  document.addEventListener(ev, e => {
+    if(isEditable(e.target)) return;
+    e.preventDefault();
+    if(ev === 'copy') warn('النسخ غير مسموح');
+  });
 });
 
-/* ============================================================
-   2) منع السحب والسحب-والإفلات
-============================================================ */
-document.addEventListener('dragstart', e => {
-  if(isEditable(e.target)) return;
-  e.preventDefault();
-});
-document.addEventListener('drop', e => {
-  if(isEditable(e.target)) return;
-  e.preventDefault();
-});
+/* حماية الصور من السحب */
+document.addEventListener('mousedown', e => { if(e.target && e.target.tagName === 'IMG') e.preventDefault(); });
 
 /* ============================================================
-   3) منع النسخ والقص
-============================================================ */
-document.addEventListener('copy', e => {
-  if(isEditable(e.target)) return;
-  e.preventDefault();
-  try{ toast('النسخ غير مسموح', 'warn'); }catch(x){}
-});
-document.addEventListener('cut', e => {
-  if(isEditable(e.target)) return;
-  e.preventDefault();
-});
-
-/* ============================================================
-   4) منع السيلكت
-============================================================ */
-document.addEventListener('selectstart', e => {
-  if(isEditable(e.target)) return;
-  e.preventDefault();
-});
-
-/* ============================================================
-   5) اختصارات لوحة المفاتيح
+   4) لوحة المفاتيح
 ============================================================ */
 document.addEventListener('keydown', e => {
-  const k = e.key;
+  if(tripped) return;
+  const k = e.key, lk = (k || '').toLowerCase();
   const editing = isEditable(e.target);
   const readerOpen = document.getElementById('reader')?.classList.contains('open');
   const videoOpen = document.getElementById('videoPlayer')?.classList.contains('open');
+  const ctrl = e.ctrlKey || e.metaKey;
 
-  /* منع DevTools */
-  if(k === 'F12'){ e.preventDefault(); triggerShield(); return false; }
+  /* اختصارات أدوات المطوّر والمصدر */
+  if(k === 'F12'){ e.preventDefault(); goWhite(); return; }
+  if(ctrl && e.shiftKey && ['i','j','c','k','e','m'].includes(lk)){ e.preventDefault(); goWhite(); return; }
+  if(e.metaKey && e.altKey && ['i','j','c','u'].includes(lk)){ e.preventDefault(); goWhite(); return; }   // Mac
+  if(ctrl && !e.shiftKey && ['u','s','p'].includes(lk)){ e.preventDefault(); warn('هذا الإجراء غير مسموح'); return; }
+  if(ctrl && lk === 'a' && !editing){ e.preventDefault(); return; }
 
-  if(e.ctrlKey && e.shiftKey){
-    const bad = ['I','J','C','K','i','j','c','k'].includes(k);
-    if(bad){ e.preventDefault(); triggerShield(); return false; }
+  /* PrintScreen: امسح الحافظة */
+  if(k === 'PrintScreen'){
+    try{ navigator.clipboard.writeText(' '); }catch(x){}
+    warn('لقطات الشاشة غير مسموحة');
+    return;
   }
-
-  if(e.ctrlKey && !e.shiftKey){
-    if(['u','U','s','S'].includes(k)){ e.preventDefault(); triggerShield(); return false; }
-  }
-
-  /* Ctrl+P (طباعة) */
-  if(e.ctrlKey && (k === 'p' || k === 'P')){ e.preventDefault(); triggerShield(); return false; }
-
-  /* Ctrl+A خارج الحقول */
-  if(e.ctrlKey && (k === 'a' || k === 'A') && !editing){ e.preventDefault(); return false; }
 
   /* اختصارات القارئ */
-  if(readerOpen && !editing){
+  if(readerOpen && !editing && !ctrl){
     if(k === '+' || k === '='){ e.preventDefault(); setZoom(RS.zoom + 0.15); return; }
     if(k === '-' || k === '_'){ e.preventDefault(); setZoom(RS.zoom - 0.15); return; }
-    if(k === 'ArrowLeft'){ e.preventDefault(); scrollToPage(RS.current + 1, true); return; }
-    if(k === 'ArrowRight'){ e.preventDefault(); scrollToPage(RS.current - 1, true); return; }
+    if(k === 'ArrowLeft' || k === 'PageDown'){ e.preventDefault(); scrollToPage(RS.current + 1, true); return; }
+    if(k === 'ArrowRight' || k === 'PageUp'){ e.preventDefault(); scrollToPage(RS.current - 1, true); return; }
     if(k === 'Home'){ e.preventDefault(); scrollToPage(1, true); return; }
     if(k === 'End'){ e.preventDefault(); scrollToPage(RS.numPages, true); return; }
-    if(k === 'p' || k === 'P'){ e.preventDefault(); if(typeof toggleDrawMode === 'function') toggleDrawMode(); return; }
-    if(k === 'w' || k === 'W'){ e.preventDefault(); if(typeof toggleWhiteboard === 'function') toggleWhiteboard(); return; }
+    if(lk === 'p'){ e.preventDefault(); if(typeof toggleDrawMode === 'function') toggleDrawMode(); return; }
+    if(lk === 'w'){ e.preventDefault(); if(typeof toggleWhiteboard === 'function') toggleWhiteboard(); return; }
   }
 
-  /* ESC */
   if(k === 'Escape'){
     const modal = document.getElementById('modal');
-    if(modal && modal.classList.contains('open')){ modal.classList.remove('open'); return; }
+    if(modal?.classList.contains('open')){ modal.classList.remove('open'); return; }
     const mum = document.getElementById('mobileUserMenu');
-    if(mum && mum.classList.contains('open')){ mum.classList.remove('open'); return; }
+    if(mum?.classList.contains('open')){ mum.classList.remove('open'); return; }
     if(videoOpen){ if(typeof closeVideoPlayer === 'function') closeVideoPlayer(); return; }
     if(readerOpen){ closeReader(); return; }
-    const th = document.getElementById('rdThumbs');
-    if(th) th.classList.remove('open');
+    document.getElementById('rdThumbs')?.classList.remove('open');
     return;
   }
 
-  /* Ctrl+K للبحث */
-  if(e.ctrlKey && (k === 'k' || k === 'K')){
+  if(ctrl && lk === 'k'){
     e.preventDefault();
     const s = document.getElementById('searchInput');
-    if(s && document.getElementById('app').classList.contains('open')){
-      s.focus(); s.select();
-    }
+    if(s && appOpen()){ s.focus(); s.select(); }
     return;
   }
 
-  if(editing) return;
-  if(e.ctrlKey || e.altKey || e.metaKey) return;
+  if(editing || ctrl || e.altKey || !appOpen()) return;
+  if(readerOpen || videoOpen) return;
 
-  /* اختصارات التنقل */
   if(k === '1') go('home');
-  if(k === '2') go('files');
-  if(k === '3') go('progress');
-  if(k === 'v' || k === 'V') go('videos');
-  if(k === 'l' || k === 'L') go('leaderboard');
-  if(k === 'p' || k === 'P') go('profile');
-  if(k === '4') go('features');
-  if(k === '5') go('settings');
-  if(k === '6' && currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'owner')) go('admin');
-});
-
-/* ============================================================
-   6) كشف DevTools — متعدد الطرق
-============================================================ */
-let devtoolsOpen = false;
-let shieldActive = false;
-
-function detectBySize(){
-  if(window.innerWidth <= 720) return false;
-  const wDiff = window.outerWidth - window.innerWidth;
-  const hDiff = window.outerHeight - window.innerHeight;
-  return (wDiff > 260 || hDiff > 280);
-}
-
-/* كشف بـ timing — دقة عالية */
-function detectByTiming(){
-  const start = performance.now();
-  // eslint-disable-next-line no-debugger
-  debugger;
-  const end = performance.now();
-  return (end - start) > 100;
-}
-
-/* كشف بـ console.log getter */
-function detectByConsole(){
-  let detected = false;
-  const el = new Image();
-  Object.defineProperty(el, 'id', {
-    get(){
-      detected = true;
-      return 'x';
-    }
-  });
-  try{
-    console.log(el);
-    console.clear();
-  }catch(e){}
-  return detected;
-}
-
-function checkDevtools(){
-  if(detectBySize() || detectByTiming()){
-    if(!shieldActive) triggerShield();
-    return true;
-  }
-  return false;
-}
-
-let devtoolsInterval = null;
-function startDevtoolsDetection(){
-  if(devtoolsInterval) clearInterval(devtoolsInterval);
-  devtoolsInterval = setInterval(() => {
-    const app = document.getElementById('app');
-    if(!app || !app.classList.contains('open')) return;
-    checkDevtools();
-  }, 800);
-}
-
-/* ============================================================
-   7) العقوبة — شاشة بيضاء
-============================================================ */
-function triggerShield(){
-  if(shieldActive) return;
-  shieldActive = true;
-  devtoolsOpen = true;
-
-  try{
-    const shield = document.getElementById('shield');
-    if(shield) shield.classList.add('on');
-  }catch(e){}
-
-  /* ⭐ اجعل الصفحة بيضاء */
-  try{
-    /* أوقف كل شيء */
-    if(typeof RS !== 'undefined' && RS.clockId){
-      clearInterval(RS.clockId);
-    }
-    if(typeof stopReadClock === 'function') stopReadClock();
-
-    /* أخفِ كل المحتوى */
-    document.body.style.background = '#fff';
-    document.body.innerHTML = '';
-    document.documentElement.style.background = '#fff';
-
-    /* امسح الجلسة أيضاً */
-    try{ sessionStorage.clear(); }catch(e){}
-  }catch(e){}
-
-  /* امنع أي تفاعل */
-  document.addEventListener('keydown', e => {
-    if(shieldActive){ e.preventDefault(); e.stopPropagation(); }
-  }, true);
-  document.addEventListener('click', e => {
-    if(shieldActive){ e.preventDefault(); e.stopPropagation(); }
-  }, true);
-}
-
-window.triggerShield = triggerShield;
-
-/* ============================================================
-   8) منع التضمين في iframe
-============================================================ */
-try{
-  if(window.top !== window.self){
-    /* في iframe → امنع */
-    document.documentElement.innerHTML = '';
-    window.top.location = window.self.location;
-  }
-}catch(e){}
-
-/* ============================================================
-   9) منع حفظ الصفحة (Ctrl+S)
-============================================================ */
-document.addEventListener('keydown', e => {
-  if((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')){
-    e.preventDefault();
-    try{ toast('حفظ الصفحة معطّل', 'warn'); }catch(x){}
-    return false;
-  }
+  else if(k === '2') go('files');
+  else if(k === '3') go('progress');
+  else if(lk === 'v') go('videos');
+  else if(lk === 'l') go('leaderboard');
+  else if(lk === 'p') go('profile');
+  else if(k === '4') go('features');
+  else if(k === '5') go('settings');
+  else if(k === '6' && currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'owner')) go('admin');
 }, true);
 
 /* ============================================================
-   10) منع الطباعة
+   5) منع التضمين في iframe + الطباعة
 ============================================================ */
-window.addEventListener('beforeprint', e => {
-  try{ triggerShield(); }catch(x){}
-});
+try{
+  if(window.top !== window.self){
+    document.documentElement.replaceChildren();
+    window.top.location = window.self.location;
+  }
+}catch(e){ goWhite(); }
+
+window.addEventListener('beforeprint', () => { goWhite(); });
 
 /* ============================================================
-   11) تشغيل المراقبة
+   6) تعطيل الـ console (لا يكشف معلومات)
 ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  startDevtoolsDetection();
-
-  /* فحص إضافي عند visibility change */
-  document.addEventListener('visibilitychange', () => {
-    if(!document.hidden) setTimeout(checkDevtools, 300);
+try{
+  const noop = function(){};
+  ['log','info','warn','error','debug','table','trace','dir','dirxml','group','groupEnd','time','timeEnd'].forEach(m => {
+    try{ console[m] = noop; }catch(e){}
   });
-
-  /* فحص عند تغيير الحجم (فتح/إغلاق devtools يغير الأحجام) */
-  let resizeCheck;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeCheck);
-    resizeCheck = setTimeout(checkDevtools, 500);
-  });
-
-  /* منع تحميل الصفحة في tab آخر لأخذ screenshot */
-  window.addEventListener('blur', () => {
-    /* لا نعاقب، فقط نراقب */
-  });
-});
+}catch(e){}
 
 /* ============================================================
-   12) تنظيف
+   7) تنظيف
 ============================================================ */
-window.addEventListener('beforeunload', () => {
-  try{
-    if(devtoolsInterval) clearInterval(devtoolsInterval);
-    if(typeof RS !== 'undefined' && RS.clockId) clearInterval(RS.clockId);
-  }catch(e){}
-});
+})();
