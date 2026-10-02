@@ -329,7 +329,11 @@ async function pushVideoProgress(){
 
 /* ================= إغلاق المشغل ================= */
 function closeVideoPlayer(){
-  if(!$('#videoPlayer').classList.contains('open')) return;
+  const vp = document.getElementById('videoPlayer');
+  if(!vp || !vp.classList.contains('open')) return;
+
+  /* ⭐ animation الإغلاق */
+  vp.classList.add('closing');
 
   if(VP.video && VP.player && VP.ready){
     try{ if(!VP.completed) pushVideoProgress(); }catch(e){}
@@ -344,12 +348,16 @@ function closeVideoPlayer(){
   VP.video = null;
 
   closeLinkedFile(true);
-  $('#videoPlayer').classList.remove('open');
-  document.body.style.overflow = '';
-  try{ history.replaceState(null, '', '#videos'); }catch(e){}
-  renderVideos();
-  if(typeof syncMyXp === 'function'){ try{ syncMyXp(); }catch(e){} }
-  if($('#view-profile').classList.contains('active')) renderProfile();
+
+  setTimeout(() => {
+    vp.classList.remove('open');
+    vp.classList.remove('closing');
+    document.body.style.overflow = '';
+    try{ history.replaceState(null, '', '#videos'); }catch(e){}
+    renderVideos();
+    if(typeof syncMyXp === 'function'){ try{ syncMyXp(); }catch(e){} }
+    if($('#view-profile') && $('#view-profile').classList.contains('active')) renderProfile();
+  }, 500);
 }
 
 /* ================= أزرار التحكم ================= */
