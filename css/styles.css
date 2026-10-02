@@ -2084,3 +2084,7 @@ input,textarea,select,button{font-family:inherit}
   .store-settings-save-bar .btn{width:100%}
   .settings-card{padding:18px}
 }
+
+.pdf-page{content-visibility:auto;contain-intrinsic-size:800px 1000px}
+.pdf-page:not(.current){will-change:auto}
+.pdf-page.current{will-change:transform}
