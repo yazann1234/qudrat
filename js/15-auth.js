@@ -126,9 +126,32 @@ async function doRegister(){
       }
     }catch(e){ console.warn('save pass:', e); }
 
-    if(!(data && data.session)){
-      setTimeout(() => showMsg('regMsg', 'تفقّد بريدك لتأكيد الحساب', 'ok'), 1500);
+        /* ⭐ إذا كان التسجيل التلقائي مفعّل → ادخل مباشرة كـ pending */
+    if(data && data.session){
+      /* احفظ كلمة المرور */
+      try{
+        sessionStorage.setItem('pending_pass_' + data.user.id, pass);
+        localStorage.setItem('pending_pass_' + data.user.id, pass);
+      }catch(e){}
+
+      /* انتظر لحظة لإنشاء الـ profile */
+      await new Promise(r => setTimeout(r, 600));
+
+      /* حدّث password_hint */
+      try{
+        await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
+      }catch(e){}
+
+      /* ⭐ ادخل التطبيق مباشرة — لا تنتظر */
+      try{ if(typeof hideAuth === 'function') hideAuth(); }catch(e){}
+      setTimeout(() => {
+        if(typeof enterApp === 'function') enterApp();
+      }, 200);
+      return;
     }
+
+    /* تأكيد البريد مطلوب */
+    setTimeout(() => showMsg('regMsg', 'تفقّد بريدك لتأكيد الحساب', 'ok'), 1500);
 
     btn.disabled = false;
     btn.innerHTML = orig;
