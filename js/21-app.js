@@ -1,11 +1,7 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع (نسخة نظيفة مصححة)
+   21) APP — نقطة الإقلاع (نسخة محسّنة v2.3.0)
 ============================================================ */
-window._appVersion = '2.2.0';
-
-/* ============================================================
-   تتبع الجلسة — لمنع إعادة التحميل
-============================================================ */
+window._appVersion = '2.3.0';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
 
@@ -19,11 +15,7 @@ async function loadProfilesAndFiles(retry){
     if(error) throw error;
     DB.files = data || [];
   }catch(err){
-    console.warn('load files failed:', err && err.message);
-    if(retry > 0){
-      await new Promise(r => setTimeout(r, 400 * (4 - retry)));
-      return loadProfilesAndFiles(retry - 1);
-    }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 400 * (4 - retry))); return loadProfilesAndFiles(retry - 1); }
     DB.files = [];
   }
 
@@ -118,7 +110,7 @@ async function loadMyVideoProgress(){
 }
 
 /* ============================================================
-   دوال التحكم بالشاشات
+   إدارة الشاشات
 ============================================================ */
 function hideAllScreens(){
   try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
@@ -128,14 +120,20 @@ function hideAllScreens(){
 
 async function showWelcome(){
   try{
-    /* ⭐ أعد تعيين العلامات عند الخروج */
     window._appInitialized = false;
     window._lastInitializedUserId = null;
 
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+
     const w = document.getElementById('welcome');
-    if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
+    if(w){
+      /* ⭐ اعرضها فقط في حالة تسجيل الخروج أو الزيارة الأولى */
+      if(w.dataset.firstVisit === 'true'){
+        w.style.display = 'flex';
+        w.classList.remove('exit');
+      }
+    }
 
     const wl = document.getElementById('welcomeLogout');
     if(wl){
@@ -148,6 +146,20 @@ async function showWelcome(){
 }
 window.showWelcome = showWelcome;
 
+/* ⭐ إظهار شاشة الترحيب (بعد تسجيل الخروج فقط) */
+function forceShowWelcome(){
+  const w = document.getElementById('welcome');
+  if(w){
+    w.dataset.firstVisit = 'true';
+    w.style.display = 'flex';
+    w.classList.remove('exit');
+  }
+  const a = document.getElementById('auth'); if(a) a.classList.remove('open');
+  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+}
+window.forceShowWelcome = forceShowWelcome;
+
+/* ⭐ عرض شاشة الدخول مباشرة (بدون ترحيب) */
 function showAuthScreen(){
   try{
     const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
@@ -163,7 +175,6 @@ window.showAuthScreen = showAuthScreen;
 ============================================================ */
 async function enterApp(){
   try{
-    /* ⭐ علّم أن التطبيق تم تهيئته */
     if(session && session.user){
       window._lastInitializedUserId = session.user.id;
       window._appInitialized = true;
@@ -185,7 +196,7 @@ async function enterApp(){
       session = null; currentUserObj = null;
       window._appInitialized = false;
       window._lastInitializedUserId = null;
-      await showWelcome();
+      forceShowWelcome();
       return false;
     }
 
@@ -195,7 +206,7 @@ async function enterApp(){
       session = null; currentUserObj = null;
       window._appInitialized = false;
       window._lastInitializedUserId = null;
-      await showWelcome();
+      forceShowWelcome();
       return false;
     }
 
@@ -231,15 +242,12 @@ async function enterApp(){
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
 
-    console.log('🛒 showStore:', _showStore, '| status:', currentUserObj.status, '| role:', currentUserObj.role);
-
     if(_showStore && storeEl && titlesOk){
       if(appEl) appEl.classList.add('store-only');
       try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
       try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
       try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
       try{ go('store'); }catch(e){}
-      setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى الملفات والفيديوهات', 'ok'); }catch(e){} }, 800);
     } else {
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){}
@@ -268,7 +276,9 @@ async function enterApp(){
     try{ syncMyXp(); }catch(e){}
     try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
 
-    setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 400);
+    setTimeout(() => {
+      try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){}
+    }, 300);
 
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
@@ -298,7 +308,7 @@ async function enterApp(){
     currentUserObj = null;
     window._appInitialized = false;
     window._lastInitializedUserId = null;
-    await showWelcome();
+    forceShowWelcome();
     return false;
   }
 }
@@ -338,7 +348,7 @@ function bindEmergencyButtons(){
   if(btn && !btn.dataset.bound){
     btn.dataset.bound = '1';
     btn.addEventListener('click', async () => {
-      if(!confirm('سيتم مسح كل الجلسات والبيانات المحلية. متابعة؟')) return;
+      if(!confirm('سيتم مسح كل الجلسات والبيانات. متابعة؟')) return;
       try{ await sb.auth.signOut(); }catch(e){}
       try{ sessionStorage.clear(); }catch(e){}
       try{ localStorage.clear(); }catch(e){}
@@ -375,16 +385,7 @@ function bindEmergencyButtons(){
             showAuthScreen();
           }
         } else {
-          const w = document.getElementById('welcome');
-          if(w){
-            w.classList.add('exit');
-            setTimeout(() => {
-              if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-              showAuthScreen();
-            }, 400);
-          } else {
-            showAuthScreen();
-          }
+          showAuthScreen();
         }
       }catch(e){
         console.error('enterBtn error:', e);
@@ -392,7 +393,7 @@ function bindEmergencyButtons(){
       }finally{
         setTimeout(() => {
           if(enterBtn){ enterBtn.disabled = false; enterBtn.innerHTML = orig; }
-        }, 1000);
+        }, 800);
       }
     });
   }
@@ -406,8 +407,7 @@ function bindEmergencyButtons(){
       try{ localStorage.clear(); }catch(e){}
       window._appInitialized = false;
       window._lastInitializedUserId = null;
-      toast('تم تسجيل الخروج', 'ok');
-      setTimeout(() => location.reload(), 400);
+      forceShowWelcome();
     });
   }
 }
@@ -420,18 +420,15 @@ window.bindEmergencyButtons = bindEmergencyButtons;
   try{
     userData = defaultUD();
     applyTheme();
-
-    console.log('🚀 App v' + window._appVersion + ' starting...');
-
     bindEmergencyButtons();
 
+    let s = null;
     try{
       const r = await sb.auth.getSession();
-      session = r.data.session;
-    }catch(e){
-      console.warn('getSession failed', e);
-      session = null;
-    }
+      s = r.data.session;
+    }catch(e){}
+
+    session = s;
 
     /* ⭐ منع إعادة التحميل عند نفس المستخدم */
     sb.auth.onAuthStateChange(async (event, newSession) => {
@@ -450,16 +447,13 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         currentUserObj = null;
         session = null;
         try{ cleanupChannels(); }catch(e){}
-        showWelcome();
+        forceShowWelcome();
         return;
       }
 
       if(event === 'SIGNED_IN' && newSession){
         const uid = newSession.user ? newSession.user.id : null;
-
-        /* ⭐ إذا نفس المستخدم → تجاهل */
         if(window._appInitialized && window._lastInitializedUserId === uid){
-          console.log('⏭️ نفس المستخدم — تم تجاهل إعادة التحميل');
           return;
         }
 
@@ -476,23 +470,17 @@ window.bindEmergencyButtons = bindEmergencyButtons;
           try{ await sb.auth.signOut(); }catch(err){}
           window._appInitialized = false;
           window._lastInitializedUserId = null;
-          showWelcome();
+          forceShowWelcome();
         }
         return;
       }
 
-      /* ⭐ TOKEN_REFRESHED وأحداث أخرى — لا إعادة تحميل */
-      if(event === 'TOKEN_REFRESHED'){
-        console.log('🔄 تم تحديث التوكن — لا حاجة لإعادة التحميل');
-        return;
-      }
-
-      if(event === 'USER_UPDATED'){
-        console.log('👤 تم تحديث بيانات المستخدم');
+      if(event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED'){
         return;
       }
     });
 
+    /* ⭐ قرر الشاشة الابتدائية */
     if(session){
       try{
         await Promise.race([
@@ -500,16 +488,28 @@ window.bindEmergencyButtons = bindEmergencyButtons;
           new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
         ]);
       }catch(e){
-        console.error('init enterApp failed/timeout:', e);
         try{ await sb.auth.signOut(); }catch(err){}
         session = null;
         currentUserObj = null;
-        window._appInitialized = false;
-        window._lastInitializedUserId = null;
-        showWelcome();
+        forceShowWelcome();
       }
     } else {
-      showWelcome();
+      /* ⭐ لا جلسة → هل المستخدم زار سابقاً؟ */
+      let hasVisited = false;
+      try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
+
+      if(hasVisited){
+        /* زار سابقاً → اذهب لشاشة الدخول مباشرة */
+        showAuthScreen();
+      } else {
+        /* زيارة أولى → اعرض الترحيب */
+        try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
+        const w = document.getElementById('welcome');
+        if(w){
+          w.dataset.firstVisit = 'true';
+          w.style.display = 'flex';
+        }
+      }
     }
 
     if(window.location.hash && window.location.hash.includes('type=recovery')){
@@ -526,17 +526,14 @@ window.bindEmergencyButtons = bindEmergencyButtons;
 
     try{ setupDrawUI(); }catch(e){}
 
-    console.log('✅ App ready');
   }catch(err){
     console.error('❌ init fatal:', err);
     try{ bindEmergencyButtons(); }catch(e){}
-    try{ showWelcome(); }catch(e){}
+    const w = document.getElementById('welcome');
+    if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
   }
 })();
 
-/* ============================================================
-   beforeunload
-============================================================ */
 window.addEventListener('beforeunload', () => {
   try{
     clearTimeout(prefsSaveTimer);
