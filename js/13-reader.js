@@ -720,6 +720,10 @@ function closeReader(){
   const r = document.getElementById('reader');
   if(!r || !r.classList.contains('open')) return;
 
+  /* ⭐ animation الإغلاق */
+  r.classList.add('closing');
+
+  /* شغّل تنظيف الحالة فوراً */
   try{
     if(typeof DRAW !== 'undefined'){
       DRAW.active = false; DRAW.wb = false; DRAW.drawing = false; DRAW.current = null;
@@ -744,17 +748,22 @@ function closeReader(){
     savePrefs();
   }
 
+  /* امسح المحتوى الداخلي */
   teardownReader(true);
-
-  r.classList.remove('open');
-  document.body.style.overflow = '';
-
-  const stage = document.getElementById('rdStage'); if(stage) stage.innerHTML = '';
-  const thumbs = document.getElementById('rdThumbs'); if(thumbs) thumbs.innerHTML = '';
-  if(thumbs) thumbs.classList.remove('open');
   hideLoading();
 
-  renderFiles(); renderBadges(); renderRecent(); updateSidebar(); checkBadges();
+  /* ⭐ أغلق بعد انتهاء الـ animation */
+  setTimeout(() => {
+    r.classList.remove('open');
+    r.classList.remove('closing');
+    document.body.style.overflow = '';
+
+    const stage = document.getElementById('rdStage'); if(stage) stage.innerHTML = '';
+    const thumbs = document.getElementById('rdThumbs'); if(thumbs) thumbs.innerHTML = '';
+    if(thumbs) thumbs.classList.remove('open');
+
+    renderFiles(); renderBadges(); renderRecent(); updateSidebar(); checkBadges();
+  }, 480);
 }
 
 /* ============================================================
