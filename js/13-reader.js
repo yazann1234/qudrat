@@ -1,9 +1,8 @@
 /* ============================================================
-   13) READER — قارئ PDF محسّن للأداء العالي
-   - إلغاء عرض الصفحات البعيدة فوراً
-   - تحميل مسبق ذكي للصفحات المجاورة
-   - قائمة صفحات بـ Event Delegation (أسرع 50x للملفات الضخمة)
-   - تجاوز الصفحات الوسيطة عند التمرير السريع
+   13) READER — قارئ PDF فائق السرعة
+   - بدون lag
+   - تمرير سلس
+   - إدارة ذاكرة ذكية
 ============================================================ */
 
 const RS = {
@@ -13,53 +12,79 @@ const RS = {
   rendered:new Set(), inView:new Set(),
   pageEls:[], observer:null, restoring:false, clockId:null,
   signedUrl: null,
-  renderTasks: new Map(),   // pageNum -> PDFRenderTask
-  idleQueue: [],            // صفحات للتحميل المسبق
-  idleScheduled: false,
-  lastScrollTime: 0,
-  fastScrollTimer: null
+  renderQueue: new Map(),
+  pendingQueue: [],
+  isProcessing: false,
+  fastScrolling: false,
+  fastScrollTimer: null,
+  scrollRAF: null,
+  watermarkEmail: ''
 };
+
 let currentFile = null;
-const rdBody = $('#rdBody');
+const rdBody = document.getElementById('rdBody');
 
 function pageWidth(){ return Math.round(RS.baseWidth * RS.zoom); }
 function pageHeight(){ return Math.round(RS.pageH * (pageWidth() / RS.pageW)); }
 
 function showLoading(txt, pct){
-  const l = $('#rdLoading'); if(!l) return;
+  const l = document.getElementById('rdLoading');
+  if(!l) return;
   l.style.display = 'flex';
-  if(txt) $('#rdLoadingTxt').textContent = txt;
-  if(typeof pct === 'number') $('#rdLoadingBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+  const t = document.getElementById('rdLoadingTxt');
+  if(t && txt) t.textContent = txt;
+  if(typeof pct === 'number'){
+    const b = document.getElementById('rdLoadingBar');
+    if(b) b.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  }
 }
-function hideLoading(){ const l = $('#rdLoading'); if(l) l.style.display = 'none'; }
+function hideLoading(){
+  const l = document.getElementById('rdLoading');
+  if(l) l.style.display = 'none';
+}
 
-/* ================= OPEN FILE ================= */
+/* ============================================================
+   فتح ملف
+============================================================ */
 async function openFile(id){
   if(!currentUserObj) return;
   if(!isSubscribed()){ showLockMessage(); return; }
   const f = DB.files.find(x => x.id === id);
   if(!f) return;
+
   currentFile = f; RS.file = f;
+  RS.watermarkEmail = currentUserObj.email || '';
+
   userData.opened = [id, ...userData.opened.filter(x => x !== id)].slice(0, 14);
   savePrefs();
+
   const icon = f.icon || 'fa-file-pdf';
   const color = f.color || '#5b6cff';
-  $('#rdIcon').innerHTML = `<i class="fas ${icon}" style="color:${color}"></i>`;
-  $('#rdIcon').style.background = `color-mix(in srgb, ${color} 16%, transparent)`;
-  $('#rdTitle').textContent = f.title;
-  $('#rdMeta').textContent = `PDF • ${f.category}${f.important ? ' • مهم' : ''}`;
+  const iconEl = document.getElementById('rdIcon');
+  if(iconEl){
+    iconEl.innerHTML = `<i class="fas ${icon}" style="color:${color}"></i>`;
+    iconEl.style.background = `color-mix(in srgb, ${color} 16%, transparent)`;
+  }
+  const titleEl = document.getElementById('rdTitle'); if(titleEl) titleEl.textContent = f.title;
+  const metaEl = document.getElementById('rdMeta'); if(metaEl) metaEl.textContent = `PDF • ${f.category}${f.important ? ' • مهم' : ''}`;
+
   updateFavBtn(); updateBookmarkBtn();
-  $('#reader').classList.add('open');
+
+  const readerEl = document.getElementById('reader');
+  if(readerEl) readerEl.classList.add('open');
   document.body.style.overflow = 'hidden';
+
   applyReaderTheme(); applySnapClass();
   RS.token++; const token = RS.token;
   teardownReader(false);
+
   showLoading('جاري تجهيز القارئ...', 15);
-  $('#rdStage').innerHTML = '';
+  const stage = document.getElementById('rdStage');
+  if(stage) stage.innerHTML = '';
   RS.baseWidth = Math.max(220, Math.min(980, rdBody.clientWidth - 30));
 
   try{
-    // ⭐ رابط موقّع + Streaming
+    /* رابط موقّع مع Streaming */
     const { data: signed, error: sErr } = await sb.storage
       .from('pdfs')
       .createSignedUrl(f.storage_path, 3600);
@@ -70,35 +95,38 @@ async function openFile(id){
     RS.signedUrl = signed.signedUrl;
     showLoading('جاري تجهيز القارئ...', 35);
 
-    // ⭐ إعدادات محسّنة للملفات الضخمة
+    /* ⭐ إعدادات محسّنة للسرعة القصوى */
     const doc = await pdfjsLib.getDocument({
       url: signed.signedUrl,
-      disableAutoFetch: false,      // ← نسمح بالتحميل المسبق للقطع
+      disableAutoFetch: false,
       disableStream: false,
-      rangeChunkSize: 524288,        // ← 512KB لكل قطعة (نصف عدد الطلبات)
+      rangeChunkSize: 1048576,   // 1MB chunks (أسرع بكثير)
       disableRange: false,
       cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
       cMapPacked: true,
-      verbosity: 0
+      verbosity: 0,
+      stopAtErrors: false
     }).promise;
+
     if(token !== RS.token){ try{doc.destroy();}catch(e){} return; }
     RS.doc = doc; RS.numPages = doc.numPages;
 
-    // أبعاد الصفحة الأولى فقط
+    /* أبعاد الصفحة الأولى فقط */
     const p1 = await doc.getPage(1);
     const vp0 = p1.getViewport({ scale: 1 });
     RS.pageW = vp0.width || 612;
     RS.pageH = vp0.height || 792;
     try{ p1.cleanup(); }catch(e){}
 
-    if(f.page_count !== RS.numPages){ f.page_count = RS.numPages; }
-    $('#rdMeta').textContent = `PDF • ${f.category} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
-    $('#rdPagesTotal').textContent = RS.numPages;
-    $('#rdPageInput').max = RS.numPages;
+    if(f.page_count !== RS.numPages) f.page_count = RS.numPages;
+    if(metaEl) metaEl.textContent = `PDF • ${f.category} • ${RS.numPages} صفحة${f.important ? ' • مهم' : ''}`;
+    const pt = document.getElementById('rdPagesTotal'); if(pt) pt.textContent = RS.numPages;
+    const pi = document.getElementById('rdPageInput'); if(pi) pi.max = RS.numPages;
 
     buildPages();
     hideLoading();
 
+    /* ابدأ من آخر موضع */
     const prog = userData.progress[id];
     let startPage = 1;
     if(userData.autoResume && prog && typeof prog === 'object'){
@@ -107,187 +135,258 @@ async function openFile(id){
     }
     startPage = Math.max(1, Math.min(startPage, RS.numPages));
     RS.current = startPage;
-    $('#rdPageInput').value = startPage;
+    if(pi) pi.value = startPage;
     renderThumbs();
-    if(startPage > 1){ RS.restoring = true; scrollToPage(startPage, false); setTimeout(()=>{ RS.restoring = false; }, 500); }
+
+    if(startPage > 1){
+      RS.restoring = true;
+      scrollToPage(startPage, false);
+      setTimeout(() => { RS.restoring = false; }, 400);
+    }
     updateReaderUI();
 
-    // ⭐ عرض فوري للصفحة الحالية + بدء التحميل المسبق
+    /* عرض فوري + preload */
     requestAnimationFrame(() => {
-      renderPage(startPage);
-      if(startPage > 1) renderPage(startPage - 1);
-      if(startPage < RS.numPages) renderPage(startPage + 1);
+      renderPageNow(startPage);
+      if(startPage > 1) renderPageNow(startPage - 1);
+      if(startPage < RS.numPages) renderPageNow(startPage + 1);
     });
 
-    if(!userData.badges.includes('first')){ userData.badges.push('first'); savePrefs(); setTimeout(()=> toast('حصلت على شارة «البداية الموفقة»', 'ok'), 700); renderBadges(); }
+    if(!userData.badges.includes('first')){
+      userData.badges.push('first');
+      savePrefs();
+      setTimeout(() => toast('حصلت على شارة «البداية الموفقة»', 'ok'), 600);
+      renderBadges();
+    }
+
     startReadClock();
     refreshAll();
-    loadDrawingsForFile(f.id).then(() => redrawVisiblePdfDrawings());
+
+    if(typeof loadDrawingsForFile === 'function'){
+      loadDrawingsForFile(f.id).then(() => {
+        if(typeof redrawVisiblePdfDrawings === 'function') redrawVisiblePdfDrawings();
+      });
+    }
+
   }catch(err){
-    console.error(err); hideLoading();
-    $('#rdStage').innerHTML = `<div class="pdf-loading" style="position:relative;display:flex"><i class="fas fa-circle-exclamation" style="color:var(--danger)"></i><p>تعذّر تحميل الملف</p><small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openFile('${id}')"><i class="fas fa-rotate"></i> إعادة المحاولة</button></div>`;
+    console.error(err);
+    hideLoading();
+    if(stage) stage.innerHTML = `<div class="pdf-loading" style="position:relative;display:flex">
+      <i class="fas fa-circle-exclamation" style="color:var(--danger)"></i>
+      <p>تعذّر تحميل الملف</p>
+      <small style="color:var(--muted);font-size:.78rem">${escapeHtml(err.message || 'خطأ غير معروف')}</small>
+      <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openFile('${id}')">
+        <i class="fas fa-rotate"></i> إعادة المحاولة
+      </button>
+    </div>`;
     toast('تعذّر تحميل الملف: ' + err.message, 'err');
   }
 }
 window.openFile = openFile;
 
-/* ================= TEARDOWN ================= */
+/* ============================================================
+   teardown
+============================================================ */
 function teardownReader(closeUI){
   try{ if(RS.observer){ RS.observer.disconnect(); RS.observer = null; } }catch(e){}
-  // ⭐ ألغِ كل عمليات العرض الجارية
-  RS.renderTasks.forEach(task => { try{ task.cancel(); }catch(e){} });
-  RS.renderTasks.clear();
-  RS.idleQueue = [];
-  RS.idleScheduled = false;
-  RS.rendered.clear(); RS.inView.clear();
-  RS.pageEls = []; RS.offsets = [];
+  RS.renderQueue.forEach(t => { try{ t.cancel(); }catch(e){} });
+  RS.renderQueue.clear();
+  RS.pendingQueue = [];
+  RS.rendered.clear();
+  RS.inView.clear();
+  RS.pageEls = [];
   stopReadClock();
   if(closeUI){
-    if(RS.doc){ try{ RS.doc.destroy(); }catch(e){} }
+    try{ if(RS.doc) RS.doc.destroy(); }catch(e){}
     RS.doc = null; RS.file = null; RS.numPages = 0; currentFile = null;
     RS.signedUrl = null;
   }
 }
 
-/* ================= BUILD PAGES ================= */
+/* ============================================================
+   بناء الصفحات
+============================================================ */
 function buildPages(){
-  const stage = $('#rdStage');
-  stage.innerHTML = ''; RS.pageEls = [];
+  const stage = document.getElementById('rdStage');
+  if(!stage) return;
+
+  stage.innerHTML = '';
+  RS.pageEls = [];
   const w = pageWidth();
   const h = pageHeight();
   stage.style.width = w + 'px';
+
   const frag = document.createDocumentFragment();
-  const email = currentUserObj ? (currentUserObj.email || '') : '';
   for(let i = 0; i < RS.numPages; i++){
     const el = document.createElement('div');
     el.className = 'pdf-page';
     el.dataset.page = String(i + 1);
     el.style.width = w + 'px';
     el.style.height = h + 'px';
-    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-diag-wm">${escapeHtml(email)}</div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
-    frag.appendChild(el); RS.pageEls.push(el);
+    el.innerHTML = `<div class="pg-num">صفحة ${i+1} / ${RS.numPages}</div><div class="pg-inner"></div><div class="pg-diag-wm">${escapeHtml(RS.watermarkEmail)}</div><div class="pg-wm">العباقرة للقدرات © محتوى محمي</div>`;
+    frag.appendChild(el);
+    RS.pageEls.push(el);
   }
   stage.appendChild(frag);
 
+  /* Intersection Observer — عرض ذكي */
   RS.observer = new IntersectionObserver(entries => {
     entries.forEach(en => {
       const idx = parseInt(en.target.dataset.page, 10);
       if(en.isIntersecting){
         RS.inView.add(idx);
-        renderPage(idx);
-        ensureDrawCanvasIfNeeded(idx);
+        requestRender(idx);
       } else {
         RS.inView.delete(idx);
-        if(Math.abs(idx - RS.current) > 8){ cancelRender(idx); }
+        /* إلغاء العمليات الجارية للصفحات البعيدة */
+        if(Math.abs(idx - RS.current) > 10) cancelRender(idx);
       }
     });
-  }, { root: rdBody, rootMargin: '600px 0px', threshold: 0 });
+  }, {
+    root: rdBody,
+    rootMargin: '500px 0px',
+    threshold: 0
+  });
+
   RS.pageEls.forEach(el => RS.observer.observe(el));
   computeOffsets();
   applyMarksVisibility();
 }
 
 function computeOffsets(){
+  const body = rdBody;
   RS.offsets = RS.pageEls.map(el => {
     const r = el.getBoundingClientRect();
-    return r.top + rdBody.scrollTop;
+    return r.top + body.scrollTop;
   });
 }
 
-/* ================= RENDER PAGE (with cancellation) ================= */
-async function renderPage(num){
+/* ============================================================
+   نظام طابور العرض (Render Queue)
+============================================================ */
+function requestRender(num){
   const holder = RS.pageEls[num - 1];
   if(!holder || holder.dataset.done === '1') return;
-  if(RS.renderTasks.has(num)) return; // قيد العرض بالفعل
+  if(RS.renderQueue.has(num)) return;
   if(!RS.doc) return;
-  const token = RS.token;
+  if(RS.pendingQueue.includes(num)) return;
 
-  try{
-    const page = await RS.doc.getPage(num);
-    if(token !== RS.token) return;
-    if(holder.dataset.done === '1') return;
+  RS.pendingQueue.push(num);
+  processQueue();
+}
 
-    const cssW = pageWidth();
-    const scale = cssW / RS.pageW;
-    // ⭐ دقة أقل للملفات الضخمة لتسريع الرسم
-    const dprCap = RS.numPages > 300 ? 1.1 : (RS.numPages > 150 ? 1.3 : (RS.numPages > 80 ? 1.5 : 1.7));
-    const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-    const vp = page.getViewport({ scale: scale * dpr });
+function processQueue(){
+  if(RS.isProcessing) return;
+  RS.isProcessing = true;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.floor(vp.width));
-    canvas.height = Math.max(1, Math.floor(vp.height));
-    canvas.style.width = '100%'; canvas.style.height = '100%';
-    const ctx = canvas.getContext('2d', { alpha:false, desynchronized: true });
+  const step = () => {
+    if(!RS.doc){ RS.isProcessing = false; return; }
+    if(!RS.pendingQueue.length){ RS.isProcessing = false; return; }
 
-    // ⭐ ابدأ العرض — احفظ المهمة لتمكين الإلغاء
-    const task = page.render({ canvasContext: ctx, viewport: vp });
-    RS.renderTasks.set(num, task);
+    /* أولوية للصفحة الحالية */
+    RS.pendingQueue.sort((a, b) => Math.abs(a - RS.current) - Math.abs(b - RS.current));
+    const num = RS.pendingQueue.shift();
 
-    await task.promise;
-    RS.renderTasks.delete(num);
+    renderPageNow(num).finally(() => {
+      if(RS.pendingQueue.length){
+        if(window.requestIdleCallback){
+          window.requestIdleCallback(step, { timeout: 100 });
+        } else {
+          setTimeout(step, 16);
+        }
+      } else {
+        RS.isProcessing = false;
+      }
+    });
+  };
 
-    if(token !== RS.token) return;
+  step();
+}
 
-    const inner = holder.querySelector('.pg-inner');
-    if(inner){ inner.innerHTML = ''; inner.appendChild(canvas); }
-    holder.dataset.done = '1';
-    try{ page.cleanup(); }catch(e){}
-  }catch(e){
-    RS.renderTasks.delete(num);
-    if(e && (e.name === 'RenderingCancelledException' || /cancel/i.test(e.message || ''))){
-      return; // تم الإلغاء — طبيعي
+function renderPageNow(num){
+  const holder = RS.pageEls[num - 1];
+  if(!holder || holder.dataset.done === '1') return Promise.resolve();
+  if(RS.renderQueue.has(num)) return RS.renderQueue.get(num);
+  if(!RS.doc) return Promise.resolve();
+
+  const promise = (async () => {
+    const token = RS.token;
+    try{
+      const page = await RS.doc.getPage(num);
+      if(token !== RS.token) return;
+      if(holder.dataset.done === '1') return;
+
+      const cssW = pageWidth();
+      const scale = cssW / RS.pageW;
+
+      /* DPR ديناميكي — أقل = أسرع */
+      let dprCap = 1.6;
+      if(RS.numPages > 300) dprCap = 1.0;
+      else if(RS.numPages > 150) dprCap = 1.15;
+      else if(RS.numPages > 60) dprCap = 1.35;
+      const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+
+      const vp = page.getViewport({ scale: scale * dpr });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.floor(vp.width));
+      canvas.height = Math.max(1, Math.floor(vp.height));
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+
+      const ctx = canvas.getContext('2d', {
+        alpha: false,
+        desynchronized: true,
+        willReadFrequently: false
+      });
+
+      const task = page.render({ canvasContext: ctx, viewport: vp });
+      RS.renderQueue.set(num, task);
+
+      await task.promise;
+      RS.renderQueue.delete(num);
+
+      if(token !== RS.token) return;
+
+      const inner = holder.querySelector('.pg-inner');
+      if(inner){
+        inner.innerHTML = '';
+        inner.appendChild(canvas);
+      }
+      holder.dataset.done = '1';
+      try{ page.cleanup(); }catch(e){}
+    }catch(e){
+      RS.renderQueue.delete(num);
+      if(e && (e.name === 'RenderingCancelledException' || /cancel/i.test(e.message || ''))) return;
+      console.warn('render error', num, e);
     }
-    console.warn('render error', num, e);
-  }
+  })();
+
+  return promise;
 }
 
 function cancelRender(num){
-  const task = RS.renderTasks.get(num);
+  const task = RS.renderQueue.get(num);
   if(task){
     try{ task.cancel(); }catch(e){}
-    RS.renderTasks.delete(num);
+    RS.renderQueue.delete(num);
   }
+  const idx = RS.pendingQueue.indexOf(num);
+  if(idx > -1) RS.pendingQueue.splice(idx, 1);
 }
 
-/* ================= SMART PRELOAD ================= */
-function scheduleIdleRender(n){
-  if(!RS.doc || !RS.numPages) return;
-  if(n < 1 || n > RS.numPages) return;
-  const el = RS.pageEls[n-1];
-  if(!el || el.dataset.done === '1') return;
-  if(RS.renderTasks.has(n)) return;
-  if(RS.idleQueue.includes(n)) return;
-  RS.idleQueue.push(n);
-  flushIdleQueue();
-}
-
-function flushIdleQueue(){
-  if(RS.idleScheduled) return;
-  RS.idleScheduled = true;
-  const run = () => {
-    RS.idleScheduled = false;
-    if(!RS.doc){ RS.idleQueue = []; return; }
-    // رتّب حسب القرب من الصفحة الحالية
-    RS.idleQueue.sort((a, b) => Math.abs(a - RS.current) - Math.abs(b - RS.current));
-    const n = RS.idleQueue.shift();
-    if(n) renderPage(n);
-    if(RS.idleQueue.length) flushIdleQueue();
-  };
-  if(window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 400 });
-  else setTimeout(run, 150);
-}
-
-/* ================= CLEANUP ================= */
+/* ============================================================
+   تنظيف ذكي (ليس قوياً)
+============================================================ */
 function cleanupFarPages(){
   if(!RS.file) return;
   const cur = RS.current;
   RS.pageEls.forEach((el, i) => {
     const n = i + 1;
-    if(Math.abs(n - cur) <= 6) return;
+    /* نُبقي 12 صفحة قبل وبعد للسيولة */
+    if(Math.abs(n - cur) <= 12) return;
     if(RS.inView.has(n)) return;
 
-    // ⭐ ألغِ أي عرض جارٍ
     cancelRender(n);
 
     if(el.dataset.done === '1'){
@@ -296,18 +395,16 @@ function cleanupFarPages(){
       el.dataset.done = '0';
       RS.rendered.delete(n);
     }
-    const c = el.querySelector('.pg-draw');
-    if(c){
-      const key = drawKeyPdf(RS.file.id, n);
-      const has = userData.drawings && userData.drawings[key] && userData.drawings[key].length;
-      if(!has) c.remove();
-    }
   });
 }
 
+/* ============================================================
+   إعادة أحجام الصفحات
+============================================================ */
 function rebuildPageSizes(){
   const w = pageWidth();
   const h = pageHeight();
+
   RS.pageEls.forEach((el, i) => {
     el.style.width = w + 'px';
     el.style.height = h + 'px';
@@ -318,109 +415,203 @@ function rebuildPageSizes(){
       RS.rendered.delete(i + 1);
     }
   });
-  const stage = $('#rdStage');
+
+  const stage = document.getElementById('rdStage');
   if(stage) stage.style.width = w + 'px';
+
   computeOffsets();
-  RS.inView.forEach(n => renderPage(n));
-  redrawVisiblePdfDrawings();
+  RS.inView.forEach(n => requestRender(n));
+  if(typeof redrawVisiblePdfDrawings === 'function') redrawVisiblePdfDrawings();
 }
 
-/* ================= SCROLL & PAGE ================= */
+/* ============================================================
+   التنقل
+============================================================ */
 function scrollToPage(num, smooth){
   num = Math.max(1, Math.min(num, RS.numPages || 1));
-  const el = RS.pageEls[num - 1]; if(!el) return;
+  const el = RS.pageEls[num - 1];
+  if(!el) return;
+
   const top = el.offsetTop - 8;
-  try{ rdBody.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' }); }
-  catch(e){ rdBody.scrollTop = top; }
+  try{
+    rdBody.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  }catch(e){
+    rdBody.scrollTop = top;
+  }
+
   RS.current = num;
-  $('#rdPageInput').value = num;
-  updateReaderUI(); highlightThumb(num);
-  // ⭐ حمّل مسبقاً الصفحات المجاورة
-  [num+1, num-1, num+2, num-2].forEach(scheduleIdleRender);
+  const pi = document.getElementById('rdPageInput');
+  if(pi) pi.value = num;
+
+  updateReaderUI();
+  highlightThumb(num);
+
+  /* Preload الصفحات المجاورة */
+  requestRender(num);
+  requestRender(num + 1);
+  requestRender(num - 1);
+  requestRender(num + 2);
 }
 
 function pageFromScroll(){
   const st = rdBody.scrollTop + 60;
   let page = 1;
-  const offs = RS.offsets.length === RS.pageEls.length ? RS.offsets : RS.pageEls.map(el => el.offsetTop);
-  for(let i = 0; i < offs.length; i++){ if(offs[i] <= st) page = i + 1; else break; }
+  const offs = RS.offsets && RS.offsets.length === RS.pageEls.length
+    ? RS.offsets
+    : RS.pageEls.map(el => el.offsetTop);
+  for(let i = 0; i < offs.length; i++){
+    if(offs[i] <= st) page = i + 1;
+    else break;
+  }
   return page;
 }
 
 function updateReaderUI(){
   if(!RS.file || !RS.numPages) return;
   const pct = Math.max(getPct(RS.file.id), Math.round((RS.current / RS.numPages) * 100));
-  $('#rdPctTxt').textContent = pct + '%';
-  $('#rdPageInfo').textContent = `الصفحة ${RS.current} من ${RS.numPages}`;
-  $('#rdBarTop').style.width = pct + '%';
-  const btn = $('#rdComplete');
-  if(pct >= 100){ btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف'; btn.classList.add('achieved'); }
-  else { btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف'; btn.classList.remove('achieved'); }
-  const fab = $('#rdTop');
+
+  const pctTxt = document.getElementById('rdPctTxt');
+  if(pctTxt) pctTxt.textContent = pct + '%';
+  const pageInfo = document.getElementById('rdPageInfo');
+  if(pageInfo) pageInfo.textContent = `الصفحة ${RS.current} من ${RS.numPages}`;
+  const barTop = document.getElementById('rdBarTop');
+  if(barTop) barTop.style.width = pct + '%';
+
+  const btn = document.getElementById('rdComplete');
+  if(btn){
+    if(pct >= 100){
+      btn.innerHTML = '<i class="fas fa-circle-check"></i> أُنجز الملف';
+      btn.classList.add('achieved');
+    } else {
+      btn.innerHTML = '<i class="fas fa-check"></i> أنهيت الملف';
+      btn.classList.remove('achieved');
+    }
+  }
+
+  const fab = document.getElementById('rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+
+  /* تحديث الصفحة الحالية بصرياً (بعد throttle) */
+  updateCurrentClass(RS.current);
 }
 
-let scrollTick = null;
-rdBody.addEventListener('scroll', () => {
-  if(!RS.doc){ updateReaderUI(); return; }
-  const fab = $('#rdTop');
-  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+let _lastCurrentClass = 0;
+function updateCurrentClass(n){
+  if(_lastCurrentClass === n) return;
+  if(_lastCurrentClass){
+    const prev = RS.pageEls[_lastCurrentClass - 1];
+    if(prev) prev.classList.remove('current');
+  }
+  const cur = RS.pageEls[n - 1];
+  if(cur) cur.classList.add('current');
+  _lastCurrentClass = n;
+}
 
-  // ⭐ كشف التمرير السريع
-  const now = Date.now();
-  const dt = now - RS.lastScrollTime;
-  RS.lastScrollTime = now;
-  if(dt < 30){
-    // تمرير سريع — لا نُحدّث فوراً
+/* ============================================================
+   Scroll — أخفّ ما يمكن
+============================================================ */
+let scrollScheduled = false;
+let lastScrollY = 0;
+
+rdBody.addEventListener('scroll', () => {
+  if(!RS.doc) return;
+
+  /* كشف التمرير السريع */
+  const now = performance.now();
+  const diff = Math.abs(rdBody.scrollTop - lastScrollY);
+  lastScrollY = rdBody.scrollTop;
+
+  if(diff > 500){
+    RS.fastScrolling = true;
     clearTimeout(RS.fastScrollTimer);
-    RS.fastScrollTimer = setTimeout(() => {
-      if(scrollTick) return;
-      scrollTick = requestAnimationFrame(() => { scrollTick = null; handleReaderScroll(); });
-    }, 80);
-    return;
+    RS.fastScrollTimer = setTimeout(() => { RS.fastScrolling = false; }, 200);
   }
 
-  if(scrollTick) return;
-  scrollTick = requestAnimationFrame(() => { scrollTick = null; handleReaderScroll(); });
-}, { passive:true });
+  if(scrollScheduled) return;
+  scrollScheduled = true;
 
-function handleReaderScroll(){
+  RS.scrollRAF = requestAnimationFrame(() => {
+    scrollScheduled = false;
+    handleScroll();
+  });
+}, { passive: true });
+
+function handleScroll(){
   if(!RS.doc || !RS.file || !RS.numPages) return;
+
   const page = pageFromScroll();
+
   if(page !== RS.current){
     RS.current = page;
-    $('#rdPageInput').value = page;
+    const pi = document.getElementById('rdPageInput');
+    if(pi) pi.value = page;
     highlightThumb(page);
-    // ⭐ حمّل مسبقاً المجاورة
-    [page+1, page-1, page+2].forEach(scheduleIdleRender);
+    updateCurrentClass(page);
+
+    /* preload ذكي */
+    requestRender(page + 1);
+    requestRender(page - 1);
   }
+
+  /* تحديث التقدم (مخفف) */
   const oldPct = getPct(RS.file.id);
   const oldMax = getMaxPage(RS.file.id);
   const pct = Math.round((page / RS.numPages) * 100);
   const newPct = Math.max(oldPct, pct);
   const newMax = Math.max(oldMax, page);
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  userData.progress[RS.file.id] = Object.assign({}, prev, { pct: newPct, maxPage: newMax, lastPage: page, at: Date.now() });
-  if(newMax > oldMax) addPagesToday(newMax - oldMax); else savePrefs();
+
+  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object')
+    ? userData.progress[RS.file.id] : {};
+
+  userData.progress[RS.file.id] = Object.assign({}, prev, {
+    pct: newPct, maxPage: newMax, lastPage: page, at: Date.now()
+  });
+
+  if(newMax > oldMax) addPagesToday(newMax - oldMax);
+  else savePrefs();
+
   scheduleProgressSync(RS.file.id, newPct, newMax, page);
-  updateReaderUI(); updateSidebar(); renderHomeStats();
+
+  /* UI أقل تواتراً */
+  const fab = document.getElementById('rdTop');
+  if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
+
   if(newPct >= 100 && oldPct < 100) toast('أكملت الملف بالكامل!', 'ok');
+
+  /* تحديث خفيف */
+  const pctTxt = document.getElementById('rdPctTxt');
+  if(pctTxt) pctTxt.textContent = newPct + '%';
+  const barTop = document.getElementById('rdBarTop');
+  if(barTop) barTop.style.width = newPct + '%';
+  const pageInfo = document.getElementById('rdPageInfo');
+  if(pageInfo) pageInfo.textContent = `الصفحة ${page} من ${RS.numPages}`;
+
   checkBadges();
-  if(!RS.restoring) cleanupFarPages();
+
+  if(!RS.restoring && !RS.fastScrolling){
+    cleanupFarPages();
+  }
 }
 
-/* ================= SYNC PROGRESS ================= */
+/* ============================================================
+   مزامنة التقدم مع الخادم
+============================================================ */
 let progressSyncTimer = null, progressSyncQueue = {};
+
 function scheduleProgressSync(fileId, pct, maxPage, lastPage){
   progressSyncQueue[fileId] = { pct, max_page: maxPage, last_page: lastPage };
   clearTimeout(progressSyncTimer);
-  progressSyncTimer = setTimeout(flushProgressSync, 1500);
+  progressSyncTimer = setTimeout(flushProgressSync, 2000);
 }
+
 async function flushProgressSync(){
-  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
   const rows = Object.keys(progressSyncQueue).map(fid => ({
-    user_id: currentUserObj.id, file_id: fid,
-    pct: progressSyncQueue[fid].pct, max_page: progressSyncQueue[fid].max_page, last_page: progressSyncQueue[fid].last_page,
+    user_id: currentUserObj.id,
+    file_id: fid,
+    pct: progressSyncQueue[fid].pct,
+    max_page: progressSyncQueue[fid].max_page,
+    last_page: progressSyncQueue[fid].last_page,
     updated_at: new Date().toISOString()
   }));
   progressSyncQueue = {};
@@ -430,56 +621,53 @@ async function flushProgressSync(){
   try{ if(typeof syncMyXp === 'function') syncMyXp(); }catch(e){}
 }
 
-/* ================= BUTTONS ================= */
-const rdAiHelp = document.getElementById('rdAiHelp');
-if(rdAiHelp) rdAiHelp.addEventListener('click', () => {
-  if(typeof openFileAiHelp === 'function') openFileAiHelp();
-});
+/* ============================================================
+   أزرار القارئ
+============================================================ */
 function updateFavBtn(){
-  const b = $('#rdFav'); if(!b || !RS.file) return;
+  const b = document.getElementById('rdFav'); if(!b || !RS.file) return;
   const on = userData.favs.includes(RS.file.id);
   b.classList.toggle('on', on);
   b.innerHTML = `<i class="${on ? 'fas' : 'far'} fa-star"></i>`;
 }
 function updateBookmarkBtn(){
-  const b = $('#rdBookmark'); if(!b || !RS.file) return;
+  const b = document.getElementById('rdBookmark'); if(!b || !RS.file) return;
   const p = userData.progress[RS.file.id];
   const has = p && typeof p === 'object' && p.bookmark;
   b.classList.toggle('on', !!has);
   b.innerHTML = `<i class="${has ? 'fas' : 'far'} fa-bookmark"></i>`;
 }
 function applyReaderTheme(){
-  const body = $('#rdBody'); if(!body) return;
+  const body = document.getElementById('rdBody'); if(!body) return;
   body.classList.remove('read-light','read-sepia','read-dark');
   body.classList.add('read-' + (userData.readTheme || 'light'));
   applyMarksVisibility();
 }
 function applySnapClass(){
-  const body = $('#rdBody'); if(!body) return;
+  const body = document.getElementById('rdBody'); if(!body) return;
   body.classList.toggle('snap', !!userData.snap);
-  const btn = $('#rdSnap');
+  const btn = document.getElementById('rdSnap');
   if(btn) btn.innerHTML = `<i class="fas fa-scroll"></i> <span>${userData.snap ? 'صفحة واحدة' : 'مستمر'}</span>`;
 }
 function applyMarksVisibility(){
-  const body = $('#rdBody'); if(!body) return;
+  const body = document.getElementById('rdBody'); if(!body) return;
   body.classList.toggle('hide-marks', !userData.showMarks);
 }
 
-/* ⭐ قائمة الصفحات بـ Event Delegation (أسرع بكثير) */
+/* قائمة الصفحات — بـ Delegation */
 function renderThumbs(){
-  const box = $('#rdThumbs'); if(!box) return;
+  const box = document.getElementById('rdThumbs'); if(!box) return;
   if(!RS.numPages){ box.innerHTML = ''; return; }
 
-  // بناء HTML كامل
-  const parts = [];
+  /* نبنيها بـ String للسرعة */
+  const parts = new Array(RS.numPages);
   for(let i = 1; i <= RS.numPages; i++){
-    parts.push(`<button class="thumb-btn ${i === RS.current ? 'on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`);
+    parts[i-1] = `<button class="thumb-btn${i === RS.current ? ' on' : ''}" data-p="${i}"><i class="fas fa-file-lines"></i> صفحة ${i}</button>`;
   }
   box.innerHTML = parts.join('');
 
-  // ⭐ مستمع واحد فقط لكل القائمة (بدل 383 مستمع)
-  if(!box.dataset.listenerAdded){
-    box.dataset.listenerAdded = '1';
+  if(!box.dataset.bound){
+    box.dataset.bound = '1';
     box.addEventListener('click', e => {
       const btn = e.target.closest('.thumb-btn');
       if(!btn) return;
@@ -490,13 +678,12 @@ function renderThumbs(){
 }
 
 function highlightThumb(n){
-  const box = $('#rdThumbs'); if(!box) return;
+  const box = document.getElementById('rdThumbs'); if(!box) return;
   const prev = box.querySelector('.thumb-btn.on');
   if(prev) prev.classList.remove('on');
   const next = box.querySelector(`.thumb-btn[data-p="${n}"]`);
   if(next){
     next.classList.add('on');
-    // ⭐ مرّر إليها فقط إذا كانت خارج الرؤية
     const r = next.getBoundingClientRect();
     const br = box.getBoundingClientRect();
     if(r.top < br.top || r.bottom > br.bottom){
@@ -509,29 +696,45 @@ function startReadClock(){
   stopReadClock();
   RS.clockId = setInterval(() => {
     if(document.hidden) return;
-    if(!$('#reader').classList.contains('open')) return;
+    const r = document.getElementById('reader');
+    if(!r || !r.classList.contains('open')) return;
     addMinutesToday(0.5);
   }, 30000);
 }
-function stopReadClock(){ if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; } }
+function stopReadClock(){
+  if(RS.clockId){ clearInterval(RS.clockId); RS.clockId = null; }
+}
 
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden){ savePrefs(); flushProgressSync(); saveDrawings(); }
+  if(document.hidden){
+    savePrefs();
+    flushProgressSync();
+    if(typeof saveDrawings === 'function') saveDrawings();
+  }
 });
 
-/* ================= CLOSE ================= */
+/* ============================================================
+   إغلاق
+============================================================ */
 function closeReader(){
-  if(!$('#reader').classList.contains('open')) return;
+  const r = document.getElementById('reader');
+  if(!r || !r.classList.contains('open')) return;
+
   try{
-    DRAW.active = false; DRAW.wb = false; DRAW.drawing = false; DRAW.current = null;
-    saveDrawings();
-    const bar = $('#drawBar'); if(bar) bar.classList.remove('on');
-    const panel = $('#wbPanel'); if(panel) panel.classList.remove('open');
-    const dbtn = $('#rdDraw'); if(dbtn) dbtn.classList.remove('on');
-    const wbtn = $('#rdWb'); if(wbtn) wbtn.classList.remove('on');
+    if(typeof DRAW !== 'undefined'){
+      DRAW.active = false; DRAW.wb = false; DRAW.drawing = false; DRAW.current = null;
+    }
+    if(typeof saveDrawings === 'function') saveDrawings();
+
+    const bar = document.getElementById('drawBar'); if(bar) bar.classList.remove('on');
+    const panel = document.getElementById('wbPanel'); if(panel) panel.classList.remove('open');
+    const dbtn = document.getElementById('rdDraw'); if(dbtn) dbtn.classList.remove('on');
+    const wbtn = document.getElementById('rdWb'); if(wbtn) wbtn.classList.remove('on');
     if(rdBody) rdBody.classList.remove('draw-on');
   }catch(e){}
+
   RS.token++;
+
   const id = RS.file ? RS.file.id : null;
   const page = RS.current;
   if(id && page){
@@ -540,67 +743,113 @@ function closeReader(){
     scheduleProgressSync(id, getPct(id), Math.max(getMaxPage(id), page), page);
     savePrefs();
   }
+
   teardownReader(true);
-  $('#reader').classList.remove('open');
+
+  r.classList.remove('open');
   document.body.style.overflow = '';
-  $('#rdStage').innerHTML = '';
-  $('#rdThumbs').innerHTML = '';
-  $('#rdThumbs').classList.remove('open');
+
+  const stage = document.getElementById('rdStage'); if(stage) stage.innerHTML = '';
+  const thumbs = document.getElementById('rdThumbs'); if(thumbs) thumbs.innerHTML = '';
+  if(thumbs) thumbs.classList.remove('open');
   hideLoading();
+
   renderFiles(); renderBadges(); renderRecent(); updateSidebar(); checkBadges();
 }
 
-$('#rdClose').addEventListener('click', closeReader);
-$('#reader').addEventListener('click', e => { if(e.target.id === 'reader') closeReader(); });
-$('#rdPrev').addEventListener('click', () => scrollToPage(RS.current - 1, true));
-$('#rdNext').addEventListener('click', () => scrollToPage(RS.current + 1, true));
-$('#rdPageInput').addEventListener('change', e => { const v = parseInt(e.target.value, 10); if(!isNaN(v)) scrollToPage(v, true); });
-$('#rdZoomIn').addEventListener('click', () => setZoom(RS.zoom + 0.15));
-$('#rdZoomOut').addEventListener('click', () => setZoom(RS.zoom - 0.15));
-$('#rdFit').addEventListener('click', () => setZoom(1));
-$('#rdTop').addEventListener('click', () => {
-  if(!RS.numPages) return;
-  if(RS.current <= 1) rdBody.scrollTo({ top:0, behavior:'smooth' }); else scrollToPage(1, true);
-});
-$('#rdSnap').addEventListener('click', () => {
-  userData.snap = !userData.snap;
-  savePrefs(); applySnapClass(); syncSettingsUI();
-  toast(userData.snap ? 'وضع الصفحة الواحدة مُفعّل' : 'وضع التمرير المستمر مُفعّل', 'ok');
-});
-$('#rdThumbsBtn').addEventListener('click', () => {
-  const box = $('#rdThumbs');
-  box.classList.toggle('open');
-  $('#rdThumbsBtn').classList.toggle('on', box.classList.contains('open'));
-  if(box.classList.contains('open')) highlightThumb(RS.current);
-});
-$('#rdFav').addEventListener('click', () => {
-  if(!RS.file) return;
-  const i = userData.favs.indexOf(RS.file.id);
-  if(i > -1) userData.favs.splice(i,1); else userData.favs.push(RS.file.id);
-  savePrefs(); updateFavBtn();
-  toast(i > -1 ? 'أُزيل من المفضلة' : 'أُضيف إلى المفضلة', 'ok');
-});
-$('#rdBookmark').addEventListener('click', () => {
-  if(!RS.file) return;
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  if(prev.bookmark){ delete prev.bookmark; toast('تم حذف العلامة المرجعية', 'warn'); }
-  else { prev.bookmark = RS.current; toast(`تم حفظ علامة عند الصفحة ${RS.current}`, 'ok'); }
-  userData.progress[RS.file.id] = prev;
-  savePrefs(); updateBookmarkBtn();
-});
-$('#rdRestart').addEventListener('click', () => { if(RS.numPages) scrollToPage(1, true); });
-$('#rdComplete').addEventListener('click', () => {
-  if(!RS.file) return;
-  const total = RS.numPages || RS.file.page_count || 1;
-  const oldPct = getPct(RS.file.id);
-  const oldMax = getMaxPage(RS.file.id);
-  const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
-  userData.progress[RS.file.id] = Object.assign({}, prev, { pct:100, maxPage:total, lastPage:total, at:Date.now() });
-  if(total > oldMax) addPagesToday(total - oldMax); else savePrefs();
-  scheduleProgressSync(RS.file.id, 100, total, total);
-  RS.current = total;
-  updateReaderUI(); refreshAll(); checkBadges(); renderBadges();
-  if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
+/* ============================================================
+   أحداث القارئ
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  const rdClose = document.getElementById('rdClose');
+  if(rdClose) rdClose.addEventListener('click', closeReader);
+
+  const readerEl = document.getElementById('reader');
+  if(readerEl) readerEl.addEventListener('click', e => {
+    if(e.target.id === 'reader') closeReader();
+  });
+
+  const rdPrev = document.getElementById('rdPrev');
+  if(rdPrev) rdPrev.addEventListener('click', () => scrollToPage(RS.current - 1, true));
+
+  const rdNext = document.getElementById('rdNext');
+  if(rdNext) rdNext.addEventListener('click', () => scrollToPage(RS.current + 1, true));
+
+  const rdPageInput = document.getElementById('rdPageInput');
+  if(rdPageInput) rdPageInput.addEventListener('change', e => {
+    const v = parseInt(e.target.value, 10);
+    if(!isNaN(v)) scrollToPage(v, true);
+  });
+
+  const rdZoomIn = document.getElementById('rdZoomIn');
+  if(rdZoomIn) rdZoomIn.addEventListener('click', () => setZoom(RS.zoom + 0.15));
+
+  const rdZoomOut = document.getElementById('rdZoomOut');
+  if(rdZoomOut) rdZoomOut.addEventListener('click', () => setZoom(RS.zoom - 0.15));
+
+  const rdFit = document.getElementById('rdFit');
+  if(rdFit) rdFit.addEventListener('click', () => setZoom(1));
+
+  const rdTop = document.getElementById('rdTop');
+  if(rdTop) rdTop.addEventListener('click', () => {
+    if(!RS.numPages) return;
+    if(RS.current <= 1) rdBody.scrollTo({ top: 0, behavior: 'smooth' });
+    else scrollToPage(1, true);
+  });
+
+  const rdSnap = document.getElementById('rdSnap');
+  if(rdSnap) rdSnap.addEventListener('click', () => {
+    userData.snap = !userData.snap;
+    savePrefs(); applySnapClass();
+    if(typeof syncSettingsUI === 'function') syncSettingsUI();
+    toast(userData.snap ? 'وضع الصفحة الواحدة' : 'وضع التمرير المستمر', 'ok');
+  });
+
+  const rdThumbsBtn = document.getElementById('rdThumbsBtn');
+  if(rdThumbsBtn) rdThumbsBtn.addEventListener('click', () => {
+    const box = document.getElementById('rdThumbs');
+    if(!box) return;
+    box.classList.toggle('open');
+    rdThumbsBtn.classList.toggle('on', box.classList.contains('open'));
+    if(box.classList.contains('open')) highlightThumb(RS.current);
+  });
+
+  const rdFav = document.getElementById('rdFav');
+  if(rdFav) rdFav.addEventListener('click', () => {
+    if(!RS.file) return;
+    const i = userData.favs.indexOf(RS.file.id);
+    if(i > -1) userData.favs.splice(i, 1); else userData.favs.push(RS.file.id);
+    savePrefs(); updateFavBtn();
+    toast(i > -1 ? 'أُزيل من المفضلة' : 'أُضيف إلى المفضلة', 'ok');
+  });
+
+  const rdBookmark = document.getElementById('rdBookmark');
+  if(rdBookmark) rdBookmark.addEventListener('click', () => {
+    if(!RS.file) return;
+    const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
+    if(prev.bookmark){ delete prev.bookmark; toast('تم حذف العلامة', 'warn'); }
+    else { prev.bookmark = RS.current; toast(`علامة عند الصفحة ${RS.current}`, 'ok'); }
+    userData.progress[RS.file.id] = prev;
+    savePrefs(); updateBookmarkBtn();
+  });
+
+  const rdRestart = document.getElementById('rdRestart');
+  if(rdRestart) rdRestart.addEventListener('click', () => { if(RS.numPages) scrollToPage(1, true); });
+
+  const rdComplete = document.getElementById('rdComplete');
+  if(rdComplete) rdComplete.addEventListener('click', () => {
+    if(!RS.file) return;
+    const total = RS.numPages || RS.file.page_count || 1;
+    const oldPct = getPct(RS.file.id);
+    const oldMax = getMaxPage(RS.file.id);
+    const prev = (userData.progress[RS.file.id] && typeof userData.progress[RS.file.id] === 'object') ? userData.progress[RS.file.id] : {};
+    userData.progress[RS.file.id] = Object.assign({}, prev, { pct: 100, maxPage: total, lastPage: total, at: Date.now() });
+    if(total > oldMax) addPagesToday(total - oldMax); else savePrefs();
+    scheduleProgressSync(RS.file.id, 100, total, total);
+    RS.current = total;
+    updateReaderUI(); refreshAll(); checkBadges(); renderBadges();
+    if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
+  });
 });
 
 function setZoom(z){
@@ -609,24 +858,35 @@ function setZoom(z){
   if(z === RS.zoom){ updateZoomLabel(); return; }
   RS.zoom = z;
   const cur = RS.current;
-  // ⭐ ألغِ كل عمليات العرض الجارية قبل إعادة الرسم
-  RS.renderTasks.forEach(task => { try{ task.cancel(); }catch(e){} });
-  RS.renderTasks.clear();
+
+  /* ألغ الكل وأعد البناء */
+  RS.renderQueue.forEach(t => { try{ t.cancel(); }catch(e){} });
+  RS.renderQueue.clear();
+  RS.pendingQueue = [];
+
   rebuildPageSizes();
   updateZoomLabel();
   scrollToPage(cur, false);
 }
-function updateZoomLabel(){ const el = $('#rdZoomVal'); if(el) el.textContent = Math.round(RS.zoom * 100) + '%'; }
+function updateZoomLabel(){
+  const el = document.getElementById('rdZoomVal');
+  if(el) el.textContent = Math.round(RS.zoom * 100) + '%';
+}
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
-  if(!$('#reader').classList.contains('open') || !RS.numPages) return;
+  const r = document.getElementById('reader');
+  if(!r || !r.classList.contains('open') || !RS.numPages) return;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     const cur = RS.current;
-    computeBaseWidth(); rebuildPageSizes(); scrollToPage(cur, false); updateZoomLabel();
+    computeBaseWidth();
+    rebuildPageSizes();
+    scrollToPage(cur, false);
+    updateZoomLabel();
   }, 250);
 });
+
 function computeBaseWidth(){
   const avail = rdBody.clientWidth - 30;
   const maxW = 980;
