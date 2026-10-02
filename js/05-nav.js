@@ -25,7 +25,7 @@ function canAccess(view){
 function go(view, skipHash){
   if(!TITLES[view]) view = 'home';
 
-  // حماية #admin
+  /* حماية #admin */
   if(!canAccess(view)){
     toast('هذه الصفحة للأدمن فقط', 'err');
     if(location.hash.slice(1) === 'admin'){
@@ -34,7 +34,7 @@ function go(view, skipHash){
     view = 'home';
   }
 
-     // ⭐ منع الانتقال خارج المتجر في وضع المتجر فقط
+  /* منع التنقل خارج المتجر */
   const appEl = document.getElementById('app');
   if(appEl && appEl.classList.contains('store-only') && view !== 'store'){
     view = 'store';
@@ -43,37 +43,42 @@ function go(view, skipHash){
   if(!skipHash && location.hash.slice(1) !== view){
     try{ history.replaceState(null, '', '#' + view); }catch(e){ location.hash = view; }
   }
-  $$('.view').forEach(v => v.classList.remove('active'));
-  const t = document.getElementById('view-' + view);
-  if(t) t.classList.add('active');
+
+  /* ⭐ animation الانتقال */
+  const currentActive = document.querySelector('.view.active');
+  const targetView = document.getElementById('view-' + view);
+
+  if(currentActive && currentActive !== targetView){
+    currentActive.classList.add('leaving');
+    setTimeout(() => {
+      currentActive.classList.remove('leaving');
+      currentActive.classList.remove('active');
+      if(targetView) targetView.classList.add('active');
+    }, 220);
+  } else if(targetView){
+    targetView.classList.add('active');
+  }
+
   $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+
   const meta = TITLES[view];
   $('#pageTitle').textContent = meta[0];
   $('#pageSub').textContent = meta[1];
   $('#mainScroll').scrollTop = 0;
   document.title = meta[0] + ' — العباقرة للقدرات';
-  if(view === 'progress' && typeof renderProgress === 'function') renderProgress();
-  if(view === 'admin' && typeof renderAdmin === 'function') renderAdmin();
-  if(view === 'files' && typeof renderFiles === 'function') renderFiles();
-  if(view === 'videos' && typeof renderVideos === 'function') renderVideos();
-  if(view === 'store' && typeof renderProducts === 'function') renderProducts();
-  if(view === 'store' && typeof applyStoreSettings === 'function') applyStoreSettings();
-  if(view === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
-  if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
-}
-window.go = go;
 
-window.addEventListener('hashchange', () => {
-  const v = location.hash.slice(1) || 'home';
-  if(v.startsWith('watch=')) return;
-  if(v === 'admin' && !canAccess('admin')){
-    try{ history.replaceState(null, '', '#home'); }catch(e){ location.hash = 'home'; }
-    toast('هذه الصفحة للأدمن فقط', 'err');
-    go('home', true);
-    return;
-  }
-  if(TITLES[v]) go(v, true);
-});
+  /* شغّل الرسم للعرض الجديد بعد فترة قصيرة */
+  setTimeout(() => {
+    if(view === 'progress' && typeof renderProgress === 'function') renderProgress();
+    if(view === 'admin' && typeof renderAdmin === 'function') renderAdmin();
+    if(view === 'files' && typeof renderFiles === 'function') renderFiles();
+    if(view === 'videos' && typeof renderVideos === 'function') renderVideos();
+    if(view === 'store' && typeof renderProducts === 'function') renderProducts();
+    if(view === 'store' && typeof applyStoreSettings === 'function') applyStoreSettings();
+    if(view === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
+    if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
+  }, 200);
+}
 
 function goFromHash(){
   const v = (location.hash.slice(1) || 'home');
