@@ -253,6 +253,14 @@ async function enterApp(){
       try{ goFromHash(); }catch(e){}
     }
 
+         /* ⭐ تحميل خطة الدراسة */
+    try{
+      if(typeof loadPlanLocally === 'function') loadPlanLocally();
+    }catch(e){}
+    /* ⭐ تحديث العد التنازلي في الرئيسية */
+    try{
+      if(typeof updateHomeCountdown === 'function') updateHomeCountdown();
+    }catch(e){}
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
