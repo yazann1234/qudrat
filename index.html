@@ -153,6 +153,9 @@
       <button class="nav-btn" data-view="store"><span class="ic"><i class="fas fa-shopping-bag"></i></span><span>المتجر</span></button>
       <button class="nav-btn" data-view="files"><span class="ic"><i class="fas fa-folder"></i></span><span>الملفات</span><span class="badge-n" id="navCount">0</span></button>
       <button class="nav-btn" data-view="videos"><span class="ic"><i class="fas fa-video"></i></span><span>الفيديوهات</span><span class="badge-n" id="navVideoCount">0</span></button>
+      <button class="nav-btn" data-view="studyplan"><span class="ic"><i class="fas fa-calendar-check"></i></span><span>الجدول الذكي</span></button>
+      <button class="nav-btn" data-view="about"><span class="ic"><i class="fas fa-info-circle"></i></span><span>من نحن</span></button>
+      <button class="nav-btn" data-view="adhkar"><span class="ic"><i class="fas fa-hands-praying"></i></span><span>الأذكار</span></button>
       <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
       <button class="nav-btn" data-view="leaderboard"><span class="ic"><i class="fas fa-trophy"></i></span><span>المتصدرون</span></button>
       <button class="nav-btn" data-view="profile"><span class="ic"><i class="fas fa-user-circle"></i></span><span>ملفي</span></button>
@@ -550,6 +553,17 @@
         </div>
       </div>
     </section>
+
+    <section class="view" id="view-adhkar">
+  <div class="sec-title"><i class="fas fa-hands-praying" style="color:var(--primary)"></i> الأذكار والأدعية</div>
+  <div class="adhkar-tabs">
+    <button class="adhkar-tab on" data-cat="morning" onclick="switchAdhkarCategory('morning')"><i class="fas fa-sun"></i> الصباح</button>
+    <button class="adhkar-tab" data-cat="evening" onclick="switchAdhkarCategory('evening')"><i class="fas fa-moon"></i> المساء</button>
+    <button class="adhkar-tab" data-cat="beforeStudy" onclick="switchAdhkarCategory('beforeStudy')"><i class="fas fa-book-open"></i> قبل المذاكرة</button>
+    <button class="adhkar-tab" data-cat="beforeSleep" onclick="switchAdhkarCategory('beforeSleep')"><i class="fas fa-bed"></i> قبل النوم</button>
+  </div>
+  <div id="adhkarContent"></div>
+</section>
 
     <section class="view" id="view-about">
   <div class="about-hero">
