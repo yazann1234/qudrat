@@ -12,6 +12,8 @@ const TITLES = {
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
   features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
+   studyplan: ['الجدول الذكي', 'خطة مذاكرتك الذكية'],
+about: ['من نحن', 'تعرف على منصة العباقرة للقدرات'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
 
@@ -23,6 +25,7 @@ function canAccess(view){
   // ⭐ منع الانتقال خارج المتجر في وضع المتجر فقط
   
 function go(view, skipHash){
+   if(view === 'studyplan' && typeof renderStudyPlan === 'function') renderStudyPlan();
   if(!TITLES[view]) view = 'home';
 
   /* حماية #admin */
