@@ -370,6 +370,63 @@
       <div class="videos-grid" id="videosGrid"></div>
     </section>
 
+    <section class="view" id="view-studyplan">
+  <!-- Hero Section -->
+  <div class="sp-hero">
+    <div class="sp-hero-inner">
+      <div class="sp-hero-icon"><i class="fas fa-calendar-check"></i></div>
+      <h1>خطة <em>مذاكرتك</em> الذكية</h1>
+      <p>حدد موعد اختبارك، وسنبني لك خطة منظمة حسب الملفات المتاحة</p>
+    </div>
+  </div>
+
+  <!-- Setup Form -->
+  <div class="sp-setup" id="spSetup">
+    <div class="sp-setup-grid">
+      <div class="sp-setup-card">
+        <div class="sp-setup-icon"><i class="fas fa-calendar-day"></i></div>
+        <h3>حدد موعد اختبارك</h3>
+        <p>سنبني لك خطة تنتهي قبل الموعد بيومين</p>
+        <input type="date" id="spExamDate" class="sp-date-input">
+      </div>
+      <div class="sp-setup-card">
+        <div class="sp-setup-icon"><i class="fas fa-hourglass-half"></i></div>
+        <h3>أو حدد عدد الأيام</h3>
+        <p>اختر عدد الأيام المتاحة لديك للمذاكرة</p>
+        <input type="number" id="spDaysCount" class="sp-days-input" min="3" max="180" placeholder="مثال: 30">
+      </div>
+    </div>
+    <button class="btn btn-primary sp-generate-btn" id="spGenerateBtn">
+      <i class="fas fa-wand-magic-sparkles"></i> أنشئ خطتي الآن
+    </button>
+  </div>
+
+  <!-- Plan Display -->
+  <div class="sp-plan" id="spPlan" style="display:none">
+    <div class="sp-plan-header">
+      <div class="sp-plan-info">
+        <h2>خطتك الدراسية</h2>
+        <div class="sp-plan-meta" id="spPlanMeta"></div>
+      </div>
+      <div class="sp-countdown" id="spCountdown">
+        <span class="sp-countdown-label">متبقي على الاختبار</span>
+        <span class="sp-countdown-num" id="spCountdownNum">--</span>
+        <span class="sp-countdown-unit">يوم</span>
+      </div>
+      <button class="btn btn-ghost sp-reset-btn" id="spResetBtn">
+        <i class="fas fa-rotate-right"></i> خطة جديدة
+      </button>
+    </div>
+
+    <div class="sp-progress-bar-wrap">
+      <div class="sp-progress-bar"><i id="spProgressFill"></i></div>
+      <span class="sp-progress-label" id="spProgressLabel">0%</span>
+    </div>
+
+    <div class="sp-days" id="spDays"></div>
+  </div>
+</section>
+
     <section class="view" id="view-progress">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
