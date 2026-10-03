@@ -348,6 +348,8 @@ function resetStudyPlan(){
   }catch(e){}
 
   renderStudyPlan();
+     /* ⭐ حدّث العد التنازلي في الرئيسية */
+  updateHomeCountdown();
 
   const examEl = document.getElementById('spExamDate');
   const daysEl = document.getElementById('spDaysCount');
