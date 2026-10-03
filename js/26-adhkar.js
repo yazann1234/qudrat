@@ -135,6 +135,15 @@ function switchAdhkarCategory(cat){
 window.switchAdhkarCategory = switchAdhkarCategory;
 
 /* ================== تهيئة ================== */
-document.addEventListener('DOMContentLoaded', () => {
+/* تهيئة الأذكار - عند التحميل وعند كل دخول للقسم */
+function initAdhkar(){
   renderAdhkarSection();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAdhkar();
 });
+
+/* ⭐ جعلها عالمية */
+window.initAdhkar = initAdhkar;
+window.renderAdhkarSection = renderAdhkarSection;
