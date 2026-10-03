@@ -184,6 +184,8 @@ function renderStudyPlan(){
 
   /* Countdown */
   updateCountdown();
+     /* ⭐ العد التنازلي في الرئيسية */
+  updateHomeCountdown();
 
   /* Progress */
   updatePlanProgress();
