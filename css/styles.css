@@ -2290,3 +2290,167 @@ img{-webkit-user-drag:none;user-drag:none}
 .adhkar-count-btn:active{transform:scale(.97)}
 .adhkar-counter{font-size:1.05rem;font-weight:900}
 .adhkar-done-badge{font-size:.72rem;font-weight:800;color:var(--success);background:rgba(34,197,94,.12);padding:5px 12px;border-radius:100px;display:inline-flex;align-items:center;gap:5px}
+
+/* ============================================================
+   العد التنازلي للاختبار في الرئيسية
+============================================================ */
+.exam-countdown-card{
+  position:relative;
+  background:linear-gradient(120deg,#0a1029 0%,#1a2560 45%,rgba(var(--primary-rgb),.7) 100%);
+  border-radius:24px;
+  padding:26px 30px;
+  color:#fff;
+  margin-bottom:24px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(var(--primary-rgb),.35);
+  animation:countdownIn .5s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes countdownIn{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.exam-countdown-card::before{
+  content:"";
+  position:absolute;
+  top:-60px;right:-60px;
+  width:240px;height:240px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.15),transparent 70%);
+  pointer-events:none;
+}
+.exam-countdown-card::after{
+  content:"";
+  position:absolute;
+  bottom:-80px;left:-40px;
+  width:200px;height:200px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,.25),transparent 70%);
+  pointer-events:none;
+}
+
+.exam-countdown-inner{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+
+.exam-countdown-icon{
+  width:60px;height:60px;border-radius:18px;
+  display:grid;place-items:center;
+  font-size:1.5rem;color:#fff;
+  background:linear-gradient(140deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
+  border:1px solid rgba(255,255,255,.28);
+  backdrop-filter:blur(10px);
+  flex-shrink:0;
+  animation:countdownIconPulse 3s ease-in-out infinite;
+}
+@keyframes countdownIconPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.3)}
+  50%{transform:scale(1.05);box-shadow:0 0 0 12px rgba(255,255,255,0)}
+}
+
+.exam-countdown-info{
+  flex:1;
+  min-width:150px;
+}
+.exam-countdown-label{
+  font-size:.78rem;
+  font-weight:700;
+  color:rgba(255,255,255,.75);
+  margin-bottom:4px;
+  letter-spacing:.4px;
+}
+.exam-countdown-date{
+  font-size:.94rem;
+  font-weight:900;
+  color:#fff;
+}
+
+.exam-countdown-nums{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.exam-countdown-num-box{
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:14px;
+  padding:10px 14px;
+  text-align:center;
+  min-width:64px;
+  backdrop-filter:blur(8px);
+  transition:transform .3s ease;
+}
+.exam-countdown-num-box:hover{transform:translateY(-3px)}
+
+.exam-countdown-num-box b{
+  display:block;
+  font-size:1.8rem;
+  font-weight:900;
+  line-height:1;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
+}
+.exam-countdown-num-box small{
+  display:block;
+  font-size:.62rem;
+  font-weight:700;
+  color:rgba(255,255,255,.65);
+  margin-top:4px;
+  letter-spacing:.4px;
+}
+
+.exam-countdown-num-box.urgent{
+  background:linear-gradient(140deg,rgba(239,68,68,.35),rgba(220,38,38,.2));
+  border-color:rgba(239,68,68,.5);
+  animation:urgentPulse 1.5s ease-in-out infinite;
+}
+@keyframes urgentPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}
+  50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}
+}
+.exam-countdown-num-box.urgent b{color:#fecaca}
+
+.exam-countdown-progress{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.exam-countdown-progress-bar{
+  flex:1;
+  height:8px;
+  border-radius:100px;
+  background:rgba(255,255,255,.15);
+  overflow:hidden;
+}
+.exam-countdown-progress-bar i{
+  display:block;
+  height:100%;
+  width:0;
+  border-radius:100px;
+  background:linear-gradient(90deg,#a5b4ff,#e9d5ff,#fbbf24);
+  transition:width .8s cubic-bezier(.2,.8,.3,1);
+}
+.exam-countdown-progress-label{
+  font-size:.76rem;
+  font-weight:800;
+  color:rgba(255,255,255,.9);
+  min-width:60px;
+  text-align:center;
+}
+
+@media (max-width:640px){
+  .exam-countdown-card{padding:20px 18px}
+  .exam-countdown-icon{width:48px;height:48px;font-size:1.2rem;border-radius:14px}
+  .exam-countdown-num-box{padding:8px 10px;min-width:54px}
+  .exam-countdown-num-box b{font-size:1.4rem}
+  .exam-countdown-nums{gap:6px;width:100%}
+  .exam-countdown-info{width:100%}
+}
