@@ -13,6 +13,7 @@ const TITLES = {
   features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
    studyplan: ['الجدول الذكي', 'خطة مذاكرتك الذكية'],
+   adhkar:['الأذكار والأدعية','أذكار الصباح والمساء وقبل المذاكرة'],
 about: ['من نحن', 'تعرف على منصة العباقرة للقدرات'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
@@ -25,7 +26,6 @@ function canAccess(view){
   // ⭐ منع الانتقال خارج المتجر في وضع المتجر فقط
   
 function go(view, skipHash){
-   if(view === 'studyplan' && typeof renderStudyPlan === 'function') renderStudyPlan();
   if(!TITLES[view]) view = 'home';
 
   /* حماية #admin */
@@ -47,7 +47,7 @@ function go(view, skipHash){
     try{ history.replaceState(null, '', '#' + view); }catch(e){ location.hash = view; }
   }
 
-  /* ⭐ animation الانتقال */
+  /* animation الانتقال */
   const currentActive = document.querySelector('.view.active');
   const targetView = document.getElementById('view-' + view);
 
@@ -57,21 +57,27 @@ function go(view, skipHash){
       currentActive.classList.remove('leaving');
       currentActive.classList.remove('active');
       if(targetView) targetView.classList.add('active');
-    }, 220);
+    }, 180);
   } else if(targetView){
     targetView.classList.add('active');
   }
 
-  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
 
   const meta = TITLES[view];
-  $('#pageTitle').textContent = meta[0];
-  $('#pageSub').textContent = meta[1];
-  $('#mainScroll').scrollTop = 0;
+  const pageTitleEl = document.getElementById('pageTitle');
+  const pageSubEl = document.getElementById('pageSub');
+  if(pageTitleEl) pageTitleEl.textContent = meta[0];
+  if(pageSubEl) pageSubEl.textContent = meta[1];
+
+  const mainScroll = document.getElementById('mainScroll');
+  if(mainScroll) mainScroll.scrollTop = 0;
+
   document.title = meta[0] + ' — العباقرة للقدرات';
 
-  /* شغّل الرسم للعرض الجديد بعد فترة قصيرة */
+  /* ⭐ شغّل محتوى القسم الجديد */
   setTimeout(() => {
+    if(view === 'home' && typeof renderHomeStats === 'function') renderHomeStats();
     if(view === 'progress' && typeof renderProgress === 'function') renderProgress();
     if(view === 'admin' && typeof renderAdmin === 'function') renderAdmin();
     if(view === 'files' && typeof renderFiles === 'function') renderFiles();
@@ -80,9 +86,13 @@ function go(view, skipHash){
     if(view === 'store' && typeof applyStoreSettings === 'function') applyStoreSettings();
     if(view === 'leaderboard' && typeof renderLeaderboard === 'function') renderLeaderboard();
     if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
-  }, 200);
+    /* ⭐ الأذكار */
+    if(view === 'adhkar' && typeof renderAdhkarSection === 'function') renderAdhkarSection();
+    /* ⭐ الجدول الذكي */
+    if(view === 'studyplan' && typeof renderStudyPlan === 'function') renderStudyPlan();
+  }, 180);
 }
-
+window.go = go;
 function goFromHash(){
   const v = (location.hash.slice(1) || 'home');
   if(v.startsWith('watch=')){ go('videos', true); return; }
