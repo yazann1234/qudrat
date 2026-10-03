@@ -328,6 +328,8 @@ function loadPlanLocally(){
     if(raw){
       SP.plan = JSON.parse(raw);
       renderStudyPlan();
+      /* ⭐ حدّث العد التنازلي في الرئيسية */
+      updateHomeCountdown();
     }
   }catch(e){}
 }
