@@ -371,6 +371,112 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateCountdown, 60000);
 });
 
+/* ============================================================
+   ⭐ العد التنازلي في الصفحة الرئيسية
+============================================================ */
+function updateHomeCountdown(){
+  const card = document.getElementById('examCountdownCard');
+  if(!card) return;
+
+  /* إذا لا توجد خطة → اخفِ البطاقة */
+  if(!SP.plan || !SP.plan.examDate){
+    card.style.display = 'none';
+    return;
+  }
+
+  const examDate = new Date(SP.plan.examDate);
+  examDate.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffMs = examDate - today;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  /* إذا انتهى الاختبار */
+  if(diffDays < 0){
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+
+  /* التاريخ */
+  const dateLabel = document.getElementById('examDateLabel');
+  if(dateLabel){
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formatted = examDate.toLocaleDateString('ar-SA', options);
+    dateLabel.textContent = formatted;
+  }
+
+  /* الأرقام */
+  const numsEl = document.getElementById('examCountdownNums');
+  if(numsEl){
+    /* احسب الساعات والدقائق المتبقية أيضاً */
+    const now = new Date();
+    let hours = 0, minutes = 0;
+    if(diffDays === 0){
+      /* آخر يوم → احسب الساعات */
+      const nowMs = now.getTime();
+      const examMs = examDate.getTime();
+      const diffMs2 = Math.max(0, examMs - nowMs);
+      hours = Math.floor(diffMs2 / (1000 * 60 * 60));
+      minutes = Math.floor((diffMs2 % (1000 * 60 * 60)) / (1000 * 60));
+    }
+
+    /* إذا 0 أو 1 يوم → اعرض الساعات */
+    if(diffDays <= 1){
+      numsEl.innerHTML = `
+        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
+          <b>${hours}</b>
+          <small>ساعة</small>
+        </div>
+        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
+          <b>${minutes}</b>
+          <small>دقيقة</small>
+        </div>
+      `;
+    } else {
+      const urgent = diffDays <= 7 ? 'urgent' : '';
+      numsEl.innerHTML = `
+        <div class="exam-countdown-num-box ${urgent}">
+          <b>${diffDays}</b>
+          <small>يوم</small>
+        </div>
+      `;
+    }
+  }
+
+  /* شريط التقدم */
+  const fill = document.getElementById('examProgressFill');
+  const label = document.getElementById('examProgressLabel');
+  if(fill && label){
+    /* نسبة التقدم = عدد المهام المكتملة */
+    const totalTasks = SP.plan.days.reduce((s, d) => s + d.tasks.length, 0);
+    const completedTasks = SP.plan.days.reduce((s, d) => s + d.tasks.filter(t => t.done).length, 0);
+    const pct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    fill.style.width = pct + '%';
+    label.textContent = pct + '% مكتمل';
+  }
+}
+window.updateHomeCountdown = updateHomeCountdown;
+
+/* ⭐ تحديث تلقائي كل دقيقة */
+setInterval(() => {
+  if(typeof updateHomeCountdown === 'function'){
+    updateHomeCountdown();
+  }
+}, 60000);
+
+/* ⭐ تحديث عند تبديل القسم */
+document.addEventListener('click', (e) => {
+  const navBtn = e.target.closest('.nav-btn');
+  if(navBtn && navBtn.dataset.view === 'home'){
+    setTimeout(updateHomeCountdown, 300);
+  }
+});
+
 window.generateStudyPlan = generateStudyPlan;
 window.renderStudyPlan = renderStudyPlan;
 window.loadPlanLocally = loadPlanLocally;
