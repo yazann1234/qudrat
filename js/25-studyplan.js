@@ -1,11 +1,13 @@
 /* ============================================================
    25) STUDY PLAN — الجدول الذكي للدراسة
+   (يدعم: ملفات فقط | ملفات + مهامي)
 ============================================================ */
 
 const SP = {
   plan: null,
   progress: {},
-  expandedDay: null
+  expandedDay: null,
+  mode: 'files' /* files | files_tasks */
 };
 
 /* ================== توليد الخطة ================== */
@@ -25,57 +27,85 @@ async function generateStudyPlan(){
     examDate.setHours(0,0,0,0);
     const diff = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
     if(diff < 3){ toast('يجب أن يكون الموعد بعد 3 أيام على الأقل', 'warn'); return; }
-    totalDays = diff - 2; /* ننتهي قبل يومين */
+    totalDays = diff - 2;
   } else if(totalDays){
-    if(totalDays < 3 || totalDays > 180){ toast('عدد الأيام يجب أن يكون بين 3 و 180', 'warn'); return; }
+    if(totalDays < 3 || totalDays > 180){ toast('عدد الأيام بين 3 و 180', 'warn'); return; }
   } else {
     toast('حدد موعد اختبارك أو عدد الأيام', 'warn'); return;
   }
 
-  /* احصل على الملفات المتاحة */
+  /* الوضع المختار */
+  const modeEl = document.querySelector('input[name="spMode"]:checked');
+  SP.mode = modeEl ? modeEl.value : 'files';
+
+  /* الملفات */
   const files = DB.files || [];
-  if(!files.length){ toast('لا توجد ملفات لبناء خطة منها', 'warn'); return; }
+  if(!files.length){ toast('لا توجد ملفات لبناء خطة', 'warn'); return; }
 
-  /* احسب التقدم الحالي */
-  const filesWithProgress = files.map(f => ({
-    id: f.id,
-    title: f.title,
-    category: f.category || 'عام',
-    pages: f.page_count || 10,
-    progress: getPct(f.id),
-    maxPage: getMaxPage(f.id)
-  }));
+  const remainingFiles = files
+    .map(f => ({
+      id: f.id,
+      title: f.title,
+      category: f.category || 'عام',
+      pages: f.page_count || 10,
+      progress: getPct(f.id),
+      maxPage: getMaxPage(f.id)
+    }))
+    .filter(f => f.progress < 100)
+    .sort((a, b) => a.progress - b.progress);
 
-  /* الملفات غير المكتملة */
-  const remainingFiles = filesWithProgress.filter(f => f.progress < 100);
+  /* المهام (لو الوضع مختار) */
+  let userTasks = [];
+  if(SP.mode === 'files_tasks'){
+    userTasks = (userData.tasks || []).filter(t => !t.done).map((t, i) => ({
+      id: 'task_' + i,
+      text: t.text,
+      done: false
+    }));
+  }
 
-  if(!remainingFiles.length){
-    toast('🎉 أكملت جميع الملفات! لا حاجة لخطة جديدة', 'ok');
+  if(!remainingFiles.length && !userTasks.length){
+    toast('🎉 لا يوجد شيء متبقٍ للمذاكرة', 'ok');
     return;
   }
 
-  /* رتب الملفات حسب الأولوية (الأقل تقدمًا أولاً) */
-  remainingFiles.sort((a, b) => a.progress - b.progress);
-
-  /* احسب إجمالي الصفحات المتبقية */
-  const totalRemainingPages = remainingFiles.reduce((sum, f) => {
-    const remaining = f.pages - f.maxPage;
-    return sum + Math.max(0, remaining);
-  }, 0);
-
-  /* الصفحات اليومية */
+  /* إجمالي الصفحات */
+  const totalRemainingPages = remainingFiles.reduce((s, f) => s + Math.max(0, f.pages - f.maxPage), 0);
   const dailyPages = Math.max(5, Math.ceil(totalRemainingPages / totalDays));
 
-  /* وزّع الصفحات على الأيام */
+  /* عدد المهام لكل يوم */
+  const tasksPerDay = userTasks.length ? Math.max(1, Math.ceil(userTasks.length / totalDays)) : 0;
+
+  /* ابنِ الأيام */
   const planDays = [];
-  let currentPageIndex = 0;
   let currentFileIndex = 0;
   let currentFilePage = remainingFiles[0] ? remainingFiles[0].maxPage : 0;
+  let currentTaskIndex = 0;
 
   for(let day = 1; day <= totalDays; day++){
     const tasks = [];
     let pagesLeftToday = dailyPages;
 
+    /* المهام أولاً (إن وُجدت) */
+    if(SP.mode === 'files_tasks' && tasksPerDay > 0){
+      for(let i = 0; i < tasksPerDay && currentTaskIndex < userTasks.length; i++){
+        const ut = userTasks[currentTaskIndex];
+        tasks.push({
+          id: `day${day}_task_${currentTaskIndex}`,
+          type: 'user_task',
+          fileId: null,
+          fileTitle: '📝 مهمة: ' + ut.text,
+          fromPage: null,
+          toPage: null,
+          pages: 0,
+          done: false,
+          xp: 15
+        });
+        currentTaskIndex++;
+      }
+    }
+
+    /* ثم الملفات */
     while(pagesLeftToday > 0 && currentFileIndex < remainingFiles.length){
       const file = remainingFiles[currentFileIndex];
       const pagesAvailable = file.pages - currentFilePage;
@@ -90,7 +120,8 @@ async function generateStudyPlan(){
       const newPage = currentFilePage + pagesToRead;
 
       tasks.push({
-        id: `task_${day}_${tasks.length}`,
+        id: `day${day}_file_${currentFileIndex}_${tasks.length}`,
+        type: 'file',
         fileId: file.id,
         fileTitle: file.title,
         fromPage: currentFilePage + 1,
@@ -113,18 +144,18 @@ async function generateStudyPlan(){
       planDays.push({
         day: day,
         tasks: tasks,
-        totalPages: tasks.reduce((s, t) => s + t.pages, 0),
+        totalPages: tasks.reduce((s, t) => s + (t.pages || 0), 0),
         totalXp: tasks.reduce((s, t) => s + t.xp, 0),
         completed: false
       });
     }
   }
 
-  /* احفظ الخطة */
   const planData = {
     examDate: examDate ? examDate.toISOString().split('T')[0] : null,
     totalDays: totalDays,
     dailyPages: dailyPages,
+    mode: SP.mode,
     createdAt: new Date().toISOString(),
     days: planDays
   };
@@ -145,24 +176,22 @@ async function generateStudyPlan(){
     else if(data){ SP.plan.dbId = data.id; }
   }catch(e){ console.warn('plan save failed:', e); }
 
-  /* احفظ محليًا */
   savePlanLocally();
-
-  /* اعرض الخطة */
   renderStudyPlan();
+  updateHomeCountdown();
 
   toast(`✓ تم إنشاء خطة لمدة ${totalDays} يوم`, 'ok');
 
-  /* أضف XP للمكافأة */
-  if(typeof userData.extraXp !== 'number') userData.extraXp = 0;
-  userData.extraXp += 50;
+  userData.extraXp = (userData.extraXp || 0) + 50;
   savePrefs();
   setTimeout(() => toast('🎁 +50 XP لإنشاء خطتك', 'ok'), 1200);
+
+  if(typeof syncMyXp === 'function') syncMyXp();
 }
 
 /* ================== عرض الخطة ================== */
 function renderStudyPlan(){
-  if(!SP.plan){ 
+  if(!SP.plan){
     const setup = document.getElementById('spSetup');
     const planEl = document.getElementById('spPlan');
     if(setup) setup.style.display = 'block';
@@ -175,28 +204,23 @@ function renderStudyPlan(){
   if(setup) setup.style.display = 'none';
   if(planEl) planEl.style.display = 'block';
 
-  /* Meta */
   const meta = document.getElementById('spPlanMeta');
   if(meta){
     const totalPages = SP.plan.days.reduce((s, d) => s + d.totalPages, 0);
-    meta.innerHTML = `${SP.plan.totalDays} يوم • ${SP.plan.dailyPages} صفحة/يوم • ${totalPages} صفحة إجمالية`;
+    const modeLabel = SP.plan.mode === 'files_tasks' ? 'ملفات + مهام' : 'ملفات فقط';
+    meta.innerHTML = `${SP.plan.totalDays} يوم • ${SP.plan.dailyPages} صفحة/يوم • ${totalPages} صفحة • ${modeLabel}`;
   }
 
-  /* Countdown */
   updateCountdown();
-     /* ⭐ العد التنازلي في الرئيسية */
   updateHomeCountdown();
-
-  /* Progress */
   updatePlanProgress();
 
-  /* Days */
   const daysEl = document.getElementById('spDays');
   if(!daysEl) return;
 
   daysEl.innerHTML = SP.plan.days.map(d => {
     const completedTasks = d.tasks.filter(t => t.done).length;
-    const isCompleted = completedTasks === d.tasks.length;
+    const isCompleted = completedTasks === d.tasks.length && d.tasks.length > 0;
     const expanded = SP.expandedDay === d.day;
 
     return `
@@ -213,7 +237,11 @@ function renderStudyPlan(){
           ${d.tasks.map(t => `
             <div class="sp-task ${t.done ? 'done' : ''}" onclick="togglePlanTask(${d.day},'${t.id}')">
               <div class="sp-task-check">${t.done ? '<i class="fas fa-check"></i>' : ''}</div>
-              <div class="sp-task-txt">${escapeHtml(t.fileTitle)} — من ص ${t.fromPage} إلى ${t.toPage}</div>
+              <div class="sp-task-txt">
+                ${t.type === 'user_task'
+                  ? escapeHtml(t.fileTitle)
+                  : `${escapeHtml(t.fileTitle)} — من ص ${t.fromPage} إلى ${t.toPage}`}
+              </div>
               <div class="sp-task-xp">+${t.xp}</div>
             </div>
           `).join('')}
@@ -232,13 +260,11 @@ window.togglePlanDay = (day) => {
 window.togglePlanTask = async (day, taskId) => {
   const dayData = SP.plan.days.find(d => d.day === day);
   if(!dayData) return;
-
   const task = dayData.tasks.find(t => t.id === taskId);
   if(!task) return;
 
   task.done = !task.done;
 
-  /* إذا أُكملت المهمة → +XP */
   if(task.done){
     userData.extraXp = (userData.extraXp || 0) + task.xp;
     savePrefs();
@@ -248,7 +274,6 @@ window.togglePlanTask = async (day, taskId) => {
     savePrefs();
   }
 
-  /* تحقق إن اكتمل اليوم */
   dayData.completed = dayData.tasks.every(t => t.done);
   if(dayData.completed && dayData.tasks.length > 0){
     userData.extraXp += 20;
@@ -259,7 +284,6 @@ window.togglePlanTask = async (day, taskId) => {
   savePlanLocally();
   renderStudyPlan();
 
-  /* مزامنة مع DB */
   try{
     if(SP.plan.dbId){
       await sb.from('study_plan_progress').upsert({
@@ -312,6 +336,80 @@ function updatePlanProgress(){
   if(label) label.textContent = pct + '%';
 }
 
+/* ================== العد التنازلي في الرئيسية ================== */
+function updateHomeCountdown(){
+  const card = document.getElementById('examCountdownCard');
+  if(!card) return;
+
+  if(!SP.plan || !SP.plan.examDate){
+    card.style.display = 'none';
+    return;
+  }
+
+  const examDate = new Date(SP.plan.examDate);
+  examDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffMs = examDate - today;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if(diffDays < 0){
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+
+  const dateLabel = document.getElementById('examDateLabel');
+  if(dateLabel){
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    dateLabel.textContent = examDate.toLocaleDateString('ar-SA', options);
+  }
+
+  const numsEl = document.getElementById('examCountdownNums');
+  if(numsEl){
+    const now = new Date();
+    let hours = 0, minutes = 0;
+    if(diffDays === 0){
+      const nowMs = now.getTime();
+      const examMs = examDate.getTime();
+      const diffMs2 = Math.max(0, examMs - nowMs);
+      hours = Math.floor(diffMs2 / (1000 * 60 * 60));
+      minutes = Math.floor((diffMs2 % (1000 * 60 * 60)) / (1000 * 60));
+    }
+
+    if(diffDays <= 1){
+      numsEl.innerHTML = `
+        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
+          <b>${hours}</b><small>ساعة</small>
+        </div>
+        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
+          <b>${minutes}</b><small>دقيقة</small>
+        </div>
+      `;
+    } else {
+      const urgent = diffDays <= 7 ? 'urgent' : '';
+      numsEl.innerHTML = `
+        <div class="exam-countdown-num-box ${urgent}">
+          <b>${diffDays}</b><small>يوم</small>
+        </div>
+      `;
+    }
+  }
+
+  const fill = document.getElementById('examProgressFill');
+  const label = document.getElementById('examProgressLabel');
+  if(fill && label){
+    const totalTasks = SP.plan.days.reduce((s, d) => s + d.tasks.length, 0);
+    const completedTasks = SP.plan.days.reduce((s, d) => s + d.tasks.filter(t => t.done).length, 0);
+    const pct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    fill.style.width = pct + '%';
+    label.textContent = pct + '% مكتمل';
+  }
+}
+window.updateHomeCountdown = updateHomeCountdown;
+
 /* ================== حفظ محلي ================== */
 function savePlanLocally(){
   try{
@@ -328,7 +426,6 @@ function loadPlanLocally(){
     if(raw){
       SP.plan = JSON.parse(raw);
       renderStudyPlan();
-      /* ⭐ حدّث العد التنازلي في الرئيسية */
       updateHomeCountdown();
     }
   }catch(e){}
@@ -342,20 +439,17 @@ function resetStudyPlan(){
   SP.expandedDay = null;
 
   try{
-    if(currentUserObj){
-      localStorage.removeItem('study_plan_' + currentUserObj.id);
-    }
+    if(currentUserObj) localStorage.removeItem('study_plan_' + currentUserObj.id);
   }catch(e){}
 
   renderStudyPlan();
-     /* ⭐ حدّث العد التنازلي في الرئيسية */
-  updateHomeCountdown();
 
   const examEl = document.getElementById('spExamDate');
   const daysEl = document.getElementById('spDaysCount');
   if(examEl) examEl.value = '';
   if(daysEl) daysEl.value = '';
 
+  updateHomeCountdown();
   toast('يمكنك إنشاء خطة جديدة الآن', 'ok');
 }
 
@@ -373,116 +467,15 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBtn.addEventListener('click', resetStudyPlan);
   }
 
-  /* تحديث العد التنازلي كل دقيقة */
+  document.querySelectorAll('input[name="spMode"]').forEach(radio => {
+    radio.addEventListener('change', e => { SP.mode = e.target.value; });
+  });
+
   setInterval(updateCountdown, 60000);
-});
-
-/* ============================================================
-   ⭐ العد التنازلي في الصفحة الرئيسية
-============================================================ */
-function updateHomeCountdown(){
-  const card = document.getElementById('examCountdownCard');
-  if(!card) return;
-
-  /* إذا لا توجد خطة → اخفِ البطاقة */
-  if(!SP.plan || !SP.plan.examDate){
-    card.style.display = 'none';
-    return;
-  }
-
-  const examDate = new Date(SP.plan.examDate);
-  examDate.setHours(0, 0, 0, 0);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const diffMs = examDate - today;
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  /* إذا انتهى الاختبار */
-  if(diffDays < 0){
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = 'block';
-
-  /* التاريخ */
-  const dateLabel = document.getElementById('examDateLabel');
-  if(dateLabel){
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const formatted = examDate.toLocaleDateString('ar-SA', options);
-    dateLabel.textContent = formatted;
-  }
-
-  /* الأرقام */
-  const numsEl = document.getElementById('examCountdownNums');
-  if(numsEl){
-    /* احسب الساعات والدقائق المتبقية أيضاً */
-    const now = new Date();
-    let hours = 0, minutes = 0;
-    if(diffDays === 0){
-      /* آخر يوم → احسب الساعات */
-      const nowMs = now.getTime();
-      const examMs = examDate.getTime();
-      const diffMs2 = Math.max(0, examMs - nowMs);
-      hours = Math.floor(diffMs2 / (1000 * 60 * 60));
-      minutes = Math.floor((diffMs2 % (1000 * 60 * 60)) / (1000 * 60));
-    }
-
-    /* إذا 0 أو 1 يوم → اعرض الساعات */
-    if(diffDays <= 1){
-      numsEl.innerHTML = `
-        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
-          <b>${hours}</b>
-          <small>ساعة</small>
-        </div>
-        <div class="exam-countdown-num-box ${diffDays === 0 ? 'urgent' : ''}">
-          <b>${minutes}</b>
-          <small>دقيقة</small>
-        </div>
-      `;
-    } else {
-      const urgent = diffDays <= 7 ? 'urgent' : '';
-      numsEl.innerHTML = `
-        <div class="exam-countdown-num-box ${urgent}">
-          <b>${diffDays}</b>
-          <small>يوم</small>
-        </div>
-      `;
-    }
-  }
-
-  /* شريط التقدم */
-  const fill = document.getElementById('examProgressFill');
-  const label = document.getElementById('examProgressLabel');
-  if(fill && label){
-    /* نسبة التقدم = عدد المهام المكتملة */
-    const totalTasks = SP.plan.days.reduce((s, d) => s + d.tasks.length, 0);
-    const completedTasks = SP.plan.days.reduce((s, d) => s + d.tasks.filter(t => t.done).length, 0);
-    const pct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    fill.style.width = pct + '%';
-    label.textContent = pct + '% مكتمل';
-  }
-}
-window.updateHomeCountdown = updateHomeCountdown;
-
-/* ⭐ تحديث تلقائي كل دقيقة */
-setInterval(() => {
-  if(typeof updateHomeCountdown === 'function'){
-    updateHomeCountdown();
-  }
-}, 60000);
-
-/* ⭐ تحديث عند تبديل القسم */
-document.addEventListener('click', (e) => {
-  const navBtn = e.target.closest('.nav-btn');
-  if(navBtn && navBtn.dataset.view === 'home'){
-    setTimeout(updateHomeCountdown, 300);
-  }
+  setInterval(updateHomeCountdown, 60000);
 });
 
 window.generateStudyPlan = generateStudyPlan;
 window.renderStudyPlan = renderStudyPlan;
 window.loadPlanLocally = loadPlanLocally;
+window.updateHomeCountdown = updateHomeCountdown;
