@@ -679,6 +679,150 @@
       </div>
     </section>
 
+
+       <!-- ============================================================
+     قسم الكاهوت
+============================================================ -->
+<section class="view" id="view-quiz">
+  <!-- اللوبي -->
+  <div id="quizLobby" class="quiz-lobby">
+    <div class="quiz-hero">
+      <div class="quiz-hero-icon"><i class="fas fa-gamepad"></i></div>
+      <h1>كاهوت <em>القدرات</em></h1>
+      <p>تحدَّ أصدقاءك في مسابقة سريعة! 20 سؤال، 20 ثانية لكل سؤال</p>
+    </div>
+
+    <div class="quiz-lobby-grid">
+      <!-- إنشاء غرفة -->
+      <div class="quiz-lobby-card">
+        <div class="quiz-card-icon" style="background:rgba(91,108,255,.15);color:#5b6cff">
+          <i class="fas fa-plus"></i>
+        </div>
+        <h3>أنشئ غرفة جديدة</h3>
+        <p>كن المضيف وادعُ 3 أصدقاء للانضمام</p>
+        <div class="form-group">
+          <label>عدد الأسئلة</label>
+          <select id="quizTotalQuestions" class="quiz-select">
+            <option value="10">10 أسئلة</option>
+            <option value="15">15 سؤال</option>
+            <option value="20" selected>20 سؤال</option>
+            <option value="30">30 سؤال</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>وقت كل سؤال (ثانية)</label>
+          <select id="quizSeconds" class="quiz-select">
+            <option value="15">15 ثانية</option>
+            <option value="20" selected>20 ثانية</option>
+            <option value="30">30 ثانية</option>
+          </select>
+        </div>
+        <button class="btn btn-primary quiz-main-btn" onclick="createQuizRoom()">
+          <i class="fas fa-plus-circle"></i> إنشاء الغرفة
+        </button>
+      </div>
+
+      <!-- الانضمام لغرفة -->
+      <div class="quiz-lobby-card">
+        <div class="quiz-card-icon" style="background:rgba(34,197,94,.15);color:#22c55e">
+          <i class="fas fa-sign-in-alt"></i>
+        </div>
+        <h3>انضم لغرفة</h3>
+        <p>أدخل رمز الغرفة المكوّن من 6 أرقام</p>
+        <div class="form-group">
+          <label>رمز الغرفة</label>
+          <input type="text" id="quizJoinCode" class="quiz-code-input" maxlength="6" placeholder="123456" inputmode="numeric" pattern="[0-9]*">
+        </div>
+        <button class="btn btn-success quiz-main-btn" onclick="joinQuizRoom()">
+          <i class="fas fa-sign-in-alt"></i> انضم
+        </button>
+      </div>
+    </div>
+
+    <!-- إحصائياتي -->
+    <div class="quiz-my-stats" id="quizMyStats"></div>
+  </div>
+
+  <!-- غرفة الانتظار -->
+  <div id="quizWaitingRoom" class="quiz-waiting" style="display:none">
+    <div class="quiz-waiting-header">
+      <h2>غرفة الانتظار</h2>
+      <div class="quiz-room-code">
+        <span>رمز الغرفة</span>
+        <div class="quiz-code-display" id="quizRoomCodeDisplay">------</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyQuizCode()"><i class="fas fa-copy"></i> نسخ</button>
+      </div>
+    </div>
+
+    <div class="quiz-players-grid" id="quizPlayersGrid"></div>
+
+    <div class="quiz-waiting-foot">
+      <div class="quiz-players-info">
+        <i class="fas fa-users"></i>
+        <span id="quizPlayersCount">1 من 4 لاعبين</span>
+      </div>
+      <button class="btn btn-ghost" onclick="leaveQuizRoom()">
+        <i class="fas fa-right-from-bracket"></i> مغادرة
+      </button>
+      <button class="btn btn-primary" id="quizStartBtn" onclick="startQuizGame()" style="display:none">
+        <i class="fas fa-play"></i> ابدأ اللعبة
+      </button>
+    </div>
+  </div>
+
+  <!-- شاشة اللعب -->
+  <div id="quizGameScreen" class="quiz-game" style="display:none">
+    <!-- رأس اللعبة -->
+    <div class="quiz-game-header">
+      <div class="quiz-progress-info">
+        <span>السؤال</span>
+        <b id="quizQNum">1</b>
+        <span>من</span>
+        <b id="quizQTotal">20</b>
+      </div>
+      <div class="quiz-timer-circle">
+        <svg width="70" height="70" viewBox="0 0 70 70">
+          <circle cx="35" cy="35" r="30" stroke="var(--border)" stroke-width="5" fill="none"/>
+          <circle id="quizTimerRing" cx="35" cy="35" r="30" stroke="var(--primary)" stroke-width="5" fill="none"
+                  stroke-dasharray="188.5" stroke-dashoffset="0" transform="rotate(-90 35 35)"
+                  style="transition:stroke-dashoffset .3s linear"/>
+        </svg>
+        <div class="quiz-timer-num" id="quizTimerNum">20</div>
+      </div>
+    </div>
+
+    <!-- السؤال -->
+    <div class="quiz-question-box">
+      <div class="quiz-category" id="quizCategory">عام</div>
+      <div class="quiz-question-text" id="quizQuestionText">—</div>
+    </div>
+
+    <!-- الأجوبة -->
+    <div class="quiz-answers-grid" id="quizAnswersGrid"></div>
+
+    <!-- نتائج السؤال -->
+    <div class="quiz-reveal-box" id="quizRevealBox" style="display:none"></div>
+
+    <!-- معلومات اللاعبين -->
+    <div class="quiz-players-bar" id="quizPlayersBar"></div>
+  </div>
+
+  <!-- نتائج نهائية -->
+  <div id="quizFinalResults" class="quiz-final" style="display:none">
+    <div class="quiz-final-hero">
+      <div class="quiz-final-trophy"><i class="fas fa-trophy"></i></div>
+      <h2 id="quizFinalTitle">انتهت اللعبة!</h2>
+      <p id="quizFinalSubtitle">—</p>
+    </div>
+    <div class="quiz-final-list" id="quizFinalList"></div>
+    <div class="quiz-final-actions">
+      <button class="btn btn-primary" onclick="backToQuizLobby()">
+        <i class="fas fa-home"></i> العودة للرئيسية
+      </button>
+    </div>
+  </div>
+</section>
+
     <!-- ============================================================
          من نحن + الدعم + القنوات
     ============================================================ -->
