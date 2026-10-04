@@ -2454,3 +2454,227 @@ img{-webkit-user-drag:none;user-drag:none}
   .exam-countdown-nums{gap:6px;width:100%}
   .exam-countdown-info{width:100%}
 }
+
+/* ============================================================
+   شعار الحواف المستديرة
+============================================================ */
+.w-illust .core.core-logo,
+.brand-logo{
+  overflow:hidden;
+  border-radius:26px;
+  padding:0;
+}
+.w-illust .core.core-logo img,
+.brand-logo-img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  border-radius:22px;
+}
+.w-illust .core.core-logo .fallback-icon,
+.brand-logo .fallback-icon{
+  display:none;
+}
+.w-illust .core.core-logo.fallback .fallback-icon,
+.brand-logo.fallback .fallback-icon{
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+}
+
+/* الشعار في auth */
+.auth-brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.auth-brand-logo{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  border-radius:14px;
+  background:rgba(255,255,255,.1);
+  padding:6px;
+}
+
+/* زر خروج في الترحيب */
+.welcome-logout-btn{
+  margin-top:20px;
+  background:rgba(239,68,68,.2);
+  border:1px solid rgba(239,68,68,.4);
+  color:#fca5a5;
+  font-family:inherit;
+  font-size:.82rem;
+  font-weight:800;
+  padding:12px 24px;
+  border-radius:100px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:.3s;
+}
+.welcome-logout-btn:hover{
+  background:rgba(239,68,68,.35);
+  color:#fff;
+}
+
+/* ============================================================
+   وضع الجدول الذكي
+============================================================ */
+.sp-mode-toggle{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:20px;
+}
+.sp-mode-option{
+  cursor:pointer;
+}
+.sp-mode-option input{
+  display:none;
+}
+.sp-mode-card{
+  padding:20px;
+  background:var(--card-2);
+  border:2px solid var(--border);
+  border-radius:16px;
+  text-align:center;
+  transition:.3s;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.sp-mode-card i{
+  font-size:1.5rem;
+  color:var(--primary);
+  margin-bottom:4px;
+}
+.sp-mode-card b{
+  font-size:.9rem;
+  font-weight:800;
+  color:var(--text);
+}
+.sp-mode-card small{
+  font-size:.72rem;
+  color:var(--muted);
+  font-weight:600;
+}
+.sp-mode-option input:checked + .sp-mode-card{
+  border-color:var(--primary);
+  background:var(--primary-soft);
+  box-shadow:0 8px 24px rgba(var(--primary-rgb),.15);
+  transform:translateY(-2px);
+}
+.sp-mode-option:hover .sp-mode-card{
+  border-color:var(--primary);
+}
+
+/* ============================================================
+   شبكة التواصل الاجتماعي
+============================================================ */
+.social-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px;
+  max-width:900px;
+  margin:0 auto;
+}
+
+.social-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 18px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  text-decoration:none;
+  color:var(--text);
+  transition:.3s;
+  position:relative;
+  overflow:hidden;
+}
+.social-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  right:0;
+  width:4px;
+  height:100%;
+  background:var(--sc,var(--primary));
+  transition:width .3s;
+}
+.social-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow);
+  border-color:var(--sc);
+}
+.social-card:hover::before{
+  width:6px;
+}
+
+.social-icon{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  font-size:1.4rem;
+  color:#fff;
+  background:var(--sc,var(--primary));
+  flex-shrink:0;
+  transition:.3s;
+}
+.social-card:hover .social-icon{
+  transform:scale(1.08) rotate(-6deg);
+}
+
+.social-info{
+  flex:1;
+  min-width:0;
+}
+.social-info b{
+  display:block;
+  font-size:.9rem;
+  font-weight:800;
+  margin-bottom:3px;
+}
+.social-info small{
+  display:block;
+  font-size:.76rem;
+  color:var(--muted);
+  font-weight:600;
+  direction:ltr;
+  text-align:right;
+}
+
+.social-arrow{
+  color:var(--muted);
+  font-size:.8rem;
+  opacity:0;
+  transform:translateX(8px);
+  transition:.3s;
+}
+.social-card:hover .social-arrow{
+  opacity:1;
+  transform:translateX(0);
+}
+
+/* ألوان كل قناة */
+.social-card.whatsapp{--sc:#25D366}
+.social-card.telegram{--sc:#0088cc}
+.social-card.twitter{--sc:#000}
+.social-card.tiktok{--sc:#000}
+.social-card.youtube{--sc:#FF0000}
+
+[data-theme="dark"] .social-card.twitter,
+[data-theme="dark"] .social-card.tiktok{--sc:#e5e7eb}
+
+@media (max-width:640px){
+  .sp-mode-toggle{grid-template-columns:1fr}
+  .social-grid{grid-template-columns:1fr}
+}
