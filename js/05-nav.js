@@ -9,6 +9,7 @@ const TITLES = {
   videos:['الفيديوهات','مكتبة الدروس المرئية'],
   studyplan:['الجدول الذكي','خطة مذاكرتك الذكية'],
   adhkar:['الأذكار والأدعية','أذكار الصباح والمساء وقبل المذاكرة'],
+  quiz:['كاهوت القدرات','تحدَّ أصدقاءك في مسابقة سريعة'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
   leaderboard:['قائمة المتصدرين','ترتيب الطلاب حسب نقاط XP'],
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
@@ -33,6 +34,8 @@ function go(view, skipHash){
     }
     view = 'home';
   }
+
+   if(view === 'quiz' && typeof initQuiz === 'function') initQuiz();
 
   const appEl = document.getElementById('app');
   if(appEl && appEl.classList.contains('store-only') && view !== 'store'){
