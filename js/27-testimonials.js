@@ -1,10 +1,21 @@
 /* ============================================================
-   27) TESTIMONIALS — تجارب الطلاب في صفحة الانتظار
+   27) TESTIMONIALS — تجارب الطلاب (تظهر فقط في انتظار التفعيل)
 ============================================================ */
+
+const TESTIMONIALS_TELEGRAM = 'https://t.me/xu4cii';
 
 function renderTestimonials(){
   const container = document.getElementById('testimonialsSection');
   if(!container) return;
+
+  /* ⭐ لا تعرض إلا في وضع "انتظار التفعيل" */
+  const appEl = document.getElementById('app');
+  if(!appEl || !appEl.classList.contains('store-only')){
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
 
   const testimonials = [
     { name: 'عبدالله م.', score: '96', text: 'الحمد لله، بفضل الله ثم منصة العباقرة قدرت أجيب درجة عالية. أفضل شي فيها الجدول الذكي والمتابعة.', avatar: 'ع' },
@@ -31,8 +42,24 @@ function renderTestimonials(){
         </div>
       `).join('')}
     </div>
-    <a href="https://t.me/Kodurat1" target="_blank" class="telegram-btn">
-      <i class="fab fa-telegram"></i> قناة تجارب الطلاب على تيليجرام
+    <a href="${TESTIMONIALS_TELEGRAM}" target="_blank" class="telegram-btn">
+      <i class="fab fa-telegram"></i> انضم لقناة تجارب الطلاب على تيليجرام
     </a>
   `;
 }
+window.renderTestimonials = renderTestimonials;
+
+/* ⭐ عرضها تلقائياً عند الدخول في وضع المتجر */
+document.addEventListener('DOMContentLoaded', () => {
+  const observer = new MutationObserver(() => {
+    const appEl = document.getElementById('app');
+    if(appEl && appEl.classList.contains('store-only')){
+      if(typeof renderTestimonials === 'function') renderTestimonials();
+    }
+  });
+
+  const appEl = document.getElementById('app');
+  if(appEl){
+    observer.observe(appEl, { attributes: true, attributeFilter: ['class'] });
+  }
+});
