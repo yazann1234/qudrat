@@ -16,9 +16,7 @@
 </head>
 <body>
 
-<!-- ============================================================
-     شاشة الترحيب
-============================================================ -->
+<!-- شاشة الترحيب -->
 <div id="welcome" style="display:none" data-first-visit="false">
   <div class="blob b1"></div>
   <div class="blob b2"></div>
@@ -50,22 +48,19 @@
       <div class="chip" style="animation-delay:.5s"><i class="fas fa-video"></i> دروس فيديو</div>
       <div class="chip" style="animation-delay:.55s"><i class="fas fa-calendar-check"></i> جدول ذكي</div>
       <div class="chip" style="animation-delay:.6s"><i class="fas fa-gamepad"></i> كاهوت</div>
-      <div class="chip" style="animation-delay:.65s"><i class="fas fa-hands-praying"></i> أذكار</div>
+      <div class="chip" style="animation-delay:.65s"><i class="fas fa-gift"></i> هدايا</div>
     </div>
 
     <button class="w-btn" id="enterBtn">ابدأ رحلتك <i class="fas fa-arrow-left"></i></button>
     <div class="w-foot">اضغط للدخول أو إنشاء حساب جديد</div>
 
-    <!-- زر خروج احتياطي -->
     <button id="welcomeLogout" class="welcome-logout-btn" style="display:none">
       <i class="fas fa-right-from-bracket"></i> تسجيل الخروج من الحساب الحالي
     </button>
   </div>
 </div>
 
-<!-- ============================================================
-     شاشة تسجيل الدخول/التسجيل
-============================================================ -->
+<!-- تسجيل الدخول -->
 <div id="auth">
   <button class="auth-back" id="authBack"><i class="fas fa-arrow-right"></i> رجوع</button>
   <div class="auth-container">
@@ -101,6 +96,10 @@
       <div class="auth-form" id="form-register">
         <div class="input-group"><i class="fas fa-user ic"></i><input type="text" id="regName" placeholder="الاسم الكامل" autocomplete="name"></div>
         <div class="input-group"><i class="fas fa-envelope ic"></i><input type="email" id="regEmail" placeholder="البريد الإلكتروني" autocomplete="email"></div>
+        <div class="input-group">
+          <i class="fas fa-phone ic"></i>
+          <input type="tel" id="regPhone" placeholder="رقم الجوال (05xxxxxxxx)" autocomplete="tel" maxlength="10" inputmode="numeric">
+        </div>
         <div class="input-group">
           <i class="fas fa-lock ic"></i>
           <input type="password" id="regPass" placeholder="كلمة المرور (8+ أحرف)" autocomplete="new-password" style="padding-left:44px">
@@ -139,9 +138,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     التطبيق الرئيسي
-============================================================ -->
+<!-- التطبيق الرئيسي -->
 <div id="app">
 
   <button class="store-logout-fab" id="storeLogoutFab">
@@ -184,6 +181,7 @@
       <button class="nav-btn" data-view="files"><span class="ic"><i class="fas fa-folder"></i></span><span>الملفات</span><span class="badge-n" id="navCount">0</span></button>
       <button class="nav-btn" data-view="videos"><span class="ic"><i class="fas fa-video"></i></span><span>الفيديوهات</span><span class="badge-n" id="navVideoCount">0</span></button>
       <button class="nav-btn" data-view="quiz"><span class="ic"><i class="fas fa-gamepad"></i></span><span>كاهوت</span></button>
+      <button class="nav-btn" data-view="gifts"><span class="ic"><i class="fas fa-gift"></i></span><span>هداياي</span><span class="badge-n" id="giftBadgeNav" style="display:none">0</span></button>
       <button class="nav-btn" data-view="studyplan"><span class="ic"><i class="fas fa-calendar-check"></i></span><span>الجدول الذكي</span></button>
       <button class="nav-btn" data-view="adhkar"><span class="ic"><i class="fas fa-hands-praying"></i></span><span>الأذكار</span></button>
       <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
@@ -214,9 +212,7 @@
       </div>
     </div>
 
-    <!-- ============================================================
-         قسم المتجر
-    ============================================================ -->
+    <!-- قسم المتجر -->
     <section class="view" id="view-store">
       <div class="store-hero">
         <div class="store-hero-inner">
@@ -248,9 +244,7 @@
       <div class="testimonials-section" id="testimonialsSection"></div>
     </section>
 
-    <!-- ============================================================
-         الصفحة الرئيسية
-    ============================================================ -->
+    <!-- الصفحة الرئيسية -->
     <section class="view active" id="view-home">
       <div id="homeSubBanner"></div>
 
@@ -376,9 +370,7 @@
       </div>
     </section>
 
-    <!-- ============================================================
-         قسم الملفات
-    ============================================================ -->
+    <!-- قسم الملفات -->
     <section class="view" id="view-files">
       <div id="filesSubBanner"></div>
       <div class="sec-title"><i class="fas fa-folder-open" style="color:var(--primary)"></i> مكتبة الملفات</div>
@@ -399,9 +391,7 @@
       <div class="files-grid" id="filesGrid"></div>
     </section>
 
-    <!-- ============================================================
-         قسم الفيديوهات
-    ============================================================ -->
+    <!-- قسم الفيديوهات -->
     <section class="view" id="view-videos">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
@@ -434,11 +424,8 @@
       <div class="videos-grid" id="videosGrid"></div>
     </section>
 
-    <!-- ============================================================
-         قسم الكاهوت
-    ============================================================ -->
+    <!-- قسم الكاهوت -->
     <section class="view" id="view-quiz">
-      <!-- اللوبي -->
       <div id="quizLobby" class="quiz-lobby">
         <div class="quiz-hero">
           <div class="quiz-hero-icon"><i class="fas fa-gamepad"></i></div>
@@ -494,7 +481,6 @@
         <div class="quiz-my-stats" id="quizMyStats"></div>
       </div>
 
-      <!-- غرفة الانتظار -->
       <div id="quizWaitingRoom" class="quiz-waiting" style="display:none">
         <div class="quiz-waiting-header">
           <h2>غرفة الانتظار</h2>
@@ -521,7 +507,6 @@
         </div>
       </div>
 
-      <!-- شاشة اللعب -->
       <div id="quizGameScreen" class="quiz-game" style="display:none">
         <div class="quiz-game-header">
           <div class="quiz-progress-info">
@@ -553,7 +538,6 @@
         <div class="quiz-players-bar" id="quizPlayersBar"></div>
       </div>
 
-      <!-- النتائج النهائية -->
       <div id="quizFinalResults" class="quiz-final" style="display:none">
         <div class="quiz-final-hero">
           <div class="quiz-final-trophy"><i class="fas fa-trophy"></i></div>
@@ -569,9 +553,13 @@
       </div>
     </section>
 
-    <!-- ============================================================
-         الجدول الذكي
-    ============================================================ -->
+    <!-- قسم الهدايا -->
+    <section class="view" id="view-gifts">
+      <div class="sec-title"><i class="fas fa-gift" style="color:var(--accent)"></i> صندوق الطالب <span class="sub">هداياك ومكافآتك</span></div>
+      <div id="myGiftsBox"></div>
+    </section>
+
+    <!-- الجدول الذكي -->
     <section class="view" id="view-studyplan">
       <div class="sp-hero">
         <div class="sp-hero-inner">
@@ -646,9 +634,7 @@
       </div>
     </section>
 
-    <!-- ============================================================
-         الأذكار
-    ============================================================ -->
+    <!-- الأذكار -->
     <section class="view" id="view-adhkar">
       <div class="sec-title">
         <i class="fas fa-hands-praying" style="color:var(--primary)"></i>
@@ -673,9 +659,7 @@
       <div id="adhkarContent"></div>
     </section>
 
-    <!-- ============================================================
-         إنجازي
-    ============================================================ -->
+    <!-- إنجازي -->
     <section class="view" id="view-progress">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
@@ -711,16 +695,14 @@
       <div class="badges-row" id="badgesAll"></div>
     </section>
 
-    <!-- ============================================================
-         المتصدرون
-    ============================================================ -->
+    <!-- المتصدرون -->
     <section class="view" id="view-leaderboard">
       <div class="lb-hero">
         <div class="lb-hero-in">
           <div class="lb-hero-txt">
             <div class="tag"><i class="fas fa-trophy"></i> لوحة الشرف</div>
             <h2>قائمة المتصدرين 🏆</h2>
-            <p>النقاط تُحسب من: الصفحات المقروءة (+٢ لكل صفحة) + الملفات المكتملة (+١٠٠) + جلسات التركيز (+٢٥) + إكمال الفيديوهات (+٥٠). اجمع النقاط واحتلّ القمة!</p>
+            <p>النقاط تُحسب من: الصفحات المقروءة + الملفات المكتملة + جلسات التركيز + إكمال الفيديوهات + الفوز في كاهوت.</p>
           </div>
           <div class="lb-hero-count"><b id="lbMyRank">—</b><span>ترتيبك</span></div>
         </div>
@@ -733,9 +715,7 @@
       <div class="lb-list" id="lbList"></div>
     </section>
 
-    <!-- ============================================================
-         الملف الشخصي
-    ============================================================ -->
+    <!-- الملف الشخصي -->
     <section class="view" id="view-profile">
       <div class="sec-title"><i class="fas fa-user-circle" style="color:var(--primary)"></i> ملفي الشخصي</div>
       <div class="profile-grid">
@@ -769,9 +749,6 @@
               <button class="btn btn-primary" id="profileSaveBtn" style="flex:1"><i class="fas fa-floppy-disk"></i> حفظ التعديلات</button>
               <button class="btn btn-ghost" id="profileRemoveAvatar"><i class="fas fa-trash"></i> حذف الصورة</button>
             </div>
-            <div class="profile-tips">
-              <i class="fas fa-circle-info"></i> صورتك واسمك يظهران في القائمة الجانبية، وقائمة المتصدرين.
-            </div>
           </div>
         </div>
 
@@ -786,6 +763,9 @@
               <span><i class="fas fa-stopwatch"></i> <b id="pXpSessions">0</b> جلسة</span>
             </div>
           </div>
+
+          <!-- معلومات الاشتراك -->
+          <div id="subscriptionInfoBox"></div>
 
           <div class="card-basic">
             <h3><i class="fas fa-award" style="color:var(--accent)"></i> شاراتك</h3>
@@ -807,9 +787,7 @@
       </div>
     </section>
 
-    <!-- ============================================================
-         من نحن + الدعم + القنوات
-    ============================================================ -->
+    <!-- من نحن -->
     <section class="view" id="view-about">
       <div class="about-hero">
         <h1>لماذا <em>عباقرة القدرات</em>؟</h1>
@@ -892,9 +870,7 @@
       </div>
     </section>
 
-    <!-- ============================================================
-         المزايا
-    ============================================================ -->
+    <!-- المزايا -->
     <section class="view" id="view-features">
       <div class="feat-hero">
         <div class="feat-hero-in">
@@ -909,9 +885,7 @@
       <div class="feat-grid-new" id="featGrid"></div>
     </section>
 
-    <!-- ============================================================
-         الإعدادات
-    ============================================================ -->
+    <!-- الإعدادات -->
     <section class="view" id="view-settings">
       <div class="sec-title"><i class="fas fa-gear" style="color:var(--primary)"></i> الإعدادات</div>
       <div class="set-grid">
@@ -941,7 +915,7 @@
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">تقليل الحركات<small>لأجهزة أضعف أو لمن يفضل ذلك</small></div>
+            <div class="lbl">تقليل الحركات<small>لأجهزة أضعف</small></div>
             <label class="switch"><input type="checkbox" id="setAnim"><span class="slider-sw"></span></label>
           </div>
         </div>
@@ -962,17 +936,17 @@
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">إظهار أرقام الصفحات<small>والعلامة المائية</small></div>
+            <div class="lbl">إظهار أرقام الصفحات</div>
             <label class="switch"><input type="checkbox" id="setMarks"><span class="slider-sw"></span></label>
           </div>
           <div class="set-row">
-            <div class="lbl">الحجم الافتراضي<small>عند فتح أي ملف</small></div>
+            <div class="lbl">الحجم الافتراضي</div>
             <div class="seg" id="zoomSeg">
               <button data-z="1">ملء العرض</button><button data-z="1.25">125%</button><button data-z="1.5">150%</button>
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">استئناف آخر موضع<small>افتح الملف عند آخر صفحة وصلت إليها</small></div>
+            <div class="lbl">استئناف آخر موضع</div>
             <label class="switch"><input type="checkbox" id="setResume"><span class="slider-sw"></span></label>
           </div>
         </div>
@@ -988,13 +962,13 @@
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">مدة الراحة القصيرة<small>بالدقائق</small></div>
+            <div class="lbl">مدة الراحة القصيرة</div>
             <div class="seg" id="breakSeg">
               <button data-m="5">5</button><button data-m="10">10</button>
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">مدة الراحة الطويلة<small>بعد ٤ جلسات</small></div>
+            <div class="lbl">مدة الراحة الطويلة</div>
             <div class="seg" id="longSeg">
               <button data-m="15">15</button><button data-m="20">20</button><button data-m="30">30</button>
             </div>
@@ -1004,7 +978,7 @@
             <label class="switch"><input type="checkbox" id="setAuto"><span class="slider-sw"></span></label>
           </div>
           <div class="set-row">
-            <div class="lbl">تنبيه صوتي<small>عند نهاية الجلسة</small></div>
+            <div class="lbl">تنبيه صوتي</div>
             <label class="switch"><input type="checkbox" id="setSound"><span class="slider-sw"></span></label>
           </div>
         </div>
@@ -1013,14 +987,14 @@
           <h3><i class="fas fa-bullseye"></i> الأهداف اليومية</h3>
           <p>حدّد أهدافاً واقعية وتابع تحقيقها كل يوم.</p>
           <div class="set-row">
-            <div class="lbl">هدف الصفحات<small>عدد الصفحات في اليوم</small></div>
+            <div class="lbl">هدف الصفحات</div>
             <div class="range-row" style="flex:1">
               <input type="range" id="goalPagesRange" min="2" max="100" step="1">
               <b id="goalPagesVal" style="color:var(--primary);min-width:42px;text-align:center">10</b>
             </div>
           </div>
           <div class="set-row">
-            <div class="lbl">هدف الدقائق<small>دقائق المذاكرة في اليوم</small></div>
+            <div class="lbl">هدف الدقائق</div>
             <div class="range-row" style="flex:1">
               <input type="range" id="goalMinRange" min="5" max="300" step="5">
               <b id="goalMinVal" style="color:var(--primary);min-width:52px;text-align:center">30</b>
@@ -1030,52 +1004,47 @@
 
         <div class="set-card">
           <h3><i class="fas fa-database"></i> بياناتك</h3>
-          <p>تقدمك محفوظ في حسابك. يمكنك أخذ نسخة احتياطية أو تصفير التقدم.</p>
+          <p>تقدمك محفوظ في حسابك.</p>
           <div class="set-row">
-            <div class="lbl">تصدير نسخة احتياطية<small>تحميل ملف JSON بتقدمك</small></div>
+            <div class="lbl">تصدير نسخة احتياطية</div>
             <button class="btn btn-ghost btn-sm" id="exportBtn"><i class="fas fa-download"></i> تصدير</button>
           </div>
           <div class="set-row">
-            <div class="lbl">استيراد نسخة<small>استرجاع تقدمك من ملف</small></div>
+            <div class="lbl">استيراد نسخة</div>
             <button class="btn btn-ghost btn-sm" id="importBtn"><i class="fas fa-upload"></i> استيراد</button>
             <input type="file" id="importFile" accept=".json,application/json" hidden>
           </div>
           <div class="set-row">
-            <div class="lbl">تصفير التقدم<small>يبقى الحساب وتُمسح النسب والشارات</small></div>
+            <div class="lbl">تصفير التقدم</div>
             <button class="btn btn-danger btn-sm" id="resetProgressBtn"><i class="fas fa-rotate-left"></i> تصفير</button>
           </div>
         </div>
 
         <div class="set-card">
           <h3><i class="fas fa-user"></i> حسابك</h3>
-          <p>معلومات حسابك الحالي على المنصة.</p>
+          <p>معلومات حسابك الحالي.</p>
           <div class="set-row"><div class="lbl">الاسم</div><b id="setName" style="color:var(--primary)">—</b></div>
           <div class="set-row"><div class="lbl">البريد</div><b id="setEmail" style="color:var(--primary);font-size:.8rem">—</b></div>
           <div class="set-row"><div class="lbl">حالة الاشتراك</div><b id="setSub" style="font-size:.8rem">—</b></div>
           <div class="set-row">
-            <div class="lbl">تغيير كلمة المرور<small>حماية إضافية لحسابك</small></div>
+            <div class="lbl">تغيير كلمة المرور</div>
             <button class="btn btn-ghost btn-sm" id="changePassBtn"><i class="fas fa-key"></i> تغيير</button>
           </div>
         </div>
 
         <div class="set-card">
-          <h3><i class="fas fa-keyboard"></i> اختصارات لوحة المفاتيح</h3>
+          <h3><i class="fas fa-keyboard"></i> الاختصارات</h3>
           <p>استخدم هذه الاختصارات للتنقل بسرعة.</p>
           <div class="set-row"><div class="lbl">فتح البحث</div><b style="color:var(--primary);direction:ltr">Ctrl + K</b></div>
           <div class="set-row"><div class="lbl">الرئيسية / الملفات / إنجازي</div><b style="color:var(--primary);direction:ltr">1 / 2 / 3</b></div>
           <div class="set-row"><div class="lbl">الفيديوهات / المتصدرون / ملفي</div><b style="color:var(--primary);direction:ltr">V / L / P</b></div>
-          <div class="set-row"><div class="lbl">المزايا / الإعدادات</div><b style="color:var(--primary);direction:ltr">4 / 5</b></div>
-          <div class="set-row"><div class="lbl">القارئ: تكبير / تصغير</div><b style="color:var(--primary);direction:ltr">+ / -</b></div>
-          <div class="set-row"><div class="lbl">القارئ: رسم / سبورة</div><b style="color:var(--primary);direction:ltr">P / W</b></div>
           <div class="set-row"><div class="lbl">إغلاق النافذة</div><b style="color:var(--primary);direction:ltr">Esc</b></div>
         </div>
 
       </div>
     </section>
 
-    <!-- ============================================================
-         لوحة الأدمن
-    ============================================================ -->
+    <!-- لوحة الأدمن -->
     <section class="view" id="view-admin">
       <div class="sec-title"><i class="fas fa-shield-halved" style="color:var(--accent)"></i> لوحة تحكم الأدمن <span class="sub">تحديث فوري</span></div>
       <div class="admin-stats">
@@ -1100,6 +1069,8 @@
         <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة الكاهوت</button>
         <button data-panel="addquiz"><i class="fas fa-plus"></i> إضافة سؤال</button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
+        <button data-panel="gifts" class="owner-only-tab" style="display:none"><i class="fas fa-gift"></i> إرسال هدية</button>
+        <button data-panel="logs" class="owner-only-tab" style="display:none"><i class="fas fa-scroll"></i> اللوقز</button>
       </div>
 
       <div class="admin-panel on" id="panel-users">
@@ -1123,7 +1094,7 @@
         <div class="card-basic">
           <h3><i class="fas fa-user-plus"></i> إنشاء حساب مستخدم جديد</h3>
           <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
-            أنشئ حسابات مباشرة لطلابك دون الحاجة لأن يسجلوا بأنفسهم. لن تتأثر جلستك كأدمن.
+            أنشئ حسابات مباشرة لطلابك دون الحاجة لأن يسجلوا بأنفسهم.
           </p>
           <div class="form-group"><label>الاسم الكامل *</label><input type="text" id="nuName" placeholder="مثال: محمد أحمد"></div>
           <div class="form-group"><label>البريد الإلكتروني *</label><input type="email" id="nuEmail" placeholder="student@email.com"></div>
@@ -1136,7 +1107,7 @@
           </div>
           <label class="checkbox-row">
             <input type="checkbox" id="nuApprove" checked>
-            <span><i class="fas fa-circle-check"></i> تفعيل الاشتراك مباشرة (بدون انتظار موافقة)</span>
+            <span><i class="fas fa-circle-check"></i> تفعيل الاشتراك مباشرة</span>
           </label>
           <div class="form-actions">
             <button class="btn btn-primary" id="nuCreateBtn" style="flex:1;padding:14px"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
@@ -1152,7 +1123,7 @@
       <div class="admin-panel" id="panel-add">
         <div class="card-basic">
           <h3><i class="fas fa-cloud-arrow-up"></i> رفع ملف PDF جديد</h3>
-          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">ارفع ملف PDF من جهازك ليظهر مباشرة في قسم الملفات لجميع الطلاب المشتركين.</p>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">ارفع ملف PDF من جهازك ليظهر مباشرة.</p>
           <div class="upload-zone" id="uploadZone">
             <div class="uz-icon"><i class="fas fa-file-pdf"></i></div>
             <h4>اسحب ملف PDF هنا أو اضغط للاختيار</h4>
@@ -1177,7 +1148,7 @@
           </div>
           <label class="checkbox-row">
             <input type="checkbox" id="afImportant">
-            <span><i class="fas fa-star"></i> تمييز كملف مهم — سيظهر بنجمة مميزة</span>
+            <span><i class="fas fa-star"></i> تمييز كملف مهم</span>
           </label>
           <div class="form-actions">
             <button class="btn btn-primary" id="saveFileBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الملف</button>
@@ -1194,12 +1165,12 @@
         <div class="card-basic">
           <h3><i class="fas fa-video"></i> إضافة فيديو جديد</h3>
           <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
-            الصق رابط يوتيوب وسيُشغّل داخل المنصة مباشرة — مع تتبع تلقائي للتقدم ومنح XP عند الإكمال.
+            الصق رابط يوتيوب وسيُشغّل داخل المنصة مباشرة.
           </p>
 
           <div class="form-group">
             <label>رابط يوتيوب *</label>
-            <input type="text" id="avUrl" placeholder="https://www.youtube.com/watch?v=... أو https://youtu.be/...">
+            <input type="text" id="avUrl" placeholder="https://www.youtube.com/watch?v=...">
             <div id="avUrlPreview" style="display:none;margin-top:10px;padding:10px;border-radius:10px;background:var(--card-2);border:1px solid var(--border);font-size:.78rem;font-weight:700;color:var(--success)">
               <i class="fas fa-circle-check"></i> <span id="avUrlPreviewText"></span>
             </div>
@@ -1215,7 +1186,7 @@
             </select>
           </div>
 
-          <div class="form-group"><label>وصف مختصر</label><textarea id="avDesc" placeholder="وصف قصير يظهر في بطاقة الفيديو..."></textarea></div>
+          <div class="form-group"><label>وصف مختصر</label><textarea id="avDesc" placeholder="وصف قصير..."></textarea></div>
 
           <label class="checkbox-row">
             <input type="checkbox" id="avImportant">
@@ -1247,8 +1218,8 @@
           <input type="hidden" id="pfId">
 
           <div class="form-group"><label>اسم المنتج *</label><input type="text" id="pfTitle" maxlength="80" placeholder="مثال: دورة الأقسام"></div>
-          <div class="form-group"><label>العنوان الفرعي</label><input type="text" id="pfSubtitle" maxlength="120" placeholder="الدورة الشاملة لاختبار القدرات"></div>
-          <div class="form-group"><label>الوصف</label><textarea id="pfDesc" placeholder="وصف تفصيلي يظهر في بطاقة المنتج..."></textarea></div>
+          <div class="form-group"><label>العنوان الفرعي</label><input type="text" id="pfSubtitle" maxlength="120" placeholder="الدورة الشاملة"></div>
+          <div class="form-group"><label>الوصف</label><textarea id="pfDesc" placeholder="وصف تفصيلي..."></textarea></div>
 
           <div class="two-col">
             <div class="form-group"><label>السعر *</label><input type="number" id="pfPrice" min="0" step="1" placeholder="199"></div>
@@ -1266,8 +1237,8 @@
           </div>
 
           <div class="form-group">
-            <label>المميزات <small style="color:var(--muted);font-weight:600">(سطر واحد لكل ميزة)</small></label>
-            <textarea id="pfFeatures" placeholder="شرح تفصيلي لجميع الأقسام&#10;ملفات PDF حصرية&#10;دروس فيديو مسجلة"></textarea>
+            <label>المميزات <small>(سطر واحد لكل ميزة)</small></label>
+            <textarea id="pfFeatures" placeholder="شرح تفصيلي&#10;ملفات PDF&#10;دروس فيديو"></textarea>
           </div>
 
           <div class="two-col">
@@ -1277,7 +1248,7 @@
             </label>
             <label class="checkbox-row">
               <input type="checkbox" id="pfActive" checked>
-              <span><i class="fas fa-eye"></i> معروض في المتجر</span>
+              <span><i class="fas fa-eye"></i> معروض</span>
             </label>
           </div>
 
@@ -1292,7 +1263,6 @@
         </div>
       </div>
 
-      <!-- لوحة أسئلة الكاهوت -->
       <div class="admin-panel" id="panel-quiz">
         <div class="filter-row" style="margin-bottom:16px">
           <button class="btn btn-primary" onclick="adminNewQuestion()" style="padding:11px 18px">
@@ -1309,7 +1279,6 @@
         <div class="quiz-admin-grid" id="adminQuizGrid"></div>
       </div>
 
-      <!-- لوحة إضافة سؤال -->
       <div class="admin-panel" id="panel-addquiz">
         <div class="card-basic">
           <h3><i class="fas fa-question-circle"></i> <span id="quizFormTitle">إضافة سؤال جديد</span></h3>
@@ -1373,13 +1342,12 @@
         </div>
       </div>
 
-      <!-- لوحة إعدادات المتجر -->
       <div class="admin-panel" id="panel-storesettings">
         <div class="store-settings-header">
           <div class="store-settings-icon"><i class="fas fa-cog"></i></div>
           <div>
             <h3>إعدادات المتجر</h3>
-            <p>هذه البيانات تظهر للطلاب في صفحة الشراء — تأكد من دقتها</p>
+            <p>هذه البيانات تظهر للطلاب في صفحة الشراء</p>
           </div>
         </div>
 
@@ -1471,13 +1439,78 @@
           </button>
         </div>
       </div>
+
+      <!-- لوحة إرسال هدية (owner فقط) -->
+      <div class="admin-panel" id="panel-gifts">
+        <div class="card-basic">
+          <h3><i class="fas fa-gift" style="color:var(--accent)"></i> إرسال هدية لطالب</h3>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:16px;line-height:1.8">
+            أرسل هدية أو مكافأة لطالب معين — ستظهر له كهدية مغلفة يفتحها باحتفال 🎉
+          </p>
+
+          <div class="form-group">
+            <label>اختر المستخدم *</label>
+            <select id="giftUserId">
+              <option value="">— اختر مستخدماً —</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>نوع الهدية</label>
+            <select id="giftType">
+              <option value="gift">🎁 هدية</option>
+              <option value="prize">🏆 جائزة</option>
+              <option value="reward">⭐ مكافأة</option>
+              <option value="subscription">📅 اشتراك مجاني</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>عنوان الهدية *</label>
+            <input type="text" id="giftTitle" placeholder="مثال: مبروك! جائزة المتصدر الأول 🏆" maxlength="100">
+          </div>
+
+          <div class="form-group">
+            <label>رسالة الهدية *</label>
+            <textarea id="giftMessage" placeholder="اكتب رسالة الطالب هنا..." style="min-height:120px"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>صورة (اختياري)</label>
+            <input type="file" id="giftImageInput" accept="image/*" onchange="previewGiftImage(this)" style="display:none">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('giftImageInput').click()">
+              <i class="fas fa-image"></i> اختيار صورة
+            </button>
+            <div id="giftImagePreview" style="margin-top:12px"></div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" id="sendGiftBtn" style="flex:1;padding:14px">
+              <i class="fas fa-paper-plane"></i> إرسال الهدية
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- لوحة اللوقز (owner فقط) -->
+      <div class="admin-panel" id="panel-logs">
+        <div class="logs-header">
+          <div class="logs-icon"><i class="fas fa-scroll"></i></div>
+          <div>
+            <h3>سجلات العمليات</h3>
+            <p>كل عملية يقوم بها الأدمن مسجلة هنا للمراجعة</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="renderAdminLogs()" style="margin-right:auto">
+            <i class="fas fa-rotate"></i> تحديث
+          </button>
+        </div>
+        <div id="ownerLogsList"></div>
+      </div>
     </section>
   </main>
 </div>
 
-<!-- ============================================================
-     قارئ PDF
-============================================================ -->
+<!-- قارئ PDF -->
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
@@ -1550,7 +1583,7 @@
           <canvas class="wb-canvas" id="wbCanvas"></canvas>
           <div class="wb-empty" id="wbEmpty" style="display:none">
             <i class="fas fa-chalkboard"></i>
-            <span>السبورة فارغة — اختر قلمك وابدأ الرسم</span>
+            <span>السبورة فارغة</span>
           </div>
         </div>
       </aside>
@@ -1569,9 +1602,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     مشغل الفيديو
-============================================================ -->
+<!-- مشغل الفيديو -->
 <div id="videoPlayer">
   <div class="vp-box">
     <div class="vp-head">
@@ -1626,13 +1657,11 @@
   </div>
 </div>
 
-<!-- ============================================================
-     منتقي الملفات
-============================================================ -->
+<!-- منتقي الملفات -->
 <div class="modal" id="filePickerModal">
   <div class="modal-box" style="max-width:640px">
     <h3><i class="fas fa-folder-open"></i> اختر ملفاً لفتحه بجانب الفيديو</h3>
-    <p style="margin-bottom:14px">ستتمكن من متابعة الفيديو وكتابة الملاحظات على الملف في نفس الوقت.</p>
+    <p style="margin-bottom:14px">ستتمكن من متابعة الفيديو والكتابة على الملف في نفس الوقت.</p>
     <div class="search-box" style="margin-bottom:12px;min-width:100%">
       <i class="fas fa-magnifying-glass"></i>
       <input type="text" id="fpSearch" placeholder="ابحث في الملفات...">
@@ -1644,9 +1673,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     مودال الشراء
-============================================================ -->
+<!-- مودال الشراء -->
 <div class="modal" id="purchaseModal">
   <div class="modal-box purchase-box">
     <div class="purchase-header">
@@ -1718,9 +1745,32 @@
   </div>
 </div>
 
-<!-- ============================================================
-     مودال تنبيه الصلاة
-============================================================ -->
+<!-- مودال الاحتفال بالهدية -->
+<div class="modal" id="giftCelebrationModal">
+  <div id="giftConfetti" class="gift-confetti"></div>
+  <div class="modal-box gift-celebration-box">
+    <div class="gift-celeb-icon">
+      <i class="fas fa-gift"></i>
+      <div class="gift-celeb-glow"></div>
+    </div>
+    <h2 id="giftCelebTitle" class="gift-celeb-title">هدية لك! 🎁</h2>
+    <p id="giftCelebSender" class="gift-celeb-sender">من: رئيس المنصة</p>
+
+    <div class="gift-celeb-image-wrap">
+      <img id="giftCelebImage" src="" alt="هدية" style="display:none">
+    </div>
+
+    <p id="giftCelebMessage" class="gift-celeb-message"></p>
+
+    <div class="gift-celeb-actions">
+      <button class="btn btn-primary gift-close-btn" onclick="closeGiftCelebration()">
+        <i class="fas fa-heart"></i> شكراً!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- مودال تنبيه الصلاة -->
 <div class="modal" id="prayerModal">
   <div class="modal-box" style="text-align:center;max-width:400px">
     <div style="width:80px;height:80px;border-radius:24px;margin:0 auto 20px;display:grid;place-items:center;font-size:2rem;color:#fff;background:linear-gradient(140deg,#22c55e,#16a34a);box-shadow:0 14px 40px rgba(34,197,94,.4)">
@@ -1737,9 +1787,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     قائمة الجوال
-============================================================ -->
+<!-- قائمة الجوال -->
 <div class="mobile-user-menu" id="mobileUserMenu">
   <div class="mum-head">
     <div class="mum-avatar" id="mumAvatar">؟</div>
@@ -1756,9 +1804,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     الحماية
-============================================================ -->
+<!-- الحماية -->
 <div id="shield">
   <div class="shield-in">
     <div class="sh-ic"><i class="fas fa-shield-halved"></i></div>
@@ -1769,9 +1815,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     المودال العام
-============================================================ -->
+<!-- المودال العام -->
 <div class="modal" id="modal">
   <div class="modal-box">
     <h3 id="modalTitle"><i class="fas fa-circle-info"></i> <span>عنوان</span></h3>
@@ -1784,9 +1828,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-     زر ونافذة الذكاء الاصطناعي
-============================================================ -->
+<!-- زر الذكاء الاصطناعي -->
 <button id="aiFabBtn" class="ai-fab-btn" title="المساعد الذكي">
   <i class="fas fa-robot"></i>
   <span class="ai-fab-pulse"></span>
@@ -1838,7 +1880,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- ⭐ ترتيب السكربتات -->
 <script src="js/01-config.js"></script>
 <script src="js/02-utils.js"></script>
 <script src="js/03-state.js"></script>
@@ -1868,5 +1909,6 @@
 <script src="js/27-testimonials.js"></script>
 <script src="js/28-prayer-times.js"></script>
 <script src="js/29-quiz.js"></script>
+<script src="js/30-owner-features.js"></script>
 </body>
 </html>
