@@ -2839,3 +2839,370 @@ img{-webkit-user-drag:none;user-drag:none}
   .quiz-admin-grid{grid-template-columns:1fr}
   .quiz-waiting-foot{flex-direction:column;align-items:stretch}
 }
+
+/* ============================================================
+   الاشتراكات
+============================================================ */
+.sub-info-card{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  margin-bottom:14px;
+  transition:.3s;
+}
+.sub-info-card i{
+  width:44px;height:44px;border-radius:13px;
+  display:grid;place-items:center;
+  font-size:1.2rem;flex-shrink:0;
+}
+.sub-info-card b{display:block;font-size:.94rem;font-weight:900;margin-bottom:3px}
+.sub-info-card small{display:block;font-size:.76rem;color:var(--muted);font-weight:600}
+
+.sub-info-card.owner{background:linear-gradient(100deg,rgba(247,179,43,.12),transparent);border-color:rgba(247,179,43,.4)}
+.sub-info-card.owner i{background:linear-gradient(140deg,#f7b32b,#d97706);color:#fff}
+.sub-info-card.owner b{color:#d97706}
+
+.sub-info-card.active{background:linear-gradient(100deg,rgba(34,197,94,.08),transparent);border-color:rgba(34,197,94,.3)}
+.sub-info-card.active i{background:rgba(34,197,94,.15);color:#16a34a}
+.sub-info-card.active b{color:#16a34a}
+
+.sub-info-card.warning{background:linear-gradient(100deg,rgba(247,179,43,.1),transparent);border-color:rgba(247,179,43,.4)}
+.sub-info-card.warning i{background:rgba(247,179,43,.18);color:#d97706}
+.sub-info-card.warning b{color:#d97706}
+
+.sub-info-card.expired{background:linear-gradient(100deg,rgba(239,68,68,.08),transparent);border-color:rgba(239,68,68,.3)}
+.sub-info-card.expired i{background:rgba(239,68,68,.15);color:#dc2626}
+.sub-info-card.expired b{color:#dc2626}
+
+/* ============================================================
+   صندوق الطالب
+============================================================ */
+.gifts-empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--muted);
+}
+.gifts-empty i{font-size:4rem;opacity:.35;color:var(--accent);margin-bottom:16px;display:block}
+.gifts-empty h3{font-size:1.1rem;font-weight:800;margin-bottom:8px;color:var(--text)}
+.gifts-empty p{font-size:.86rem}
+
+#myGiftsBox{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+
+.gift-card{
+  background:linear-gradient(135deg,#f7b32b,#d97706);
+  border-radius:20px;
+  padding:22px;
+  color:#fff;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  transition:.3s;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 12px 30px rgba(247,179,43,.35);
+}
+.gift-card::before{
+  content:"";
+  position:absolute;
+  top:-40px;right:-40px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.2),transparent 70%);
+}
+.gift-card:hover{
+  transform:translateY(-6px) scale(1.02);
+  box-shadow:0 20px 44px rgba(247,179,43,.5);
+}
+.gift-card.opened{
+  background:linear-gradient(135deg,var(--card),var(--card-2));
+  color:var(--text);
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+.gift-card.opened:hover{
+  box-shadow:var(--shadow-lg);
+  transform:translateY(-4px);
+}
+.gift-box-icon{
+  width:60px;height:60px;border-radius:18px;
+  display:grid;place-items:center;
+  font-size:1.8rem;
+  background:rgba(255,255,255,.22);
+  border:1px solid rgba(255,255,255,.3);
+  flex-shrink:0;
+  position:relative;z-index:2;
+}
+.gift-card.opened .gift-box-icon{
+  background:var(--primary-soft);
+  color:var(--primary);
+  border-color:var(--border);
+}
+.gift-card.unopened .gift-box-icon{
+  animation:giftShake 2s ease-in-out infinite;
+}
+@keyframes giftShake{
+  0%,100%{transform:rotate(0)}
+  10%{transform:rotate(-8deg)}
+  20%{transform:rotate(8deg)}
+  30%{transform:rotate(-6deg)}
+  40%{transform:rotate(6deg)}
+  50%{transform:rotate(0)}
+}
+.gift-info{position:relative;z-index:2;flex:1;min-width:0}
+.gift-info b{display:block;font-size:1rem;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gift-info small{display:block;font-size:.72rem;opacity:.8;font-weight:600}
+.gift-card.opened .gift-info small{color:var(--muted)}
+.gift-new-badge{
+  position:absolute;top:10px;left:10px;
+  background:#ef4444;color:#fff;
+  font-size:.66rem;font-weight:900;
+  padding:4px 10px;border-radius:100px;
+  animation:pulseBadge 1.5s ease-in-out infinite;
+}
+@keyframes pulseBadge{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.1)}
+}
+
+/* ============================================================
+   مودال الاحتفال بالهدية
+============================================================ */
+#giftCelebrationModal{
+  z-index:9700;
+}
+.gift-confetti{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9800;
+  overflow:hidden;
+}
+.confetti-piece{
+  position:absolute;
+  top:-40px;
+  animation:confettiFall linear forwards;
+  pointer-events:none;
+}
+@keyframes confettiFall{
+  0%{transform:translateY(0) rotate(0);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:.6}
+}
+
+.gift-celebration-box{
+  max-width:520px !important;
+  text-align:center;
+  padding:36px 28px !important;
+  background:linear-gradient(160deg,#fffbe6 0%,#fff4bf 60%,#fde68a 100%) !important;
+  border:3px solid #f7b32b !important;
+  position:relative;
+  z-index:9700;
+}
+[data-theme="dark"] .gift-celebration-box{
+  background:linear-gradient(160deg,#2a2205 0%,#3d3108 60%,#4a3a08 100%) !important;
+  border-color:#f7b32b !important;
+}
+.gift-celeb-icon{
+  position:relative;
+  width:110px;height:110px;
+  margin:0 auto 20px;
+  display:grid;place-items:center;
+  font-size:3.5rem;
+  color:#fff;
+  background:linear-gradient(140deg,#f7b32b,#d97706);
+  border-radius:32px;
+  box-shadow:0 20px 50px rgba(247,179,43,.55);
+  animation:giftIconBounce 1.8s ease-in-out infinite;
+  z-index:2;
+}
+@keyframes giftIconBounce{
+  0%,100%{transform:scale(1) rotate(-3deg)}
+  50%{transform:scale(1.08) rotate(3deg)}
+}
+.gift-celeb-glow{
+  position:absolute;
+  inset:-15px;
+  border-radius:36px;
+  background:radial-gradient(circle,rgba(247,179,43,.5),transparent 70%);
+  animation:glowPulse 2s ease-in-out infinite;
+  z-index:-1;
+}
+@keyframes glowPulse{
+  0%,100%{opacity:.7;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.15)}
+}
+.gift-celeb-title{
+  font-size:1.6rem;
+  font-weight:900;
+  color:#8a5a00;
+  margin-bottom:8px;
+}
+[data-theme="dark"] .gift-celeb-title{color:#f7b32b}
+.gift-celeb-sender{
+  font-size:.86rem;
+  color:#a86b1a;
+  font-weight:700;
+  margin-bottom:20px;
+}
+[data-theme="dark"] .gift-celeb-sender{color:#d4a548}
+.gift-celeb-image-wrap{
+  margin:16px auto;
+  max-width:100%;
+}
+.gift-celeb-image-wrap img{
+  max-width:100%;
+  max-height:280px;
+  border-radius:16px;
+  border:3px solid rgba(255,255,255,.6);
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+}
+.gift-celeb-message{
+  font-size:.94rem;
+  line-height:2;
+  color:#6b4a00;
+  font-weight:600;
+  padding:18px;
+  background:rgba(255,255,255,.5);
+  border-radius:16px;
+  margin:20px 0;
+  white-space:pre-wrap;
+  text-align:right;
+  max-height:200px;
+  overflow-y:auto;
+}
+[data-theme="dark"] .gift-celeb-message{
+  background:rgba(255,255,255,.06);
+  color:#f7b32b;
+}
+.gift-celeb-actions{margin-top:10px}
+.gift-close-btn{
+  padding:14px 40px !important;
+  font-size:1rem !important;
+  background:linear-gradient(100deg,#f7b32b,#d97706) !important;
+  box-shadow:0 12px 30px rgba(247,179,43,.5) !important;
+}
+.gift-close-btn:hover{
+  box-shadow:0 16px 40px rgba(247,179,43,.7) !important;
+  transform:translateY(-3px);
+}
+
+/* ============================================================
+   السجلات (اللوقز)
+============================================================ */
+.logs-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:20px 24px;
+  background:linear-gradient(135deg,rgba(91,108,255,.08),rgba(139,92,246,.05));
+  border:1px solid var(--border);
+  border-radius:18px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+.logs-icon{
+  width:52px;height:52px;border-radius:15px;
+  display:grid;place-items:center;
+  font-size:1.3rem;color:#fff;
+  background:linear-gradient(140deg,#5b6cff,#8b5cf6);
+  box-shadow:0 10px 26px rgba(91,108,255,.4);
+  flex-shrink:0;
+}
+.logs-header h3{font-size:1.05rem;font-weight:900;margin-bottom:3px}
+.logs-header p{font-size:.82rem;color:var(--muted);margin:0}
+
+#ownerLogsList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:70vh;
+  overflow-y:auto;
+}
+.log-row{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:14px 18px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  transition:.25s;
+}
+.log-row:hover{
+  border-color:var(--primary);
+  transform:translateX(-3px);
+  box-shadow:var(--shadow-sm);
+}
+.log-icon{
+  width:42px;height:42px;border-radius:12px;
+  display:grid;place-items:center;
+  font-size:1rem;flex-shrink:0;
+}
+.log-content{flex:1;min-width:0}
+.log-top{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:6px;flex-wrap:wrap;
+}
+.log-top b{font-size:.86rem;font-weight:900}
+.log-role-badge{
+  font-size:.62rem;
+  font-weight:900;
+  padding:3px 8px;
+  border-radius:100px;
+  color:#fff;
+  letter-spacing:.3px;
+}
+.log-action{
+  font-size:.82rem;
+  color:var(--text);
+  font-weight:700;
+  line-height:1.7;
+  margin-bottom:4px;
+}
+.log-target{
+  font-size:.74rem;
+  color:var(--primary);
+  font-weight:700;
+  margin-bottom:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.log-time{
+  font-size:.7rem;
+  color:var(--muted);
+  font-weight:600;
+  display:flex;align-items:center;gap:5px;
+}
+
+/* ============================================================
+   تثبيت وضع المتجر (منع الوميض)
+============================================================ */
+#app:not(.ready){
+  visibility:hidden;
+}
+#app.ready{
+  visibility:visible;
+}
+
+.owner-only-tab{
+  /* يُدار عبر JS */
+}
+
+/* ============================================================
+   جوال
+============================================================ */
+@media (max-width:640px){
+  #myGiftsBox{grid-template-columns:1fr}
+  .gift-card{padding:18px}
+  .gift-box-icon{width:50px;height:50px;font-size:1.5rem}
+  .gift-celebration-box{padding:24px 18px !important}
+  .gift-celeb-icon{width:88px;height:88px;font-size:2.6rem}
+  .gift-celeb-title{font-size:1.3rem}
+  .log-row{padding:12px 14px;gap:10px}
+  .log-icon{width:36px;height:36px;font-size:.9rem}
+}
