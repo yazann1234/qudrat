@@ -461,15 +461,20 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         session = null; currentUserObj = null;
         forceShowWelcome();
       }
-    } else {
-      let hasVisited = false;
-      try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
-      if(hasVisited){
-        showAuthScreen();
-      } else {
-        try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
-        const w = document.getElementById('welcome');
-        if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
+        } else {
+      /* ⭐⭐⭐ دائماً اعرض شاشة الترحيب لأي زائر بدون جلسة */
+      try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
+      const w  = document.getElementById('welcome');
+      const a  = document.getElementById('auth');
+      const ap = document.getElementById('app');
+      if(a)  a.classList.remove('open');
+      if(ap) ap.classList.remove('open','store-only','ready');
+      if(w){
+        w.dataset.firstVisit = 'true';
+        w.classList.remove('exit');
+        w.style.display    = 'flex';
+        w.style.opacity    = '1';
+        w.style.visibility = 'visible';
       }
     }
 
