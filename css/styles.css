@@ -3723,3 +3723,88 @@ img{-webkit-user-drag:none;user-drag:none}
   .color-pick{width:36px;height:36px}
   .icon-picker{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
 }
+
+/* ============================================================
+   عرض السعر الموحد للدورات ذات تاريخ النهاية الثابت
+============================================================ */
+.course-fixed-end{
+  margin: 18px 0 22px;
+  padding: 20px 22px;
+  background: linear-gradient(140deg,
+    color-mix(in srgb, var(--cc, var(--primary)) 10%, var(--card)),
+    var(--card-2));
+  border: 2px solid color-mix(in srgb, var(--cc, var(--primary)) 35%, transparent);
+  border-radius: 18px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.course-fixed-end::before{
+  content: "";
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--cc, var(--primary)) 30%, transparent),
+    transparent 70%);
+  pointer-events: none;
+}
+
+.course-fixed-end-head{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .82rem;
+  font-weight: 800;
+  color: var(--cc, var(--primary));
+  padding: 6px 14px;
+  background: color-mix(in srgb, var(--cc, var(--primary)) 14%, transparent);
+  border-radius: 100px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+.course-fixed-end-head i{font-size:.9rem}
+
+.course-fixed-end-date{
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -.3px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.course-fixed-end-price{
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--cc, var(--primary)) 25%, transparent);
+  position: relative;
+  z-index: 1;
+}
+.course-fixed-end-price b{
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--cc, var(--primary));
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.course-fixed-end-price span{
+  font-size: .9rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+/* جوال */
+@media (max-width: 640px){
+  .course-fixed-end{padding: 16px 18px; border-radius: 16px}
+  .course-fixed-end-head{font-size: .76rem; padding: 5px 12px}
+  .course-fixed-end-date{font-size: 1rem}
+  .course-fixed-end-price b{font-size: 2rem}
+}
