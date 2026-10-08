@@ -1,13 +1,12 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع (نسخة محسّنة v2.3.0)
+   21) APP — نقطة الإقلاع (نسخة v2.4.0)
 ============================================================ */
-window._appVersion = '2.3.0';
+window._appVersion = '2.4.0';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
+window._lastStoreState = null;
 
-/* ============================================================
-   تحميل البيانات
-============================================================ */
+/* ================== تحميل البيانات ================== */
 async function loadProfilesAndFiles(retry){
   retry = (typeof retry === 'number') ? retry : 3;
   try{
@@ -109,13 +108,11 @@ async function loadMyVideoProgress(){
   }catch(e){ userData.videoProgress = userData.videoProgress || {}; }
 }
 
-/* ============================================================
-   إدارة الشاشات
-============================================================ */
+/* ================== إدارة الشاشات ================== */
 function hideAllScreens(){
   try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
   try{ const a = document.getElementById('auth'); if(a) a.classList.remove('open'); }catch(e){}
-  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); } }catch(e){}
+  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); } }catch(e){}
 }
 
 async function showWelcome(){
@@ -124,11 +121,10 @@ async function showWelcome(){
     window._lastInitializedUserId = null;
 
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
-    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
 
     const w = document.getElementById('welcome');
     if(w){
-      /* ⭐ اعرضها فقط في حالة تسجيل الخروج أو الزيارة الأولى */
       if(w.dataset.firstVisit === 'true'){
         w.style.display = 'flex';
         w.classList.remove('exit');
@@ -146,33 +142,25 @@ async function showWelcome(){
 }
 window.showWelcome = showWelcome;
 
-/* ⭐ إظهار شاشة الترحيب (بعد تسجيل الخروج فقط) */
 function forceShowWelcome(){
   const w = document.getElementById('welcome');
-  if(w){
-    w.dataset.firstVisit = 'true';
-    w.style.display = 'flex';
-    w.classList.remove('exit');
-  }
+  if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; w.classList.remove('exit'); }
   const a = document.getElementById('auth'); if(a) a.classList.remove('open');
-  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
 }
 window.forceShowWelcome = forceShowWelcome;
 
-/* ⭐ عرض شاشة الدخول مباشرة (بدون ترحيب) */
 function showAuthScreen(){
   try{
     const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
     const a = document.getElementById('auth'); if(a) a.classList.add('open');
     if(typeof showAuthForm === 'function') showAuthForm('login');
   }catch(e){ console.warn('showAuthScreen error:', e); }
 }
 window.showAuthScreen = showAuthScreen;
 
-/* ============================================================
-   enterApp
-============================================================ */
+/* ================== enterApp ================== */
 async function enterApp(){
   try{
     if(session && session.user){
@@ -212,6 +200,17 @@ async function enterApp(){
 
     currentUserObj = profileData;
 
+    /* ⭐ فحص انتهاء الاشتراك */
+    if(typeof checkSubscriptionOnLogin === 'function'){
+      try{
+        const wasExpired = await checkSubscriptionOnLogin();
+        if(wasExpired){
+          const r2 = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+          if(r2.data) currentUserObj = r2.data;
+        }
+      }catch(e){ console.warn('subscription check failed', e); }
+    }
+
     try{ loadPrefs(); }catch(e){}
     try{ loadPrefsFromDB(); }catch(e){}
     try{ loadDrawings(); }catch(e){}
@@ -242,25 +241,21 @@ async function enterApp(){
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
 
+    window._lastStoreState = _showStore;
+
     if(_showStore && storeEl && titlesOk){
       if(appEl) appEl.classList.add('store-only');
       try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
       try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
       try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
+      try{ if(typeof renderTestimonials === 'function') renderTestimonials(); }catch(e){}
       try{ go('store'); }catch(e){}
+      setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى المنصة', 'ok'); }catch(e){} }, 800);
     } else {
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){}
     }
 
-         /* ⭐ تحميل خطة الدراسة */
-    try{
-      if(typeof loadPlanLocally === 'function') loadPlanLocally();
-    }catch(e){}
-    /* ⭐ تحديث العد التنازلي في الرئيسية */
-    try{
-      if(typeof updateHomeCountdown === 'function') updateHomeCountdown();
-    }catch(e){}
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
@@ -284,15 +279,17 @@ async function enterApp(){
     try{ syncMyXp(); }catch(e){}
     try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
 
-    setTimeout(() => {
-      try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){}
-    }, 300);
+    setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 400);
 
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
     try{ if(privileged && typeof subscribeProfilesForAdmin === 'function') subscribeProfilesForAdmin(); }catch(e){}
+
+    /* ⭐ ميزات الرئيس + صندوق الطالب */
+    try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
+    try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
 
     const m = location.hash.match(/^#watch=(.+)$/);
     if(m && m[1]){
@@ -306,6 +303,9 @@ async function enterApp(){
         }catch(e){}
       }, 700);
     }
+
+    /* ⭐ اجعل التطبيق مرئياً */
+    if(appEl) appEl.classList.add('ready');
 
     return true;
   }catch(err){
@@ -348,15 +348,13 @@ function renderStoreUserBadge(){
 }
 window.renderStoreUserBadge = renderStoreUserBadge;
 
-/* ============================================================
-   الأزرار الطارئة
-============================================================ */
+/* ================== الأزرار الطارئة ================== */
 function bindEmergencyButtons(){
   const btn = document.getElementById('emergencyReset');
   if(btn && !btn.dataset.bound){
     btn.dataset.bound = '1';
     btn.addEventListener('click', async () => {
-      if(!confirm('سيتم مسح كل الجلسات والبيانات. متابعة؟')) return;
+      if(!confirm('سيتم مسح كل الجلسات. متابعة؟')) return;
       try{ await sb.auth.signOut(); }catch(e){}
       try{ sessionStorage.clear(); }catch(e){}
       try{ localStorage.clear(); }catch(e){}
@@ -421,9 +419,7 @@ function bindEmergencyButtons(){
 }
 window.bindEmergencyButtons = bindEmergencyButtons;
 
-/* ============================================================
-   الإقلاع
-============================================================ */
+/* ================== الإقلاع ================== */
 (async function init(){
   try{
     userData = defaultUD();
@@ -438,7 +434,6 @@ window.bindEmergencyButtons = bindEmergencyButtons;
 
     session = s;
 
-    /* ⭐ منع إعادة التحميل عند نفس المستخدم */
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
 
@@ -488,7 +483,6 @@ window.bindEmergencyButtons = bindEmergencyButtons;
       }
     });
 
-    /* ⭐ قرر الشاشة الابتدائية */
     if(session){
       try{
         await Promise.race([
@@ -502,21 +496,15 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         forceShowWelcome();
       }
     } else {
-      /* ⭐ لا جلسة → هل المستخدم زار سابقاً؟ */
       let hasVisited = false;
       try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
 
       if(hasVisited){
-        /* زار سابقاً → اذهب لشاشة الدخول مباشرة */
         showAuthScreen();
       } else {
-        /* زيارة أولى → اعرض الترحيب */
         try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
         const w = document.getElementById('welcome');
-        if(w){
-          w.dataset.firstVisit = 'true';
-          w.style.display = 'flex';
-        }
+        if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
       }
     }
 
@@ -549,4 +537,5 @@ window.addEventListener('beforeunload', () => {
   }catch(e){}
   try{ saveDrawings(); }catch(e){}
   try{ flushProgressSync(); }catch(e){}
+  try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
 });
