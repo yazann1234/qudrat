@@ -122,6 +122,7 @@ function renderAdminProducts(){
         </div>
 
         ${p.course_code ? `<div class="apc-features-count"><i class="fas fa-link"></i> مرتبط بدورة: ${escapeHtml(p.course_code)}</div>` : ''}
+${p.subscription_end_date ? `<div class="apc-features-count" style="color:var(--accent)"><i class="fas fa-calendar-check"></i> ينتهي: ${escapeHtml(p.subscription_end_date)}</div>` : ''}
         ${p.features && p.features.length ? `<div class="apc-features-count"><i class="fas fa-list-check"></i> ${p.features.length} ميزة</div>` : ''}
 
         <div class="apc-actions">
@@ -346,13 +347,15 @@ window.clearProductImage = function(){
     if(imageUrl) payload.image_url = imageUrl;
     if(courseCode) payload.course_code = courseCode;
 
-    let error;
+        let error;
+    let savedId = id;
     if(id){
       const r = await sb.from('products').update(payload).eq('id', id);
       error = r.error;
     } else {
-      const r = await sb.from('products').insert(payload);
+      const r = await sb.from('products').insert(payload).select('id').single();
       error = r.error;
+      if(r.data && r.data.id) savedId = r.data.id;
     }
 
     clone.disabled = false;
@@ -366,9 +369,16 @@ window.clearProductImage = function(){
 
     toast(id ? '✓ تم التحديث' : '✓ تم الإضافة', 'ok');
 
-    if(courseCode && typeof syncProductToCourse === 'function'){
-      await syncProductToCourse(payload);
+    /* ⭐⭐⭐ دائماً ازامن مع الدورات (حتى لو ما فيه course_code) */
+    if(typeof syncProductToCourse === 'function'){
+      await syncProductToCourse({ ...payload, id: savedId });
     }
+
+    /* ⭐ أعِد تحميل الدورات واعرضها في المتجر */
+    try{
+      if(typeof loadCourses === 'function') await loadCourses();
+      if(typeof renderCoursesGrid === 'function') renderCoursesGrid();
+    }catch(e){}
 
     if(typeof loadProducts === 'function') await loadProducts();
     if(typeof renderProducts === 'function') renderProducts();
