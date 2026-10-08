@@ -3590,3 +3590,136 @@ img{-webkit-user-drag:none;user-drag:none}
   .course-price-item{padding:12px 14px}
   .course-price-item b{font-size:1.15rem}
 }
+
+/* ============================================================
+   ADMIN PRODUCTS — شبكة المنتجات + المنتقيات
+============================================================ */
+
+.admin-products-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:18px;
+}
+
+.admin-product-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+  transition:.3s cubic-bezier(.2,.8,.2,1);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+.admin-product-card::before{
+  content:"";
+  position:absolute;
+  top:0;right:0;left:0;
+  height:4px;
+  background:linear-gradient(90deg, var(--pc,var(--primary)), color-mix(in srgb,var(--pc,var(--primary)) 40%,transparent));
+  z-index:2;
+}
+.admin-product-card:hover{
+  transform:translateY(-4px);
+  box-shadow:var(--shadow-lg);
+  border-color:color-mix(in srgb,var(--pc,var(--primary)) 40%,var(--border));
+}
+.admin-product-card.inactive{opacity:.7;filter:grayscale(.4)}
+
+.apc-image{
+  width:100%;height:180px;
+  background-size:cover;background-position:center;
+  background-color:var(--card-2);
+}
+.apc-icon-wrap{padding:24px 24px 0;display:flex;justify-content:center}
+.apc-icon{
+  width:80px;height:80px;border-radius:22px;
+  display:grid;place-items:center;font-size:2rem;
+  box-shadow:0 12px 28px -8px color-mix(in srgb,var(--pc,var(--primary)) 40%,transparent);
+}
+.apc-body{
+  padding:18px 22px 22px;flex:1;
+  display:flex;flex-direction:column;gap:10px;
+}
+.apc-head{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.apc-head h4{font-size:1.05rem;font-weight:900;line-height:1.4;margin:0;flex:1;min-width:0}
+.apc-badge{
+  font-size:.66rem;font-weight:900;padding:4px 10px;border-radius:100px;
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.apc-badge.popular{
+  background:linear-gradient(120deg,#ef4444,#dc2626);color:#fff;
+  box-shadow:0 4px 12px rgba(239,68,68,.35);
+}
+.apc-badge.inactive{background:rgba(148,163,184,.18);color:#64748b}
+
+.apc-sub{font-size:.78rem;color:var(--pc,var(--primary));font-weight:800;display:block}
+.apc-desc{
+  font-size:.82rem;color:var(--muted);line-height:1.8;margin:0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.apc-price{
+  padding:12px 0;border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);
+  display:flex;align-items:baseline;gap:5px;justify-content:center;
+}
+.apc-price b{font-size:1.9rem;font-weight:900;color:var(--pc,var(--primary));line-height:1;letter-spacing:-1px}
+.apc-price span{font-size:.82rem;color:var(--muted);font-weight:800}
+.apc-features-count{font-size:.76rem;color:var(--muted);font-weight:700;text-align:center}
+.apc-features-count i{color:var(--pc,var(--primary));margin-left:4px}
+.apc-actions{display:flex;gap:6px;margin-top:auto;padding-top:8px}
+
+/* منتقي الأيقونات */
+.icon-picker{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(50px,1fr));
+  gap:8px;padding:12px;
+  background:var(--bg);border:1px solid var(--border);border-radius:14px;
+}
+.icon-pick{
+  width:100%;aspect-ratio:1;border-radius:12px;
+  border:1px solid var(--border);background:var(--card);color:var(--muted);
+  cursor:pointer;display:grid;place-items:center;font-size:1.1rem;transition:.25s;
+}
+.icon-pick:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-2px)}
+.icon-pick.on{
+  background:linear-gradient(140deg,var(--primary),var(--primary-2));
+  color:#fff;border-color:transparent;
+  box-shadow:0 6px 16px rgba(var(--primary-rgb),.35);
+}
+
+/* منتقي الألوان */
+.color-picker{
+  display:flex;gap:10px;flex-wrap:wrap;padding:12px;
+  background:var(--bg);border:1px solid var(--border);border-radius:14px;
+}
+.color-pick{
+  width:42px;height:42px;border-radius:50%;
+  border:3px solid var(--card);background:var(--cc);
+  cursor:pointer;position:relative;transition:.25s;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.color-pick:hover{transform:scale(1.12)}
+.color-pick.on{
+  box-shadow:
+    0 0 0 3px var(--card),
+    0 0 0 6px var(--cc),
+    0 6px 16px color-mix(in srgb,var(--cc) 50%,transparent);
+  transform:scale(1.05);
+}
+.color-pick.on::after{
+  content:"✓";position:absolute;inset:0;
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:.9rem;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+
+#pfImagePreview img{box-shadow:0 8px 20px rgba(0,0,0,.15)}
+
+@media (max-width:640px){
+  .admin-products-grid{grid-template-columns:1fr}
+  .apc-image{height:150px}
+  .apc-icon{width:64px;height:64px;font-size:1.6rem;border-radius:18px}
+  .apc-price b{font-size:1.55rem}
+  .color-pick{width:36px;height:36px}
+  .icon-picker{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+}
