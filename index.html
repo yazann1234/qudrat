@@ -1123,6 +1123,8 @@
         <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة الكاهوت</button>
         <button data-panel="addquiz"><i class="fas fa-plus"></i> إضافة سؤال</button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
+           <button data-panel="products"><i class="fas fa-box"></i> المنتجات</button>
+<button data-panel="addproduct"><i class="fas fa-plus-square"></i> إضافة منتج</button>
         <button data-panel="gifts" class="owner-only-tab" style="display:none"><i class="fas fa-gift"></i> إرسال هدية</button>
         <button data-panel="logs" class="owner-only-tab" style="display:none"><i class="fas fa-scroll"></i> اللوقز</button>
       </div>
@@ -1430,6 +1432,19 @@
       </button>
     </div>
   </div>
+</div>
+
+         <div class="admin-panel" id="panel-products">
+  <div class="filter-row" style="margin-bottom:16px">
+    <button class="btn btn-primary" id="newProductBtn" style="padding:11px 18px">
+      <i class="fas fa-plus"></i> منتج جديد
+    </button>
+    <div style="margin-right:auto;display:flex;gap:8px;align-items:center;font-size:.82rem;font-weight:700">
+      <span>إجمالي المنتجات:</span>
+      <b id="productsCount" style="color:var(--primary);font-size:1rem">0</b>
+    </div>
+  </div>
+  <div class="admin-products-grid" id="adminProductsGrid"></div>
 </div>
 
       <div class="admin-panel" id="panel-storesettings">
