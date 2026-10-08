@@ -2,7 +2,6 @@
    15) AUTH — دوال المصادقة + ربط كل الأزرار
 ============================================================ */
 
-/* ===================== شاشات ===================== */
 function showAuth(){
   const a = document.getElementById('auth');
   if(a) a.classList.add('open');
@@ -39,7 +38,7 @@ function showMsg(elId, text, type){
 }
 window.showMsg = showMsg;
 
-/* ===================== تسجيل الدخول ===================== */
+/* تسجيل الدخول */
 async function doLogin(){
   const btn = document.getElementById('loginBtn');
   if(!btn || btn.disabled) return;
@@ -70,7 +69,6 @@ async function doLogin(){
       return;
     }
     showMsg('loginMsg', 'تم تسجيل الدخول ✓', 'ok');
-    /* onAuthStateChange سيتولى فتح التطبيق */
   }catch(e){
     showMsg('loginMsg', e.message || 'خطأ غير متوقع');
     btn.disabled = false;
@@ -79,7 +77,7 @@ async function doLogin(){
 }
 window.doLogin = doLogin;
 
-/* ===================== إنشاء حساب ===================== */
+/* إنشاء حساب */
 async function doRegister(){
   const btn = document.getElementById('regBtn');
   if(!btn || btn.disabled) return;
@@ -87,14 +85,22 @@ async function doRegister(){
   const nameEl = document.getElementById('regName');
   const emailEl = document.getElementById('regEmail');
   const passEl = document.getElementById('regPass');
+  const phoneEl = document.getElementById('regPhone');
 
   const name = (nameEl ? nameEl.value : '').trim();
   const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
   const pass = passEl ? passEl.value : '';
+  const phone = (phoneEl ? phoneEl.value : '').trim();
 
   if(!name || name.length < 2){ showMsg('regMsg', 'أدخل اسماً صحيحاً (حرفان على الأقل)'); return; }
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg', 'أدخل بريداً إلكترونياً صحيحاً'); return; }
   if(!pass || pass.length < 8){ showMsg('regMsg', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  if(!cleanPhone || cleanPhone.length !== 10 || !cleanPhone.startsWith('05')){
+    showMsg('regMsg', 'أدخل رقم جوال صحيح (يبدأ بـ 05 و 10 أرقام)');
+    return;
+  }
 
   btn.disabled = true;
   const orig = btn.innerHTML;
@@ -104,7 +110,7 @@ async function doRegister(){
     const { data, error } = await sb.auth.signUp({
       email,
       password: pass,
-      options: { data: { name } }
+      options: { data: { name, phone: cleanPhone } }
     });
 
     if(error){
@@ -116,42 +122,21 @@ async function doRegister(){
 
     showMsg('regMsg', 'تم إنشاء حسابك بنجاح! بانتظار موافقة الأدمن...', 'ok');
 
-    /* احفظ كلمة المرور محلياً + في DB */
     try{
       if(data && data.user){
         sessionStorage.setItem('pending_pass_' + data.user.id, pass);
         localStorage.setItem('pending_pass_' + data.user.id, pass);
         await new Promise(r => setTimeout(r, 800));
-        await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
+        await sb.from('profiles').update({
+          password_hint: pass,
+          phone: cleanPhone
+        }).eq('id', data.user.id);
       }
-    }catch(e){ console.warn('save pass:', e); }
+    }catch(e){ console.warn('save pass/phone:', e); }
 
-        /* ⭐ إذا كان التسجيل التلقائي مفعّل → ادخل مباشرة كـ pending */
-    if(data && data.session){
-      /* احفظ كلمة المرور */
-      try{
-        sessionStorage.setItem('pending_pass_' + data.user.id, pass);
-        localStorage.setItem('pending_pass_' + data.user.id, pass);
-      }catch(e){}
-
-      /* انتظر لحظة لإنشاء الـ profile */
-      await new Promise(r => setTimeout(r, 600));
-
-      /* حدّث password_hint */
-      try{
-        await sb.from('profiles').update({ password_hint: pass }).eq('id', data.user.id);
-      }catch(e){}
-
-      /* ⭐ ادخل التطبيق مباشرة — لا تنتظر */
-      try{ if(typeof hideAuth === 'function') hideAuth(); }catch(e){}
-      setTimeout(() => {
-        if(typeof enterApp === 'function') enterApp();
-      }, 200);
-      return;
+    if(!(data && data.session)){
+      setTimeout(() => showMsg('regMsg', 'تفقّد بريدك لتأكيد الحساب', 'ok'), 1500);
     }
-
-    /* تأكيد البريد مطلوب */
-    setTimeout(() => showMsg('regMsg', 'تفقّد بريدك لتأكيد الحساب', 'ok'), 1500);
 
     btn.disabled = false;
     btn.innerHTML = orig;
@@ -163,7 +148,7 @@ async function doRegister(){
 }
 window.doRegister = doRegister;
 
-/* ===================== دخول الأدمن ===================== */
+/* دخول الأدمن */
 async function doAdminLogin(){
   const btn = document.getElementById('adminBtn');
   if(!btn || btn.disabled) return;
@@ -206,7 +191,7 @@ async function doAdminLogin(){
 }
 window.doAdminLogin = doAdminLogin;
 
-/* ===================== نسيت كلمة المرور ===================== */
+/* نسيت كلمة المرور */
 function doForgotPassword(){
   openModal({
     title: 'استعادة كلمة المرور',
@@ -315,9 +300,7 @@ function doForgotPassword(){
 }
 window.doForgotPassword = doForgotPassword;
 
-/* ============================================================
-   شاشة تعيين كلمة المرور (بعد رابط الاستعادة)
-============================================================ */
+/* شاشة تعيين كلمة المرور */
 let recoveryModalShown = false;
 
 function showRecoveryModal(){
@@ -392,7 +375,8 @@ function showRecoveryModal(){
         if(error){ showErr(error.message); return; }
 
         try{
-          const { data: { session: s } } = await sb.auth.getSession();
+          const r = await sb.auth.getSession();
+          const s = r.data.session;
           if(s && s.user){
             await sb.from('profiles').update({ password_hint: p1 }).eq('id', s.user.id);
             sessionStorage.setItem('pending_pass_' + s.user.id, p1);
@@ -444,13 +428,10 @@ function showRecoveryModal(){
 }
 window.showRecoveryModal = showRecoveryModal;
 
-/* ============================================================
-   ⭐ ربط كل الأزرار (Event Delegation) — يعمل دائماً
-============================================================ */
+/* ربط الأزرار */
 document.addEventListener('click', function(e){
   const t = e.target;
 
-  /* تبويبات الدخول/التسجيل/الأدمن */
   const tabBtn = t.closest('.auth-tabs button');
   if(tabBtn){
     e.preventDefault();
@@ -458,35 +439,11 @@ document.addEventListener('click', function(e){
     return;
   }
 
-  /* زر تسجيل الدخول */
-  if(t.closest('#loginBtn')){
-    e.preventDefault();
-    doLogin();
-    return;
-  }
+  if(t.closest('#loginBtn')){ e.preventDefault(); doLogin(); return; }
+  if(t.closest('#regBtn')){ e.preventDefault(); doRegister(); return; }
+  if(t.closest('#adminBtn')){ e.preventDefault(); doAdminLogin(); return; }
+  if(t.closest('#forgotLink')){ e.preventDefault(); doForgotPassword(); return; }
 
-  /* زر إنشاء حساب */
-  if(t.closest('#regBtn')){
-    e.preventDefault();
-    doRegister();
-    return;
-  }
-
-  /* زر دخول الأدمن */
-  if(t.closest('#adminBtn')){
-    e.preventDefault();
-    doAdminLogin();
-    return;
-  }
-
-  /* نسيت كلمة المرور */
-  if(t.closest('#forgotLink')){
-    e.preventDefault();
-    doForgotPassword();
-    return;
-  }
-
-  /* زر الرجوع للترحيب */
   if(t.closest('#authBack')){
     e.preventDefault();
     const a = document.getElementById('auth');
@@ -497,15 +454,22 @@ document.addEventListener('click', function(e){
   }
 });
 
-/* ============================================================
-   Enter للإرسال السريع في الحقول
-============================================================ */
 document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter') return;
   const t = e.target;
   if(!t || t.tagName !== 'INPUT') return;
 
   if(t.id === 'loginPass' || t.id === 'loginEmail'){ e.preventDefault(); doLogin(); return; }
-  if(t.id === 'regPass' || t.id === 'regEmail' || t.id === 'regName'){ e.preventDefault(); doRegister(); return; }
+  if(t.id === 'regPass' || t.id === 'regEmail' || t.id === 'regName' || t.id === 'regPhone'){ e.preventDefault(); doRegister(); return; }
   if(t.id === 'adminPass' || t.id === 'adminEmail'){ e.preventDefault(); doAdminLogin(); return; }
+});
+
+/* تنظيف رقم الجوال */
+document.addEventListener('DOMContentLoaded', () => {
+  const phoneInput = document.getElementById('regPhone');
+  if(phoneInput){
+    phoneInput.addEventListener('input', e => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    });
+  }
 });
