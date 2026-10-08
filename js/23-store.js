@@ -96,13 +96,39 @@ function renderProducts(){
 }
 window.renderProducts = renderProducts;
 
-function startPurchase(productId){
-  const list = getActiveProducts();
-  const p = list.find(x => x.id === productId);
-  if(!p) return;
-  if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
-  currentProduct = p;
+/* ============================================================
+   الشراء للدورات
+============================================================ */
+let currentPurchaseData = null;
 
+function openPurchaseModalInline(course, months, price){
+  currentPurchaseData = { course, months, price };
+  renderPurchaseModal();
+  const modal = document.getElementById('purchaseModal');
+  if(modal) modal.classList.add('open');
+}
+window.openPurchaseModalInline = openPurchaseModalInline;
+
+function renderPurchaseModal(){
+  const d = currentPurchaseData;
+  if(!d) return;
+
+  /* معلومات المنتج */
+  const pp = document.getElementById('purchaseProduct');
+  if(pp){
+    pp.innerHTML = `
+      <div class="pp-icon" style="background:color-mix(in srgb,${d.course.color || '#5b6cff'} 15%,transparent);color:${d.course.color || '#5b6cff'}">
+        <i class="fas ${d.course.icon || 'fa-graduation-cap'}"></i>
+      </div>
+      <div class="pp-info">
+        <b>${escapeHtml(d.course.name)}</b>
+        <small>اشتراك ${d.months} شهر</small>
+      </div>
+      <div class="pp-price"><b>${d.price}</b> <span>ر.س</span></div>
+    `;
+  }
+
+  /* بيانات المستخدم */
   const nameEl = document.getElementById('puName'); if(nameEl) nameEl.textContent = currentUserObj.name || '—';
   const emailEl = document.getElementById('puEmail'); if(emailEl) emailEl.textContent = currentUserObj.email || '—';
 
@@ -113,36 +139,110 @@ function startPurchase(productId){
       passEl.textContent = actualPass;
       passEl.style.color = 'var(--success)';
       passEl.style.fontStyle = 'normal';
-      passEl.style.fontWeight = '900';
     } else {
-      passEl.textContent = 'غير متاحة — استخدم «نسيت كلمة المرور»';
+      passEl.textContent = 'غير متاحة';
       passEl.style.color = 'var(--danger)';
-      passEl.style.fontWeight = '700';
-      passEl.style.fontSize = '.78rem';
+      passEl.style.fontStyle = 'italic';
     }
-  }
-
-  const pp = document.getElementById('purchaseProduct');
-  if(pp){
-    pp.innerHTML = `
-      <div class="pp-icon" style="background:color-mix(in srgb,${p.color || '#5b6cff'} 15%,transparent);color:${p.color || '#5b6cff'}">
-        <i class="fas ${p.icon || 'fa-graduation-cap'}"></i>
-      </div>
-      <div class="pp-info"><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.subtitle || '')}</small></div>
-      <div class="pp-price"><b>${p.price}</b> <span>${escapeHtml(p.currency || 'ر.س')}</span></div>`;
   }
 
   applyStoreSettings();
 
+  /* reset receipt */
   receiptFile = null;
   const prev = document.getElementById('receiptPreview'); if(prev) prev.style.display = 'none';
   const up = document.getElementById('receiptUpload'); if(up) up.style.display = 'block';
   const inp = document.getElementById('receiptInput'); if(inp) inp.value = '';
-
-  const modal = document.getElementById('purchaseModal');
-  if(modal) modal.classList.add('open');
 }
-window.startPurchase = startPurchase;
+
+/* ⭐ استبدل معالج الشراء القديم */
+document.addEventListener('DOMContentLoaded', () => {
+  const submitBtn = document.getElementById('purchaseSubmit');
+  if(submitBtn && !submitBtn.dataset.newBound){
+    /* أزل الربط القديم */
+    const newBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+    newBtn.dataset.newBound = '1';
+
+    newBtn.addEventListener('click', async () => {
+      if(!currentPurchaseData){ toast('لا توجد بيانات شراء', 'warn'); return; }
+      if(!receiptFile){ toast('أرفق الإيصال أولاً', 'warn'); return; }
+      if(!currentUserObj){ toast('سجل الدخول', 'err'); return; }
+      if(newBtn.disabled) return;
+
+      newBtn.disabled = true;
+      const orig = newBtn.innerHTML;
+      newBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+
+      let uploaded = null;
+      try{ uploaded = await uploadReceipt(receiptFile); }
+      catch(e){
+        toast('فشل رفع الإيصال: ' + e.message, 'err');
+        newBtn.disabled = false; newBtn.innerHTML = orig;
+        return;
+      }
+
+      const cfg = getStoreConfig();
+      const pass = getActualPassword() || '(غير متاحة)';
+      const d = currentPurchaseData;
+
+      const msg =
+        `السلام عليكم 🌹\n` +
+        `طلب اشتراك: *${d.course.name}* — *${d.months} شهر* (${d.price} ر.س)\n\n` +
+        `👤 ${currentUserObj.name || '—'}\n` +
+        `📧 ${currentUserObj.email || '—'}\n` +
+        `🔑 ${pass}\n\n` +
+        `📎 الإيصال مرفق في الرسالة التالية`;
+
+      try{
+        localStorage.setItem('purchase_submitted_' + currentUserObj.id, new Date().toISOString());
+        await sb.from('profiles').update({
+          purchase_submitted: true,
+          purchase_product: d.course.code + '_' + d.months + 'm',
+          purchase_submitted_at: new Date().toISOString(),
+          purchase_receipt_url: uploaded.url,
+          purchase_receipt_path: uploaded.path
+        }).eq('id', currentUserObj.id);
+
+        currentUserObj.purchase_submitted = true;
+        currentUserObj.purchase_receipt_url = uploaded.url;
+      }catch(e){}
+
+      const wa = 'https://wa.me/' + cfg.supportWhatsApp + '?text=' + encodeURIComponent(msg);
+
+      let opened = false;
+      try{
+        const link = document.createElement('a');
+        link.href = wa; link.target = '_blank'; link.rel = 'noopener';
+        link.style.display = 'none';
+        document.body.appendChild(link); link.click();
+        setTimeout(() => { try{ document.body.removeChild(link); }catch(e){} }, 100);
+        opened = true;
+      }catch(e){}
+
+      if(!opened) try{ window.open(wa, '_blank'); opened = true; }catch(e){}
+
+      newBtn.innerHTML = '<i class="fas fa-check"></i> تم الإرسال';
+
+      setTimeout(() => {
+        closePurchase();
+
+        const appEl = document.getElementById('app');
+        if(appEl) appEl.classList.remove('store-only');
+
+        (async () => {
+          try{ if(typeof loadProfilesAndFiles === 'function') await loadProfilesAndFiles(); }catch(e){}
+          try{ if(typeof loadVideos === 'function') await loadVideos(); }catch(e){}
+          try{ if(typeof renderSubBanners === 'function') renderSubBanners(); }catch(e){}
+          try{ if(typeof renderFiles === 'function') renderFiles(); }catch(e){}
+          try{ if(typeof renderRecent === 'function') renderRecent(); }catch(e){}
+          try{ if(typeof go === 'function') go('home'); }catch(e){}
+          setTimeout(() => { try{ toast('✅ تم استلام طلبك — قيد المراجعة', 'ok'); }catch(e){} }, 400);
+        })();
+      }, 1500);
+    });
+  }
+});
 
 function closePurchase(){
   const modal = document.getElementById('purchaseModal');
