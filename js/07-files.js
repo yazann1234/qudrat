@@ -84,7 +84,9 @@ function renderFiles(){
     grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>${q || fileFilter !== 'all' ? 'لا توجد نتائج مطابقة' : 'لا توجد ملفات متاحة لدورتك'}</h3><p>${q || fileFilter !== 'all' ? 'جرّب تغيير البحث أو التصنيف' : 'سيتم رفع الملفات من لوحة الأدمن'}</p></div></div>`;
   } else grid.innerHTML = list.map(fileCard).join('');
   renderRecent();
-  const nc = $('#navCount'); if(nc) nc.textContent = list.length;
+  /* ⭐ استخدم العدد المفلتر الحقيقي (وليس عدد نتائج البحث الحالية) */
+const nc = $('#navCount');
+if(nc) nc.textContent = (typeof getUserCourseFiles === 'function' ? getUserCourseFiles() : list).length;
   renderSubBanners();
 }
 
