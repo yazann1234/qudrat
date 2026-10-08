@@ -16,7 +16,9 @@
 </head>
 <body>
 
-<!-- شاشة الترحيب -->
+<!-- ============================================================
+     شاشة الترحيب
+============================================================ -->
 <div id="welcome" style="display:none" data-first-visit="false">
   <div class="blob b1"></div>
   <div class="blob b2"></div>
@@ -60,7 +62,9 @@
   </div>
 </div>
 
-<!-- تسجيل الدخول -->
+<!-- ============================================================
+     شاشة تسجيل الدخول/التسجيل
+============================================================ -->
 <div id="auth">
   <button class="auth-back" id="authBack"><i class="fas fa-arrow-right"></i> رجوع</button>
   <div class="auth-container">
@@ -131,14 +135,16 @@
         <ul class="features-list">
           <li><i class="fas fa-check"></i> قارئ PDF فائق السرعة</li>
           <li><i class="fas fa-check"></i> جدول ذكي تلقائي</li>
-          <li><i class="fas fa-check"></i> مساعد ذكاء اصطناعي</li>
+          <li><i class="fas fa-check"></i> دورات الورقي والمحوسب</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<!-- التطبيق الرئيسي -->
+<!-- ============================================================
+     التطبيق الرئيسي
+============================================================ -->
 <div id="app">
 
   <button class="store-logout-fab" id="storeLogoutFab">
@@ -212,17 +218,19 @@
       </div>
     </div>
 
-    <!-- قسم المتجر -->
+    <!-- ============================================================
+         قسم المتجر (وضع الانتظار)
+    ============================================================ -->
     <section class="view" id="view-store">
       <div class="store-hero">
         <div class="store-hero-inner">
           <div class="store-hero-badge"><i class="fas fa-crown"></i> المتجر</div>
           <h1>اختر <em>رحلتك</em> نحو التفوق</h1>
-          <p>فعّل اشتراكك بسهولة، وابدأ التعلم فور الموافقة</p>
+          <p>اختر دورتك ومدتها، ثم أرسل الإيصال للدعم لتفعيل الحساب</p>
           <div class="store-steps">
             <div class="store-step">
               <div class="step-num">1</div>
-              <div><b>اختر الدورة</b><small>المناسبة لك</small></div>
+              <div><b>اختر الدورة والمدة</b><small>المناسبة لك</small></div>
             </div>
             <div class="store-step-arrow"><i class="fas fa-arrow-left"></i></div>
             <div class="store-step">
@@ -238,16 +246,37 @@
         </div>
       </div>
 
-      <div class="sec-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> الدورات المتاحة</div>
-      <div class="products-grid" id="productsGrid"></div>
+      <!-- الدورات -->
+      <div class="sec-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> اختر دورتك</div>
+      <div class="courses-grid" id="coursesGrid"></div>
 
       <div class="testimonials-section" id="testimonialsSection"></div>
     </section>
 
-    <!-- الصفحة الرئيسية -->
+    <!-- ============================================================
+         الصفحة الرئيسية
+    ============================================================ -->
     <section class="view active" id="view-home">
       <div id="homeSubBanner"></div>
 
+      <!-- ⭐ زر الإشعارات -->
+      <div class="notif-bell-wrap">
+        <button class="notif-bell-btn" id="notifBtn" title="الإشعارات">
+          <i class="fas fa-bell"></i>
+          <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        </button>
+      </div>
+
+      <!-- لوحة الإشعارات -->
+      <div class="notifications-panel" id="notificationsPanel">
+        <div class="notif-header">
+          <b><i class="fas fa-bell"></i> الإشعارات</b>
+          <button id="notifMarkRead" class="notif-mark-read">تعيين الكل كمقروء</button>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+      </div>
+
+      <!-- العد التنازلي للاختبار -->
       <div id="examCountdownCard" class="exam-countdown-card" style="display:none">
         <div class="exam-countdown-inner">
           <div class="exam-countdown-icon"><i class="fas fa-hourglass-half"></i></div>
@@ -370,7 +399,9 @@
       </div>
     </section>
 
-    <!-- قسم الملفات -->
+    <!-- ============================================================
+         قسم الملفات
+    ============================================================ -->
     <section class="view" id="view-files">
       <div id="filesSubBanner"></div>
       <div class="sec-title"><i class="fas fa-folder-open" style="color:var(--primary)"></i> مكتبة الملفات</div>
@@ -391,7 +422,9 @@
       <div class="files-grid" id="filesGrid"></div>
     </section>
 
-    <!-- قسم الفيديوهات -->
+    <!-- ============================================================
+         قسم الفيديوهات
+    ============================================================ -->
     <section class="view" id="view-videos">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
@@ -424,7 +457,9 @@
       <div class="videos-grid" id="videosGrid"></div>
     </section>
 
-    <!-- قسم الكاهوت -->
+    <!-- ============================================================
+         قسم الكاهوت
+    ============================================================ -->
     <section class="view" id="view-quiz">
       <div id="quizLobby" class="quiz-lobby">
         <div class="quiz-hero">
@@ -553,13 +588,17 @@
       </div>
     </section>
 
-    <!-- قسم الهدايا -->
+    <!-- ============================================================
+         قسم الهدايا
+    ============================================================ -->
     <section class="view" id="view-gifts">
       <div class="sec-title"><i class="fas fa-gift" style="color:var(--accent)"></i> صندوق الطالب <span class="sub">هداياك ومكافآتك</span></div>
       <div id="myGiftsBox"></div>
     </section>
 
-    <!-- الجدول الذكي -->
+    <!-- ============================================================
+         الجدول الذكي
+    ============================================================ -->
     <section class="view" id="view-studyplan">
       <div class="sp-hero">
         <div class="sp-hero-inner">
@@ -634,7 +673,9 @@
       </div>
     </section>
 
-    <!-- الأذكار -->
+    <!-- ============================================================
+         الأذكار
+    ============================================================ -->
     <section class="view" id="view-adhkar">
       <div class="sec-title">
         <i class="fas fa-hands-praying" style="color:var(--primary)"></i>
@@ -659,7 +700,9 @@
       <div id="adhkarContent"></div>
     </section>
 
-    <!-- إنجازي -->
+    <!-- ============================================================
+         إنجازي
+    ============================================================ -->
     <section class="view" id="view-progress">
       <div class="hero-big" style="min-height:280px">
         <div class="hero-bg"></div>
@@ -695,7 +738,9 @@
       <div class="badges-row" id="badgesAll"></div>
     </section>
 
-    <!-- المتصدرون -->
+    <!-- ============================================================
+         المتصدرون
+    ============================================================ -->
     <section class="view" id="view-leaderboard">
       <div class="lb-hero">
         <div class="lb-hero-in">
@@ -715,7 +760,9 @@
       <div class="lb-list" id="lbList"></div>
     </section>
 
-    <!-- الملف الشخصي -->
+    <!-- ============================================================
+         الملف الشخصي
+    ============================================================ -->
     <section class="view" id="view-profile">
       <div class="sec-title"><i class="fas fa-user-circle" style="color:var(--primary)"></i> ملفي الشخصي</div>
       <div class="profile-grid">
@@ -764,7 +811,6 @@
             </div>
           </div>
 
-          <!-- معلومات الاشتراك -->
           <div id="subscriptionInfoBox"></div>
 
           <div class="card-basic">
@@ -787,7 +833,9 @@
       </div>
     </section>
 
-    <!-- من نحن -->
+    <!-- ============================================================
+         من نحن + الدعم + القنوات
+    ============================================================ -->
     <section class="view" id="view-about">
       <div class="about-hero">
         <h1>لماذا <em>عباقرة القدرات</em>؟</h1>
@@ -870,7 +918,9 @@
       </div>
     </section>
 
-    <!-- المزايا -->
+    <!-- ============================================================
+         المزايا
+    ============================================================ -->
     <section class="view" id="view-features">
       <div class="feat-hero">
         <div class="feat-hero-in">
@@ -885,7 +935,9 @@
       <div class="feat-grid-new" id="featGrid"></div>
     </section>
 
-    <!-- الإعدادات -->
+    <!-- ============================================================
+         الإعدادات
+    ============================================================ -->
     <section class="view" id="view-settings">
       <div class="sec-title"><i class="fas fa-gear" style="color:var(--primary)"></i> الإعدادات</div>
       <div class="set-grid">
@@ -1044,7 +1096,9 @@
       </div>
     </section>
 
-    <!-- لوحة الأدمن -->
+    <!-- ============================================================
+         لوحة الأدمن
+    ============================================================ -->
     <section class="view" id="view-admin">
       <div class="sec-title"><i class="fas fa-shield-halved" style="color:var(--accent)"></i> لوحة تحكم الأدمن <span class="sub">تحديث فوري</span></div>
       <div class="admin-stats">
@@ -1057,6 +1111,7 @@
         <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adPurchases">0</h3><p>طلبات الشراء</p></div>
         <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adImportant">0</h3><p>ملفات مميزة</p></div>
       </div>
+
       <div class="admin-tabs">
         <button class="on" data-panel="users"><i class="fas fa-users"></i> المستخدمون</button>
         <button data-panel="adduser"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
@@ -1064,8 +1119,6 @@
         <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
         <button data-panel="videos"><i class="fas fa-video"></i> الفيديوهات</button>
         <button data-panel="addvideo"><i class="fas fa-plus-circle"></i> إضافة فيديو</button>
-        <button data-panel="products"><i class="fas fa-shopping-bag"></i> المنتجات</button>
-        <button data-panel="addproduct"><i class="fas fa-plus-square"></i> إضافة منتج</button>
         <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة الكاهوت</button>
         <button data-panel="addquiz"><i class="fas fa-plus"></i> إضافة سؤال</button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
@@ -1136,6 +1189,12 @@
             <input type="text" id="afTitle" placeholder="مثال: أساسيات الهندسة">
           </div>
           <div class="form-group">
+            <label>الدورة *</label>
+            <select id="afCourse">
+              <option value="">— بدون دورة (للجميع) —</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>التصنيف *</label>
             <select id="afCat">
               <option value="كمي">كمي</option><option value="لفظي">لفظي</option>
@@ -1179,6 +1238,13 @@
           <div class="form-group"><label>عنوان الفيديو *</label><input type="text" id="avTitle" placeholder="مثال: شرح أساسيات الهندسة"></div>
 
           <div class="form-group">
+            <label>الدورة *</label>
+            <select id="avCourse">
+              <option value="">— بدون دورة (للجميع) —</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>التصنيف *</label>
             <select id="avCat">
               <option value="كمي">كمي</option><option value="لفظي">لفظي</option>
@@ -1196,69 +1262,6 @@
           <div class="form-actions">
             <button class="btn btn-primary" id="saveVideoBtn" style="flex:1;padding:14px"><i class="fas fa-floppy-disk"></i> حفظ الفيديو</button>
             <button class="btn btn-ghost" id="clearVideoBtn" style="padding:14px 20px"><i class="fas fa-broom"></i> مسح</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="admin-panel" id="panel-products">
-        <div class="filter-row" style="margin-bottom:16px">
-          <button class="btn btn-primary" onclick="adminNewProduct()" style="padding:11px 18px">
-            <i class="fas fa-plus"></i> منتج جديد
-          </button>
-          <button class="btn btn-ghost" id="seedDefaultProductBtn" style="padding:11px 18px">
-            <i class="fas fa-magic"></i> إضافة الدورة الافتراضية
-          </button>
-        </div>
-        <div class="products-admin-grid" id="adminProductsGrid"></div>
-      </div>
-
-      <div class="admin-panel" id="panel-addproduct">
-        <div class="card-basic">
-          <h3><i class="fas fa-box-open"></i> <span id="productFormTitle">إضافة منتج جديد</span></h3>
-          <input type="hidden" id="pfId">
-
-          <div class="form-group"><label>اسم المنتج *</label><input type="text" id="pfTitle" maxlength="80" placeholder="مثال: دورة الأقسام"></div>
-          <div class="form-group"><label>العنوان الفرعي</label><input type="text" id="pfSubtitle" maxlength="120" placeholder="الدورة الشاملة"></div>
-          <div class="form-group"><label>الوصف</label><textarea id="pfDesc" placeholder="وصف تفصيلي..."></textarea></div>
-
-          <div class="two-col">
-            <div class="form-group"><label>السعر *</label><input type="number" id="pfPrice" min="0" step="1" placeholder="199"></div>
-            <div class="form-group"><label>العملة</label><input type="text" id="pfCurrency" value="ر.س" maxlength="10"></div>
-          </div>
-
-          <div class="form-group">
-            <label>الأيقونة</label>
-            <div class="icon-picker" id="pfIconPicker"></div>
-          </div>
-
-          <div class="form-group">
-            <label>اللون الرئيسي</label>
-            <div class="color-picker" id="pfColorPicker"></div>
-          </div>
-
-          <div class="form-group">
-            <label>المميزات <small>(سطر واحد لكل ميزة)</small></label>
-            <textarea id="pfFeatures" placeholder="شرح تفصيلي&#10;ملفات PDF&#10;دروس فيديو"></textarea>
-          </div>
-
-          <div class="two-col">
-            <label class="checkbox-row">
-              <input type="checkbox" id="pfPopular">
-              <span><i class="fas fa-fire"></i> الأكثر طلباً</span>
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" id="pfActive" checked>
-              <span><i class="fas fa-eye"></i> معروض</span>
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn btn-primary" id="pfSave" style="flex:1;padding:14px">
-              <i class="fas fa-floppy-disk"></i> حفظ المنتج
-            </button>
-            <button class="btn btn-ghost" id="pfCancel" style="padding:14px 20px">
-              <i class="fas fa-times"></i> إلغاء
-            </button>
           </div>
         </div>
       </div>
@@ -1466,6 +1469,26 @@
           </div>
 
           <div class="form-group">
+            <label>إجراء الهدية (ما الذي تفعله فعلياً)</label>
+            <select id="giftAction">
+              <option value="show">📢 عرض فقط (رسالة)</option>
+              <option value="extend">⏰ تمديد مدة الاشتراك</option>
+              <option value="course">🔄 تحويل لدورة جديدة</option>
+              <option value="cancel">❌ إلغاء الاشتراك</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="giftCourseWrap" style="display:none">
+            <label>اختر الدورة</label>
+            <select id="giftCourseSelect"></select>
+          </div>
+
+          <div class="form-group" id="giftMonthsWrap" style="display:none">
+            <label>عدد الأشهر</label>
+            <input type="number" id="giftExtraMonths" min="1" max="12" value="1">
+          </div>
+
+          <div class="form-group">
             <label>عنوان الهدية *</label>
             <input type="text" id="giftTitle" placeholder="مثال: مبروك! جائزة المتصدر الأول 🏆" maxlength="100">
           </div>
@@ -1510,7 +1533,9 @@
   </main>
 </div>
 
-<!-- قارئ PDF -->
+<!-- ============================================================
+     قارئ PDF
+============================================================ -->
 <div id="reader">
   <div class="reader-box">
     <div class="reader-head">
@@ -1602,7 +1627,9 @@
   </div>
 </div>
 
-<!-- مشغل الفيديو -->
+<!-- ============================================================
+     مشغل الفيديو
+============================================================ -->
 <div id="videoPlayer">
   <div class="vp-box">
     <div class="vp-head">
@@ -1657,7 +1684,9 @@
   </div>
 </div>
 
-<!-- منتقي الملفات -->
+<!-- ============================================================
+     منتقي الملفات
+============================================================ -->
 <div class="modal" id="filePickerModal">
   <div class="modal-box" style="max-width:640px">
     <h3><i class="fas fa-folder-open"></i> اختر ملفاً لفتحه بجانب الفيديو</h3>
@@ -1673,7 +1702,9 @@
   </div>
 </div>
 
-<!-- مودال الشراء -->
+<!-- ============================================================
+     مودال الشراء
+============================================================ -->
 <div class="modal" id="purchaseModal">
   <div class="modal-box purchase-box">
     <div class="purchase-header">
@@ -1745,7 +1776,9 @@
   </div>
 </div>
 
-<!-- مودال الاحتفال بالهدية -->
+<!-- ============================================================
+     مودال الاحتفال بالهدية
+============================================================ -->
 <div class="modal" id="giftCelebrationModal">
   <div id="giftConfetti" class="gift-confetti"></div>
   <div class="modal-box gift-celebration-box">
@@ -1770,7 +1803,9 @@
   </div>
 </div>
 
-<!-- مودال تنبيه الصلاة -->
+<!-- ============================================================
+     مودال تنبيه الصلاة
+============================================================ -->
 <div class="modal" id="prayerModal">
   <div class="modal-box" style="text-align:center;max-width:400px">
     <div style="width:80px;height:80px;border-radius:24px;margin:0 auto 20px;display:grid;place-items:center;font-size:2rem;color:#fff;background:linear-gradient(140deg,#22c55e,#16a34a);box-shadow:0 14px 40px rgba(34,197,94,.4)">
@@ -1787,7 +1822,9 @@
   </div>
 </div>
 
-<!-- قائمة الجوال -->
+<!-- ============================================================
+     قائمة الجوال
+============================================================ -->
 <div class="mobile-user-menu" id="mobileUserMenu">
   <div class="mum-head">
     <div class="mum-avatar" id="mumAvatar">؟</div>
@@ -1804,7 +1841,9 @@
   </div>
 </div>
 
-<!-- الحماية -->
+<!-- ============================================================
+     الحماية
+============================================================ -->
 <div id="shield">
   <div class="shield-in">
     <div class="sh-ic"><i class="fas fa-shield-halved"></i></div>
@@ -1815,7 +1854,9 @@
   </div>
 </div>
 
-<!-- المودال العام -->
+<!-- ============================================================
+     المودال العام
+============================================================ -->
 <div class="modal" id="modal">
   <div class="modal-box">
     <h3 id="modalTitle"><i class="fas fa-circle-info"></i> <span>عنوان</span></h3>
@@ -1828,7 +1869,9 @@
   </div>
 </div>
 
-<!-- زر الذكاء الاصطناعي -->
+<!-- ============================================================
+     زر الذكاء الاصطناعي
+============================================================ -->
 <button id="aiFabBtn" class="ai-fab-btn" title="المساعد الذكي">
   <i class="fas fa-robot"></i>
   <span class="ai-fab-pulse"></span>
@@ -1880,6 +1923,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- ⭐ ترتيب السكربتات -->
 <script src="js/01-config.js"></script>
 <script src="js/02-utils.js"></script>
 <script src="js/03-state.js"></script>
@@ -1910,5 +1954,7 @@
 <script src="js/28-prayer-times.js"></script>
 <script src="js/29-quiz.js"></script>
 <script src="js/30-owner-features.js"></script>
+<script src="js/31-course-system.js"></script>
+<script src="js/32-notifications.js"></script>
 </body>
 </html>
