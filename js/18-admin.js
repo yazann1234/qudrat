@@ -1314,3 +1314,53 @@ document.addEventListener('DOMContentLoaded', () => {
     saveBtn.addEventListener('click', saveStoreSettings);
   }
 });
+
+/* ============================================================
+   تعديل مودال التفعيل ليختار الدورة + المدة
+============================================================ */
+window.openApproveModal = (userId) => {
+  const u = DB.users.find(x => x.id === userId);
+  if(!u) return;
+
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+
+  openModal({
+    title: 'تفعيل اشتراك الطالب',
+    text: `اختر الدورة ومدة الاشتراك لـ: ${escapeHtml(u.name || u.email)}`,
+    bodyHTML: `
+      <div class="form-group" style="margin-bottom:14px">
+        <label>الدورة *</label>
+        <select id="approveCourse" style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="">— اختر دورة —</option>
+          ${courses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>مدة الاشتراك *</label>
+        <select id="approveDuration" style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="1">شهر واحد</option>
+          <option value="3">3 أشهر</option>
+          <option value="6">6 أشهر</option>
+          <option value="12">سنة كاملة</option>
+        </select>
+      </div>
+      <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
+        <i class="fas fa-info-circle"></i> الطالب سيرى فقط ملفات وفيديوهات الدورة التي تختارها. عند انتهاء المدة يعود لحالة الانتظار.
+      </div>
+    `,
+    okText: 'تفعيل الآن',
+    onOk: async () => {
+      const courseId = document.getElementById('approveCourse').value;
+      const months = parseInt(document.getElementById('approveDuration').value, 10);
+      if(!courseId){ toast('اختر دورة', 'warn'); return; }
+      if(typeof activateSubscription === 'function'){
+        await activateSubscription(userId, months, courseId);
+      }
+      try{
+        const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = data || [];
+        renderUsersTable();
+      }catch(e){}
+    }
+  });
+};
