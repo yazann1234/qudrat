@@ -89,7 +89,13 @@ function renderVideos(){
   else if(videoSort === 'alpha') list.sort((a,b)=> String(a.title).localeCompare(String(b.title), 'ar'));
 
   const cnt = $('#videosCountLabel'); if(cnt) cnt.textContent = list.length + ' فيديو';
-  const nvc = $('#navVideoCount'); if(nvc) nvc.textContent = (DB.videos || []).length;
+  const nvc = document.getElementById('navVideoCount');
+if(nvc){
+  const count = typeof getUserCourseVideos === 'function' 
+    ? getUserCourseVideos().length 
+    : (DB.videos || []).length;
+  nvc.textContent = count;
+}
 
   if(!list.length){
     grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات بعد</h3><p>سيتم إضافة الفيديوهات من لوحة الأدمن</p></div></div>`;
