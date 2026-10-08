@@ -1,26 +1,38 @@
 /* ============================================================
-   21) APP — الإقلاع السريع v3.0.0
+   21) APP — الإقلاع الفوري v4.0.0
 ============================================================ */
-window._appVersion = '3.0.0';
+window._appVersion = '4.0.0';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
 
-/* ================== التحميلات ================== */
+/* ================== التحميلات (مع caching) ================== */
+function cachedFetch(key, fetcher, ttl){
+  ttl = ttl || 30000;
+  try{
+    const raw = localStorage.getItem('abdq_cache_' + key);
+    if(raw){
+      const j = JSON.parse(raw);
+      if(j && j.t && (Date.now() - j.t) < ttl){
+        fetcher.resolve(j.d);
+      }
+    }
+  }catch(e){}
+}
+
 async function loadProfilesAndFiles(retry){
   retry = (typeof retry === 'number') ? retry : 3;
   try{
     const { data, error } = await sb.from('files').select('*').order('created_at', { ascending: false });
     if(error) throw error;
     DB.files = data || [];
+    try{ localStorage.setItem('abdq_cache_files', JSON.stringify({ t: Date.now(), d: DB.files })); }catch(e){}
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadProfilesAndFiles(retry - 1); }
-    DB.files = [];
-  }
-  if(typeof isPrivileged === 'function' && isPrivileged()){
+    if(retry > 0){ await new Promise(r => setTimeout(r, 200)); return loadProfilesAndFiles(retry - 1); }
+    /* fallback */
     try{
-      const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-      DB.users = r.data || [];
-    }catch(e){}
+      const raw = localStorage.getItem('abdq_cache_files');
+      if(raw){ const j = JSON.parse(raw); DB.files = j.d || []; }
+    }catch(e){ DB.files = []; }
   }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
   const nc = document.getElementById('navCount');
@@ -28,17 +40,21 @@ async function loadProfilesAndFiles(retry){
 }
 
 async function loadVideos(retry){
-  retry = (typeof retry === 'number') ? retry : 3;
+  retry = (typeof retry === 'number') ? retry : 2;
   try{
     const { data, error } = await sb.from('videos').select('*').order('created_at', { ascending: false });
     if(error) throw error;
     DB.videos = data || [];
+    try{ localStorage.setItem('abdq_cache_videos', JSON.stringify({ t: Date.now(), d: DB.videos })); }catch(e){}
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadVideos(retry - 1); }
-    DB.videos = [];
+    if(retry > 0){ await new Promise(r => setTimeout(r, 200)); return loadVideos(retry - 1); }
+    try{
+      const raw = localStorage.getItem('abdq_cache_videos');
+      if(raw){ const j = JSON.parse(raw); DB.videos = j.d || []; }
+    }catch(e){ DB.videos = []; }
   }
-  if(typeof renderVideos === 'function'){ try{ renderVideos(); }catch(e){} }
-  if(typeof renderAdminVideos === 'function'){ try{ renderAdminVideos(); }catch(e){} }
+  try{ if(typeof renderVideos === 'function') renderVideos(); }catch(e){}
+  try{ if(typeof renderAdminVideos === 'function') renderAdminVideos(); }catch(e){}
 }
 
 async function loadProducts(retry){
@@ -48,11 +64,11 @@ async function loadProducts(retry){
     if(error) throw error;
     DB.products = data || [];
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadProducts(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 200)); return loadProducts(retry - 1); }
     DB.products = [];
   }
-  if(typeof renderProducts === 'function'){ try{ renderProducts(); }catch(e){} }
-  if(typeof renderAdminProducts === 'function'){ try{ renderAdminProducts(); }catch(e){} }
+  try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
+  try{ if(typeof renderAdminProducts === 'function') renderAdminProducts(); }catch(e){}
 }
 
 async function loadStoreSettings(retry){
@@ -62,11 +78,11 @@ async function loadStoreSettings(retry){
     if(error) throw error;
     DB.storeSettings = data || null;
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadStoreSettings(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 200)); return loadStoreSettings(retry - 1); }
     DB.storeSettings = null;
   }
-  if(typeof applyStoreSettings === 'function'){ try{ applyStoreSettings(); }catch(e){} }
-  if(typeof renderStoreSettings === 'function'){ try{ renderStoreSettings(); }catch(e){} }
+  try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
+  try{ if(typeof renderStoreSettings === 'function') renderStoreSettings(); }catch(e){}
 }
 
 async function loadMyProgress(){
@@ -116,19 +132,14 @@ async function showWelcome(){
   try{
     window._appInitialized = false;
     window._lastInitializedUserId = null;
-
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
-
     const w = document.getElementById('welcome');
     if(w && w.dataset.firstVisit === 'true'){ w.style.display = 'flex'; w.classList.remove('exit'); }
-
     const wl = document.getElementById('welcomeLogout');
     if(wl){
-      try{
-        const r = await sb.auth.getSession();
-        wl.style.display = r.data.session ? 'inline-flex' : 'none';
-      }catch(e){ wl.style.display = 'none'; }
+      try{ const r = await sb.auth.getSession(); wl.style.display = r.data.session ? 'inline-flex' : 'none'; }
+      catch(e){ wl.style.display = 'none'; }
     }
   }catch(e){}
 }
@@ -152,7 +163,7 @@ function showAuthScreen(){
 }
 window.showAuthScreen = showAuthScreen;
 
-/* ================== enterApp — سريع ================== */
+/* ================== enterApp — سريع جداً ================== */
 async function enterApp(){
   try{
     if(session && session.user){
@@ -170,8 +181,6 @@ async function enterApp(){
       if(r.error) throw r.error;
       profileData = r.data;
     }catch(err){
-      console.error('profile fetch:', err);
-      try{ toast('تعذّر تحميل الملف', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       session = null; currentUserObj = null;
       window._appInitialized = false;
@@ -189,23 +198,6 @@ async function enterApp(){
 
     currentUserObj = profileData;
 
-    /* ⭐ فحص الاشتراك في الخلفية - لا يوقف التحميل */
-    if(typeof checkSubscriptionOnLogin === 'function'){
-      checkSubscriptionOnLogin().then(wasExpired => {
-        if(wasExpired){
-          sb.from('profiles').select('*').eq('id', session.user.id).single().then(r => {
-            if(r.data){
-              currentUserObj = r.data;
-              applyUserUI();
-              const appEl = document.getElementById('app');
-              if(appEl) appEl.classList.remove('store-only');
-              go('store');
-            }
-          });
-        }
-      }).catch(()=>{});
-    }
-
     /* التفضيلات */
     try{ loadPrefs(); }catch(e){}
     try{ loadPrefsFromDB(); }catch(e){}
@@ -218,52 +210,41 @@ async function enterApp(){
     const mainScroll = document.getElementById('mainScroll');
     if(mainScroll) mainScroll.scrollTop = 0;
 
-    /* تحميل الدورات + الإعدادات */
-    const privileged = typeof isPrivileged === 'function' && isPrivileged();
-
-    /* بالتوازي */
-    await Promise.all([
-      (async () => { try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){} })(),
-      (async () => { try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){} })(),
-      (async () => { try{ if(typeof loadCourses === 'function') await loadCourses(); }catch(e){} })()
-    ]);
-
-    if(privileged || currentUserObj.status === 'approved'){
-      /* حمّل الباقي في الخلفية */
-      Promise.all([
-        loadProfilesAndFiles(),
-        loadMyProgress(),
-        loadVideos(),
-        loadMyVideoProgress(),
-        (async () => { try{ if(typeof loadNotifications === 'function') await loadNotifications(); }catch(e){} })()
-      ]).then(() => {
-        try{ refreshAll(); }catch(e){}
+    /* ⭐ فحص الاشتراك في الخلفية */
+    if(typeof checkSubscriptionOnLogin === 'function'){
+      checkSubscriptionOnLogin().then(wasExpired => {
+        if(wasExpired){
+          sb.from('profiles').select('*').eq('id', session.user.id).single().then(r => {
+            if(r.data){
+              currentUserObj = r.data;
+              applyUserUI();
+              if(appEl) appEl.classList.remove('store-only');
+              go('store');
+            }
+          });
+        }
       }).catch(()=>{});
-    } else {
-      DB.files = [];
-      try{ renderFiles(); renderRecent(); }catch(e){}
     }
 
-    /* قرار المتجر */
+    /* ⭐ قرار المتجر أولاً (سريع) */
     const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
 
     if(_showStore && storeEl && titlesOk){
       if(appEl) appEl.classList.add('store-only');
-      try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
-      try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
-      try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
       try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
       try{ if(typeof renderTestimonials === 'function') renderTestimonials(); }catch(e){}
       try{ go('store'); }catch(e){}
-      setTimeout(() => { try{ toast('🛒 اختر دورتك ومدتها', 'ok'); }catch(e){} }, 600);
     } else {
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){}
     }
 
-    /* رندر عناصر فورية */
+    /* ⭐ اجعل التطبيق مرئياً فوراً */
+    if(appEl) appEl.classList.add('ready');
+
+    /* رندر فوري */
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
@@ -275,11 +256,32 @@ async function enterApp(){
     try{ syncSettingsUI(); }catch(e){}
     try{ renderDrawToolbar(); }catch(e){}
 
-    /* الخلفية */
-    try{ syncMyXp(); }catch(e){}
-    sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id).then(()=>{}).catch(()=>{});
-
     setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 300);
+
+    /* ⭐ كل التحميلات الثقيلة في الخلفية — بدون await */
+    const privileged = typeof isPrivileged === 'function' && isPrivileged();
+
+    (async () => {
+      try{ await loadStoreSettings(); }catch(e){}
+      try{ await loadProducts(); }catch(e){}
+      try{ await loadCourses(); }catch(e){}
+      try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
+      try{ if(typeof fillCourseDropdowns === 'function') fillCourseDropdowns(); }catch(e){}
+
+      if(privileged || currentUserObj.status === 'approved'){
+        await Promise.all([
+          loadProfilesAndFiles(),
+          loadMyProgress(),
+          loadVideos(),
+          loadMyVideoProgress(),
+          (async () => { try{ if(typeof loadNotifications === 'function') await loadNotifications(); }catch(e){} })()
+        ]);
+      }
+      refreshAll();
+      try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
+      try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
+      try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
+    })().catch(e => console.warn('bg load failed', e));
 
     /* اشتراكات realtime */
     try{ subscribeMyProfile(); }catch(e){}
@@ -288,13 +290,6 @@ async function enterApp(){
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
     try{ if(typeof subscribeNotifications === 'function') subscribeNotifications(); }catch(e){}
     try{ if(privileged && typeof subscribeProfilesForAdmin === 'function') subscribeProfilesForAdmin(); }catch(e){}
-
-    /* ميزات الرئيس */
-    try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
-    try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
-
-    /* ⭐ اطلب فتح الهدايا غير المفتوحة فور الدخول */
-    try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
 
     /* watch hash */
     const m = location.hash.match(/^#watch=(.+)$/);
@@ -310,13 +305,9 @@ async function enterApp(){
       }, 700);
     }
 
-    /* أظهر التطبيق */
-    if(appEl) appEl.classList.add('ready');
-
     return true;
   }catch(err){
     console.error('enterApp fatal:', err);
-    try{ toast('خطأ غير متوقع', 'err'); }catch(e){}
     try{ await sb.auth.signOut(); }catch(e){}
     session = null; currentUserObj = null;
     window._appInitialized = false;
@@ -371,7 +362,7 @@ function bindEmergencyButtons(){
           try{
             await Promise.race([
               enterApp(),
-              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
             ]);
           }catch(err){
             try{ await sb.auth.signOut(); }catch(e){}
@@ -383,12 +374,11 @@ function bindEmergencyButtons(){
         } else {
           showAuthScreen();
         }
-      }catch(e){
-        showAuthScreen();
-      }finally{
+      }catch(e){ showAuthScreen(); }
+      finally{
         setTimeout(() => {
           if(enterBtn){ enterBtn.disabled = false; enterBtn.innerHTML = orig; }
-        }, 500);
+        }, 400);
       }
     });
   }
@@ -447,7 +437,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         try{
           await Promise.race([
             enterApp(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
           ]);
         }catch(e){
           try{ await sb.auth.signOut(); }catch(err){}
@@ -465,18 +455,16 @@ window.bindEmergencyButtons = bindEmergencyButtons;
       try{
         await Promise.race([
           enterApp(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
         ]);
       }catch(e){
         try{ await sb.auth.signOut(); }catch(err){}
-        session = null;
-        currentUserObj = null;
+        session = null; currentUserObj = null;
         forceShowWelcome();
       }
     } else {
       let hasVisited = false;
       try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
-
       if(hasVisited){
         showAuthScreen();
       } else {
@@ -497,7 +485,6 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     });
 
     try{ setupDrawUI(); }catch(e){}
-
   }catch(err){
     console.error('❌ init:', err);
     try{ bindEmergencyButtons(); }catch(e){}
@@ -507,10 +494,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
 })();
 
 window.addEventListener('beforeunload', () => {
-  try{
-    clearTimeout(prefsSaveTimer);
-    sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData)));
-  }catch(e){}
+  try{ clearTimeout(prefsSaveTimer); sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
   try{ saveDrawings(); }catch(e){}
   try{ flushProgressSync(); }catch(e){}
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
