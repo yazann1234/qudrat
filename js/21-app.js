@@ -35,8 +35,7 @@ async function loadProfilesAndFiles(retry){
     }catch(e){ DB.files = []; }
   }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
-  const nc = document.getElementById('navCount');
-  if(nc) nc.textContent = DB.files.length;
+  try{ if(typeof fixNavCounts === 'function') fixNavCounts(); }catch(e){}
 }
 
 async function loadVideos(retry){
