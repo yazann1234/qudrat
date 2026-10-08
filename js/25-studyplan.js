@@ -14,6 +14,25 @@ const SP = {
 async function generateStudyPlan(){
   if(!currentUserObj){ toast('سجل الدخول أولاً', 'warn'); return; }
 
+   if(SP.plan && SP.plan.days){
+    const validIds = new Set(
+      (typeof getUserCourseFiles === 'function' ? getUserCourseFiles() : DB.files)
+        .map(f => f.id)
+    );
+    const hasInvalid = SP.plan.days.some(d =>
+      (d.tasks || []).some(t => t.type === 'file' && t.fileId && !validIds.has(t.fileId))
+    );
+    if(hasInvalid){
+      const ok = confirm('خطتك الحالية تحتوي على ملفات من دورة أخرى. هل تريد إنشاء خطة جديدة بناءً على دورتك الحالية؟');
+      if(ok){
+        SP.plan = null;
+        try{ if(currentUserObj) localStorage.removeItem('study_plan_' + currentUserObj.id); }catch(e){}
+      } else {
+        return;
+      }
+    }
+  }
+
   const examDateEl = document.getElementById('spExamDate');
   const daysCountEl = document.getElementById('spDaysCount');
 
@@ -39,8 +58,14 @@ async function generateStudyPlan(){
   SP.mode = modeEl ? modeEl.value : 'files';
 
   /* الملفات */
-  const files = DB.files || [];
-  if(!files.length){ toast('لا توجد ملفات لبناء خطة', 'warn'); return; }
+    /* ⭐ الملفات — فقط ملفات دورة المستخدم */
+  const files = (typeof getUserCourseFiles === 'function')
+    ? getUserCourseFiles()
+    : (DB.files || []);
+  if(!files.length){
+    toast('لا توجد ملفات متاحة في دورتك لبناء خطة', 'warn');
+    return;
+  }
 
   const remainingFiles = files
     .map(f => ({
