@@ -1,12 +1,11 @@
 /* ============================================================
-   21) APP — نقطة الإقلاع (نسخة v2.4.0)
+   21) APP — الإقلاع السريع v3.0.0
 ============================================================ */
-window._appVersion = '2.4.0';
+window._appVersion = '3.0.0';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
-window._lastStoreState = null;
 
-/* ================== تحميل البيانات ================== */
+/* ================== التحميلات ================== */
 async function loadProfilesAndFiles(retry){
   retry = (typeof retry === 'number') ? retry : 3;
   try{
@@ -14,14 +13,13 @@ async function loadProfilesAndFiles(retry){
     if(error) throw error;
     DB.files = data || [];
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 400 * (4 - retry))); return loadProfilesAndFiles(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadProfilesAndFiles(retry - 1); }
     DB.files = [];
   }
-
   if(typeof isPrivileged === 'function' && isPrivileged()){
     try{
-      const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-      DB.users = usersData || [];
+      const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+      DB.users = r.data || [];
     }catch(e){}
   }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
@@ -36,7 +34,7 @@ async function loadVideos(retry){
     if(error) throw error;
     DB.videos = data || [];
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadVideos(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadVideos(retry - 1); }
     DB.videos = [];
   }
   if(typeof renderVideos === 'function'){ try{ renderVideos(); }catch(e){} }
@@ -50,7 +48,7 @@ async function loadProducts(retry){
     if(error) throw error;
     DB.products = data || [];
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadProducts(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadProducts(retry - 1); }
     DB.products = [];
   }
   if(typeof renderProducts === 'function'){ try{ renderProducts(); }catch(e){} }
@@ -64,7 +62,7 @@ async function loadStoreSettings(retry){
     if(error) throw error;
     DB.storeSettings = data || null;
   }catch(err){
-    if(retry > 0){ await new Promise(r => setTimeout(r, 400)); return loadStoreSettings(retry - 1); }
+    if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadStoreSettings(retry - 1); }
     DB.storeSettings = null;
   }
   if(typeof applyStoreSettings === 'function'){ try{ applyStoreSettings(); }catch(e){} }
@@ -82,8 +80,7 @@ async function loadMyProgress(){
       userData.progress[r.file_id] = { pct: r.pct || 0, maxPage: r.max_page || 0, lastPage: r.last_page || 1 };
     });
     savePrefs();
-    refreshAll();
-  }catch(e){ console.warn('progress load failed', e); }
+  }catch(e){}
 }
 
 async function loadMyVideoProgress(){
@@ -108,11 +105,11 @@ async function loadMyVideoProgress(){
   }catch(e){ userData.videoProgress = userData.videoProgress || {}; }
 }
 
-/* ================== إدارة الشاشات ================== */
+/* ================== الشاشات ================== */
 function hideAllScreens(){
   try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
   try{ const a = document.getElementById('auth'); if(a) a.classList.remove('open'); }catch(e){}
-  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); } }catch(e){}
+  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); } }catch(e){}
 }
 
 async function showWelcome(){
@@ -121,15 +118,10 @@ async function showWelcome(){
     window._lastInitializedUserId = null;
 
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
-    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
 
     const w = document.getElementById('welcome');
-    if(w){
-      if(w.dataset.firstVisit === 'true'){
-        w.style.display = 'flex';
-        w.classList.remove('exit');
-      }
-    }
+    if(w && w.dataset.firstVisit === 'true'){ w.style.display = 'flex'; w.classList.remove('exit'); }
 
     const wl = document.getElementById('welcomeLogout');
     if(wl){
@@ -138,7 +130,7 @@ async function showWelcome(){
         wl.style.display = r.data.session ? 'inline-flex' : 'none';
       }catch(e){ wl.style.display = 'none'; }
     }
-  }catch(e){ console.warn('showWelcome error:', e); }
+  }catch(e){}
 }
 window.showWelcome = showWelcome;
 
@@ -146,21 +138,21 @@ function forceShowWelcome(){
   const w = document.getElementById('welcome');
   if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; w.classList.remove('exit'); }
   const a = document.getElementById('auth'); if(a) a.classList.remove('open');
-  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
+  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
 }
 window.forceShowWelcome = forceShowWelcome;
 
 function showAuthScreen(){
   try{
     const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open'); ap.classList.remove('store-only'); ap.classList.remove('ready'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
     const a = document.getElementById('auth'); if(a) a.classList.add('open');
     if(typeof showAuthForm === 'function') showAuthForm('login');
-  }catch(e){ console.warn('showAuthScreen error:', e); }
+  }catch(e){}
 }
 window.showAuthScreen = showAuthScreen;
 
-/* ================== enterApp ================== */
+/* ================== enterApp — سريع ================== */
 async function enterApp(){
   try{
     if(session && session.user){
@@ -169,17 +161,17 @@ async function enterApp(){
     }
 
     hideAllScreens();
-
     if(!session){ await showWelcome(); return false; }
 
+    /* جلب الملف الشخصي */
     let profileData = null;
     try{
       const r = await sb.from('profiles').select('*').eq('id', session.user.id).single();
       if(r.error) throw r.error;
       profileData = r.data;
     }catch(err){
-      console.error('profile fetch error:', err);
-      try{ toast('تعذّر تحميل الملف الشخصي', 'err'); }catch(e){}
+      console.error('profile fetch:', err);
+      try{ toast('تعذّر تحميل الملف', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       session = null; currentUserObj = null;
       window._appInitialized = false;
@@ -189,28 +181,32 @@ async function enterApp(){
     }
 
     if(!profileData){
-      try{ toast('لم يتم العثور على ملفك الشخصي', 'err'); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       session = null; currentUserObj = null;
-      window._appInitialized = false;
-      window._lastInitializedUserId = null;
       forceShowWelcome();
       return false;
     }
 
     currentUserObj = profileData;
 
-    /* ⭐ فحص انتهاء الاشتراك */
+    /* ⭐ فحص الاشتراك في الخلفية - لا يوقف التحميل */
     if(typeof checkSubscriptionOnLogin === 'function'){
-      try{
-        const wasExpired = await checkSubscriptionOnLogin();
+      checkSubscriptionOnLogin().then(wasExpired => {
         if(wasExpired){
-          const r2 = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-          if(r2.data) currentUserObj = r2.data;
+          sb.from('profiles').select('*').eq('id', session.user.id).single().then(r => {
+            if(r.data){
+              currentUserObj = r.data;
+              applyUserUI();
+              const appEl = document.getElementById('app');
+              if(appEl) appEl.classList.remove('store-only');
+              go('store');
+            }
+          });
         }
-      }catch(e){ console.warn('subscription check failed', e); }
+      }).catch(()=>{});
     }
 
+    /* التفضيلات */
     try{ loadPrefs(); }catch(e){}
     try{ loadPrefsFromDB(); }catch(e){}
     try{ loadDrawings(); }catch(e){}
@@ -222,75 +218,85 @@ async function enterApp(){
     const mainScroll = document.getElementById('mainScroll');
     if(mainScroll) mainScroll.scrollTop = 0;
 
-    try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){}
-    try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){}
-
+    /* تحميل الدورات + الإعدادات */
     const privileged = typeof isPrivileged === 'function' && isPrivileged();
 
+    /* بالتوازي */
+    await Promise.all([
+      (async () => { try{ if(typeof loadStoreSettings === 'function') await loadStoreSettings(); }catch(e){} })(),
+      (async () => { try{ if(typeof loadProducts === 'function') await loadProducts(); }catch(e){} })(),
+      (async () => { try{ if(typeof loadCourses === 'function') await loadCourses(); }catch(e){} })()
+    ]);
+
     if(privileged || currentUserObj.status === 'approved'){
-      try{ await loadProfilesAndFiles(); }catch(e){}
-      try{ await loadMyProgress(); }catch(e){}
-      try{ await loadVideos(); }catch(e){}
-      try{ await loadMyVideoProgress(); }catch(e){}
+      /* حمّل الباقي في الخلفية */
+      Promise.all([
+        loadProfilesAndFiles(),
+        loadMyProgress(),
+        loadVideos(),
+        loadMyVideoProgress(),
+        (async () => { try{ if(typeof loadNotifications === 'function') await loadNotifications(); }catch(e){} })()
+      ]).then(() => {
+        try{ refreshAll(); }catch(e){}
+      }).catch(()=>{});
     } else {
       DB.files = [];
       try{ renderFiles(); renderRecent(); }catch(e){}
     }
 
+    /* قرار المتجر */
     const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
 
-    window._lastStoreState = _showStore;
-
     if(_showStore && storeEl && titlesOk){
       if(appEl) appEl.classList.add('store-only');
+      try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
       try{ if(typeof renderProducts === 'function') renderProducts(); }catch(e){}
       try{ if(typeof applyStoreSettings === 'function') applyStoreSettings(); }catch(e){}
       try{ if(typeof renderStoreUserBadge === 'function') renderStoreUserBadge(); }catch(e){}
       try{ if(typeof renderTestimonials === 'function') renderTestimonials(); }catch(e){}
       try{ go('store'); }catch(e){}
-      setTimeout(() => { try{ toast('🛒 فعّل اشتراكك للوصول إلى المنصة', 'ok'); }catch(e){} }, 800);
+      setTimeout(() => { try{ toast('🛒 اختر دورتك ومدتها', 'ok'); }catch(e){} }, 600);
     } else {
       if(appEl) appEl.classList.remove('store-only');
       try{ goFromHash(); }catch(e){}
     }
 
+    /* رندر عناصر فورية */
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
     try{ renderThemesGrid(); }catch(e){}
-
     if(typeof notesArea !== 'undefined' && notesArea) notesArea.value = userData.notes || '';
-
-    try{
-      if(typeof TIMER !== 'undefined'){
-        TIMER.mode = 'focus';
-        TIMER.remain = timerTotalSec('focus');
-        updateTimerUI();
-      }
-    }catch(e){}
-
+    try{ if(typeof TIMER !== 'undefined'){ TIMER.mode = 'focus'; TIMER.remain = timerTotalSec('focus'); updateTimerUI(); } }catch(e){}
     try{ applyReaderTheme(); }catch(e){}
     try{ applySnapClass(); }catch(e){}
     try{ syncSettingsUI(); }catch(e){}
     try{ renderDrawToolbar(); }catch(e){}
 
+    /* الخلفية */
     try{ syncMyXp(); }catch(e){}
-    try{ await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id); }catch(e){}
+    sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUserObj.id).then(()=>{}).catch(()=>{});
 
-    setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 400);
+    setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 300);
 
+    /* اشتراكات realtime */
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
+    try{ if(typeof subscribeNotifications === 'function') subscribeNotifications(); }catch(e){}
     try{ if(privileged && typeof subscribeProfilesForAdmin === 'function') subscribeProfilesForAdmin(); }catch(e){}
 
-    /* ⭐ ميزات الرئيس + صندوق الطالب */
+    /* ميزات الرئيس */
     try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
     try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
 
+    /* ⭐ اطلب فتح الهدايا غير المفتوحة فور الدخول */
+    try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
+
+    /* watch hash */
     const m = location.hash.match(/^#watch=(.+)$/);
     if(m && m[1]){
       const vid = m[1];
@@ -304,16 +310,15 @@ async function enterApp(){
       }, 700);
     }
 
-    /* ⭐ اجعل التطبيق مرئياً */
+    /* أظهر التطبيق */
     if(appEl) appEl.classList.add('ready');
 
     return true;
   }catch(err){
-    console.error('enterApp fatal error:', err);
-    try{ toast('حدث خطأ غير متوقع', 'err'); }catch(e){}
+    console.error('enterApp fatal:', err);
+    try{ toast('خطأ غير متوقع', 'err'); }catch(e){}
     try{ await sb.auth.signOut(); }catch(e){}
-    session = null;
-    currentUserObj = null;
+    session = null; currentUserObj = null;
     window._appInitialized = false;
     window._lastInitializedUserId = null;
     forceShowWelcome();
@@ -324,9 +329,7 @@ async function enterApp(){
 function refreshAll(){
   try{
     renderFiles(); renderHomeStats(); updateSidebar();
-    if(document.getElementById('view-progress') && document.getElementById('view-progress').classList.contains('active')){
-      renderProgress();
-    }
+    if(document.getElementById('view-progress') && document.getElementById('view-progress').classList.contains('active')) renderProgress();
     checkBadges();
   }catch(e){}
 }
@@ -348,20 +351,8 @@ function renderStoreUserBadge(){
 }
 window.renderStoreUserBadge = renderStoreUserBadge;
 
-/* ================== الأزرار الطارئة ================== */
+/* ================== الأزرار ================== */
 function bindEmergencyButtons(){
-  const btn = document.getElementById('emergencyReset');
-  if(btn && !btn.dataset.bound){
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', async () => {
-      if(!confirm('سيتم مسح كل الجلسات. متابعة؟')) return;
-      try{ await sb.auth.signOut(); }catch(e){}
-      try{ sessionStorage.clear(); }catch(e){}
-      try{ localStorage.clear(); }catch(e){}
-      setTimeout(() => location.reload(), 300);
-    });
-  }
-
   const enterBtn = document.getElementById('enterBtn');
   if(enterBtn && !enterBtn.dataset.bound){
     enterBtn.dataset.bound = '1';
@@ -369,21 +360,20 @@ function bindEmergencyButtons(){
       if(enterBtn.disabled) return;
       enterBtn.disabled = true;
       const orig = enterBtn.innerHTML;
-      enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+      enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
 
       try{
-        let s = null;
-        try{ const r = await sb.auth.getSession(); s = r.data.session; }catch(e){}
+        const r = await sb.auth.getSession();
+        const s = r.data.session;
 
         if(s){
           session = s;
           try{
             await Promise.race([
               enterApp(),
-              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
             ]);
           }catch(err){
-            console.error('enterApp failed:', err);
             try{ await sb.auth.signOut(); }catch(e){}
             session = null; currentUserObj = null;
             window._appInitialized = false;
@@ -394,12 +384,11 @@ function bindEmergencyButtons(){
           showAuthScreen();
         }
       }catch(e){
-        console.error('enterBtn error:', e);
         showAuthScreen();
       }finally{
         setTimeout(() => {
           if(enterBtn){ enterBtn.disabled = false; enterBtn.innerHTML = orig; }
-        }, 800);
+        }, 500);
       }
     });
   }
@@ -427,20 +416,14 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     bindEmergencyButtons();
 
     let s = null;
-    try{
-      const r = await sb.auth.getSession();
-      s = r.data.session;
-    }catch(e){}
-
+    try{ const r = await sb.auth.getSession(); s = r.data.session; }catch(e){}
     session = s;
 
     sb.auth.onAuthStateChange(async (event, newSession) => {
       session = newSession;
 
       if(event === 'PASSWORD_RECOVERY'){
-        setTimeout(() => {
-          if(typeof showRecoveryModal === 'function') showRecoveryModal();
-        }, 600);
+        setTimeout(() => { if(typeof showRecoveryModal === 'function') showRecoveryModal(); }, 500);
         return;
       }
 
@@ -456,9 +439,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
 
       if(event === 'SIGNED_IN' && newSession){
         const uid = newSession.user ? newSession.user.id : null;
-        if(window._appInitialized && window._lastInitializedUserId === uid){
-          return;
-        }
+        if(window._appInitialized && window._lastInitializedUserId === uid) return;
 
         window._lastInitializedUserId = uid;
         window._appInitialized = true;
@@ -466,10 +447,9 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         try{
           await Promise.race([
             enterApp(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
           ]);
         }catch(e){
-          console.error('SIGNED_IN error:', e);
           try{ await sb.auth.signOut(); }catch(err){}
           window._appInitialized = false;
           window._lastInitializedUserId = null;
@@ -478,16 +458,14 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         return;
       }
 
-      if(event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED'){
-        return;
-      }
+      if(event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
     });
 
     if(session){
       try{
         await Promise.race([
           enterApp(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
         ]);
       }catch(e){
         try{ await sb.auth.signOut(); }catch(err){}
@@ -509,9 +487,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     }
 
     if(window.location.hash && window.location.hash.includes('type=recovery')){
-      setTimeout(() => {
-        if(typeof showRecoveryModal === 'function') showRecoveryModal();
-      }, 900);
+      setTimeout(() => { if(typeof showRecoveryModal === 'function') showRecoveryModal(); }, 800);
     }
 
     let rotTimer = null;
@@ -523,7 +499,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     try{ setupDrawUI(); }catch(e){}
 
   }catch(err){
-    console.error('❌ init fatal:', err);
+    console.error('❌ init:', err);
     try{ bindEmergencyButtons(); }catch(e){}
     const w = document.getElementById('welcome');
     if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
@@ -538,4 +514,5 @@ window.addEventListener('beforeunload', () => {
   try{ saveDrawings(); }catch(e){}
   try{ flushProgressSync(); }catch(e){}
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
+  try{ if(NOTIF.channel) sb.removeChannel(NOTIF.channel); }catch(e){}
 });
