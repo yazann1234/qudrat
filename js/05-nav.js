@@ -7,14 +7,15 @@ const TITLES = {
   store:['المتجر','اختر دورتك وفعّل اشتراكك'],
   files:['الملفات','مكتبتك التعليمية الكاملة'],
   videos:['الفيديوهات','مكتبة الدروس المرئية'],
+  quiz:['كاهوت القدرات','تحدَّ أصدقاءك في مسابقة سريعة'],
+  gifts:['هداياي','صندوق الطالب — الهدايا والمكافآت'],
   studyplan:['الجدول الذكي','خطة مذاكرتك الذكية'],
   adhkar:['الأذكار والأدعية','أذكار الصباح والمساء وقبل المذاكرة'],
-  quiz:['كاهوت القدرات','تحدَّ أصدقاءك في مسابقة سريعة'],
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
   leaderboard:['قائمة المتصدرين','ترتيب الطلاب حسب نقاط XP'],
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
-  about:['من نحن','تعرّف على منصة العباقرة للقدرات'],
-  features:['المزايا','كل ما تقدمه لك منصة العباقرة للقدرات'],
+  about:['من نحن','تعرّف على منصة عباقرة القدرات'],
+  features:['المزايا','كل ما تقدمه لك منصة عباقرة القدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
   admin:['لوحة الأدمن','إدارة كاملة للمستخدمين والملفات']
 };
@@ -27,6 +28,7 @@ function canAccess(view){
 function go(view, skipHash){
   if(!TITLES[view]) view = 'home';
 
+  /* حماية #admin */
   if(!canAccess(view)){
     toast('هذه الصفحة للأدمن فقط', 'err');
     if(location.hash.slice(1) === 'admin'){
@@ -35,8 +37,7 @@ function go(view, skipHash){
     view = 'home';
   }
 
-   if(view === 'quiz' && typeof initQuiz === 'function') initQuiz();
-
+  /* منع التنقل خارج المتجر */
   const appEl = document.getElementById('app');
   if(appEl && appEl.classList.contains('store-only') && view !== 'store'){
     view = 'store';
@@ -70,7 +71,7 @@ function go(view, skipHash){
 
   const mainScroll = document.getElementById('mainScroll');
   if(mainScroll) mainScroll.scrollTop = 0;
-  document.title = meta[0] + ' — العباقرة للقدرات';
+  document.title = meta[0] + ' — عباقرة القدرات';
 
   setTimeout(() => {
     if(view === 'home' && typeof renderHomeStats === 'function') renderHomeStats();
@@ -86,6 +87,8 @@ function go(view, skipHash){
     if(view === 'profile' && typeof renderProfile === 'function') renderProfile();
     if(view === 'adhkar' && typeof renderAdhkarSection === 'function') renderAdhkarSection();
     if(view === 'studyplan' && typeof renderStudyPlan === 'function') renderStudyPlan();
+    if(view === 'quiz' && typeof initQuiz === 'function') initQuiz();
+    if(view === 'gifts' && typeof renderMyGifts === 'function') renderMyGifts();
   }, 180);
 }
 window.go = go;
