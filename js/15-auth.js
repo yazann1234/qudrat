@@ -1,5 +1,5 @@
 /* ============================================================
-   15) AUTH — مصادقة سريعة
+   15) AUTH — مصادقة سريعة (مُصلحة)
 ============================================================ */
 
 function showAuth(){
@@ -38,7 +38,7 @@ function showMsg(elId, text, type){
 }
 window.showMsg = showMsg;
 
-/* ⭐ تسجيل دخول سريع */
+/* ⭐ تسجيل دخول */
 async function doLogin(){
   const btn = document.getElementById('loginBtn');
   if(!btn || btn.disabled) return;
@@ -64,7 +64,6 @@ async function doLogin(){
       return;
     }
     showMsg('loginMsg', '✓ تم الدخول', 'ok');
-    /* enterApp ستنفذ عبر onAuthStateChange */
   }catch(e){
     showMsg('loginMsg', e.message || 'خطأ');
     btn.disabled = false;
@@ -73,7 +72,7 @@ async function doLogin(){
 }
 window.doLogin = doLogin;
 
-/* ⭐ تسجيل سريع */
+/* ⭐ تسجيل حساب */
 async function doRegister(){
   const btn = document.getElementById('regBtn');
   if(!btn || btn.disabled) return;
@@ -105,19 +104,16 @@ async function doRegister(){
 
     if(error){ showMsg('regMsg', error.message); btn.disabled = false; btn.innerHTML = orig; return; }
 
-    /* احفظ محليًا بدون انتظار */
     try{
       if(data && data.user){
         sessionStorage.setItem('pending_pass_' + data.user.id, pass);
         localStorage.setItem('pending_pass_' + data.user.id, pass);
-        /* حدّث DB في الخلفية */
         sb.from('profiles').update({ password_hint: pass, phone: cleanPhone }).eq('id', data.user.id).then(()=>{}).catch(()=>{});
       }
     }catch(e){}
 
     showMsg('regMsg', '✓ تم إنشاء حسابك! بانتظار موافقة الأدمن', 'ok');
     setTimeout(() => {
-      /* إذا كان auto-login، انتقل مباشرة */
       if(data && data.session){
         /* سيتم الدخول عبر onAuthStateChange */
       } else {
@@ -170,7 +166,7 @@ async function doAdminLogin(){
 }
 window.doAdminLogin = doAdminLogin;
 
-/* نسيت كلمة المرور — تبسيط */
+/* نسيت كلمة المرور */
 function doForgotPassword(){
   openModal({
     title: 'استعادة كلمة المرور',
@@ -238,9 +234,10 @@ function showRecoveryModal(){
 }
 window.showRecoveryModal = showRecoveryModal;
 
-/* ربط */
+/* ⭐⭐⭐ الأحداث — مع حماية من الصفحة البيضاء */
 document.addEventListener('click', function(e){
   const t = e.target;
+  if(!t) return;
 
   const tabBtn = t.closest('.auth-tabs button');
   if(tabBtn){ e.preventDefault(); showAuthForm(tabBtn.dataset.tab); return; }
@@ -249,10 +246,26 @@ document.addEventListener('click', function(e){
   if(t.closest('#regBtn')){ e.preventDefault(); doRegister(); return; }
   if(t.closest('#adminBtn')){ e.preventDefault(); doAdminLogin(); return; }
   if(t.closest('#forgotLink')){ e.preventDefault(); doForgotPassword(); return; }
+
+  /* ⭐ زر الرجوع — يعرض الترحيب مباشرة (بدون شروط) */
   if(t.closest('#authBack')){
     e.preventDefault();
-    const a = document.getElementById('auth'); if(a) a.classList.remove('open');
-    const w = document.getElementById('welcome'); if(w){ w.style.display = 'flex'; w.classList.remove('exit'); }
+    e.stopPropagation();
+
+    const a = document.getElementById('auth');
+    if(a) a.classList.remove('open');
+
+    const ap = document.getElementById('app');
+    if(ap) ap.classList.remove('open','store-only','ready');
+
+    const w = document.getElementById('welcome');
+    if(w){
+      w.dataset.firstVisit = 'true';
+      w.classList.remove('exit');
+      w.style.display = 'flex';
+      w.style.opacity = '1';
+      w.style.visibility = 'visible';
+    }
     return;
   }
 });
