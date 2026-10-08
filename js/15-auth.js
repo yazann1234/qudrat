@@ -1,7 +1,8 @@
 /* ============================================================
-   15) AUTH — مصادقة سريعة (مُصلحة)
+   15) AUTH — مصادقة كاملة (نسخة مُصلحة نهائية)
 ============================================================ */
 
+/* ================== إظهار/إخفاء شاشة auth ================== */
 function showAuth(){
   const a = document.getElementById('auth');
   if(a) a.classList.add('open');
@@ -13,6 +14,7 @@ function hideAuth(){
 window.showAuth = showAuth;
 window.hideAuth = hideAuth;
 
+/* ================== تبديل التبويبات (دخول/تسجيل/أدمن) ================== */
 function showAuthForm(tab){
   try{
     document.querySelectorAll('.auth-tabs button').forEach(b => {
@@ -25,10 +27,11 @@ function showAuthForm(tab){
       const m = document.getElementById(id);
       if(m){ m.className = 'auth-msg'; m.textContent = ''; }
     });
-  }catch(e){}
+  }catch(e){ console.warn('showAuthForm error:', e); }
 }
 window.showAuthForm = showAuthForm;
 
+/* ================== عرض رسائل داخل auth ================== */
 function showMsg(elId, text, type){
   type = type || 'err';
   const el = document.getElementById(elId);
@@ -38,13 +41,15 @@ function showMsg(elId, text, type){
 }
 window.showMsg = showMsg;
 
-/* ⭐ تسجيل دخول */
+/* ================== تسجيل الدخول ================== */
 async function doLogin(){
   const btn = document.getElementById('loginBtn');
   if(!btn || btn.disabled) return;
 
-  const email = (document.getElementById('loginEmail').value || '').trim().toLowerCase();
-  const pass = document.getElementById('loginPass').value || '';
+  const emailEl = document.getElementById('loginEmail');
+  const passEl  = document.getElementById('loginPass');
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass  = passEl ? passEl.value : '';
 
   if(!email || !pass){ showMsg('loginMsg', 'أدخل البريد وكلمة المرور'); return; }
 
@@ -64,6 +69,7 @@ async function doLogin(){
       return;
     }
     showMsg('loginMsg', '✓ تم الدخول', 'ok');
+    /* enterApp ستنفذ عبر onAuthStateChange */
   }catch(e){
     showMsg('loginMsg', e.message || 'خطأ');
     btn.disabled = false;
@@ -72,15 +78,20 @@ async function doLogin(){
 }
 window.doLogin = doLogin;
 
-/* ⭐ تسجيل حساب */
+/* ================== تسجيل حساب جديد ================== */
 async function doRegister(){
   const btn = document.getElementById('regBtn');
   if(!btn || btn.disabled) return;
 
-  const name = (document.getElementById('regName').value || '').trim();
-  const email = (document.getElementById('regEmail').value || '').trim().toLowerCase();
-  const pass = document.getElementById('regPass').value || '';
-  const phone = (document.getElementById('regPhone').value || '').trim();
+  const nameEl  = document.getElementById('regName');
+  const emailEl = document.getElementById('regEmail');
+  const passEl  = document.getElementById('regPass');
+  const phoneEl = document.getElementById('regPhone');
+
+  const name  = (nameEl  ? nameEl.value  : '').trim();
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass  = passEl   ? passEl.value  : '';
+  const phone = (phoneEl ? phoneEl.value : '').trim();
 
   if(!name || name.length < 2){ showMsg('regMsg', 'أدخل اسماً صحيحاً'); return; }
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg', 'بريد غير صحيح'); return; }
@@ -104,11 +115,13 @@ async function doRegister(){
 
     if(error){ showMsg('regMsg', error.message); btn.disabled = false; btn.innerHTML = orig; return; }
 
+    /* احفظ محلياً + حدّث DB في الخلفية */
     try{
       if(data && data.user){
         sessionStorage.setItem('pending_pass_' + data.user.id, pass);
         localStorage.setItem('pending_pass_' + data.user.id, pass);
-        sb.from('profiles').update({ password_hint: pass, phone: cleanPhone }).eq('id', data.user.id).then(()=>{}).catch(()=>{});
+        sb.from('profiles').update({ password_hint: pass, phone: cleanPhone })
+          .eq('id', data.user.id).then(()=>{}).catch(()=>{});
       }
     }catch(e){}
 
@@ -131,13 +144,15 @@ async function doRegister(){
 }
 window.doRegister = doRegister;
 
-/* دخول الأدمن */
+/* ================== دخول الأدمن ================== */
 async function doAdminLogin(){
   const btn = document.getElementById('adminBtn');
   if(!btn || btn.disabled) return;
 
-  const email = (document.getElementById('adminEmail').value || '').trim().toLowerCase();
-  const pass = document.getElementById('adminPass').value || '';
+  const emailEl = document.getElementById('adminEmail');
+  const passEl  = document.getElementById('adminPass');
+  const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+  const pass  = passEl  ? passEl.value  : '';
 
   if(!email || !pass){ showMsg('adminMsg', 'أدخل البريد وكلمة المرور'); return; }
 
@@ -166,7 +181,7 @@ async function doAdminLogin(){
 }
 window.doAdminLogin = doAdminLogin;
 
-/* نسيت كلمة المرور */
+/* ================== نسيت كلمة المرور ================== */
 function doForgotPassword(){
   openModal({
     title: 'استعادة كلمة المرور',
@@ -181,9 +196,12 @@ function doForgotPassword(){
     `,
     okText: 'إرسال',
     onOk: async () => {
-      const email = (document.getElementById('fpEmail').value || '').trim().toLowerCase();
+      const emailEl = document.getElementById('fpEmail');
+      const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صحيح', 'err'); return; }
-      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
       if(error){ toast('فشل: ' + error.message, 'err'); return; }
       toast('✓ تم إرسال الرابط', 'ok');
     }
@@ -191,7 +209,7 @@ function doForgotPassword(){
 }
 window.doForgotPassword = doForgotPassword;
 
-/* تعيين كلمة مرور جديدة */
+/* ================== تعيين كلمة مرور جديدة ================== */
 let recoveryModalShown = false;
 function showRecoveryModal(){
   if(recoveryModalShown) return;
@@ -206,7 +224,10 @@ function showRecoveryModal(){
         <div style="position:relative">
           <input type="password" id="npPass" placeholder="8 أحرف على الأقل"
             style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button type="button" onclick="togglePassVis('npPass',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+          <button type="button" onclick="togglePassVis('npPass',this)"
+            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
       </div>
       <div class="form-group" style="margin-bottom:12px">
@@ -214,16 +235,31 @@ function showRecoveryModal(){
         <div style="position:relative">
           <input type="password" id="npPass2" placeholder="أعد الكتابة"
             style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button type="button" onclick="togglePassVis('npPass2',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+          <button type="button" onclick="togglePassVis('npPass2',this)"
+            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
       </div>
     `,
     okText: 'حفظ',
     onOk: async () => {
-      const p1 = document.getElementById('npPass').value;
-      const p2 = document.getElementById('npPass2').value;
-      if(!p1 || p1.length < 8){ toast('كلمة المرور قصيرة', 'err'); recoveryModalShown = false; setTimeout(showRecoveryModal, 100); return; }
-      if(p1 !== p2){ toast('غير متطابقتين', 'err'); recoveryModalShown = false; setTimeout(showRecoveryModal, 100); return; }
+      const p1El = document.getElementById('npPass');
+      const p2El = document.getElementById('npPass2');
+      const p1 = p1El ? p1El.value : '';
+      const p2 = p2El ? p2El.value : '';
+      if(!p1 || p1.length < 8){
+        toast('كلمة المرور قصيرة', 'err');
+        recoveryModalShown = false;
+        setTimeout(showRecoveryModal, 100);
+        return;
+      }
+      if(p1 !== p2){
+        toast('غير متطابقتين', 'err');
+        recoveryModalShown = false;
+        setTimeout(showRecoveryModal, 100);
+        return;
+      }
       const { error } = await sb.auth.updateUser({ password: p1 });
       if(error){ toast(error.message, 'err'); return; }
       toast('✓ تم تعيين كلمة المرور', 'ok');
@@ -234,42 +270,56 @@ function showRecoveryModal(){
 }
 window.showRecoveryModal = showRecoveryModal;
 
-/* ⭐⭐⭐ الأحداث — مع حماية من الصفحة البيضاء */
+/* ============================================================
+   ⭐⭐⭐ الأحداث — معالج شامل لكل أزرار auth
+============================================================ */
 document.addEventListener('click', function(e){
   const t = e.target;
   if(!t) return;
 
+  /* تبديل التبويبات */
   const tabBtn = t.closest('.auth-tabs button');
-  if(tabBtn){ e.preventDefault(); showAuthForm(tabBtn.dataset.tab); return; }
+  if(tabBtn){
+    e.preventDefault();
+    showAuthForm(tabBtn.dataset.tab);
+    return;
+  }
 
+  /* أزرار الدخول/التسجيل/الأدمن */
   if(t.closest('#loginBtn')){ e.preventDefault(); doLogin(); return; }
-  if(t.closest('#regBtn')){ e.preventDefault(); doRegister(); return; }
+  if(t.closest('#regBtn')){   e.preventDefault(); doRegister(); return; }
   if(t.closest('#adminBtn')){ e.preventDefault(); doAdminLogin(); return; }
   if(t.closest('#forgotLink')){ e.preventDefault(); doForgotPassword(); return; }
 
-  /* ⭐ زر الرجوع — يعرض الترحيب مباشرة (بدون شروط) */
+  /* ⭐⭐⭐ زر الرجوع — يعرض شاشة الترحيب بشكل صحيح */
   if(t.closest('#authBack')){
     e.preventDefault();
     e.stopPropagation();
 
+    /* 1) اقفل auth */
     const a = document.getElementById('auth');
     if(a) a.classList.remove('open');
 
+    /* 2) اقفل app */
     const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
+    if(ap) ap.classList.remove('open', 'store-only', 'ready');
 
+    /* 3) اعرض welcome — بدون أي شرط */
     const w = document.getElementById('welcome');
     if(w){
       w.dataset.firstVisit = 'true';
       w.classList.remove('exit');
-      w.style.display = 'flex';
-      w.style.opacity = '1';
+      w.style.display    = 'flex';
+      w.style.opacity    = '1';
       w.style.visibility = 'visible';
     }
     return;
   }
 });
 
+/* ============================================================
+   Enter في الحقول
+============================================================ */
 document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter') return;
   const t = e.target;
@@ -280,10 +330,13 @@ document.addEventListener('keydown', function(e){
   if(t.id === 'adminPass' || t.id === 'adminEmail'){ e.preventDefault(); doAdminLogin(); return; }
 });
 
-/* تنظيف الجوال */
+/* ============================================================
+   تنظيف رقم الجوال
+============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const phoneInput = document.getElementById('regPhone');
-  if(phoneInput){
+  if(phoneInput && !phoneInput.dataset.bound){
+    phoneInput.dataset.bound = '1';
     phoneInput.addEventListener('input', e => {
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
     });
