@@ -1,7 +1,8 @@
 /* ============================================================
-   21) APP — الإقلاع الفوري v4.0.0
+   21) APP — الإقلاع الفوري v4.0.1
+   (نفس v4.0.0 + إصلاح مشكلة الترحيب فقط)
 ============================================================ */
-window._appVersion = '4.0.0';
+window._appVersion = '4.0.1';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
 
@@ -128,6 +129,7 @@ function hideAllScreens(){
   try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); } }catch(e){}
 }
 
+/* ⭐⭐⭐ الإصلاح الوحيد: showWelcome تعرض الترحيب دائماً بدون شرط */
 async function showWelcome(){
   try{
     window._appInitialized = false;
@@ -135,7 +137,12 @@ async function showWelcome(){
     const a = document.getElementById('auth'); if(a) a.classList.remove('open');
     const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
     const w = document.getElementById('welcome');
-    if(w && w.dataset.firstVisit === 'true'){ w.style.display = 'flex'; w.classList.remove('exit'); }
+    /* ✅ شلنا شرط firstVisit — صارت تعرض الترحيب دائماً */
+    if(w){
+      w.dataset.firstVisit = 'true';
+      w.style.display = 'flex';
+      w.classList.remove('exit');
+    }
     const wl = document.getElementById('welcomeLogout');
     if(wl){
       try{ const r = await sb.auth.getSession(); wl.style.display = r.data.session ? 'inline-flex' : 'none'; }
@@ -463,14 +470,17 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         forceShowWelcome();
       }
     } else {
-      let hasVisited = false;
-      try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
-      if(hasVisited){
-        showAuthScreen();
-      } else {
-        try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
-        const w = document.getElementById('welcome');
-        if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
+      /* ⭐⭐⭐ الإصلاح: دائماً اعرض الترحيب لأي زائر بدون جلسة */
+      try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
+      const w  = document.getElementById('welcome');
+      const a  = document.getElementById('auth');
+      const ap = document.getElementById('app');
+      if(a)  a.classList.remove('open');
+      if(ap) ap.classList.remove('open','store-only','ready');
+      if(w){
+        w.dataset.firstVisit = 'true';
+        w.style.display = 'flex';
+        w.classList.remove('exit');
       }
     }
 
