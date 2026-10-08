@@ -1,5 +1,5 @@
 /* ============================================================
-   31) COURSE SYSTEM — نظام الدورات
+   31) COURSE SYSTEM — نظام الدورات + منتجات = دورات
 ============================================================ */
 
 const CS = {
@@ -7,7 +7,6 @@ const CS = {
   currentCourseId: null
 };
 
-/* ================== تحميل الدورات ================== */
 async function loadCourses(retry){
   retry = (typeof retry === 'number') ? retry : 2;
   try{
@@ -20,11 +19,27 @@ async function loadCourses(retry){
     if(retry > 0){ await new Promise(r => setTimeout(r, 300)); return loadCourses(retry - 1); }
     CS.courses = [];
   }
+  /* ⭐ املأ قوائم الاختيار في لوحة الأدمن */
+  fillCourseDropdowns();
   return CS.courses;
 }
 window.loadCourses = loadCourses;
 
-/* ================== الحصول على دورة ================== */
+/* ⭐ املأ كل الـ selects بالدورات */
+function fillCourseDropdowns(){
+  const selects = ['afCourse', 'avCourse', 'giftCourseSelect', 'nuCourse'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const currentVal = sel.value;
+    const isGift = (id === 'giftCourseSelect');
+    sel.innerHTML = (isGift ? '<option value="">— اختر دورة —</option>' : '<option value="">— بدون دورة (للجميع) —</option>') +
+      CS.courses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    if(currentVal) sel.value = currentVal;
+  });
+}
+window.fillCourseDropdowns = fillCourseDropdowns;
+
 function getCourseById(id){
   if(!id) return null;
   return (CS.courses || []).find(c => c.id === id) || null;
@@ -37,31 +52,20 @@ function getMyCourse(){
 }
 window.getMyCourse = getMyCourse;
 
-/* ================== دورة المستخدم الحالية ================== */
 function shouldSeeCourseItem(item){
-  /* الأدمن والمالك يرون كل شيء */
   if(typeof isPrivileged === 'function' && isPrivileged()) return true;
-
-  /* لو ما فيه دورة محددة للمستخدم → لا يرى شيئاً */
   if(!currentUserObj || !currentUserObj.course_id) return false;
-
-  /* لو الملف ما له دورة → متاح للجميع */
   if(!item.course_id) return true;
-
-  /* المطابقة */
   return item.course_id === currentUserObj.course_id;
 }
 window.shouldSeeCourseItem = shouldSeeCourseItem;
 
-/* ================== السعر حسب المدة ================== */
 function getCoursePrice(course, months){
   if(!course || !course.prices) return 0;
-  const prices = course.prices;
-  return prices[String(months)] || 0;
+  return course.prices[String(months)] || 0;
 }
 window.getCoursePrice = getCoursePrice;
 
-/* ================== عرض الدورات في المتجر ================== */
 function renderCoursesGrid(){
   const grid = document.getElementById('coursesGrid');
   if(!grid) return;
@@ -70,9 +74,6 @@ function renderCoursesGrid(){
     grid.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-graduation-cap"></i></div><h3>لا توجد دورات</h3></div>';
     return;
   }
-
-  /* دورات المتاح له الاشتراك */
-  const isSubscribedToAny = currentUserObj && currentUserObj.status === 'approved' && currentUserObj.course_id;
 
   grid.innerHTML = CS.courses.map(c => {
     const isMyCourse = currentUserObj && currentUserObj.course_id === c.id && currentUserObj.status === 'approved';
@@ -108,14 +109,11 @@ function renderCoursesGrid(){
 }
 window.renderCoursesGrid = renderCoursesGrid;
 
-/* ================== بدء الاشتراك ================== */
 function startCourseSubscription(courseId){
   const c = getCourseById(courseId);
   if(!c) return;
-
   if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
 
-  /* مودال اختيار المدة */
   const prices = c.prices || {};
   const options = [
     { m: 1, label: 'شهر واحد' },
@@ -148,11 +146,10 @@ function startCourseSubscription(courseId){
       if(!selected) return;
       const months = parseInt(selected.value, 10);
       const price = prices[String(months)];
-      openPurchaseModal(c, months, price);
+      openPurchaseModalInline(c, months, price);
     }
   });
 
-  /* ربط التحديد */
   setTimeout(() => {
     const picker = document.getElementById('durationPicker');
     if(picker){
@@ -169,45 +166,11 @@ function startCourseSubscription(courseId){
 }
 window.startCourseSubscription = startCourseSubscription;
 
-/* ================== حفظ حالة الاشتراك المؤقت (لإرسالها للدعم) ================== */
-window._pendingSubscription = null;
-
-function openPurchaseModal(course, months, price){
-  /* لو دالة الشراء القديمة موجودة، استخدمها بعد تحديث الـ currentProduct */
-  const fakeProduct = {
-    id: course.code + '_' + months + 'm',
-    title: course.name + ' — ' + months + ' شهر',
-    subtitle: 'اشتراك في دورة ' + course.name,
-    price: price,
-    currency: 'ر.س',
-    icon: course.icon,
-    color: course.color,
-    course_id: course.id,
-    months: months
-  };
-
-  /* استخدم دالة الشراء القديمة */
-  if(typeof openPurchaseModalInline === 'function'){
-    openPurchaseModalInline(fakeProduct);
-  } else {
-    /* البديل: عرض رسالة */
-    window._pendingSubscription = { course, months, price };
-    if(typeof startPurchase === 'function'){
-      /* try قديم */
-      window._currentFakeProduct = fakeProduct;
-      /* استدعاء يدوي */
-      toast('جاري تحضير الدفع...', 'ok');
-    }
-  }
-}
-window.openPurchaseModal = openPurchaseModal;
-
-/* ================== فلترة الملفات والفيديوهات ================== */
+/* ⭐ ربط ملف بفيديو + فلترة */
 function filterByCourse(items){
   if(!Array.isArray(items)) return [];
   if(typeof isPrivileged === 'function' && isPrivileged()) return items;
   if(!currentUserObj) return [];
-  /* لو المستخدم ما عنده دورة → يرى العناصر بدون دورة فقط */
   const myCourse = currentUserObj.course_id;
   return items.filter(item => {
     if(!item.course_id) return true;
@@ -216,7 +179,42 @@ function filterByCourse(items){
 }
 window.filterByCourse = filterByCourse;
 
-/* ================== التهيئة ================== */
+/* ⭐ مزامنة منتج → دورة */
+async function syncProductToCourse(product){
+  if(!product) return;
+  if(!product.course_code) return;
+
+  try{
+    const code = product.course_code;
+    const prices = {
+      "1": product.price || 45,
+      "3": Math.round((product.price || 45) * 2.8),
+      "6": Math.round((product.price || 45) * 4.4),
+      "12": Math.round((product.price || 45) * 7.5)
+    };
+
+    const payload = {
+      code: code,
+      name: product.title,
+      description: product.description || '',
+      icon: product.icon || 'fa-graduation-cap',
+      color: product.color || '#5b6cff',
+      prices: prices,
+      active: product.active !== false
+    };
+
+    const check = await sb.from('courses').select('id').eq('code', code).maybeSingle();
+    if(check.data){
+      await sb.from('courses').update(payload).eq('code', code);
+    } else {
+      await sb.from('courses').insert(payload);
+    }
+
+    await loadCourses();
+  }catch(e){ console.warn('syncProductToCourse failed', e); }
+}
+window.syncProductToCourse = syncProductToCourse;
+
 async function initCourseSystem(){
   await loadCourses();
   try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
