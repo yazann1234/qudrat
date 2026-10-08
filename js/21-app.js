@@ -522,3 +522,98 @@ window.addEventListener('beforeunload', () => {
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
   try{ if(NOTIF.channel) sb.removeChannel(NOTIF.channel); }catch(e){}
 });
+
+/* ============================================================
+   ⭐ إصلاح دقيق لشاشة الترحيب (بدون كسر أي شي)
+   - زر "رجوع" يعرض الترحيب
+   - عرض الترحيب لأي زائر بدون جلسة
+============================================================ */
+
+(function welcomeFix(){
+  /* 1) استبدال showWelcome — بدون شرط firstVisit */
+  const origShowWelcome = window.showWelcome;
+  window.showWelcome = async function(){
+    try{
+      window._appInitialized = false;
+      window._lastInitializedUserId = null;
+
+      const a = document.getElementById('auth');
+      if(a) a.classList.remove('open');
+
+      const ap = document.getElementById('app');
+      if(ap) ap.classList.remove('open','store-only','ready');
+
+      const w = document.getElementById('welcome');
+      if(w){
+        w.dataset.firstVisit = 'true';
+        w.classList.remove('exit');
+        w.style.display = 'flex';
+      }
+
+      const wl = document.getElementById('welcomeLogout');
+      if(wl){
+        try{
+          const r = await sb.auth.getSession();
+          wl.style.display = r.data.session ? 'inline-flex' : 'none';
+        }catch(e){ wl.style.display = 'none'; }
+      }
+    }catch(e){ console.warn('showWelcome error:', e); }
+  };
+
+  /* 2) استبدال forceShowWelcome */
+  window.forceShowWelcome = function(){
+    const w = document.getElementById('welcome');
+    if(w){
+      w.dataset.firstVisit = 'true';
+      w.classList.remove('exit');
+      w.style.display = 'flex';
+    }
+    const a = document.getElementById('auth');
+    if(a) a.classList.remove('open');
+    const ap = document.getElementById('app');
+    if(ap) ap.classList.remove('open','store-only','ready');
+  };
+
+  /* 3) اعتراض زر "رجوع" من تسجيل الدخول */
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#authBack')) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const a = document.getElementById('auth');
+    if(a) a.classList.remove('open');
+
+    const ap = document.getElementById('app');
+    if(ap) ap.classList.remove('open','store-only','ready');
+
+    const w = document.getElementById('welcome');
+    if(w){
+      w.dataset.firstVisit = 'true';
+      w.classList.remove('exit');
+      w.style.display = 'flex';
+      w.style.opacity = '1';
+      w.style.visibility = 'visible';
+    }
+  }, true);
+
+  /* 4) عند الإقلاع: أي زائر بدون جلسة → شاشة الترحيب */
+  setTimeout(async () => {
+    try{
+      const r = await sb.auth.getSession();
+      if(!r.data.session){
+        const w = document.getElementById('welcome');
+        if(w){
+          w.dataset.firstVisit = 'true';
+          w.classList.remove('exit');
+          w.style.display = 'flex';
+        }
+        const a = document.getElementById('auth');
+        if(a) a.classList.remove('open');
+        const ap = document.getElementById('app');
+        if(ap) ap.classList.remove('open','store-only','ready');
+      }
+    }catch(e){}
+  }, 800);
+
+  console.log('✅ Welcome fix loaded (small patch)');
+})();
