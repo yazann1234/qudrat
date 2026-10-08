@@ -3206,3 +3206,62 @@ img{-webkit-user-drag:none;user-drag:none}
   .log-row{padding:12px 14px;gap:10px}
   .log-icon{width:36px;height:36px;font-size:.9rem}
 }
+
+/* الدورات */
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:30px}
+.course-card{background:var(--card);border:2px solid var(--border);border-radius:22px;padding:24px;position:relative;transition:.3s}
+.course-card:hover{border-color:var(--cc);transform:translateY(-4px);box-shadow:0 14px 40px rgba(0,0,0,.1)}
+.course-card.mine{border-color:var(--success);background:linear-gradient(140deg,rgba(34,197,94,.05),transparent)}
+.course-active-badge{position:absolute;top:14px;left:14px;background:var(--success);color:#fff;font-size:.7rem;font-weight:900;padding:5px 12px;border-radius:100px}
+.course-icon{width:66px;height:66px;border-radius:18px;display:grid;place-items:center;font-size:1.7rem;color:#fff;background:linear-gradient(140deg,var(--cc),color-mix(in srgb,var(--cc) 60%,#000));margin-bottom:14px;box-shadow:0 10px 24px color-mix(in srgb,var(--cc) 40%,transparent)}
+.course-card h3{font-size:1.2rem;font-weight:900;margin-bottom:8px}
+.course-desc{font-size:.86rem;color:var(--muted);line-height:1.8;margin-bottom:16px}
+.course-prices{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.course-price-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:.88rem}
+.course-price-item .months{font-weight:700;color:var(--muted)}
+.course-price-item b{font-size:1.1rem;font-weight:900;color:var(--cc)}
+.course-subscribe-btn{width:100%;padding:14px;background:linear-gradient(100deg,var(--cc),color-mix(in srgb,var(--cc) 65%,#000));color:#fff;border:none;border-radius:14px;font-weight:800;font-size:.94rem;cursor:pointer;transition:.3s;font-family:inherit}
+.course-subscribe-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 24px color-mix(in srgb,var(--cc) 45%,transparent)}
+.course-subscribe-btn:disabled{opacity:.6;cursor:not-allowed;background:var(--muted)}
+
+/* منتقي المدة */
+.duration-picker{display:flex;flex-direction:column;gap:10px}
+.duration-option{cursor:pointer}
+.duration-option input{display:none}
+.duration-card{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border:2px solid var(--border);border-radius:14px;background:var(--bg);transition:.2s}
+.duration-option.on .duration-card{border-color:var(--primary);background:var(--primary-soft)}
+.duration-label{font-weight:700}
+.duration-price b{font-size:1.3rem;font-weight:900;color:var(--primary)}
+.duration-price span{font-size:.8rem;color:var(--muted)}
+
+/* الإشعارات */
+.notif-bell-wrap{position:relative;display:inline-block;margin-bottom:16px}
+.notif-bell-btn{width:46px;height:46px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;display:grid;place-items:center;font-size:1rem;position:relative;transition:.2s;box-shadow:var(--shadow-sm)}
+.notif-bell-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.notif-badge{position:absolute;top:-4px;left:-4px;background:var(--danger);color:#fff;font-size:.62rem;font-weight:900;padding:2px 7px;border-radius:100px;min-width:18px;text-align:center;border:2px solid var(--card);animation:notifPulse 2s ease-in-out infinite}
+@keyframes notifPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.notifications-panel{position:absolute;top:80px;right:20px;width:380px;max-width:calc(100vw - 40px);max-height:500px;background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.18);z-index:100;display:none;flex-direction:column;overflow:hidden}
+.notifications-panel.open{display:flex;animation:notifSlide .3s cubic-bezier(.2,.8,.3,1)}
+@keyframes notifSlide{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--card-2)}
+.notif-header b{font-size:.94rem;font-weight:900;display:flex;align-items:center;gap:8px}
+.notif-header b i{color:var(--primary)}
+.notif-mark-read{font-family:inherit;font-size:.74rem;font-weight:700;color:var(--primary);background:var(--primary-soft);border:none;padding:6px 12px;border-radius:8px;cursor:pointer}
+.notif-mark-read:hover{background:var(--primary);color:#fff}
+.notif-list{flex:1;overflow-y:auto;padding:8px}
+.notif-item{display:flex;gap:12px;padding:12px 14px;border-radius:12px;transition:.2s;margin-bottom:4px}
+.notif-item:hover{background:var(--bg)}
+.notif-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1rem;flex-shrink:0}
+.notif-body{flex:1;min-width:0}
+.notif-body b{font-size:.86rem;font-weight:800;display:block;margin-bottom:4px}
+.notif-body p{font-size:.78rem;color:var(--muted);line-height:1.7;margin-bottom:6px}
+.notif-body small{font-size:.7rem;color:var(--muted);font-weight:600}
+.notif-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.notif-empty i{font-size:2.5rem;opacity:.35;color:var(--primary);margin-bottom:12px;display:block}
+.notif-empty h4{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:4px}
+.notif-empty p{font-size:.78rem}
+
+@media (max-width:640px){
+  .courses-grid{grid-template-columns:1fr}
+  .notifications-panel{top:70px;right:10px;left:10px;width:auto}
+}
