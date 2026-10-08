@@ -2,9 +2,6 @@
    18) ADMIN — لوحة الأدمن الكاملة
 ============================================================ */
 
-/* ============================================================
-   عرض لوحة الأدمن الرئيسية
-============================================================ */
 function renderAdmin(){
   if(!isPrivileged()) return;
 
@@ -19,11 +16,24 @@ function renderAdmin(){
   setTxt('adProducts', (DB.products || []).filter(p => p.active).length);
   setTxt('adPurchases', nonAdmins.filter(u => u.purchase_submitted).length);
 
+  /* ⭐ إظهار/إخفاء تبويبات الرئيس */
+  const ownerTabs = document.querySelectorAll('.owner-only-tab');
+  ownerTabs.forEach(t => {
+    t.style.display = (currentUserObj && currentUserObj.role === 'owner') ? '' : 'none';
+  });
+
   renderUsersTable();
   renderAdminFiles();
   if(typeof renderAdminVideos === 'function') renderAdminVideos();
   if(typeof renderAdminProducts === 'function') renderAdminProducts();
   if(typeof renderStoreSettings === 'function') renderStoreSettings();
+  if(typeof renderAdminQuizQuestions === 'function') renderAdminQuizQuestions();
+
+  /* ⭐ تحميل بيانات الرئيس */
+  if(currentUserObj && currentUserObj.role === 'owner'){
+    try{ if(typeof loadGiftUsersList === 'function') loadGiftUsersList(); }catch(e){}
+    try{ if(typeof renderAdminLogs === 'function') renderAdminLogs(); }catch(e){}
+  }
 }
 window.renderAdmin = renderAdmin;
 
@@ -46,7 +56,6 @@ function renderUsersTable(){
   else if(filter === 'off') list = list.filter(u => u.status !== 'approved');
   else if(filter === 'admins') list = list.filter(u => u.role === 'admin' || u.role === 'owner');
 
-  /* الترتيب: owner > admin > pending > others */
   list.sort((a,b) => {
     const rank = u => {
       if(u.role === 'owner') return 0;
@@ -72,7 +81,11 @@ function renderUsersTable(){
       let statusBadge;
       if(u.role === 'owner') statusBadge = '<span class="role-badge owner"><i class="fas fa-crown"></i> رئيس المنصة</span>';
       else if(u.role === 'admin') statusBadge = '<span class="role-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
-      else if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
+      else if(u.status === 'approved'){
+        const daysLeft = u.subscription_end ? Math.ceil((new Date(u.subscription_end) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+        const subLabel = daysLeft !== null ? ` (${daysLeft > 0 ? daysLeft + ' يوم' : 'منتهي'})` : '';
+        statusBadge = `<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك${subLabel}</span>`;
+      }
       else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
       else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> مرفوض</span>';
 
@@ -88,7 +101,7 @@ function renderUsersTable(){
 
       if(!isTargetOwner){
         if(u.status !== 'approved' && u.role !== 'admin'){
-          actions += `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
+          actions += `<button class="btn btn-success btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
         }
         if(u.status !== 'rejected' && u.role !== 'admin'){
           actions += `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>`;
@@ -118,7 +131,7 @@ function renderUsersTable(){
           <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
           <div class="info">
             <b>${escapeHtml(u.name || '—')}</b>
-            <small>${u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—'}</small>
+            <small>${u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—'}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</small>
           </div>
         </div>
         <div class="email-cell" style="direction:ltr;text-align:right">${escapeHtml(u.email)}</div>
@@ -131,56 +144,61 @@ function renderUsersTable(){
 }
 window.renderUsersTable = renderUsersTable;
 
-/* ============================================================
-   نسخ
-============================================================ */
-window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت كلمة السر', 'ok'); }catch(e){} };
+window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت', 'ok'); }catch(e){} };
 
 /* ============================================================
-   عرض الإيصال
+   مودال التفعيل بالاشتراك
 ============================================================ */
-window.viewReceipt = (url) => {
-  if(!url) return;
+window.openApproveModal = (userId) => {
+  const u = DB.users.find(x => x.id === userId);
+  if(!u) return;
+
   openModal({
-    title: '🧾 إيصال التحويل',
-    text: 'رابط صورة الإيصال المرفقة من المستخدم.',
+    title: 'تفعيل اشتراك الطالب',
+    text: `اختر مدة الاشتراك للمستخدم: ${escapeHtml(u.name || u.email)}`,
     bodyHTML: `
-      <div style="text-align:center;margin-bottom:12px">
-        <img src="${escapeHtml(url)}" alt="الإيصال" style="max-width:100%;max-height:60vh;border-radius:12px;border:1px solid var(--border);background:#fff" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <p style="display:none;color:var(--danger);font-weight:700;font-size:.84rem">تعذّر تحميل الصورة</p>
+      <div class="form-group">
+        <label>مدة الاشتراك</label>
+        <select id="approveDuration" style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="1">شهر واحد (30 يوم)</option>
+          <option value="2">شهرين (60 يوم)</option>
+          <option value="3" selected>3 أشهر (90 يوم)</option>
+          <option value="6">6 أشهر (180 يوم)</option>
+          <option value="12">سنة كاملة (365 يوم)</option>
+        </select>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a href="${escapeHtml(url)}" target="_blank" class="btn btn-primary" style="flex:1;text-decoration:none;justify-content:center">
-          <i class="fas fa-external-link-alt"></i> فتح في نافذة جديدة
-        </a>
-        <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${escapeHtml(url).replace(/'/g,'&#39;')}');toast('نُسخ الرابط','ok')">
-          <i class="fas fa-copy"></i> نسخ
-        </button>
+      <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
+        <i class="fas fa-info-circle"></i> عند انتهاء المدة، سيتم إرجاع الطالب لصفحة انتظار التفعيل تلقائياً.
       </div>
     `,
-    okText: 'إغلاق',
-    onOk: () => {}
+    okText: 'تفعيل الاشتراك',
+    onOk: async () => {
+      const months = parseInt(document.getElementById('approveDuration').value, 10);
+      if(typeof activateSubscription === 'function'){
+        await activateSubscription(userId, months);
+      }
+      try{
+        const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = data || [];
+        renderUsersTable();
+      }catch(e){}
+    }
   });
 };
 
-/* ============================================================
-   تفعيل/رفض
-============================================================ */
 window.approveUser = async id => {
-  const { error } = await sb.from('profiles').update({ status:'approved' }).eq('id', id);
-  if(error){ toast('فشل: ' + error.message, 'err'); return; }
-  toast('✓ تم تفعيل الاشتراك', 'ok');
+  openApproveModal(id);
 };
 
 window.rejectUser = async id => {
   const { error } = await sb.from('profiles').update({ status:'rejected' }).eq('id', id);
   if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  if(typeof logAdminAction === 'function'){
+    await logAdminAction('reject_user', id, 'رفض طلب مستخدم');
+  }
   toast('تم رفض المستخدم', 'warn');
 };
 
-/* ============================================================
-   owner فقط: ترقية / تنزيل
-============================================================ */
 window.promoteToAdmin = (id) => {
   if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
   const u = DB.users.find(x => x.id === id); if(!u) return;
@@ -188,8 +206,9 @@ window.promoteToAdmin = (id) => {
     const { error } = await sb.from('profiles').update({ role: 'admin' }).eq('id', id);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     u.role = 'admin';
+    if(typeof logAdminAction === 'function'){ await logAdminAction('promote_admin', id, 'ترقية إلى أدمن'); }
     renderUsersTable();
-    toast('✓ تم ترقية المستخدم إلى أدمن', 'ok');
+    toast('✓ تم الترقية', 'ok');
   });
 };
 
@@ -200,14 +219,12 @@ window.demoteAdmin = (id) => {
     const { error } = await sb.from('profiles').update({ role: 'user' }).eq('id', id);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     u.role = 'user';
+    if(typeof logAdminAction === 'function'){ await logAdminAction('demote_admin', id, 'إزالة صلاحية الأدمن'); }
     renderUsersTable();
-    toast('تمت إزالة صلاحية الأدمن', 'warn');
+    toast('تمت الإزالة', 'warn');
   }, true);
 };
 
-/* ============================================================
-   تعديل المستخدم
-============================================================ */
 window.editUser = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
   const isOwnerUser = isOwner();
@@ -220,9 +237,7 @@ window.editUser = id => {
 
   openModal({
     title: 'تعديل المستخدم',
-    text: isOwnerUser
-      ? 'رئيس المنصة يمكنه تعديل كل شيء: الاسم، البريد، كلمة المرور، الدور.'
-      : 'عدّل البيانات الأساسية. تغيير كلمة السر يتم عبر خدمة آمنة.',
+    text: isOwnerUser ? 'رئيس المنصة يمكنه تعديل كل شيء.' : 'عدّل البيانات الأساسية.',
     bodyHTML: `
       <div class="form-group" style="margin-bottom:12px">
         <label>الاسم</label>
@@ -233,6 +248,12 @@ window.editUser = id => {
       <div class="form-group" style="margin-bottom:12px">
         <label>البريد الإلكتروني</label>
         <input type="email" id="euEmail" value="${escapeHtml(u.email||'')}"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label>رقم الجوال</label>
+        <input type="tel" id="euPhone" value="${escapeHtml(u.phone||'')}" maxlength="10"
           style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
       </div>
 
@@ -269,6 +290,12 @@ window.editUser = id => {
           <option value="rejected" ${u.status==='rejected'?'selected':''}>❌ مرفوض</option>
         </select>
       </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label>مدة الاشتراك (لو الحالة مشترك) — عدد الأشهر</label>
+        <input type="number" id="euMonths" min="1" max="12" value="${u.subscription_months || 1}"
+          style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
       ` : ''}
 
       <div id="euStatusBar" style="display:none;padding:10px 12px;border-radius:10px;font-size:.78rem;font-weight:700;text-align:center;margin-top:8px"></div>
@@ -276,6 +303,7 @@ window.editUser = id => {
     okText: 'حفظ',
     onOk: async () => {
       const newPw = document.getElementById('euPw').value.trim();
+      const newPhone = document.getElementById('euPhone').value.trim().replace(/\D/g, '');
       const statusBar = document.getElementById('euStatusBar');
       const showBar = (kind, html) => {
         if(!statusBar) return;
@@ -291,14 +319,29 @@ window.editUser = id => {
         email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email
       };
 
+      if(newPhone && newPhone.length === 10) upd.phone = newPhone;
+
       const statusEl = document.getElementById('euStatus');
       if(statusEl) upd.status = statusEl.value;
 
       const roleEl = document.getElementById('euRole');
       if(roleEl) upd.role = roleEl.value;
 
+      /* ⭐ لو الحالة تحولت لمشترك → حدّد مدة الاشتراك */
+      if(statusEl && statusEl.value === 'approved' && u.status !== 'approved'){
+        const months = parseInt(document.getElementById('euMonths').value, 10) || 1;
+        const start = new Date();
+        const end = new Date();
+        end.setMonth(end.getMonth() + months);
+        upd.subscription_start = start.toISOString();
+        upd.subscription_end = end.toISOString();
+        upd.subscription_months = months;
+      }
+
       const { error } = await sb.from('profiles').update(upd).eq('id', id);
       if(error){ showBar('err', '<i class="fas fa-circle-xmark"></i> فشل: ' + error.message); return; }
+
+      if(typeof logAdminAction === 'function'){ await logAdminAction('edit_user', id, 'تعديل بيانات المستخدم', upd); }
 
       if(newPw && newPw !== u.password_hint){
         if(newPw.length < 8){ showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور 8 أحرف على الأقل'); return; }
@@ -306,13 +349,14 @@ window.editUser = id => {
 
         let success = false;
         try{
-          const { data: { session: curSess } } = await sb.auth.getSession();
+          const r = await sb.auth.getSession();
+          const curSess = r.data.session;
           const res = await fetch(CHANGE_PASS_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '') },
             body: JSON.stringify({ userId: id, newPassword: newPw })
           });
-          if(res.ok){ const r = await res.json(); if(r && r.success) success = true; }
+          if(res.ok){ const j = await res.json(); if(j && j.success) success = true; }
         }catch(e){}
 
         if(success){
@@ -351,9 +395,6 @@ window.editUser = id => {
   });
 };
 
-/* ============================================================
-   إعادة تعيين كلمة المرور بالبريد
-============================================================ */
 window.resetUserPassword = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
   confirmBox('إعادة تعيين كلمة السر', `سيتم إرسال رابط إعادة تعيين كلمة السر إلى: ${escapeHtml(u.email)}`, async () => {
@@ -365,13 +406,12 @@ window.resetUserPassword = id => {
   });
 };
 
-/* ============================================================
-   حذف مستخدم
-============================================================ */
 window.deleteUser = id => {
   if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
   const u = DB.users.find(x => x.id === id); if(!u) return;
   confirmBox('حذف المستخدم', `سيتم حذف الحساب «${escapeHtml(u.name)}» (${escapeHtml(u.email)}) نهائيًا مع كل تقدمه. متأكد؟`, async () => {
+    if(typeof logAdminAction === 'function'){ await logAdminAction('delete_user', id, `حذف المستخدم: ${u.name}`, { email: u.email }); }
+
     try{ await sb.from('user_progress').delete().eq('user_id', id); }catch(e){}
     try{ await sb.from('user_drawings').delete().eq('user_id', id); }catch(e){}
     try{ await sb.from('video_progress').delete().eq('user_id', id); }catch(e){}
@@ -383,9 +423,27 @@ window.deleteUser = id => {
   }, true);
 };
 
-/* ============================================================
-   أحداث البحث والتصفية
-============================================================ */
+window.viewReceipt = (url) => {
+  if(!url) return;
+  openModal({
+    title: '🧾 إيصال التحويل',
+    text: '',
+    bodyHTML: `
+      <div style="text-align:center;margin-bottom:12px">
+        <img src="${escapeHtml(url)}" alt="الإيصال" style="max-width:100%;max-height:60vh;border-radius:12px;border:1px solid var(--border);background:#fff" onerror="this.style.display='none'">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="${escapeHtml(url)}" target="_blank" class="btn btn-primary" style="flex:1;text-decoration:none;justify-content:center">
+          <i class="fas fa-external-link-alt"></i> فتح في نافذة جديدة
+        </a>
+      </div>
+    `,
+    okText: 'إغلاق',
+    onOk: () => {}
+  });
+};
+
+/* أحداث البحث */
 document.addEventListener('DOMContentLoaded', () => {
   const searchEl = document.getElementById('userSearch');
   if(searchEl && !searchEl.dataset.bound){
@@ -400,12 +458,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ============================================================
-   عرض ملفات الأدمن
+   ملفات
 ============================================================ */
 function renderAdminFiles(){
   const box = document.getElementById('adminFilesGrid'); if(!box) return;
   if(!DB.files.length){
-    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3><p>اذهب لتبويب «إضافة ملف» لرفع أول ملف PDF</p></div>';
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3></div>';
     return;
   }
   box.innerHTML = DB.files.map(f => `
@@ -419,7 +477,6 @@ function renderAdminFiles(){
       </div>
       <div class="afc-meta">
         <span>${f.important ? '<i class="fas fa-star" style="color:var(--accent)"></i> مهم' : 'ملف عادي'}</span>
-        <span>${f.created_at ? new Date(f.created_at).toLocaleDateString('ar-SA') : ''}</span>
       </div>
       <div class="afc-actions">
         <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
@@ -443,13 +500,11 @@ window.deleteFile = (id, path) => {
     try{ await sb.storage.from('pdfs').remove([path]); }catch(e){}
     const { error } = await sb.from('files').delete().eq('id', id);
     if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
+    if(typeof logAdminAction === 'function'){ await logAdminAction('delete_file', null, `حذف ملف: ${f.title}`); }
     toast('تم حذف الملف', 'ok');
   }, true);
 };
 
-/* ============================================================
-   رفع ملف PDF جديد
-============================================================ */
 let currentPdfBlob = null;
 const uploadZone = document.getElementById('uploadZone');
 const afPdfInput = document.getElementById('afPdfInput');
@@ -474,8 +529,8 @@ if(uploadZone && afPdfInput && !uploadZone.dataset.bound){
 }
 
 async function handlePdfFile(file){
-  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('الرجاء اختيار ملف PDF فقط', 'warn'); return; }
-  if(file.size > 100 * 1024 * 1024){ toast('حجم الملف كبير جداً (الحد 100 ميجا)', 'warn'); return; }
+  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('PDF فقط', 'warn'); return; }
+  if(file.size > 100 * 1024 * 1024){ toast('الحد 100 ميجا', 'warn'); return; }
   currentPdfBlob = file;
   const sizeMB = (file.size / 1024 / 1024).toFixed(2);
   let pages = '?';
@@ -538,11 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { error: upErr } = await sb.storage.from('pdfs').upload(storagePath, currentPdfBlob, {
         cacheControl: '3600', upsert: false, contentType: 'application/pdf'
       });
-      if(upErr){
-        btn.disabled = false; btn.innerHTML = orig;
-        toast('فشل رفع الملف: ' + upErr.message, 'err');
-        return;
-      }
+      if(upErr){ btn.disabled = false; btn.innerHTML = orig; toast('فشل: ' + upErr.message, 'err'); return; }
 
       const choice = typeof pick === 'function' ? pick(ICONS) : { i: 'fa-book', c: '#5b6cff' };
       const { error: dbErr } = await sb.from('files').insert({
@@ -554,9 +605,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if(dbErr){
         try{ await sb.storage.from('pdfs').remove([storagePath]); }catch(e){}
         btn.disabled = false; btn.innerHTML = orig;
-        toast('فشل حفظ البيانات: ' + dbErr.message, 'err');
+        toast('فشل: ' + dbErr.message, 'err');
         return;
       }
+
+      if(typeof logAdminAction === 'function'){ await logAdminAction('upload_file', null, `رفع ملف: ${title}`, { category: cat }); }
 
       btn.disabled = false; btn.innerHTML = orig;
       const t = document.getElementById('afTitle'); if(t) t.value = '';
@@ -567,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(afPdfInput) afPdfInput.value = '';
       currentPdfBlob = null;
 
-      toast('✓ تم رفع الملف بنجاح', 'ok');
+      toast('✓ تم رفع الملف', 'ok');
 
       document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
       document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
@@ -579,9 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* ============================================================
-   تبويبات لوحة الأدمن
-============================================================ */
+/* تبويبات لوحة الأدمن */
 document.addEventListener('click', (e) => {
   const tabBtn = e.target.closest('.admin-tabs button');
   if(tabBtn){
@@ -594,9 +645,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* ============================================================
-   إضافة مستخدم من لوحة الأدمن
-============================================================ */
+/* إضافة مستخدم */
 (function bindAdminCreateUser(){
   const btn = document.getElementById('nuCreateBtn');
   if(!btn || btn.dataset.bound) return;
@@ -619,14 +668,24 @@ document.addEventListener('click', (e) => {
 
     try{
       const { data, error } = await sbTemp.auth.signUp({ email, password: pass, options: { data: { name } } });
-      if(error){ toast('فشل الإنشاء: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
+      if(error){ toast('فشل: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
 
       if(data && data.user){
         await new Promise(r => setTimeout(r, 800));
         const upd = { name, password_hint: pass };
-        if(approve) upd.status = 'approved';
+        if(approve){
+          upd.status = 'approved';
+          const start = new Date();
+          const end = new Date();
+          end.setMonth(end.getMonth() + 1);
+          upd.subscription_start = start.toISOString();
+          upd.subscription_end = end.toISOString();
+          upd.subscription_months = 1;
+        }
         const { error: upErr } = await sb.from('profiles').update(upd).eq('id', data.user.id);
-        if(upErr) console.warn('auto update failed', upErr);
+        if(upErr) console.warn('update failed', upErr);
+
+        if(typeof logAdminAction === 'function'){ await logAdminAction('create_user', data.user.id, `إنشاء حساب: ${name}`); }
       }
 
       toast('✓ تم إنشاء الحساب', 'ok');
@@ -634,8 +693,8 @@ document.addEventListener('click', (e) => {
       document.getElementById('nuEmail').value = '';
 
       try{
-        const { data: usersData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-        DB.users = usersData || [];
+        const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = r.data || [];
         renderAdmin();
       }catch(e){}
     }catch(e){ toast('خطأ: ' + e.message, 'err'); }
@@ -656,13 +715,13 @@ document.addEventListener('click', (e) => {
 })();
 
 /* ============================================================
-   إدارة الفيديوهات في لوحة الأدمن
+   الفيديوهات
 ============================================================ */
 function renderAdminVideos(){
   const box = document.getElementById('adminVideosGrid'); if(!box) return;
   const list = DB.videos || [];
   if(!list.length){
-    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات</h3><p>اذهب لتبويب «إضافة فيديو» لإضافة أول فيديو</p></div>';
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات</h3></div>';
     return;
   }
   box.innerHTML = list.map(v => `
@@ -687,23 +746,24 @@ window.renderAdminVideos = renderAdminVideos;
 window.toggleVideoImportant = async id => {
   const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
   const { error } = await sb.from('videos').update({ important: !v.important }).eq('id', id);
-  if(error){ toast('فشل: ' + error.message, 'err'); return; }
-  toast(v.important ? 'أُزيل التمييز' : 'أصبح الفيديو مميزاً', 'ok');
+  if(error){ toast('فشل', 'err'); return; }
+  toast(v.important ? 'أُزيل التمييز' : 'أصبح مميزاً', 'ok');
 };
 
 window.deleteVideo = id => {
   const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
   confirmBox('حذف الفيديو', `حذف «${escapeHtml(v.title)}»؟`, async () => {
     const { error } = await sb.from('videos').delete().eq('id', id);
-    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
-    toast('تم حذف الفيديو', 'ok');
+    if(error){ toast('فشل', 'err'); return; }
+    if(typeof logAdminAction === 'function'){ await logAdminAction('delete_video', null, `حذف فيديو: ${v.title}`); }
+    toast('تم الحذف', 'ok');
   }, true);
 };
 
 window.linkVideoToFile = (videoId) => {
   const v = (DB.videos || []).find(x => x.id === videoId); if(!v) return;
   const list = DB.files || [];
-  if(!list.length){ toast('لا توجد ملفات لربطها', 'warn'); return; }
+  if(!list.length){ toast('لا توجد ملفات', 'warn'); return; }
   openModal({
     title: 'ربط الفيديو بملف كـ «شرح»',
     text: 'اختر الملف الذي سيعرض هذا الفيديو كشرح له.',
@@ -732,14 +792,12 @@ window.doLinkVideo = async (videoId, fileId) => {
   if(error){ toast('فشل: ' + error.message, 'err'); return; }
   f.explanation_video_id = videoId;
   const m = document.getElementById('modal'); if(m) m.classList.remove('open');
-  toast('✓ تم ربط الفيديو بالملف', 'ok');
+  toast('✓ تم الربط', 'ok');
   if(typeof renderAdminFiles === 'function') renderAdminFiles();
   if(typeof renderFiles === 'function') renderFiles();
 };
 
-/* ============================================================
-   حفظ الفيديو
-============================================================ */
+/* حفظ الفيديو */
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('saveVideoBtn');
   if(btn && !btn.dataset.bound){
@@ -771,6 +829,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if(error){ toast('فشل: ' + error.message, 'err'); return; }
 
+      if(typeof logAdminAction === 'function'){ await logAdminAction('add_video', null, `إضافة فيديو: ${title}`); }
+
       document.getElementById('avUrl').value = '';
       document.getElementById('avTitle').value = '';
       document.getElementById('avDesc').value = '';
@@ -778,49 +838,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const p = document.getElementById('avUrlPreview'); if(p) p.style.display = 'none';
 
       toast('✓ تم إضافة الفيديو', 'ok');
-
-      document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
-      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
-      const tab = document.querySelector('.admin-tabs button[data-panel="videos"]');
-      if(tab) tab.classList.add('on');
-      const panel = document.getElementById('panel-videos');
-      if(panel) panel.classList.add('on');
-
       if(typeof loadVideos === 'function') loadVideos();
-    });
-  }
-
-  const clr = document.getElementById('clearVideoBtn');
-  if(clr && !clr.dataset.bound){
-    clr.dataset.bound = '1';
-    clr.addEventListener('click', () => {
-      document.getElementById('avUrl').value = '';
-      document.getElementById('avTitle').value = '';
-      document.getElementById('avDesc').value = '';
-      document.getElementById('avImportant').checked = false;
-      const p = document.getElementById('avUrlPreview'); if(p) p.style.display = 'none';
-    });
-  }
-
-  const avUrl = document.getElementById('avUrl');
-  if(avUrl && !avUrl.dataset.bound){
-    avUrl.dataset.bound = '1';
-    avUrl.addEventListener('input', e => {
-      const ytId = extractYoutubeId(e.target.value);
-      const prev = document.getElementById('avUrlPreview');
-      const txt = document.getElementById('avUrlPreviewText');
-      if(ytId && prev && txt){
-        prev.style.display = 'block';
-        txt.textContent = 'معرف الفيديو: ' + ytId;
-      } else if(prev){
-        prev.style.display = 'none';
-      }
     });
   }
 });
 
 /* ============================================================
-   إدارة المنتجات
+   المنتجات
 ============================================================ */
 const PRODUCT_ICONS = [
   'fa-graduation-cap','fa-book','fa-calculator','fa-brain',
@@ -843,12 +867,7 @@ function renderAdminProducts(){
   if(stat1) stat1.textContent = list.filter(p => p.active).length;
 
   if(!list.length){
-    box.innerHTML = `
-      <div class="admin-empty" style="grid-column:1/-1">
-        <div class="em-ic"><i class="fas fa-shopping-bag"></i></div>
-        <h3>لا توجد منتجات</h3>
-        <p>اضغط «منتج جديد» أو «إضافة الدورة الافتراضية» للبدء</p>
-      </div>`;
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-shopping-bag"></i></div><h3>لا توجد منتجات</h3></div>';
     return;
   }
 
@@ -861,28 +880,15 @@ function renderAdminProducts(){
           <small>${escapeHtml(p.subtitle || '')}</small>
         </div>
       </div>
-
       <div class="admin-product-badges">
         ${p.popular ? '<span class="popular"><i class="fas fa-fire"></i> الأكثر طلباً</span>' : ''}
         ${p.active ? '<span class="active"><i class="fas fa-eye"></i> معروض</span>' : '<span class="inactive"><i class="fas fa-eye-slash"></i> مخفي</span>'}
-        <span>${(p.features || []).length} ميزة</span>
       </div>
-
-      <div class="admin-product-price">
-        <b>${p.price || 0}</b>
-        <span>${escapeHtml(p.currency || 'ر.س')}</span>
-      </div>
-
+      <div class="admin-product-price"><b>${p.price || 0}</b> <span>${escapeHtml(p.currency || 'ر.س')}</span></div>
       <div class="admin-product-actions">
-        <button class="btn btn-ghost btn-sm" onclick="adminEditProduct('${p.id}')" style="flex:1">
-          <i class="fas fa-pen"></i> تعديل
-        </button>
-        <button class="btn btn-ghost btn-sm" onclick="adminToggleProductActive('${p.id}')">
-          <i class="fas ${p.active ? 'fa-eye-slash' : 'fa-eye'}"></i>
-        </button>
-        <button class="btn btn-danger btn-sm" onclick="adminDeleteProduct('${p.id}')">
-          <i class="fas fa-trash"></i>
-        </button>
+        <button class="btn btn-ghost btn-sm" onclick="adminEditProduct('${p.id}')" style="flex:1"><i class="fas fa-pen"></i> تعديل</button>
+        <button class="btn btn-ghost btn-sm" onclick="adminToggleProductActive('${p.id}')"><i class="fas ${p.active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="adminDeleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
@@ -955,9 +961,7 @@ function renderIconPicker(){
   const box = document.getElementById('pfIconPicker');
   if(!box) return;
   box.innerHTML = PRODUCT_ICONS.map(ic => `
-    <button type="button" class="icon-pick ${ic === pfSelectedIcon ? 'on' : ''}" data-icon="${ic}">
-      <i class="fas ${ic}"></i>
-    </button>
+    <button type="button" class="icon-pick ${ic === pfSelectedIcon ? 'on' : ''}" data-icon="${ic}"><i class="fas ${ic}"></i></button>
   `).join('');
   box.querySelectorAll('.icon-pick').forEach(b => {
     b.addEventListener('click', () => {
@@ -981,27 +985,23 @@ function renderColorPicker(){
   });
 }
 
-/* حفظ المنتج */
 document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('pfSave');
   if(saveBtn && !saveBtn.dataset.bound){
     saveBtn.dataset.bound = '1';
     saveBtn.addEventListener('click', async () => {
       if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
-
       const id = document.getElementById('pfId').value.trim();
       const title = document.getElementById('pfTitle').value.trim();
       const subtitle = document.getElementById('pfSubtitle').value.trim();
       const description = document.getElementById('pfDesc').value.trim();
       const price = parseFloat(document.getElementById('pfPrice').value) || 0;
       const currency = document.getElementById('pfCurrency').value.trim() || 'ر.س';
-      const featuresRaw = document.getElementById('pfFeatures').value;
-      const features = featuresRaw.split('\n').map(s => s.trim()).filter(Boolean);
+      const features = document.getElementById('pfFeatures').value.split('\n').map(s => s.trim()).filter(Boolean);
       const popular = document.getElementById('pfPopular').checked;
       const active = document.getElementById('pfActive').checked;
 
       if(!title){ toast('أدخل اسم المنتج', 'warn'); return; }
-      if(price < 0){ toast('السعر غير صحيح', 'warn'); return; }
 
       const payload = { title, subtitle, description, price, currency, icon: pfSelectedIcon, color: pfSelectedColor, features, popular, active };
 
@@ -1023,18 +1023,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if(error){ toast('فشل: ' + error.message, 'err'); return; }
 
-      toast(id ? '✓ تم تحديث المنتج' : '✓ تم إضافة المنتج', 'ok');
-
+      toast(id ? '✓ تم التحديث' : '✓ تم الإضافة', 'ok');
       if(typeof loadProducts === 'function') await loadProducts();
       if(typeof renderProducts === 'function') renderProducts();
       backToProductsList();
     });
-  }
-
-  const cancelBtn = document.getElementById('pfCancel');
-  if(cancelBtn && !cancelBtn.dataset.bound){
-    cancelBtn.dataset.bound = '1';
-    cancelBtn.addEventListener('click', backToProductsList);
   }
 });
 
@@ -1042,29 +1035,23 @@ window.adminToggleProductActive = async id => {
   const p = (DB.products || []).find(x => x.id === id);
   if(!p) return;
   const { error } = await sb.from('products').update({ active: !p.active }).eq('id', id);
-  if(error){ toast('فشل: ' + error.message, 'err'); return; }
-  toast(p.active ? 'تم إخفاء المنتج' : 'أصبح المنتج معروضاً', 'ok');
+  if(error){ toast('فشل', 'err'); return; }
+  toast(p.active ? 'تم الإخفاء' : 'أصبح معروضاً', 'ok');
 };
 
 window.adminDeleteProduct = id => {
   const p = (DB.products || []).find(x => x.id === id);
   if(!p) return;
-  confirmBox('حذف المنتج', `حذف «${escapeHtml(p.title)}»؟ لا يمكن التراجع.`, async () => {
+  confirmBox('حذف المنتج', `حذف «${escapeHtml(p.title)}»؟`, async () => {
     const { error } = await sb.from('products').delete().eq('id', id);
-    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
-    toast('تم حذف المنتج', 'ok');
+    if(error){ toast('فشل', 'err'); return; }
+    toast('تم الحذف', 'ok');
   }, true);
 };
 
-/* ============================================================
-   ⭐ زر إضافة الدورة الافتراضية (مُحسَّن)
-============================================================ */
+/* زر الدورة الافتراضية */
 async function seedDefaultProduct(){
-  if(!isPrivileged()){
-    toast('هذه الصلاحية للأدمن فقط', 'err');
-    return;
-  }
-
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
   const btn = document.getElementById('seedDefaultProductBtn');
   if(!btn || btn.disabled) return;
 
@@ -1073,88 +1060,32 @@ async function seedDefaultProduct(){
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإضافة...';
 
   try{
-    /* تحقق من وجود الدورة مسبقاً */
-    const checkRes = await sb.from('products')
-      .select('id, title')
-      .eq('title', 'دورة الأقسام')
-      .maybeSingle();
+    const checkRes = await sb.from('products').select('id').eq('title', 'دورة الأقسام').maybeSingle();
+    if(checkRes.data){ if(!confirm('الدورة موجودة مسبقاً. متابعة؟')){ btn.disabled = false; btn.innerHTML = orig; return; } }
 
-    if(checkRes.data && checkRes.data.id){
-      const proceed = confirm('دورة الأقسام موجودة مسبقاً. هل تريد إضافة نسخة أخرى؟');
-      if(!proceed){
-        btn.disabled = false;
-        btn.innerHTML = orig;
-        return;
-      }
-    }
-
-    /* أضف الدورة */
     const payload = {
       title: 'دورة الأقسام',
       subtitle: 'الدورة الشاملة لاختبار القدرات',
-      description: 'دورة متكاملة تغطي جميع أقسام اختبار القدرات بأسلوب مبسط ومنظم، مع ملفات وتمارين تفاعلية.',
-      price: 199,
-      currency: 'ر.س',
-      icon: 'fa-graduation-cap',
-      color: '#5b6cff',
-      features: [
-        'شرح تفصيلي لجميع الأقسام',
-        'ملفات PDF حصرية',
-        'دروس فيديو مسجلة',
-        'متابعة تقدمك أسبوعياً'
-      ],
-      popular: true,
-      active: true,
-      sort_order: 0
+      description: 'دورة متكاملة تغطي جميع أقسام اختبار القدرات بأسلوب مبسط ومنظم.',
+      price: 199, currency: 'ر.س',
+      icon: 'fa-graduation-cap', color: '#5b6cff',
+      features: ['شرح تفصيلي','ملفات PDF','فيديوهات','متابعة أسبوعية'],
+      popular: true, active: true, sort_order: 0
     };
 
-    const { data, error } = await sb.from('products').insert(payload).select().single();
+    const { error } = await sb.from('products').insert(payload);
+    if(error){ toast('فشل: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
 
-    if(error){
-      console.error('seed error:', error);
-      toast('فشل الإضافة: ' + error.message, 'err');
-      btn.disabled = false;
-      btn.innerHTML = orig;
-      return;
-    }
-
-    toast('✅ تمت إضافة دورة الأقسام بنجاح', 'ok');
-
-    /* أعد تحميل المنتجات */
-    if(typeof loadProducts === 'function'){
-      await loadProducts();
-    } else {
-      if(!DB.products) DB.products = [];
-      DB.products.unshift(data);
-      if(typeof renderAdminProducts === 'function') renderAdminProducts();
-      if(typeof renderProducts === 'function') renderProducts();
-    }
-
-    /* انتقل لتبويب المنتجات */
-    setTimeout(() => {
-      document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
-      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
-      const tab = document.querySelector('.admin-tabs button[data-panel="products"]');
-      if(tab) tab.classList.add('on');
-      const panel = document.getElementById('panel-products');
-      if(panel) panel.classList.add('on');
-    }, 400);
-
-  }catch(e){
-    console.error('seed error:', e);
-    toast('خطأ: ' + e.message, 'err');
-  }
+    toast('✅ تمت الإضافة', 'ok');
+    if(typeof loadProducts === 'function') await loadProducts();
+  }catch(e){ toast('خطأ: ' + e.message, 'err'); }
 
   btn.disabled = false;
   btn.innerHTML = orig;
 }
 
-/* ربط زر الدورة الافتراضية عبر Delegation */
 document.addEventListener('click', (e) => {
-  if(e.target.closest('#seedDefaultProductBtn')){
-    e.preventDefault();
-    seedDefaultProduct();
-  }
+  if(e.target.closest('#seedDefaultProductBtn')){ e.preventDefault(); seedDefaultProduct(); }
 });
 
 /* ============================================================
@@ -1163,17 +1094,10 @@ document.addEventListener('click', (e) => {
 function renderStoreSettings(){
   const s = DB.storeSettings || {};
 
-  const ibanEl = document.getElementById('ssIban');
-  if(ibanEl) ibanEl.value = s.iban_number || '';
-
-  const holderEl = document.getElementById('ssHolder');
-  if(holderEl) holderEl.value = s.iban_holder || '';
-
-  const phoneEl = document.getElementById('ssPhone');
-  if(phoneEl) phoneEl.value = s.support_phone || '';
-
-  const waEl = document.getElementById('ssWhatsApp');
-  if(waEl) waEl.value = s.support_whatsapp || '';
+  const ibanEl = document.getElementById('ssIban'); if(ibanEl) ibanEl.value = s.iban_number || '';
+  const holderEl = document.getElementById('ssHolder'); if(holderEl) holderEl.value = s.iban_holder || '';
+  const phoneEl = document.getElementById('ssPhone'); if(phoneEl) phoneEl.value = s.support_phone || '';
+  const waEl = document.getElementById('ssWhatsApp'); if(waEl) waEl.value = s.support_whatsapp || '';
 
   const wrap = document.getElementById('ssIbanImageWrap');
   const removeBtn = document.getElementById('ssIbanImageRemove');
@@ -1204,14 +1128,8 @@ window.renderStoreSettings = renderStoreSettings;
 window.copyFieldValue = (fieldId) => {
   const el = document.getElementById(fieldId);
   if(!el || !el.value){ toast('الحقل فارغ', 'warn'); return; }
-  try{
-    navigator.clipboard.writeText(el.value);
-    toast('✓ تم النسخ', 'ok');
-  }catch(e){
-    el.select();
-    document.execCommand('copy');
-    toast('✓ تم النسخ', 'ok');
-  }
+  try{ navigator.clipboard.writeText(el.value); toast('✓ تم النسخ', 'ok'); }
+  catch(e){ el.select(); document.execCommand('copy'); toast('✓ تم النسخ', 'ok'); }
 };
 
 function updateWaPreview(){
@@ -1220,18 +1138,14 @@ function updateWaPreview(){
   if(!waEl || !prev) return;
 
   const val = (waEl.value || '').replace(/\D/g, '');
-  if(!val){
-    prev.classList.remove('show');
-    prev.innerHTML = '';
-    return;
-  }
+  if(!val){ prev.classList.remove('show'); prev.innerHTML = ''; return; }
 
   if(val.length < 10){
     prev.classList.add('show');
     prev.style.background = 'rgba(239,68,68,.08)';
     prev.style.borderColor = 'rgba(239,68,68,.25)';
     prev.style.color = '#dc2626';
-    prev.innerHTML = '<i class="fas fa-circle-exclamation"></i> الرقم قصير جداً';
+    prev.innerHTML = '<i class="fas fa-circle-exclamation"></i> الرقم قصير';
     return;
   }
 
@@ -1239,7 +1153,7 @@ function updateWaPreview(){
   prev.style.background = 'rgba(37,211,102,.08)';
   prev.style.borderColor = 'rgba(37,211,102,.25)';
   prev.style.color = '#128C7E';
-  prev.innerHTML = `<i class="fas fa-check-circle"></i> <b>الرابط سيكون:</b><br>https://wa.me/${val}`;
+  prev.innerHTML = `<i class="fas fa-check-circle"></i> <b>الرابط:</b> https://wa.me/${val}`;
 }
 
 function markSettingsDirty(){
@@ -1250,11 +1164,7 @@ function markSettingsDirty(){
 }
 
 async function saveStoreSettings(){
-  if(!isPrivileged()){
-    toast('غير مصرح', 'err');
-    return;
-  }
-
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
   const saveBtn = document.getElementById('ssSave');
   const orig = saveBtn.innerHTML;
 
@@ -1277,42 +1187,33 @@ async function saveStoreSettings(){
 
   try{
     const { error } = await sb.from('store_settings').update(payload).eq('id', 1);
-    if(error){
-      toast('فشل الحفظ: ' + error.message, 'err');
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = orig;
-      return;
-    }
+    if(error){ toast('فشل: ' + error.message, 'err'); saveBtn.disabled = false; saveBtn.innerHTML = orig; return; }
 
     DB.storeSettings = Object.assign({}, DB.storeSettings, payload);
-
     if(typeof applyStoreSettings === 'function') applyStoreSettings();
+
+    if(typeof logAdminAction === 'function'){ await logAdminAction('update_settings', null, 'تحديث إعدادات المتجر'); }
 
     const status = document.getElementById('storeSettingsStatus');
     if(status){
       status.className = 'store-settings-status saved';
-      status.innerHTML = '<i class="fas fa-circle-check"></i><span>✓ تم الحفظ بنجاح</span>';
+      status.innerHTML = '<i class="fas fa-circle-check"></i><span>✓ تم الحفظ</span>';
     }
 
-    toast('✅ تم حفظ إعدادات المتجر', 'ok');
-
+    toast('✅ تم الحفظ', 'ok');
     setTimeout(() => {
       if(status){
         status.className = 'store-settings-status';
         status.innerHTML = '<i class="fas fa-circle-info"></i><span>لا توجد تغييرات غير محفوظة</span>';
       }
     }, 3000);
-
-  }catch(e){
-    toast('خطأ: ' + e.message, 'err');
-  }
+  }catch(e){ toast('خطأ: ' + e.message, 'err'); }
 
   saveBtn.disabled = false;
   saveBtn.innerHTML = orig;
 }
 window.saveStoreSettings = saveStoreSettings;
 
-/* أحداث إعدادات المتجر */
 document.addEventListener('DOMContentLoaded', () => {
   const ibanInput = document.getElementById('ssIbanImageInput');
 
@@ -1321,10 +1222,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ibanInput.addEventListener('change', async (e) => {
       const f = e.target.files[0];
       if(!f) return;
-      if(!f.type.startsWith('image/')){ toast('اختر صورة صحيحة', 'warn'); return; }
-      if(f.size > 5 * 1024 * 1024){ toast('الحجم كبير (5MB حد أقصى)', 'warn'); return; }
+      if(!f.type.startsWith('image/')){ toast('صورة صحيحة', 'warn'); return; }
+      if(f.size > 5 * 1024 * 1024){ toast('الحد 5 ميجا', 'warn'); return; }
 
-      toast('جاري رفع الصورة...');
+      toast('جاري الرفع...');
       try{
         const blob = await new Promise((res, rej) => {
           const reader = new FileReader();
@@ -1352,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
           cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
         });
-        if(upErr){ toast('فشل الرفع: ' + upErr.message, 'err'); return; }
+        if(upErr){ toast('فشل: ' + upErr.message, 'err'); return; }
 
         try{
           const old = DB.storeSettings && DB.storeSettings.iban_image;
@@ -1368,15 +1269,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = urlData ? urlData.publicUrl + '?t=' + Date.now() : '';
 
         const { error: dbErr } = await sb.from('store_settings').update({ iban_image: url }).eq('id', 1);
-        if(dbErr){ toast('فشل الحفظ: ' + dbErr.message, 'err'); return; }
+        if(dbErr){ toast('فشل: ' + dbErr.message, 'err'); return; }
 
         if(!DB.storeSettings) DB.storeSettings = {};
         DB.storeSettings.iban_image = url;
         renderStoreSettings();
-        toast('✅ تم رفع صورة الآيبان', 'ok');
-      }catch(err){
-        toast('خطأ: ' + err.message, 'err');
-      }
+        toast('✅ تم الرفع', 'ok');
+      }catch(err){ toast('خطأ: ' + err.message, 'err'); }
       e.target.value = '';
     });
   }
@@ -1398,10 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const waInput = document.getElementById('ssWhatsApp');
   if(waInput && !waInput.dataset.bound){
     waInput.dataset.bound = '1';
-    waInput.addEventListener('input', () => {
-      updateWaPreview();
-      markSettingsDirty();
-    });
+    waInput.addEventListener('input', () => { updateWaPreview(); markSettingsDirty(); });
   }
 
   ['ssIban','ssHolder','ssPhone'].forEach(id => {
