@@ -1,11 +1,24 @@
 /* ============================================================
-   21) APP — الإقلاع الفوري v4.1.0 (مُصلح)
+   21) APP — الإقلاع الفوري v4.0.0
 ============================================================ */
-window._appVersion = '4.1.0';
+window._appVersion = '4.0.0';
 window._lastInitializedUserId = null;
 window._appInitialized = false;
 
-/* ================== التحميلات ================== */
+/* ================== التحميلات (مع caching) ================== */
+function cachedFetch(key, fetcher, ttl){
+  ttl = ttl || 30000;
+  try{
+    const raw = localStorage.getItem('abdq_cache_' + key);
+    if(raw){
+      const j = JSON.parse(raw);
+      if(j && j.t && (Date.now() - j.t) < ttl){
+        fetcher.resolve(j.d);
+      }
+    }
+  }catch(e){}
+}
+
 async function loadProfilesAndFiles(retry){
   retry = (typeof retry === 'number') ? retry : 3;
   try{
@@ -15,19 +28,15 @@ async function loadProfilesAndFiles(retry){
     try{ localStorage.setItem('abdq_cache_files', JSON.stringify({ t: Date.now(), d: DB.files })); }catch(e){}
   }catch(err){
     if(retry > 0){ await new Promise(r => setTimeout(r, 200)); return loadProfilesAndFiles(retry - 1); }
+    /* fallback */
     try{
       const raw = localStorage.getItem('abdq_cache_files');
       if(raw){ const j = JSON.parse(raw); DB.files = j.d || []; }
     }catch(e){ DB.files = []; }
   }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
-  try{
-    if(typeof fixNavCounts === 'function'){ fixNavCounts(); }
-    else {
-      const nc = document.getElementById('navCount');
-      if(nc) nc.textContent = DB.files.length;
-    }
-  }catch(e){}
+  const nc = document.getElementById('navCount');
+  if(nc) nc.textContent = DB.files.length;
 }
 
 async function loadVideos(retry){
@@ -114,79 +123,47 @@ async function loadMyVideoProgress(){
 
 /* ================== الشاشات ================== */
 function hideAllScreens(){
-  try{
-    const w = document.getElementById('welcome');
-    if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
-  }catch(e){}
-  try{
-    const a = document.getElementById('auth');
-    if(a) a.classList.remove('open');
-  }catch(e){}
-  try{
-    const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
-  }catch(e){}
+  try{ const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); } }catch(e){}
+  try{ const a = document.getElementById('auth'); if(a) a.classList.remove('open'); }catch(e){}
+  try{ const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); } }catch(e){}
 }
 
-/* ⭐⭐⭐ showWelcome — تعرض الترحيب دائماً (بدون شرط) */
 async function showWelcome(){
   try{
     window._appInitialized = false;
     window._lastInitializedUserId = null;
-
-    const a = document.getElementById('auth');
-    if(a) a.classList.remove('open');
-
-    const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
-
+    const a = document.getElementById('auth'); if(a) a.classList.remove('open');
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
     const w = document.getElementById('welcome');
-    if(w){
-      w.dataset.firstVisit = 'true';
-      w.classList.remove('exit');
-      w.style.display = 'flex';
-    }
-
-    /* شارة "تسجيل الخروج" في الترحيب */
+    if(w && w.dataset.firstVisit === 'true'){ w.style.display = 'flex'; w.classList.remove('exit'); }
     const wl = document.getElementById('welcomeLogout');
     if(wl){
-      try{
-        const r = await sb.auth.getSession();
-        wl.style.display = r.data.session ? 'inline-flex' : 'none';
-      }catch(e){ wl.style.display = 'none'; }
+      try{ const r = await sb.auth.getSession(); wl.style.display = r.data.session ? 'inline-flex' : 'none'; }
+      catch(e){ wl.style.display = 'none'; }
     }
-  }catch(e){ console.warn('showWelcome error:', e); }
+  }catch(e){}
 }
 window.showWelcome = showWelcome;
 
 function forceShowWelcome(){
   const w = document.getElementById('welcome');
-  if(w){
-    w.dataset.firstVisit = 'true';
-    w.classList.remove('exit');
-    w.style.display = 'flex';
-  }
-  const a = document.getElementById('auth');
-  if(a) a.classList.remove('open');
-  const ap = document.getElementById('app');
-  if(ap) ap.classList.remove('open','store-only','ready');
+  if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; w.classList.remove('exit'); }
+  const a = document.getElementById('auth'); if(a) a.classList.remove('open');
+  const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
 }
 window.forceShowWelcome = forceShowWelcome;
 
 function showAuthScreen(){
   try{
-    const w = document.getElementById('welcome');
-    if(w){ w.classList.add('exit'); w.style.display = 'none'; }
-    const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
-    const a = document.getElementById('auth');
-    if(a) a.classList.add('open');
+    const w = document.getElementById('welcome'); if(w){ w.style.display = 'none'; w.classList.remove('exit'); }
+    const ap = document.getElementById('app'); if(ap){ ap.classList.remove('open','store-only','ready'); }
+    const a = document.getElementById('auth'); if(a) a.classList.add('open');
     if(typeof showAuthForm === 'function') showAuthForm('login');
-  }catch(e){ console.warn('showAuthScreen error:', e); }
+  }catch(e){}
 }
 window.showAuthScreen = showAuthScreen;
 
-/* ================== enterApp ================== */
+/* ================== enterApp — سريع جداً ================== */
 async function enterApp(){
   try{
     if(session && session.user){
@@ -197,6 +174,7 @@ async function enterApp(){
     hideAllScreens();
     if(!session){ await showWelcome(); return false; }
 
+    /* جلب الملف الشخصي */
     let profileData = null;
     try{
       const r = await sb.from('profiles').select('*').eq('id', session.user.id).single();
@@ -220,6 +198,7 @@ async function enterApp(){
 
     currentUserObj = profileData;
 
+    /* التفضيلات */
     try{ loadPrefs(); }catch(e){}
     try{ loadPrefsFromDB(); }catch(e){}
     try{ loadDrawings(); }catch(e){}
@@ -231,6 +210,7 @@ async function enterApp(){
     const mainScroll = document.getElementById('mainScroll');
     if(mainScroll) mainScroll.scrollTop = 0;
 
+    /* ⭐ فحص الاشتراك في الخلفية */
     if(typeof checkSubscriptionOnLogin === 'function'){
       checkSubscriptionOnLogin().then(wasExpired => {
         if(wasExpired){
@@ -246,6 +226,7 @@ async function enterApp(){
       }).catch(()=>{});
     }
 
+    /* ⭐ قرار المتجر أولاً (سريع) */
     const _showStore = typeof shouldShowStore === 'function' ? shouldShowStore() : false;
     const storeEl = document.getElementById('view-store');
     const titlesOk = (typeof TITLES !== 'undefined' && TITLES.store);
@@ -260,8 +241,10 @@ async function enterApp(){
       try{ goFromHash(); }catch(e){}
     }
 
+    /* ⭐ اجعل التطبيق مرئياً فوراً */
     if(appEl) appEl.classList.add('ready');
 
+    /* رندر فوري */
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
     try{ renderFeatures(); }catch(e){}
@@ -275,6 +258,7 @@ async function enterApp(){
 
     setTimeout(() => { try{ toast(`أهلاً بك ${currentUserObj.name}`, 'ok'); }catch(e){} }, 300);
 
+    /* ⭐ كل التحميلات الثقيلة في الخلفية — بدون await */
     const privileged = typeof isPrivileged === 'function' && isPrivileged();
 
     (async () => {
@@ -299,6 +283,7 @@ async function enterApp(){
       try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
     })().catch(e => console.warn('bg load failed', e));
 
+    /* اشتراكات realtime */
     try{ subscribeMyProfile(); }catch(e){}
     try{ subscribeFiles(); }catch(e){}
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
@@ -306,6 +291,7 @@ async function enterApp(){
     try{ if(typeof subscribeNotifications === 'function') subscribeNotifications(); }catch(e){}
     try{ if(privileged && typeof subscribeProfilesForAdmin === 'function') subscribeProfilesForAdmin(); }catch(e){}
 
+    /* watch hash */
     const m = location.hash.match(/^#watch=(.+)$/);
     if(m && m[1]){
       const vid = m[1];
@@ -465,9 +451,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
       if(event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
     });
 
-    /* ⭐⭐⭐ الاختيار الصحيح للشاشة الأولى */
     if(session){
-      /* فيه جلسة → دخول مباشر */
       try{
         await Promise.race([
           enterApp(),
@@ -479,17 +463,14 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         forceShowWelcome();
       }
     } else {
-      /* ما فيه جلسة → دائماً اعرض الترحيب */
-      try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
-      const w  = document.getElementById('welcome');
-      const a  = document.getElementById('auth');
-      const ap = document.getElementById('app');
-      if(a)  a.classList.remove('open');
-      if(ap) ap.classList.remove('open','store-only','ready');
-      if(w){
-        w.dataset.firstVisit = 'true';
-        w.classList.remove('exit');
-        w.style.display = 'flex';
+      let hasVisited = false;
+      try{ hasVisited = !!localStorage.getItem('abdq_has_visited'); }catch(e){}
+      if(hasVisited){
+        showAuthScreen();
+      } else {
+        try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
+        const w = document.getElementById('welcome');
+        if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
       }
     }
 
@@ -508,10 +489,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     console.error('❌ init:', err);
     try{ bindEmergencyButtons(); }catch(e){}
     const w = document.getElementById('welcome');
-    if(w){
-      w.dataset.firstVisit = 'true';
-      w.style.display = 'flex';
-    }
+    if(w){ w.dataset.firstVisit = 'true'; w.style.display = 'flex'; }
   }
 })();
 
@@ -522,98 +500,3 @@ window.addEventListener('beforeunload', () => {
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
   try{ if(NOTIF.channel) sb.removeChannel(NOTIF.channel); }catch(e){}
 });
-
-/* ============================================================
-   ⭐ إصلاح دقيق لشاشة الترحيب (بدون كسر أي شي)
-   - زر "رجوع" يعرض الترحيب
-   - عرض الترحيب لأي زائر بدون جلسة
-============================================================ */
-
-(function welcomeFix(){
-  /* 1) استبدال showWelcome — بدون شرط firstVisit */
-  const origShowWelcome = window.showWelcome;
-  window.showWelcome = async function(){
-    try{
-      window._appInitialized = false;
-      window._lastInitializedUserId = null;
-
-      const a = document.getElementById('auth');
-      if(a) a.classList.remove('open');
-
-      const ap = document.getElementById('app');
-      if(ap) ap.classList.remove('open','store-only','ready');
-
-      const w = document.getElementById('welcome');
-      if(w){
-        w.dataset.firstVisit = 'true';
-        w.classList.remove('exit');
-        w.style.display = 'flex';
-      }
-
-      const wl = document.getElementById('welcomeLogout');
-      if(wl){
-        try{
-          const r = await sb.auth.getSession();
-          wl.style.display = r.data.session ? 'inline-flex' : 'none';
-        }catch(e){ wl.style.display = 'none'; }
-      }
-    }catch(e){ console.warn('showWelcome error:', e); }
-  };
-
-  /* 2) استبدال forceShowWelcome */
-  window.forceShowWelcome = function(){
-    const w = document.getElementById('welcome');
-    if(w){
-      w.dataset.firstVisit = 'true';
-      w.classList.remove('exit');
-      w.style.display = 'flex';
-    }
-    const a = document.getElementById('auth');
-    if(a) a.classList.remove('open');
-    const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
-  };
-
-  /* 3) اعتراض زر "رجوع" من تسجيل الدخول */
-  document.addEventListener('click', function(e){
-    if(!e.target.closest('#authBack')) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const a = document.getElementById('auth');
-    if(a) a.classList.remove('open');
-
-    const ap = document.getElementById('app');
-    if(ap) ap.classList.remove('open','store-only','ready');
-
-    const w = document.getElementById('welcome');
-    if(w){
-      w.dataset.firstVisit = 'true';
-      w.classList.remove('exit');
-      w.style.display = 'flex';
-      w.style.opacity = '1';
-      w.style.visibility = 'visible';
-    }
-  }, true);
-
-  /* 4) عند الإقلاع: أي زائر بدون جلسة → شاشة الترحيب */
-  setTimeout(async () => {
-    try{
-      const r = await sb.auth.getSession();
-      if(!r.data.session){
-        const w = document.getElementById('welcome');
-        if(w){
-          w.dataset.firstVisit = 'true';
-          w.classList.remove('exit');
-          w.style.display = 'flex';
-        }
-        const a = document.getElementById('auth');
-        if(a) a.classList.remove('open');
-        const ap = document.getElementById('app');
-        if(ap) ap.classList.remove('open','store-only','ready');
-      }
-    }catch(e){}
-  }, 800);
-
-  console.log('✅ Welcome fix loaded (small patch)');
-})();
