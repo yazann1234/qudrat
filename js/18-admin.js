@@ -1364,3 +1364,404 @@ window.openApproveModal = (userId) => {
     }
   });
 };
+
+/* ============================================================
+   إضافة مستخدم — مع كل الخيارات
+============================================================ */
+(function bindAdminCreateUserFull(){
+  const btn = document.getElementById('nuCreateBtn');
+  if(!btn || btn.dataset.fullBound) return;
+  btn.dataset.fullBound = '1';
+
+  /* املأ قائمة الدورات */
+  const courseSel = document.getElementById('nuCourse');
+  if(courseSel && typeof CS !== 'undefined' && CS.courses){
+    courseSel.innerHTML = '<option value="">— اختر دورة —</option>' +
+      CS.courses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  /* فعّل/أخفِ المدة المخصصة */
+  const durationSel = document.getElementById('nuDuration');
+  const customWrap = document.getElementById('nuCustomMonthsWrap');
+  if(durationSel && customWrap){
+    durationSel.addEventListener('change', e => {
+      customWrap.style.display = e.target.value === 'custom' ? 'block' : 'none';
+    });
+  }
+
+  btn.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+
+    const name = (document.getElementById('nuName').value || '').trim();
+    const email = (document.getElementById('nuEmail').value || '').trim().toLowerCase();
+    const phone = (document.getElementById('nuPhone') ? document.getElementById('nuPhone').value : '').trim().replace(/\D/g, '');
+    const pass = document.getElementById('nuPass').value;
+    const courseId = document.getElementById('nuCourse') ? document.getElementById('nuCourse').value : '';
+    const durationValue = document.getElementById('nuDuration') ? document.getElementById('nuDuration').value : '1';
+    const customMonths = document.getElementById('nuCustomMonths') ? parseInt(document.getElementById('nuCustomMonths').value, 10) : 1;
+    const approve = document.getElementById('nuApprove').checked;
+
+    if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صحيح', 'warn'); return; }
+    if(!pass || pass.length < 8){ toast('كلمة المرور 8 أحرف على الأقل', 'warn'); return; }
+    if(approve && !courseId){ toast('اختر دورة للتفعيل', 'warn'); return; }
+
+    /* احسب المدة */
+    let months = 1;
+    if(approve){
+      if(durationValue === 'custom'){
+        months = customMonths;
+        if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return; }
+      } else {
+        months = parseInt(durationValue, 10) || 1;
+      }
+    }
+
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+    try{
+      const { data, error } = await sbTemp.auth.signUp({
+        email, password: pass,
+        options: { data: { name, phone: phone || null } }
+      });
+      if(error){ toast('فشل: ' + error.message, 'err'); btn.disabled = false; btn.innerHTML = orig; return; }
+
+      if(data && data.user){
+        await new Promise(r => setTimeout(r, 700));
+
+        const upd = { name, password_hint: pass };
+        if(phone && phone.length === 10) upd.phone = phone;
+
+        if(approve){
+          upd.status = 'approved';
+          upd.course_id = courseId;
+          const start = new Date();
+          const end = new Date();
+          end.setMonth(end.getMonth() + months);
+          upd.subscription_start = start.toISOString();
+          upd.subscription_end = end.toISOString();
+          upd.subscription_months = months;
+        }
+
+        const { error: upErr } = await sb.from('profiles').update(upd).eq('id', data.user.id);
+        if(upErr) console.warn('update failed', upErr);
+
+        if(typeof logAdminAction === 'function'){
+          await logAdminAction('create_user', data.user.id, `إنشاء حساب: ${name}`, { course_id: courseId, months });
+        }
+      }
+
+      toast('✓ تم إنشاء الحساب', 'ok');
+      document.getElementById('nuName').value = '';
+      document.getElementById('nuEmail').value = '';
+      if(document.getElementById('nuPhone')) document.getElementById('nuPhone').value = '';
+
+      try{
+        const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+        DB.users = r.data || [];
+        renderAdmin();
+      }catch(e){}
+    }catch(e){ toast('خطأ: ' + e.message, 'err'); }
+
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  });
+
+  const clr = document.getElementById('nuClearBtn');
+  if(clr){
+    clr.addEventListener('click', () => {
+      document.getElementById('nuName').value = '';
+      document.getElementById('nuEmail').value = '';
+      if(document.getElementById('nuPhone')) document.getElementById('nuPhone').value = '';
+      document.getElementById('nuPass').value = '12345678';
+      document.getElementById('nuApprove').checked = true;
+    });
+  }
+})();
+
+/* ============================================================
+   ربط ملف/فيديو بدورة
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  /* املأ الدورات في afCourse و avCourse */
+  setTimeout(() => { try{ fillCourseDropdowns(); }catch(e){} }, 500);
+});
+
+/* حفظ ملف مع دورة */
+(function patchSaveFile(){
+  const orig = window.saveFileBtn;
+  const btn = document.getElementById('saveFileBtn');
+  if(!btn) return;
+  /* استخدم mutation observer لتعديل الحفظ */
+  const clone = btn.cloneNode(true);
+  btn.parentNode.replaceChild(clone, btn);
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    const title = (document.getElementById('afTitle').value || '').trim();
+    const courseId = document.getElementById('afCourse') ? document.getElementById('afCourse').value : '';
+    const cat = document.getElementById('afCat').value;
+    const desc = (document.getElementById('afDesc').value || '').trim();
+    const important = document.getElementById('afImportant').checked;
+    if(!title){ toast('أدخل عنوان الملف', 'warn'); return; }
+    if(!currentPdfBlob){ toast('اختر ملف PDF أولاً', 'warn'); return; }
+
+    clone.disabled = true;
+    const orig2 = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+
+    const id = typeof uuidv4 === 'function' ? uuidv4() : ('f_' + Date.now() + '_' + Math.random().toString(36).slice(2,9));
+    const safeName = currentPdfBlob.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
+    const storagePath = currentUserObj.id + '/' + id + '_' + safeName;
+
+    let pages = 0;
+    try{
+      const ab = await currentPdfBlob.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+      pages = doc.numPages;
+      try{ doc.destroy(); }catch(e){}
+    }catch(e){}
+
+    const { error: upErr } = await sb.storage.from('pdfs').upload(storagePath, currentPdfBlob, {
+      cacheControl: '3600', upsert: false, contentType: 'application/pdf'
+    });
+    if(upErr){ clone.disabled = false; clone.innerHTML = orig2; toast('فشل: ' + upErr.message, 'err'); return; }
+
+    const choice = typeof pick === 'function' ? pick(ICONS) : { i: 'fa-book', c: '#5b6cff' };
+    const { error: dbErr } = await sb.from('files').insert({
+      id: id, title, category: cat, description: desc, important,
+      icon: choice.i, color: choice.c, page_count: pages,
+      storage_path: storagePath, created_by: currentUserObj.id,
+      course_id: courseId || null
+    });
+
+    if(dbErr){
+      try{ await sb.storage.from('pdfs').remove([storagePath]); }catch(e){}
+      clone.disabled = false; clone.innerHTML = orig2;
+      toast('فشل: ' + dbErr.message, 'err'); return;
+    }
+
+    if(typeof logAdminAction === 'function'){
+      await logAdminAction('upload_file', null, `رفع ملف: ${title}`, { course_id: courseId });
+    }
+
+    /* ⭐ إشعار عام أو حسب الدورة */
+    if(typeof sendNotification === 'function'){
+      const c = courseId ? getCourseById(courseId) : null;
+      await sendNotification('file', '📄 ملف جديد: ' + title,
+        c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
+        null, courseId || null, 'fa-file-pdf', '#ef4444');
+    }
+
+    clone.disabled = false; clone.innerHTML = orig2;
+    document.getElementById('afTitle').value = '';
+    if(document.getElementById('afCourse')) document.getElementById('afCourse').value = '';
+    document.getElementById('afDesc').value = '';
+    document.getElementById('afImportant').checked = false;
+    document.getElementById('uzFileInfo').innerHTML = '';
+    if(afPdfInput) afPdfInput.value = '';
+    currentPdfBlob = null;
+
+    toast('✓ تم الرفع', 'ok');
+
+    document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
+    const tab = document.querySelector('.admin-tabs button[data-panel="files"]');
+    if(tab) tab.classList.add('on');
+    const panel = document.getElementById('panel-files');
+    if(panel) panel.classList.add('on');
+  });
+})();
+
+/* حفظ فيديو مع دورة */
+(function patchSaveVideo(){
+  const btn = document.getElementById('saveVideoBtn');
+  if(!btn) return;
+  const clone = btn.cloneNode(true);
+  btn.parentNode.replaceChild(clone, btn);
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    const url = (document.getElementById('avUrl').value || '').trim();
+    const title = (document.getElementById('avTitle').value || '').trim();
+    const courseId = document.getElementById('avCourse') ? document.getElementById('avCourse').value : '';
+    const cat = document.getElementById('avCat').value;
+    const desc = (document.getElementById('avDesc').value || '').trim();
+    const important = document.getElementById('avImportant').checked;
+    const ytId = extractYoutubeId(url);
+    if(!ytId){ toast('رابط يوتيوب غير صالح', 'err'); return; }
+    if(!title){ toast('أدخل عنوان الفيديو', 'warn'); return; }
+
+    clone.disabled = true;
+    const orig = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+    const thumb = youtubeThumb(ytId);
+    const { error } = await sb.from('videos').insert({
+      title, description: desc, youtube_id: ytId, category: cat,
+      important, thumbnail: thumb, duration: 0, created_by: currentUserObj.id,
+      course_id: courseId || null
+    });
+
+    clone.disabled = false; clone.innerHTML = orig;
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+
+    if(typeof logAdminAction === 'function'){
+      await logAdminAction('add_video', null, `إضافة فيديو: ${title}`, { course_id: courseId });
+    }
+
+    /* ⭐ إشعار */
+    if(typeof sendNotification === 'function'){
+      const c = courseId ? getCourseById(courseId) : null;
+      await sendNotification('video', '🎬 فيديو جديد: ' + title,
+        c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
+        null, courseId || null, 'fa-video', '#dc2626');
+    }
+
+    document.getElementById('avUrl').value = '';
+    document.getElementById('avTitle').value = '';
+    if(document.getElementById('avCourse')) document.getElementById('avCourse').value = '';
+    document.getElementById('avDesc').value = '';
+    document.getElementById('avImportant').checked = false;
+
+    toast('✓ تم الإضافة', 'ok');
+    if(typeof loadVideos === 'function') loadVideos();
+  });
+})();
+
+/* ============================================================
+   صور المنتجات + ربطها بالدورات
+============================================================ */
+let _productImageFile = null;
+
+window.previewProductImage = function(input){
+  const f = input.files[0];
+  if(!f) return;
+  _productImageFile = f;
+  const prev = document.getElementById('pfImagePreview');
+  if(!prev) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    prev.innerHTML = `
+      <div style="position:relative;display:inline-block">
+        <img src="${e.target.result}" style="max-width:180px;max-height:140px;border-radius:10px;border:1px solid var(--border)">
+        <button type="button" onclick="clearProductImage()" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>`;
+  };
+  reader.readAsDataURL(f);
+};
+
+window.clearProductImage = function(){
+  _productImageFile = null;
+  const inp = document.getElementById('pfImageInput');
+  if(inp) inp.value = '';
+  const prev = document.getElementById('pfImagePreview');
+  if(prev) prev.innerHTML = '';
+};
+
+/* حفظ المنتج مع صورة + دورة */
+(function patchProductSave(){
+  const btn = document.getElementById('pfSave');
+  if(!btn) return;
+  const clone = btn.cloneNode(true);
+  btn.parentNode.replaceChild(clone, btn);
+
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    const id = document.getElementById('pfId').value.trim();
+    const title = document.getElementById('pfTitle').value.trim();
+    const subtitle = document.getElementById('pfSubtitle').value.trim();
+    const description = document.getElementById('pfDesc').value.trim();
+    const price = parseFloat(document.getElementById('pfPrice').value) || 0;
+    const currency = document.getElementById('pfCurrency').value.trim() || 'ر.س';
+    const features = document.getElementById('pfFeatures').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const popular = document.getElementById('pfPopular').checked;
+    const active = document.getElementById('pfActive').checked;
+    const courseCode = document.getElementById('pfCourseCode') ? document.getElementById('pfCourseCode').value.trim() : '';
+
+    if(!title){ toast('أدخل اسم المنتج', 'warn'); return; }
+
+    clone.disabled = true;
+    const orig = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+    let imageUrl = null;
+
+    if(_productImageFile){
+      try{
+        const blob = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              const ratio = Math.min(800 / img.width, 800 / img.height, 1);
+              const w = Math.round(img.width * ratio);
+              const h = Math.round(img.height * ratio);
+              const c = document.createElement('canvas');
+              c.width = w; c.height = h;
+              const ctx = c.getContext('2d');
+              ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0, w, h);
+              c.toBlob(b => b ? res(b) : rej(new Error('فشل')), 'image/jpeg', 0.85);
+            };
+            img.onerror = rej;
+            img.src = reader.result;
+          };
+          reader.onerror = rej;
+          reader.readAsDataURL(_productImageFile);
+        });
+
+        const path = '_products/' + (id || Date.now()) + '.jpg';
+        const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
+          cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
+        });
+        if(!upErr){
+          const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
+          imageUrl = urlData ? urlData.publicUrl + '?t=' + Date.now() : null;
+        }
+      }catch(e){}
+    }
+
+    const payload = {
+      title, subtitle, description, price, currency,
+      icon: pfSelectedIcon, color: pfSelectedColor,
+      features, popular, active
+    };
+    if(imageUrl) payload.image_url = imageUrl;
+    if(courseCode) payload.course_code = courseCode;
+
+    let error;
+    if(id){
+      const r = await sb.from('products').update(payload).eq('id', id);
+      error = r.error;
+    } else {
+      const r = await sb.from('products').insert(payload);
+      error = r.error;
+    }
+
+    clone.disabled = false;
+    clone.innerHTML = orig;
+
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+
+    toast(id ? '✓ تم التحديث' : '✓ تم الإضافة', 'ok');
+
+    /* ⭐ ازامن مع الدورات */
+    if(courseCode && typeof syncProductToCourse === 'function'){
+      await syncProductToCourse(payload);
+    }
+
+    if(typeof loadProducts === 'function') await loadProducts();
+    if(typeof renderProducts === 'function') renderProducts();
+    if(typeof backToProductsList === 'function') backToProductsList();
+
+    /* نظّف الصورة */
+    _productImageFile = null;
+    const inp = document.getElementById('pfImageInput');
+    if(inp) inp.value = '';
+    const prev = document.getElementById('pfImagePreview');
+    if(prev) prev.innerHTML = '';
+  });
+})();
