@@ -59,7 +59,7 @@ function last7Days(){
 }
 
 function checkBadges(){
-   if(currentUserObj && (currentUserObj.role === 'admin' || currentUserObj.role === 'owner')) return;
+   
   const add = id => {
     if(userData.badges.includes(id)) return;
     userData.badges.push(id);
