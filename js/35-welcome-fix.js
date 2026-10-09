@@ -1,23 +1,23 @@
 /* ============================================================
-   35) WELCOME & AUTH FIX
-   - شاشة الترحيب تعمل بشكل موثوق
-   - زر "رجوع" من auth يعرض الترحيب (بدل بياض)
-   - الكتابة في البريد لا تسبب إعادة تحميل / بياض
+   35) WELCOME & AUTH FIX v2 — إصلاح نهائي
+   - شاشة الترحيب تظهر دائماً لأي زائر بدون جلسة
+   - زر الرجوع يعرض الترحيب بشكل موثوق
+   - لا شاشة بيضاء مهما حدث
 ============================================================ */
-
 (function(){
-  'use strict';
+'use strict';
 
-  /* الحالة الحالية للشاشة: welcome | auth | app */
-  window._APP_SCREEN = 'welcome';
+console.log('🔧 Welcome fix v2 loading...');
 
-  /* آخر وقت عرضنا فيه الترحيب (حماية من السباقات) */
-  let _lastWelcomeShow = 0;
+let _lastShow = 0;
 
-  /* ⭐⭐⭐ إظهار شاشة الترحيب */
-  window.showWelcomeSafe = function(){
-    _lastWelcomeShow = Date.now();
+/* ⭐ إظهار شاشة الترحيب */
+window.showWelcomeSafe = function(){
+  try{
+    _lastShow = Date.now();
     window._APP_SCREEN = 'welcome';
+    window._appInitialized = false;
+    window._lastInitializedUserId = null;
 
     const w  = document.getElementById('welcome');
     const a  = document.getElementById('auth');
@@ -32,6 +32,7 @@
       w.style.display    = 'flex';
       w.style.opacity    = '1';
       w.style.visibility = 'visible';
+      w.style.pointerEvents = 'auto';
     }
 
     /* شارة "تسجيل خروج" في الترحيب */
@@ -43,117 +44,140 @@
         }).catch(() => { if(wl) wl.style.display = 'none'; });
       }catch(e){ if(wl) wl.style.display = 'none'; }
     }
-  };
+  }catch(e){ console.warn('showWelcomeSafe error:', e); }
+};
 
-  /* ⭐⭐⭐ إظهار شاشة تسجيل الدخول */
-  window.showAuthSafe = function(){
+/* ⭐ إظهار شاشة الدخول */
+window.showAuthSafe = function(){
+  try{
     window._APP_SCREEN = 'auth';
-
     const w  = document.getElementById('welcome');
     const a  = document.getElementById('auth');
     const ap = document.getElementById('app');
 
-    if(w){
-      w.classList.add('exit');
-      w.style.display = 'none';
-    }
+    if(w){ w.classList.add('exit'); w.style.display = 'none'; }
     if(ap) ap.classList.remove('open', 'store-only', 'ready');
     if(a)  a.classList.add('open');
 
     if(typeof window.showAuthForm === 'function') window.showAuthForm('login');
-  };
+  }catch(e){ console.warn('showAuthSafe error:', e); }
+};
 
-  /* ⭐ استبدال الدوال القديمة */
-  function overrideFunctions(){
-    window.showWelcome      = window.showWelcomeSafe;
-    window.forceShowWelcome = window.showWelcomeSafe;
-    window.showAuthScreen   = window.showAuthSafe;
-  }
+/* ⭐ استبدال كل الدوال القديمة */
+function overrideAll(){
+  window.showWelcome      = window.showWelcomeSafe;
+  window.forceShowWelcome = window.showWelcomeSafe;
+  window.showAuthScreen   = window.showAuthSafe;
+  window.showWelcomeSafe  = window.showWelcomeSafe; /* حماية من overwrite */
+  window.showAuthSafe     = window.showAuthSafe;
+}
+overrideAll();
+[50, 200, 500, 1000, 2000, 3000, 5000, 8000].forEach(t => setTimeout(overrideAll, t));
 
-  overrideFunctions();
-  setTimeout(overrideFunctions, 100);
-  setTimeout(overrideFunctions, 500);
-  setTimeout(overrideFunctions, 1500);
-  setTimeout(overrideFunctions, 3000);
+/* ⭐⭐⭐ معالج زر "رجوع" من شاشة الدخول */
+document.addEventListener('click', function(e){
+  const backBtn = e.target.closest('#authBack');
+  if(!backBtn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+  window.showWelcomeSafe();
+}, true);
 
-  /* ⭐⭐⭐ معالج زر "رجوع" — يشتغل قبل أي handler ثاني */
-  document.addEventListener('click', function(e){
-    const backBtn = e.target.closest('#authBack');
-    if(!backBtn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    window.showWelcomeSafe();
-  }, true);
+/* ⭐⭐⭐ معالج زر "ابدأ رحلتك" */
+document.addEventListener('click', async function(e){
+  const enterBtn = e.target.closest('#enterBtn');
+  if(!enterBtn) return;
+  e.preventDefault();
+  e.stopPropagation();
 
-  /* ⭐⭐⭐ حماية: ما نسمح للترحيب يختفي بدون سبب */
-  function installWelcomeGuard(){
-    const w = document.getElementById('welcome');
-    if(!w || w._guardInstalled) return;
-    w._guardInstalled = true;
+  if(enterBtn.disabled) return;
+  enterBtn.disabled = true;
+  const orig = enterBtn.innerHTML;
+  enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
 
-    const obs = new MutationObserver(() => {
-      if(Date.now() - _lastWelcomeShow < 400) return;
-      if(window._APP_SCREEN !== 'welcome') return;
+  try{
+    const r = await sb.auth.getSession();
+    const s = r.data.session;
 
-      if(w.style.display === 'none'){
-        const a  = document.getElementById('auth');
-        const ap = document.getElementById('app');
-        /* مسموح الإخفاء فقط لو auth أو app مفتوحين */
-        if(a  && a.classList.contains('open'))  return;
-        if(ap && ap.classList.contains('open')) return;
-        /* وإلا — أعِد الترحيب */
-        w.classList.remove('exit');
-        w.style.display = 'flex';
+    if(s){
+      session = s;
+      if(typeof window.enterApp === 'function'){
+        try{
+          await Promise.race([
+            window.enterApp(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+          ]);
+        }catch(err){
+          console.warn('enterApp failed:', err);
+          try{ await sb.auth.signOut(); }catch(x){}
+          session = null;
+          window.showAuthSafe();
+        }
+      } else {
+        window.showAuthSafe();
       }
-    });
-    obs.observe(w, { attributes: true, attributeFilter: ['style', 'class'] });
+    } else {
+      window.showAuthSafe();
+    }
+  }catch(err){
+    window.showAuthSafe();
+  } finally {
+    setTimeout(() => {
+      if(enterBtn){ enterBtn.disabled = false; enterBtn.innerHTML = orig; }
+    }, 400);
   }
-  setTimeout(installWelcomeGuard, 500);
+}, true);
 
-  /* ⭐⭐⭐ حماية صفحة auth من أي submit أو تنقل غير مقصود */
-  function protectAuthForm(){
-    const authEl = document.getElementById('auth');
-    if(!authEl || authEl._protected) return;
-    authEl._protected = true;
+/* ⭐⭐⭐ حراسة الترحيب: لا تسمح بإخفائه إلا لو app/auth مفتوح */
+setInterval(() => {
+  if(window._APP_SCREEN !== 'welcome') return;
+  if(Date.now() - _lastShow < 300) return;
 
-    /* امنع أي submit */
-    authEl.addEventListener('submit', e => {
-      e.preventDefault();
-      e.stopPropagation();
-    }, true);
+  const w  = document.getElementById('welcome');
+  const a  = document.getElementById('auth');
+  const ap = document.getElementById('app');
+  if(!w) return;
+  if(a && a.classList.contains('open')) return;
+  if(ap && ap.classList.contains('open')) return;
 
-    /* حماية مدخلات auth */
-    const inputs = authEl.querySelectorAll('input');
-    inputs.forEach(inp => {
-      if(inp._protected) return;
-      inp._protected = true;
-
-      /* اسمح فقط بـ Enter (يستخدمه doLogin) */
-      inp.addEventListener('keydown', function(e){
-        if(e.key === 'Enter') return;
-        e.stopPropagation();
-      }, true);
-
-      inp.addEventListener('paste',  e => e.stopPropagation(), true);
-      inp.addEventListener('change', e => e.stopPropagation(), true);
-      inp.addEventListener('input',  e => e.stopPropagation(), true);
-    });
+  if(w.style.display === 'none' || w.style.display === ''){
+    w.classList.remove('exit');
+    w.style.display = 'flex';
+    w.style.opacity = '1';
+    w.style.visibility = 'visible';
   }
-  setTimeout(protectAuthForm, 300);
-  setTimeout(protectAuthForm, 1500);
+}, 700);
 
-  /* ⭐⭐⭐ مزامنة الحالة دورياً */
-  function syncState(){
-    const ap = document.getElementById('app');
-    const a  = document.getElementById('auth');
-    const w  = document.getElementById('welcome');
+/* ⭐⭐⭐ عند الإقلاع: تأكد من الشاشة الصحيحة */
+setTimeout(async () => {
+  const ap = document.getElementById('app');
+  const a  = document.getElementById('auth');
+  if(ap && ap.classList.contains('open')) return;
+  if(a && a.classList.contains('open')) return;
 
-    if(ap && ap.classList.contains('open')){ window._APP_SCREEN = 'app'; return; }
-    if(a  && a.classList.contains('open')) { window._APP_SCREEN = 'auth'; return; }
-    if(w  && w.style.display !== 'none')   { window._APP_SCREEN = 'welcome'; }
+  try{
+    const r = await sb.auth.getSession();
+    const s = r.data.session;
+
+    if(s && typeof window.enterApp === 'function'){
+      session = s;
+      try{
+        await Promise.race([
+          window.enterApp(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+        ]);
+      }catch(err){
+        console.warn('boot enterApp failed:', err);
+        window.showWelcomeSafe();
+      }
+    } else {
+      window.showWelcomeSafe();
+    }
+  }catch(e){
+    window.showWelcomeSafe();
   }
-  setInterval(syncState, 800);
+}, 1500);
 
-  console.log('✅ Welcome & Auth fix loaded');
+console.log('✅ Welcome & Auth fix v2 loaded');
 })();
