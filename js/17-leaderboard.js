@@ -24,7 +24,10 @@ function myStats(){
 }
 
 async function syncMyXp(){
-  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  /* ⭐ لا نحفظ XP للإداريين أو رئيس المنصة */
+  if(!currentUserObj) return;
+  if(currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
+
   const s = myStats();
   try{
     await sb.from('profiles').update({
@@ -57,12 +60,12 @@ async function renderLeaderboard(){
   let profilesData = [];
   let progressData = [];
   try{
-    const r1 = await sb.from('profiles').select('id, name, email, avatar_url, role, status, xp_points, focus_sessions, completed_files').neq('role', 'admin');
+    const r1 = await sb.from('profiles').select('id, name, email, avatar_url, role, status, xp_points, focus_sessions, completed_files').not('role', 'in', '(admin,owner)');
     profilesData = r1.data || [];
   }catch(e){}
   if(!profilesData.length){
     try{
-      const r1 = await sb.from('profiles').select('id, name, email, role, status').neq('role', 'admin');
+      const r1 = await sb.from('profiles').select('id, name, email, role, status').not('role', 'in', '(admin,owner)');
       profilesData = r1.data || [];
     }catch(e){}
   }
