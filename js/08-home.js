@@ -58,7 +58,7 @@ function renderProgress(){
   const avg = overallProgress();
   const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   setTxt('progPctBig', avg + '%');
-  setTxt('progDoneBig', completedCount() + '/' + DB.files.length);
+  setTxt('progDoneBig', completedCount() + '/' + statFiles().length);
   setTxt('progPagesBig', totalPagesRead());
   setTxt('progMinBig', Math.round(userData.minutes));
   const msgs = ['ابدأ بفتح أول ملف وسيتابع النظام تقدمك تلقائياً.','بداية جيدة! استمر في التقدم خطوة بخطوة.','أنت في منتصف الطريق تقريباً، لا تتوقف الآن!','أداء ممتاز! اقتربت من إتمام كل الملفات.','مذهل! أكملت جميع الملفات، أنت عبقري القدرات'];
@@ -70,8 +70,9 @@ function renderProgress(){
   setTxt('totalMinutes', Math.round(userData.minutes));
   setTxt('totalSessions', userData.sessions);
   const pl = $('#progressList'); if(!pl) return;
-  if(!DB.files.length){ pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>'; return; }
-  pl.innerHTML = DB.files.map(f => {
+  const files = statFiles();
+  if(!files.length){ pl.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات بعد</h3></div>'; return; }
+  pl.innerHTML = files.map(f => {
     const p = getPct(f.id);
     const mp = getMaxPage(f.id);
     const total = f.page_count || '?';
