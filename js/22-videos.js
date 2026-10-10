@@ -286,17 +286,7 @@ async function grantVideoXp(videoId, amount){
     userData.extraXp = (userData.extraXp || 0) + amount;
     savePrefs();
 
-    if(currentUserObj && currentUserObj.role !== 'admin'){
-      const st = myStats();
-      try{
-        await sb.from('profiles').update({
-          xp_points: st.xp,
-          focus_sessions: st.sessions,
-          completed_files: st.completed
-        }).eq('id', currentUserObj.id);
-        currentUserObj.xp_points = st.xp;
-      }catch(e){}
-    }
+    if(typeof syncMyXp === 'function') syncMyXp();
   }catch(e){ console.warn(e); }
 }
 
