@@ -22,7 +22,15 @@ async function loadProfilesAndFiles(retry){
       if(raw){ const j = JSON.parse(raw); DB.files = j.d || []; }
     }catch(e){ DB.files = []; }
   }
+  /* ⭐ الأدمن: حمّل قائمة المستخدمين أيضاً (كانت لا تُحمّل إلا عند حدوث تغيير) */
+  if(typeof isPrivileged === 'function' && isPrivileged()){
+    try{
+      const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+      if(!r.error) DB.users = r.data || [];
+    }catch(e){}
+  }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
+  try{ if(typeof rebuildNotifications === 'function') rebuildNotifications(); }catch(e){}
   try{
     if(typeof fixNavCounts === 'function'){ fixNavCounts(); }
     else {
@@ -48,6 +56,7 @@ async function loadVideos(retry){
   }
   try{ if(typeof renderVideos === 'function') renderVideos(); }catch(e){}
   try{ if(typeof renderAdminVideos === 'function') renderAdminVideos(); }catch(e){}
+  try{ if(typeof rebuildNotifications === 'function') rebuildNotifications(); }catch(e){}
 }
 
 async function loadProducts(retry){
@@ -80,16 +89,43 @@ async function loadStoreSettings(retry){
 
 async function loadMyProgress(){
   if(!currentUserObj) return;
-  if(currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
+  if(currentUserObj.role === 'admin' || currentUserObj.role === 'owner'){ window._progressReady = true; return; }
   try{
     const { data, error } = await sb.from('user_progress').select('*').eq('user_id', currentUserObj.id);
     if(error) throw error;
-    userData.progress = {};
+    const fromDb = {};
     (data || []).forEach(r => {
-      userData.progress[r.file_id] = { pct: r.pct || 0, maxPage: r.max_page || 0, lastPage: r.last_page || 1 };
+      fromDb[r.file_id] = {
+        pct: r.pct || 0, maxPage: r.max_page || 0, lastPage: r.last_page || 1,
+        at: r.updated_at ? Date.parse(r.updated_at) || 0 : 0
+      };
     });
+    /* ⭐ دمج بدل استبدال: لا نمسح التقدم المحلي/الاحتياطي أبداً */
+    userData.progress = mergeProgressMaps(userData.progress, fromDb);
     savePrefs();
-  }catch(e){}
+
+    /* ⭐ لو عندنا تقدم أعلى من المحفوظ بالقاعدة (مزامنة سابقة فشلت) → ارفعه */
+    setTimeout(() => {
+      try{
+        const ids = new Set((DB.files || []).map(f => f.id));
+        let n = 0;
+        Object.keys(userData.progress).forEach(fid => {
+          if(!ids.has(fid)) return;
+          const l = userData.progress[fid], d = fromDb[fid];
+          if(!d || (l.pct || 0) > (d.pct || 0) || (l.maxPage || 0) > (d.maxPage || 0)){
+            progressSyncQueue[fid] = { pct: l.pct || 0, max_page: l.maxPage || 0, last_page: l.lastPage || 1 };
+            n++;
+          }
+        });
+        if(n) flushProgressSync();
+      }catch(e){}
+    }, 3000);
+  }catch(e){
+    console.warn('loadMyProgress failed:', e && e.message);
+  }finally{
+    window._progressReady = true;
+    try{ syncMyXp(); }catch(e){}
+  }
 }
 
 async function loadMyVideoProgress(){
@@ -194,6 +230,7 @@ window.showAuthScreen = showAuthScreen;
 
 /* ================== enterApp ================== */
 async function enterApp(){
+  window._progressReady = false;
   try{
     if(session && session.user){
       window._lastInitializedUserId = session.user.id;
@@ -300,6 +337,7 @@ async function enterApp(){
         ]);
       }
       refreshAll();
+      try{ if(typeof primeNotifications === 'function') primeNotifications(); }catch(e){}
       try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
       try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
       try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
@@ -310,6 +348,7 @@ async function enterApp(){
     try{ if(typeof subscribeVideos === 'function') subscribeVideos(); }catch(e){}
     try{ if(typeof subscribeProductsAndSettings === 'function') subscribeProductsAndSettings(); }catch(e){}
     try{ if(typeof subscribeNotifications === 'function') subscribeNotifications(); }catch(e){}
+    try{ if(typeof startNotifPolling === 'function') startNotifPolling(); }catch(e){}
     try{ if(privileged && typeof subscribeProfilesForAdmin === 'function') subscribeProfilesForAdmin(); }catch(e){}
 
     const m = location.hash.match(/^#watch=(.+)$/);
