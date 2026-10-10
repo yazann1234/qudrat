@@ -3870,3 +3870,43 @@ img{-webkit-user-drag:none;user-drag:none}
 .notif-push-banner small{display:block;font-size:.7rem;color:var(--muted);font-weight:600;line-height:1.6}
 .notif-bell-btn.ring i{animation:bellRing 1s ease-in-out 2}
 @keyframes bellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(18deg)}30%{transform:rotate(-16deg)}45%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}75%{transform:rotate(4deg)}}
+
+/* ============================================================
+   ✏️ مدة اشتراك مخصصة (أيام / أشهر / تاريخ)
+============================================================ */
+.custom-dur{background:var(--card-2);border:1px dashed color-mix(in srgb,var(--primary) 45%,transparent);border-radius:14px;padding:12px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.custom-dur-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.custom-dur-tabs button{font-family:inherit;font-size:.76rem;font-weight:800;padding:9px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.2s}
+.custom-dur-tabs button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.custom-dur-row{display:flex;align-items:center;gap:8px}
+.custom-dur-row span{font-size:.82rem;font-weight:800;color:var(--muted);white-space:nowrap}
+.custom-dur-quick{display:flex;flex-wrap:wrap;gap:6px}
+.custom-dur-quick button{font-family:inherit;font-size:.7rem;font-weight:800;padding:5px 10px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+.custom-dur-quick button:hover{border-color:var(--primary);color:var(--primary)}
+.custom-dur-preview{font-size:.78rem;font-weight:700;line-height:1.9;padding:9px 12px;border-radius:10px;background:rgba(34,197,94,.1);color:#15803d}
+.custom-dur-preview i{width:16px;text-align:center}
+.custom-dur-preview.err{background:rgba(239,68,68,.1);color:#dc2626}
+
+/* ============================================================
+   📅 بطاقة الاشتراك في الملف الشخصي
+============================================================ */
+.sub-detail-card{--sc:#16a34a;background:var(--card);border:1px solid color-mix(in srgb,var(--sc) 35%,var(--border));border-radius:20px;padding:18px;margin:14px 0;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.sub-detail-card::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--sc),color-mix(in srgb,var(--sc) 50%,#fff))}
+.sub-detail-card.warning{--sc:#d97706}
+.sub-detail-card.expired{--sc:#dc2626}
+.sdc-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sdc-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.15rem;flex-shrink:0;background:color-mix(in srgb,var(--cc,var(--primary)) 15%,transparent);color:var(--cc,var(--primary))}
+.sdc-head small{display:block;font-size:.7rem;color:var(--muted);font-weight:700}
+.sdc-head b{display:block;font-size:1rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdc-badge{font-size:.68rem;font-weight:900;padding:4px 10px;border-radius:100px;background:color-mix(in srgb,var(--sc) 14%,transparent);color:var(--sc);white-space:nowrap}
+.sdc-count{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sdc-count b{font-size:2.3rem;font-weight:900;line-height:1;color:var(--sc)}
+.sdc-count small{font-size:.8rem;color:var(--muted);font-weight:700}
+.sdc-bar{height:8px;border-radius:100px;background:var(--border);overflow:hidden;margin-bottom:14px}
+.sdc-bar i{display:block;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--sc),color-mix(in srgb,var(--sc) 55%,#fff));transition:width 1s ease}
+.sdc-dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sdc-dates>div{background:var(--card-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.sdc-dates small{display:block;font-size:.68rem;color:var(--muted);font-weight:700;margin-bottom:3px}
+.sdc-dates small i{color:var(--sc);margin-left:3px}
+.sdc-dates b{font-size:.8rem;font-weight:800;line-height:1.5}
+@media (max-width:520px){ .sdc-dates{grid-template-columns:1fr} .sdc-count b{font-size:2rem} }
