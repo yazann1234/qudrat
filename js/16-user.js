@@ -142,6 +142,8 @@ function renderProfile(){
     }
 
     if(typeof renderBadges === 'function') renderBadges();
+    /* ⭐ تفاصيل الاشتراك (المدة + تاريخ البداية والنهاية + الأيام المتبقية) */
+    if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo();
   }catch(e){ console.warn('renderProfile error:', e); }
 }
 window.renderProfile = renderProfile;
