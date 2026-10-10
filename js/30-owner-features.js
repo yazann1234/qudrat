@@ -49,45 +49,68 @@ async function checkSubscriptionOnLogin(){
 }
 window.checkSubscriptionOnLogin = checkSubscriptionOnLogin;
 
-/* ================== تفعيل اشتراك ================== */
+/* ================== حساب نهاية الاشتراك (يدعم التاريخ الثابت للدورة) ================== */
+function calculateSubscriptionEnd(months, courseId){
+  const course = courseId && typeof getCourseById === 'function' ? getCourseById(courseId) : null;
+  if(course && course.subscription_end_date){
+    const d = new Date(course.subscription_end_date);
+    if(!isNaN(d.getTime())){
+      d.setHours(23, 59, 59, 999);
+      if(d > new Date()) return d;
+    }
+  }
+  const end = new Date();
+  end.setMonth(end.getMonth() + (months || 1));
+  return end;
+}
+window.calculateSubscriptionEnd = calculateSubscriptionEnd;
+
+/* ================== تفعيل اشتراك ==================
+   activateSubscription(userId, months, courseId) → true عند النجاح
+=================================================== */
 async function activateSubscription(userId, months, courseId){
-  if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return false; }
 
   months = parseInt(months, 10);
-  if(!months || months < 1 || months > 12){ toast('المدة 1-12 شهر', 'warn'); return; }
+  if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return false; }
 
   const start = new Date();
-  const end = new Date();
-  end.setMonth(end.getMonth() + months);
+  const end = calculateSubscriptionEnd(months, courseId);
 
   const payload = {
     status: 'approved',
     subscription_start: start.toISOString(),
     subscription_end: end.toISOString(),
-    subscription_months: months
+    subscription_months: months,
+    /* ⭐ الطلب تمت معالجته — لو انتهى الاشتراك لاحقاً يقدر يشتري من جديد */
+    purchase_submitted: false
   };
-
   if(courseId) payload.course_id = courseId;
 
-  const { error } = await sb.from('profiles').update(payload).eq('id', userId);
-  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), payload);
+  if(error){ toast('فشل: ' + error.message, 'err'); return false; }
+
+  /* حدّث النسخة المحلية فوراً */
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(u) Object.assign(u, payload);
+
+  const course = courseId && typeof getCourseById === 'function' ? getCourseById(courseId) : null;
 
   if(typeof logAdminAction === 'function'){
-    const course = courseId ? getCourseById(courseId) : null;
     await logAdminAction('activate_subscription', userId,
       `تفعيل اشتراك ${course ? course.name + ' ' : ''}لمدة ${months} شهر`,
       { months, course_id: courseId });
   }
 
-  /* أرسل إشعاراً */
+  /* ⭐ إشعار موجّه للطالب نفسه فقط (كان يصل لكل الطلاب بالخطأ) */
   if(typeof sendNotification === 'function'){
-    const course = courseId ? getCourseById(courseId) : null;
     await sendNotification('general', '✓ تم تفعيل اشتراكك',
-      `تم تفعيل اشتراكك في ${course ? course.name : 'المنصة'} لمدة ${months} شهر. استمتع بالتعلم!`,
-      null, courseId, 'fa-check-circle', '#22c55e');
+      `تم تفعيل اشتراكك في ${course ? course.name : 'المنصة'} حتى ${end.toLocaleDateString('ar-SA')}. استمتع بالتعلم!`,
+      null, null, 'fa-check-circle', '#22c55e', userId);
   }
 
-  toast(`✓ تم التفعيل لمدة ${months} شهر`, 'ok');
+  toast(`✓ تم التفعيل${course ? ' — ' + course.name : ''} لمدة ${months} شهر`, 'ok');
+  return true;
 }
 window.activateSubscription = activateSubscription;
 
@@ -145,6 +168,8 @@ async function renderAdminLogs(){
       add_video: 'fa-video',
       delete_video: 'fa-video-slash',
       add_product: 'fa-cart-plus',
+      edit_product: 'fa-pen-to-square',
+      delete_product: 'fa-trash-can',
       update_settings: 'fa-gear',
       send_gift: 'fa-gift',
       promote_admin: 'fa-user-shield',
@@ -468,7 +493,7 @@ async function sendStudentGift(){
 
   /* أرسل إشعاراً أيضاً */
   if(typeof sendNotification === 'function'){
-    await sendNotification('gift', '🎁 وصلك هدية جديدة!', title, userId, null, 'fa-gift', '#f7b32b');
+    await sendNotification('gift', '🎁 وصلك هدية جديدة!', title, null, null, 'fa-gift', '#f7b32b', userId);
   }
 
   toast('🎁 تم الإرسال', 'ok');
