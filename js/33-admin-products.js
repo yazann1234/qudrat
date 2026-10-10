@@ -2,47 +2,8 @@
    33) ADMIN PRODUCTS — إدارة المنتجات الكاملة مع الصور
 ============================================================ */
 
-/* ⭐ 1) حساب نهاية الاشتراك (يدعم التاريخ الثابت للدورة) */
-function calculateSubscriptionEnd(months, courseId){
-  const course = courseId && typeof getCourseById === 'function' ? getCourseById(courseId) : null;
-  if(course && course.subscription_end_date){
-    const d = new Date(course.subscription_end_date);
-    if(!isNaN(d.getTime())){
-      d.setHours(23, 59, 59, 999);
-      return d;
-    }
-  }
-  const end = new Date();
-  end.setMonth(end.getMonth() + (months || 1));
-  return end;
-}
-window.calculateSubscriptionEnd = calculateSubscriptionEnd;
-
-/* ⭐ 2) تغليف activateSubscription ليفرض التاريخ الثابت */
-(function wrapActivateSubscription(){
-  const check = setInterval(() => {
-    if(typeof window.activateSubscription === 'function' && !window._activateSubWrapped){
-      clearInterval(check);
-      const orig = window.activateSubscription;
-      window._activateSubWrapped = true;
-      window.activateSubscription = async function(userId, months, courseId){
-        const result = await orig.apply(this, arguments);
-        try{
-          const course = courseId ? getCourseById(courseId) : null;
-          if(course && course.subscription_end_date){
-            const endDate = new Date(course.subscription_end_date);
-            endDate.setHours(23, 59, 59, 999);
-            await sb.from('profiles').update({
-              subscription_end: endDate.toISOString()
-            }).eq('id', userId);
-          }
-        }catch(e){ console.warn('force end date failed:', e); }
-        return result;
-      };
-    }
-  }, 100);
-  setTimeout(() => clearInterval(check), 6000);
-})();
+/* ⭐ حساب نهاية الاشتراك + فرض التاريخ الثابت انتقلت إلى activateSubscription
+   في 30-owner-features.js (بدل التغليف بـ setInterval) */
 
 /* ⭐ 3) الثوابت */
 const PRODUCT_ICONS = [
@@ -56,6 +17,35 @@ const PRODUCT_COLORS = [
   '#5b6cff','#8b5cf6','#7c3aed','#ec4899','#db2777','#ef4444',
   '#f59e0b','#f7b32b','#22c55e','#16a34a','#14b8a6','#06b6d4','#0ea5e9'
 ];
+
+const PF_DURATIONS = [1, 3, 6, 12];
+
+/* ⭐ قراءة/تعبئة حقول الأسعار (سعر مستقل لكل مدة) */
+function readPriceInputs(){
+  const prices = {};
+  PF_DURATIONS.forEach(m => {
+    const el = document.getElementById('pfPrice' + m);
+    const v = el ? parseFloat(el.value) : NaN;
+    if(v > 0) prices[String(m)] = v;
+  });
+  return prices;
+}
+function fillPriceInputs(prices){
+  PF_DURATIONS.forEach(m => {
+    const el = document.getElementById('pfPrice' + m);
+    if(el) el.value = (prices && Number(prices[String(m)]) > 0) ? Number(prices[String(m)]) : '';
+  });
+}
+/* أسعار المنتج: من المنتج نفسه، أو من الدورة المرتبطة، أو السعر القديم الموحد */
+function getProductPrices(p){
+  if(!p) return {};
+  if(p.prices && typeof p.prices === 'object' && Object.keys(p.prices).length) return p.prices;
+  const code = p.course_code || ('auto_' + p.id);
+  const c = (typeof CS !== 'undefined' ? CS.courses : []).find(x => x.code === code);
+  if(c && c.prices && Object.keys(c.prices).length) return c.prices;
+  return Number(p.price) > 0 ? { '1': Number(p.price) } : {};
+}
+window.getProductPrices = getProductPrices;
 
 let pfSelectedIcon  = 'fa-graduation-cap';
 let pfSelectedColor = '#5b6cff';
@@ -117,8 +107,13 @@ function renderAdminProducts(){
         ${p.subtitle ? `<small class="apc-sub">${escapeHtml(p.subtitle)}</small>` : ''}
         ${p.description ? `<p class="apc-desc">${escapeHtml(p.description)}</p>` : ''}
 
-        <div class="apc-price">
-          <b>${p.price || 0}</b> <span>${escapeHtml(p.currency || 'ر.س')}</span>
+        <div class="apc-durations">
+          ${(() => {
+            const pr = getProductPrices(p);
+            const items = PF_DURATIONS.filter(m => Number(pr[String(m)]) > 0);
+            if(!items.length) return '<span class="apc-no-price">لا توجد أسعار</span>';
+            return items.map(m => `<div class="apc-dur"><small>${typeof monthsLabel === 'function' ? monthsLabel(m) : m + ' شهر'}</small>${priceHTML(pr[String(m)], p.currency)}</div>`).join('');
+          })()}
         </div>
 
         ${p.course_code ? `<div class="apc-features-count"><i class="fas fa-link"></i> مرتبط بدورة: ${escapeHtml(p.course_code)}</div>` : ''}
@@ -149,8 +144,9 @@ window.adminNewProduct = () => {
   document.getElementById('pfTitle').value = '';
   document.getElementById('pfSubtitle').value = '';
   document.getElementById('pfDesc').value = '';
-  document.getElementById('pfPrice').value = '';
+  fillPriceInputs({});
   document.getElementById('pfCurrency').value = 'ر.س';
+  if(document.getElementById('pfEndDate')) document.getElementById('pfEndDate').value = '';
   if(document.getElementById('pfCourseCode')) document.getElementById('pfCourseCode').value = '';
   document.getElementById('pfFeatures').value = '';
   document.getElementById('pfPopular').checked = false;
@@ -174,8 +170,9 @@ window.adminEditProduct = id => {
   document.getElementById('pfTitle').value = p.title || '';
   document.getElementById('pfSubtitle').value = p.subtitle || '';
   document.getElementById('pfDesc').value = p.description || '';
-  document.getElementById('pfPrice').value = p.price || 0;
+  fillPriceInputs(getProductPrices(p));
   document.getElementById('pfCurrency').value = p.currency || 'ر.س';
+  if(document.getElementById('pfEndDate')) document.getElementById('pfEndDate').value = p.subscription_end_date ? String(p.subscription_end_date).slice(0, 10) : '';
   if(document.getElementById('pfCourseCode')) document.getElementById('pfCourseCode').value = p.course_code || '';
   document.getElementById('pfFeatures').value = (p.features || []).join('\n');
   document.getElementById('pfPopular').checked = !!p.popular;
@@ -286,7 +283,11 @@ window.clearProductImage = function(){
     const title       = document.getElementById('pfTitle').value.trim();
     const subtitle    = document.getElementById('pfSubtitle').value.trim();
     const description = document.getElementById('pfDesc').value.trim();
-    const price       = parseFloat(document.getElementById('pfPrice').value) || 0;
+    const prices      = readPriceInputs();
+    const priceVals   = Object.values(prices);
+    const price       = priceVals.length ? Math.min(...priceVals) : 0;
+    const endDateEl   = document.getElementById('pfEndDate');
+    const endDate     = endDateEl && endDateEl.value ? endDateEl.value : null;
     const currency    = document.getElementById('pfCurrency').value.trim() || 'ر.س';
     const features    = document.getElementById('pfFeatures').value.split('\n').map(s => s.trim()).filter(Boolean);
     const popular     = document.getElementById('pfPopular').checked;
@@ -294,6 +295,7 @@ window.clearProductImage = function(){
     const courseCode  = document.getElementById('pfCourseCode') ? document.getElementById('pfCourseCode').value.trim() : '';
 
     if(!title){ toast('أدخل اسم المنتج', 'warn'); return; }
+    if(!priceVals.length){ toast('أدخل سعراً لمدة واحدة على الأقل', 'warn'); return; }
 
     clone.disabled = true;
     const orig = clone.innerHTML;
@@ -341,6 +343,8 @@ window.clearProductImage = function(){
 
     const payload = {
       title, subtitle, description, price, currency,
+      prices,
+      subscription_end_date: endDate,
       icon: pfSelectedIcon, color: pfSelectedColor,
       features, popular, active
     };
@@ -349,11 +353,13 @@ window.clearProductImage = function(){
 
         let error;
     let savedId = id;
+    /* sbSafeWrite: لو عمود prices غير موجود بجدول products يحفظ الباقي
+       (الأسعار تُحفظ دائماً في جدول courses عبر syncProductToCourse) */
     if(id){
-      const r = await sb.from('products').update(payload).eq('id', id);
+      const r = await sbSafeWrite(pl => sb.from('products').update(pl).eq('id', id), payload);
       error = r.error;
     } else {
-      const r = await sb.from('products').insert(payload).select('id').single();
+      const r = await sbSafeWrite(pl => sb.from('products').insert(pl).select('id').single(), payload);
       error = r.error;
       if(r.data && r.data.id) savedId = r.data.id;
     }
@@ -371,7 +377,8 @@ window.clearProductImage = function(){
 
     /* ⭐⭐⭐ دائماً ازامن مع الدورات (حتى لو ما فيه course_code) */
     if(typeof syncProductToCourse === 'function'){
-      await syncProductToCourse({ ...payload, id: savedId });
+      const existing = (DB.products || []).find(x => x.id === savedId);
+      await syncProductToCourse({ ...payload, id: savedId, course_code: courseCode || (existing && existing.course_code) || undefined });
     }
 
     /* ⭐ أعِد تحميل الدورات واعرضها في المتجر */
