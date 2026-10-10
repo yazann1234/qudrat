@@ -5,13 +5,19 @@
 function getPct(id){ const p = userData.progress[id]; if(!p) return 0; return typeof p === 'object' ? (p.pct || 0) : p; }
 function getMaxPage(id){ const p = userData.progress[id]; if(!p || typeof p !== 'object') return 0; return p.maxPage || 0; }
 
-function overallProgress(){
-  if(!DB.files.length) return 0;
-  const sum = DB.files.reduce((a,f)=> a + getPct(f.id), 0);
-  return Math.round(sum / DB.files.length);
+/* ⭐ الإحصاءات تُحسب على ملفات دورة الطالب فقط (وليس كل ملفات المنصة) */
+function statFiles(){
+  try{ if(typeof getVisibleFiles === 'function') return getVisibleFiles(); }catch(e){}
+  return DB.files || [];
 }
-function completedCount(){ return DB.files.filter(f => getPct(f.id) >= 100).length; }
-function totalPagesRead(){ return DB.files.reduce((a,f)=> a + getMaxPage(f.id), 0); }
+function overallProgress(){
+  const list = statFiles();
+  if(!list.length) return 0;
+  const sum = list.reduce((a,f)=> a + getPct(f.id), 0);
+  return Math.round(sum / list.length);
+}
+function completedCount(){ return statFiles().filter(f => getPct(f.id) >= 100).length; }
+function totalPagesRead(){ return statFiles().reduce((a,f)=> a + getMaxPage(f.id), 0); }
 function isSubscribed(){
   return currentUserObj && (
     currentUserObj.role === 'admin' ||
@@ -66,7 +72,7 @@ function checkBadges(){
     const b = BADGES.find(x => x.id === id);
     if(b) toast(`حصلت على شارة «${b.t}»`, 'ok');
   };
-  const vals = DB.files.map(f => getPct(f.id));
+  const vals = statFiles().map(f => getPct(f.id));
   if(userData.opened.length) add('first');
   if(totalPagesRead() >= 10) add('pages10');
   if(totalPagesRead() >= 100) add('pages100');
