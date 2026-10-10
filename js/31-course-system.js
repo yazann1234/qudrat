@@ -64,14 +64,74 @@ function getCoursePrice(course, months){
 }
 window.getCoursePrice = getCoursePrice;
 
-/* ⭐ استخرج سعر الدورة (يدعم التاريخ الثابت) */
+/* ⭐ المدد المعتمدة للاشتراك */
+const COURSE_DURATIONS = [
+  { m: 1,  label: 'شهر',   long: 'شهر واحد' },
+  { m: 3,  label: '3 أشهر', long: '3 أشهر' },
+  { m: 6,  label: '6 أشهر', long: '6 أشهر' },
+  { m: 12, label: 'سنة',   long: 'سنة كاملة' }
+];
+window.COURSE_DURATIONS = COURSE_DURATIONS;
+
+function monthsLabel(m){
+  m = parseInt(m, 10) || 0;
+  if(m === 1) return 'شهر';
+  if(m === 2) return 'شهرين';
+  if(m === 12) return 'سنة';
+  if(m >= 3 && m <= 10) return m + ' أشهر';
+  return m + ' شهر';
+}
+window.monthsLabel = monthsLabel;
+
+/* ⭐ أقل سعر متاح للدورة (للعرض «يبدأ من») */
 function getCourseDisplayPrice(course){
   if(!course) return 0;
   const prices = course.prices || {};
-  return prices['1'] || prices['3'] || prices['6'] || prices['12'] ||
-         (Object.values(prices)[0]) || course.price || 0;
+  const vals = Object.values(prices).map(Number).filter(v => v > 0);
+  if(vals.length) return Math.min(...vals);
+  return Number(course.price) || 0;
 }
 window.getCourseDisplayPrice = getCourseDisplayPrice;
+
+/* ⭐ عدد الأشهر حتى تاريخ النهاية الثابت */
+function monthsUntilFixedEnd(course){
+  if(!course || !course.subscription_end_date) return 0;
+  const diffMs = new Date(course.subscription_end_date) - new Date();
+  return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30)));
+}
+window.monthsUntilFixedEnd = monthsUntilFixedEnd;
+
+/* ⭐⭐⭐ ماذا اشترى المستخدم؟ (الدورة + المدة + السعر) — للتفعيل بضغطة واحدة */
+function getPurchaseRequest(u){
+  if(!u) return null;
+  let course = null, months = 0;
+  const code = String(u.purchase_product || '');
+  const m = /^(.*)_(\d+)m$/.exec(code);
+
+  if(u.purchase_course_id) course = getCourseById(u.purchase_course_id);
+  if(!course && m) course = (CS.courses || []).find(c => c.code === m[1]) || null;
+  if(!course && code){
+    /* الصيغة القديمة: كان يُحفظ id المنتج */
+    const prod = (DB.products || []).find(p => p.id === code);
+    if(prod) course = (CS.courses || []).find(c => c.code === (prod.course_code || ('auto_' + prod.id))) || null;
+  }
+  if(!course) return null;
+
+  months = parseInt(u.purchase_months, 10) || (m ? parseInt(m[2], 10) : 0) || 0;
+  if(!months){
+    if(course.subscription_end_date) months = monthsUntilFixedEnd(course);
+    else {
+      const first = COURSE_DURATIONS.find(d => Number((course.prices || {})[String(d.m)]) > 0);
+      months = first ? first.m : 1;
+    }
+  }
+  const price = (u.purchase_price != null && u.purchase_price !== '')
+    ? Number(u.purchase_price)
+    : (course.subscription_end_date ? getCourseDisplayPrice(course) : getCoursePrice(course, months));
+
+  return { course, months, price };
+}
+window.getPurchaseRequest = getPurchaseRequest;
 
 /* ⭐ تنسيق التاريخ بالعربي */
 function formatEndDate(dateStr){
@@ -93,20 +153,23 @@ function renderCoursesGrid(){
     return;
   }
 
+  /* هل للمستخدم طلب شراء قيد المراجعة؟ */
+  const pendingReq = (currentUserObj && currentUserObj.purchase_submitted && currentUserObj.status !== 'approved')
+    ? getPurchaseRequest(currentUserObj) : null;
+
   grid.innerHTML = CS.courses.map(c => {
     const isMyCourse = currentUserObj && currentUserObj.course_id === c.id && currentUserObj.status === 'approved';
+    const isPendingHere = pendingReq && pendingReq.course && pendingReq.course.id === c.id;
     const prices = c.prices || {};
-
-    /* ⭐ هل الدورة لها تاريخ نهاية ثابت؟ (مثل دورة الورقي) */
     const hasFixedEnd = !!(c.subscription_end_date);
+    const p1 = Number(prices['1']) || 0;
 
-    let priceHTML = '';
+    let priceBlock = '';
 
     if(hasFixedEnd){
-      /* ⭐ عرض واحد فقط: السعر + التاريخ */
       const price = getCourseDisplayPrice(c);
       const dateStr = formatEndDate(c.subscription_end_date);
-      priceHTML = `
+      priceBlock = `
         <div class="course-fixed-end">
           <div class="course-fixed-end-head">
             <i class="fas fa-calendar-check"></i>
@@ -115,46 +178,46 @@ function renderCoursesGrid(){
           <div class="course-fixed-end-date">${escapeHtml(dateStr)}</div>
           <div class="course-fixed-end-price">
             <b>${price}</b>
-            <span>ر.س</span>
+            <span>${sarIcon()}</span>
           </div>
         </div>
       `;
     } else {
-      /* ⭐ عرض المدد المتعددة */
-      const durations = [
-        { m: 1,  label: 'شهر' },
-        { m: 3,  label: '3 أشهر' },
-        { m: 6,  label: '6 أشهر' },
-        { m: 12, label: 'سنة' }
-      ].filter(d => prices[String(d.m)]);
+      const durations = COURSE_DURATIONS.filter(d => Number(prices[String(d.m)]) > 0);
 
       if(!durations.length){
-        priceHTML = `<div style="text-align:center;font-size:.82rem;color:var(--muted);padding:16px">لا توجد أسعار محددة</div>`;
+        priceBlock = `<div style="text-align:center;font-size:.82rem;color:var(--muted);padding:16px">لا توجد أسعار محددة</div>`;
       } else {
-        priceHTML = `
+        priceBlock = `
           <div class="course-prices">
-            ${durations.map(d => `
+            ${durations.map(d => {
+              const price = Number(prices[String(d.m)]);
+              const save = (p1 && d.m > 1) ? Math.round((1 - price / (p1 * d.m)) * 100) : 0;
+              return `
               <div class="course-price-item" data-course="${c.id}" data-months="${d.m}">
-                <span class="months">${d.label}</span>
-                <b>${prices[String(d.m)]}</b>
-                <span class="currency">ر.س</span>
-              </div>
-            `).join('')}
+                <span class="months">${d.label}${save > 0 ? ` <em class="price-save">وفّر ${save}%</em>` : ''}</span>
+                <b>${price}${sarIcon()}</b>
+              </div>`;
+            }).join('')}
           </div>
         `;
       }
     }
 
+    let btn;
+    if(isMyCourse) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-check"></i> أنت مشترك</button>';
+    else if(isPendingHere) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-hourglass-half"></i> طلبك قيد المراجعة</button>';
+    else btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-shopping-cart"></i> اشترك الآن</button>`;
+
     return `
       <div class="course-card ${isMyCourse ? 'mine' : ''}" style="--cc:${c.color || '#5b6cff'}">
         ${isMyCourse ? '<div class="course-active-badge"><i class="fas fa-check-circle"></i> دورتك الحالية</div>' : ''}
+        ${isPendingHere ? `<div class="course-active-badge" style="background:linear-gradient(120deg,#f7b32b,#d97706)"><i class="fas fa-clock"></i> ${monthsLabel(pendingReq.months)} — قيد المراجعة</div>` : ''}
         <div class="course-icon"><i class="fas ${c.icon || 'fa-graduation-cap'}"></i></div>
         <h3>${escapeHtml(c.name)}</h3>
         <p class="course-desc">${escapeHtml(c.description || '')}</p>
-        ${priceHTML}
-        <button class="course-subscribe-btn" ${isMyCourse ? 'disabled' : ''} onclick="startCourseSubscription('${c.id}')">
-          ${isMyCourse ? '<i class="fas fa-check"></i> أنت مشترك' : '<i class="fas fa-shopping-cart"></i> اشترك الآن'}
-        </button>
+        ${priceBlock}
+        ${btn}
       </div>
     `;
   }).join('');
@@ -167,26 +230,14 @@ function startCourseSubscription(courseId){
   if(!c) return;
   if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
 
-  /* ⭐ لو الدورة فيها تاريخ نهاية ثابت: انتقل مباشرة للشراء */
   if(c.subscription_end_date){
-    const price = getCourseDisplayPrice(c);
-    /* احسب الأشهر حتى تاريخ النهاية (لعرضها في مودال الشراء) */
-    const now = new Date();
-    const endDate = new Date(c.subscription_end_date);
-    const diffMs = endDate - now;
-    const diffMonths = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30)));
-    openPurchaseModalInline(c, diffMonths, price);
+    openPurchaseModalInline(c, monthsUntilFixedEnd(c), getCourseDisplayPrice(c));
     return;
   }
 
-  /* ⭐ الدورات بدون تاريخ ثابت: اعرض اختيار المدة */
   const prices = c.prices || {};
-  const options = [
-    { m: 1,  label: 'شهر واحد' },
-    { m: 3,  label: '3 أشهر' },
-    { m: 6,  label: '6 أشهر' },
-    { m: 12, label: 'سنة كاملة' }
-  ].filter(o => prices[String(o.m)]);
+  const p1 = Number(prices['1']) || 0;
+  const options = COURSE_DURATIONS.filter(o => Number(prices[String(o.m)]) > 0);
 
   if(!options.length){
     toast('لا توجد أسعار محددة لهذه الدورة', 'warn');
@@ -195,20 +246,25 @@ function startCourseSubscription(courseId){
 
   openModal({
     title: 'اختر مدة الاشتراك',
-    text: `دورة: ${c.name}`,
+    text: `دورة: ${escapeHtml(c.name)}`,
     bodyHTML: `
       <div class="duration-picker" id="durationPicker">
-        ${options.map((o, i) => `
-          <label class="duration-option ${i === 0 ? 'on' : ''}" data-months="${o.m}" data-price="${prices[String(o.m)]}">
+        ${options.map((o, i) => {
+          const price = Number(prices[String(o.m)]);
+          const perMonth = o.m > 1 ? Math.round(price / o.m) : 0;
+          const save = (p1 && o.m > 1) ? Math.round((1 - price / (p1 * o.m)) * 100) : 0;
+          return `
+          <label class="duration-option ${i === 0 ? 'on' : ''}" data-months="${o.m}" data-price="${price}">
             <input type="radio" name="courseDuration" value="${o.m}" ${i === 0 ? 'checked' : ''}>
             <div class="duration-card">
-              <div class="duration-label">${o.label}</div>
+              <div class="duration-label">${o.long}${save > 0 ? ` <em class="price-save">وفّر ${save}%</em>` : ''}</div>
               <div class="duration-price">
-                <b>${prices[String(o.m)]}</b> <span>ر.س</span>
+                <b>${price}</b> <span>${sarIcon()}</span>
+                ${perMonth ? `<small class="duration-per-month">≈ ${perMonth} ${sarIcon()} / شهر</small>` : ''}
               </div>
             </div>
-          </label>
-        `).join('')}
+          </label>`;
+        }).join('')}
       </div>
     `,
     okText: 'متابعة للدفع',
@@ -216,8 +272,7 @@ function startCourseSubscription(courseId){
       const selected = document.querySelector('input[name="courseDuration"]:checked');
       if(!selected) return;
       const months = parseInt(selected.value, 10);
-      const price = prices[String(months)];
-      openPurchaseModalInline(c, months, price);
+      openPurchaseModalInline(c, months, Number(prices[String(months)]));
     }
   });
 
@@ -261,12 +316,14 @@ async function syncProductToCourse(product){
   }
 
   try{
-    const prices = {
-      "1":  product.price || 0,
-      "3":  product.price || 0,
-      "6":  product.price || 0,
-      "12": product.price || 0
-    };
+    /* ⭐ سعر مستقل لكل مدة (من لوحة الأدمن) */
+    const prices = {};
+    const src = (product.prices && typeof product.prices === 'object') ? product.prices : null;
+    COURSE_DURATIONS.forEach(d => {
+      const v = src ? Number(src[String(d.m)]) : Number(product.price);
+      if(v > 0) prices[String(d.m)] = v;
+    });
+    if(!Object.keys(prices).length && Number(product.price) > 0) prices['1'] = Number(product.price);
 
     const payload = {
       code: code,
@@ -280,11 +337,10 @@ async function syncProductToCourse(product){
     };
 
     const check = await sb.from('courses').select('id').eq('code', code).maybeSingle();
-    if(check.data){
-      await sb.from('courses').update(payload).eq('code', code);
-    } else {
-      await sb.from('courses').insert(payload);
-    }
+    const r = check.data
+      ? await sbSafeWrite(p => sb.from('courses').update(p).eq('code', code), payload)
+      : await sbSafeWrite(p => sb.from('courses').insert(p), payload);
+    if(r && r.error) console.warn('course sync failed:', r.error.message);
 
     /* ⭐ خزّن الكود في المنتج لو ما كان موجود */
     if(!product.course_code && product.id){
