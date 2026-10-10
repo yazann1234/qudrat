@@ -24,13 +24,15 @@ function fileCard(f){
   /* ⭐ هل هذا الملف من دورة أخرى؟ */
   const fromOtherCourse = !isPrivileged() && f.course_id && currentUserObj && f.course_id !== currentUserObj.course_id;
   const course = f.course_id && typeof getCourseById === 'function' ? getCourseById(f.course_id) : null;
+  /* ⭐ شارة «جديد» للملفات المضافة خلال آخر 4 أيام ولم يفتحها الطالب */
+  const isNew = !locked && f.created_at && (Date.now() - new Date(f.created_at).getTime()) < 4 * 86400000 && !userData.opened.includes(f.id);
 
   return `
   <div class="file-card ${f.important ? 'important' : ''} ${locked ? 'locked' : ''}" style="--fc:${color}">
     <div class="fc-head">
       <div class="fc-icon"><i class="fas ${icon}"></i></div>
       <div class="fc-head-txt">
-        <h3>${escapeHtml(f.title)}</h3>
+        <h3>${escapeHtml(f.title)}${isNew ? ' <span class="fc-new"><i class="fas fa-bolt"></i> جديد</span>' : ''}</h3>
         <span class="fc-cat">${escapeHtml(cat)}</span>
         ${course ? `<span class="fc-cat" style="background:color-mix(in srgb,${course.color} 15%,transparent);color:${course.color};margin-right:6px"><i class="fas ${course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(course.name)}</span>` : ''}
       </div>
