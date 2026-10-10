@@ -36,7 +36,9 @@ function pickLocalFields(ud){
     badges: ud.badges,
     videoProgress: ud.videoProgress,
     awardedVideoXp: ud.awardedVideoXp,
-    extraXp: ud.extraXp
+    extraXp: ud.extraXp,
+    /* ⭐ نسخة احتياطية من التقدم — حتى لا تضيع النقاط لو فشلت مزامنة user_progress */
+    progress: ud.progress
   };
 }
 
@@ -50,7 +52,7 @@ function savePrefs(){
 }
 
 async function pushUserDataToDB(){
-  if(!currentUserObj || currentUserObj.role === 'admin') return;
+  if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
   try{
     const payload = pickLocalFields(userData);
     const { error } = await sb.from('profiles').update({ user_data: payload }).eq('id', currentUserObj.id);
@@ -66,10 +68,38 @@ function loadPrefs(){
   }catch(e){}
 }
 
+/* ⭐ دمج تقدّم ملفين: نأخذ الأعلى دائماً (لا يضيع أي تقدم) */
+function mergeProgressEntry(a, b){
+  const norm = v => (v && typeof v === 'object') ? v : (typeof v === 'number' ? { pct: v } : {});
+  const x = norm(a), y = norm(b);
+  const out = Object.assign({}, x, y);
+  out.pct = Math.max(x.pct || 0, y.pct || 0);
+  out.maxPage = Math.max(x.maxPage || 0, y.maxPage || 0);
+  out.lastPage = (y.at || 0) >= (x.at || 0) ? (y.lastPage || x.lastPage || 1) : (x.lastPage || y.lastPage || 1);
+  if(x.bookmark || y.bookmark) out.bookmark = y.bookmark || x.bookmark;
+  out.at = Math.max(x.at || 0, y.at || 0);
+  return out;
+}
+function mergeProgressMaps(a, b){
+  const out = {};
+  const A = (a && typeof a === 'object') ? a : {};
+  const B = (b && typeof b === 'object') ? b : {};
+  new Set([...Object.keys(A), ...Object.keys(B)]).forEach(k => { out[k] = mergeProgressEntry(A[k], B[k]); });
+  return out;
+}
+window.mergeProgressMaps = mergeProgressMaps;
+
 function loadPrefsFromDB(){
   try{
     if(currentUserObj && currentUserObj.user_data && typeof currentUserObj.user_data === 'object'){
+      const localProgress = userData.progress;
+      const localExtra = userData.extraXp || 0;
       Object.assign(userData, currentUserObj.user_data);
+      userData.progress = mergeProgressMaps(localProgress, currentUserObj.user_data.progress);
+      /* XP الإضافي: خذ الأعلى بين المحلي والمحفوظ */
+      if(typeof currentUserObj.user_data.extraXp === 'number'){
+        userData.extraXp = Math.max(localExtra, currentUserObj.user_data.extraXp);
+      }
     }
   }catch(e){}
   if(!userData.log || typeof userData.log !== 'object') userData.log = {};
@@ -83,23 +113,6 @@ function loadPrefsFromDB(){
   if(!userData.awardedVideoXp || typeof userData.awardedVideoXp !== 'object') userData.awardedVideoXp = {};
   if(typeof userData.extraXp !== 'number') userData.extraXp = 0;
 }
-
-/* ================= هل يجب عرض المتجر؟ ================= */
-function shouldShowStore(){
-  try{
-    if(!currentUserObj) return false;
-    if(currentUserObj.role === 'admin') return false;
-    if(currentUserObj.status === 'approved') return false;
-    if(currentUserObj.purchase_submitted === true) return false;
-    const lsKey = 'purchase_submitted_' + currentUserObj.id;
-    if(localStorage.getItem(lsKey)) return false;
-    return true;
-  }catch(e){
-    console.warn('shouldShowStore error:', e);
-    return false;
-  }
-}
-window.shouldShowStore = shouldShowStore;
 
 /* ============================================================
    ⭐ دوال مساعدة للصلاحيات
