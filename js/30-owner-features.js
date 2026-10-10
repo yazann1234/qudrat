@@ -65,17 +65,151 @@ function calculateSubscriptionEnd(months, courseId){
 }
 window.calculateSubscriptionEnd = calculateSubscriptionEnd;
 
-/* ================== تفعيل اشتراك ==================
-   activateSubscription(userId, months, courseId) → true عند النجاح
-=================================================== */
-async function activateSubscription(userId, months, courseId){
-  if(!isPrivileged()){ toast('غير مصرح', 'err'); return false; }
+/* ============================================================
+   ⭐ مدة مخصصة: بالأيام / بالأشهر / تاريخ انتهاء محدد (يوم + شهر)
+   تُستخدم في: مودال التفعيل + تعديل المستخدم + إنشاء مستخدم
+============================================================ */
+function fmtArDate(d){
+  try{ return new Date(d).toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }
+  catch(e){ return ''; }
+}
+window.fmtArDate = fmtArDate;
 
-  months = parseInt(months, 10);
-  if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return false; }
+function todayInputValue(offsetDays){
+  const d = new Date(); d.setDate(d.getDate() + (offsetDays || 0));
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+/* HTML حقول المدة المخصصة — prefix لتمييز الحقول (approve / eu / nu) */
+function customDurationHTML(prefix, hidden){
+  const fieldStyle = 'width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
+  return `
+    <div class="custom-dur" id="${prefix}CustomWrap" style="${hidden ? 'display:none' : ''}">
+      <div class="custom-dur-tabs" id="${prefix}CustomTabs">
+        <button type="button" class="on" data-t="days"><i class="fas fa-calendar-day"></i> بالأيام</button>
+        <button type="button" data-t="months"><i class="fas fa-calendar-week"></i> بالأشهر</button>
+        <button type="button" data-t="date"><i class="fas fa-calendar-check"></i> تاريخ محدد</button>
+      </div>
+      <input type="hidden" id="${prefix}CustomType" value="days">
+      <div class="custom-dur-row" id="${prefix}CustomNumRow">
+        <input type="number" id="${prefix}CustomNum" min="1" max="1825" value="30" style="${fieldStyle}">
+        <span id="${prefix}CustomUnit">يوم</span>
+      </div>
+      <div class="custom-dur-row" id="${prefix}CustomDateRow" style="display:none">
+        <input type="date" id="${prefix}CustomDate" min="${todayInputValue(1)}" value="${todayInputValue(30)}" style="${fieldStyle}">
+      </div>
+      <div class="custom-dur-quick" id="${prefix}CustomQuick">
+        ${[7, 14, 30, 45, 60, 90].map(n => `<button type="button" data-d="${n}">${n} يوم</button>`).join('')}
+      </div>
+      <div class="custom-dur-preview" id="${prefix}CustomPreview"></div>
+    </div>`;
+}
+window.customDurationHTML = customDurationHTML;
+
+/* يقرأ الحقول ويرجع { endDate, months, days, label } أو { error } */
+function readCustomDuration(prefix){
+  const type = (document.getElementById(prefix + 'CustomType') || {}).value || 'days';
+  let end = null;
+  if(type === 'date'){
+    const v = (document.getElementById(prefix + 'CustomDate') || {}).value;
+    if(!v) return { error: 'اختر تاريخ الانتهاء' };
+    const [y, m, d] = v.split('-').map(Number);
+    end = new Date(y, m - 1, d, 23, 59, 59, 999);
+  } else {
+    const n = parseInt((document.getElementById(prefix + 'CustomNum') || {}).value, 10);
+    if(!n || n < 1) return { error: 'أدخل مدة صحيحة' };
+    if(type === 'months' && n > 60) return { error: 'الحد الأقصى 60 شهر' };
+    if(type === 'days' && n > 1825) return { error: 'الحد الأقصى 1825 يوم' };
+    end = new Date();
+    if(type === 'months') end.setMonth(end.getMonth() + n);
+    else end.setDate(end.getDate() + n);
+    end.setHours(23, 59, 59, 999);
+  }
+  if(isNaN(end.getTime()) || end <= new Date()) return { error: 'تاريخ الانتهاء يجب أن يكون بعد اليوم' };
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const e0 = new Date(end); e0.setHours(0, 0, 0, 0);
+  const days = Math.round((e0 - t0) / 86400000);
+  let months = Math.max(1, Math.round(days / 30));
+  let label = formatDurationDays(days);
+  if(type === 'months'){
+    months = parseInt((document.getElementById(prefix + 'CustomNum') || {}).value, 10) || months;
+    label = (typeof monthsLabel === 'function' ? monthsLabel(months) : months + ' شهر') + ` (${days} يوم)`;
+  }
+  return { endDate: end, days, months, label };
+}
+window.readCustomDuration = readCustomDuration;
+
+/* «45 يوم» → «شهر و 15 يوم» */
+function formatDurationDays(days){
+  days = Math.max(0, Math.round(days));
+  if(days < 30) return days + ' يوم';
+  const m = Math.floor(days / 30), d = days % 30;
+  const mTxt = typeof monthsLabel === 'function' ? monthsLabel(m) : m + ' شهر';
+  return d ? `${mTxt} و ${d} يوم` : mTxt;
+}
+window.formatDurationDays = formatDurationDays;
+
+function bindCustomDuration(prefix){
+  const wrap = document.getElementById(prefix + 'CustomWrap');
+  if(!wrap || wrap.dataset.bound) return;
+  wrap.dataset.bound = '1';
+  const typeEl = document.getElementById(prefix + 'CustomType');
+  const numRow = document.getElementById(prefix + 'CustomNumRow');
+  const dateRow = document.getElementById(prefix + 'CustomDateRow');
+  const quick = document.getElementById(prefix + 'CustomQuick');
+  const unit = document.getElementById(prefix + 'CustomUnit');
+  const num = document.getElementById(prefix + 'CustomNum');
+  const preview = document.getElementById(prefix + 'CustomPreview');
+
+  const update = () => {
+    const r = readCustomDuration(prefix);
+    if(!preview) return;
+    if(r.error){ preview.className = 'custom-dur-preview err'; preview.innerHTML = `<i class="fas fa-circle-exclamation"></i> ${r.error}`; return; }
+    preview.className = 'custom-dur-preview';
+    preview.innerHTML = `<i class="fas fa-hourglass-half"></i> المدة: <b>${r.label}</b><br><i class="fas fa-calendar-xmark"></i> ينتهي: <b>${fmtArDate(r.endDate)}</b>`;
+  };
+
+  wrap.querySelectorAll('.custom-dur-tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      wrap.querySelectorAll('.custom-dur-tabs button').forEach(x => x.classList.toggle('on', x === b));
+      const t = b.dataset.t;
+      typeEl.value = t;
+      numRow.style.display = t === 'date' ? 'none' : 'flex';
+      dateRow.style.display = t === 'date' ? 'flex' : 'none';
+      quick.style.display = t === 'days' ? 'flex' : 'none';
+      if(unit) unit.textContent = t === 'months' ? 'شهر' : 'يوم';
+      if(t === 'months' && num && parseInt(num.value, 10) > 60) num.value = 2;
+      update();
+    });
+  });
+  quick.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => { num.value = b.dataset.d; update(); });
+  });
+  wrap.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  update();
+}
+window.bindCustomDuration = bindCustomDuration;
+
+/* ================== تفعيل اشتراك ==================
+   activateSubscription(userId, months, courseId, opts) → true عند النجاح
+   opts.endDate: تاريخ انتهاء مخصص (يتجاوز المدة وتاريخ الدورة الثابت)
+=================================================== */
+async function activateSubscription(userId, months, courseId, opts){
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return false; }
+  opts = opts || {};
 
   const start = new Date();
-  const end = calculateSubscriptionEnd(months, courseId);
+  let end;
+  if(opts.endDate){
+    end = new Date(opts.endDate);
+    if(isNaN(end.getTime()) || end <= start){ toast('تاريخ الانتهاء يجب أن يكون بعد اليوم', 'warn'); return false; }
+    months = Math.max(1, Math.round((end - start) / (86400000 * 30)));
+  } else {
+    months = parseInt(months, 10);
+    if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return false; }
+    end = calculateSubscriptionEnd(months, courseId);
+  }
+  const durTxt = formatDurationDays((end - start) / 86400000);
 
   const payload = {
     status: 'approved',
@@ -98,8 +232,8 @@ async function activateSubscription(userId, months, courseId){
 
   if(typeof logAdminAction === 'function'){
     await logAdminAction('activate_subscription', userId,
-      `تفعيل اشتراك ${course ? course.name + ' ' : ''}لمدة ${months} شهر`,
-      { months, course_id: courseId });
+      `تفعيل اشتراك ${course ? course.name + ' ' : ''}لمدة ${durTxt} (حتى ${end.toLocaleDateString('ar-SA')})`,
+      { months, course_id: courseId, end: end.toISOString(), custom: !!opts.endDate });
   }
 
   /* ⭐ إشعار موجّه للطالب نفسه فقط (كان يصل لكل الطلاب بالخطأ) */
@@ -109,7 +243,7 @@ async function activateSubscription(userId, months, courseId){
       null, null, 'fa-check-circle', '#22c55e', userId);
   }
 
-  toast(`✓ تم التفعيل${course ? ' — ' + course.name : ''} لمدة ${months} شهر`, 'ok');
+  toast(`✓ تم التفعيل${course ? ' — ' + course.name : ''} لمدة ${durTxt}`, 'ok');
   return true;
 }
 window.activateSubscription = activateSubscription;
@@ -605,7 +739,7 @@ function renderGiftsSection(){
   if(box) renderMyGifts();
 }
 
-/* ================== معلومات الاشتراك ================== */
+/* ================== معلومات الاشتراك (تظهر للطالب في ملفه الشخصي) ================== */
 function renderSubscriptionInfo(){
   const box = document.getElementById('subscriptionInfoBox');
   if(!box) return;
@@ -616,42 +750,74 @@ function renderSubscriptionInfo(){
       <div class="sub-info-card owner">
         <i class="fas fa-crown"></i>
         <div>
-          <b>رئيس المنصة / أدمن</b>
+          <b>${currentUserObj.role === 'owner' ? 'رئيس المنصة' : 'أدمن'}</b>
           <small>صلاحيات كاملة</small>
         </div>
       </div>`;
     return;
   }
 
-  if(currentUserObj.status !== 'approved'){ box.innerHTML = ''; return; }
-
-  const days = getSubscriptionDaysLeft();
-  const course = getMyCourse();
-
-  if(days === null){
+  if(currentUserObj.status !== 'approved'){
+    const pending = currentUserObj.purchase_submitted;
     box.innerHTML = `
-      <div class="sub-info-card">
-        <i class="fas fa-infinity"></i>
+      <div class="sub-info-card warning">
+        <i class="fas ${pending ? 'fa-hourglass-half' : 'fa-lock'}"></i>
         <div>
-          <b>اشتراك دائم</b>
-          <small>${course ? course.name : ''}</small>
+          <b>${pending ? 'طلب اشتراكك قيد المراجعة' : 'لا يوجد اشتراك فعّال'}</b>
+          <small>${pending ? 'سيتم التفعيل من الإدارة قريباً' : 'اشترك من المتجر لتفتح الملفات والفيديوهات'}</small>
         </div>
       </div>`;
     return;
   }
 
+  const course = getMyCourse();
+  const startD = currentUserObj.subscription_start ? new Date(currentUserObj.subscription_start) : null;
+  const endD = currentUserObj.subscription_end ? new Date(currentUserObj.subscription_end) : null;
+
+  if(!endD){
+    box.innerHTML = `
+      <div class="sub-detail-card active">
+        <div class="sdc-head">
+          <div class="sdc-ic"><i class="fas fa-infinity"></i></div>
+          <div><b>اشتراك دائم</b><small>${course ? escapeHtml(course.name) : ''}</small></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const now = new Date();
+  const msLeft = endD - now;
+  const days = Math.ceil(msLeft / 86400000);
   const isExpired = days <= 0;
-  const isWarning = days > 0 && days <= 7;
+  const isWarning = !isExpired && days <= 7;
   const cls = isExpired ? 'expired' : (isWarning ? 'warning' : 'active');
-  const icon = isExpired ? 'fa-circle-xmark' : (isWarning ? 'fa-triangle-exclamation' : 'fa-circle-check');
-  const label = isExpired ? 'انتهى اشتراكك' : `باقي ${days} يوم`;
+  const totalMs = startD ? Math.max(1, endD - startD) : null;
+  const usedPct = totalMs ? Math.min(100, Math.max(0, Math.round(((now - startD) / totalMs) * 100))) : 0;
+  const leftPct = 100 - usedPct;
+  const hoursLeft = Math.max(0, Math.floor((msLeft % 86400000) / 3600000));
 
   box.innerHTML = `
-    <div class="sub-info-card ${cls}">
-      <i class="fas ${icon}"></i>
-      <div>
-        <b>${label}</b>
-        <small>${course ? course.name : ''}${currentUserObj.subscription_end ? ' • ينتهي ' + new Date(currentUserObj.subscription_end).toLocaleDateString('ar-SA') : ''}</small>
+    <div class="sub-detail-card ${cls}" style="--cc:${course ? (course.color || '#5b6cff') : '#5b6cff'}">
+      <div class="sdc-head">
+        <div class="sdc-ic"><i class="fas ${course ? (course.icon || 'fa-graduation-cap') : 'fa-crown'}"></i></div>
+        <div style="flex:1;min-width:0">
+          <small>اشتراكك الحالي</small>
+          <b>${course ? escapeHtml(course.name) : 'اشتراك المنصة'}</b>
+        </div>
+        <span class="sdc-badge">${isExpired ? '⛔ منتهي' : isWarning ? '⚠️ قارب على الانتهاء' : '✓ فعّال'}</span>
+      </div>
+
+      <div class="sdc-count">
+        ${isExpired
+          ? '<b>انتهى</b><small>جدّد اشتراكك من المتجر</small>'
+          : `<b>${days}</b><small>${days === 1 ? `يوم متبقي (${hoursLeft} ساعة)` : 'يوم متبقي'} • ${formatDurationDays(days)}</small>`}
+      </div>
+
+      ${totalMs ? `<div class="sdc-bar"><i style="width:${leftPct}%"></i></div>` : ''}
+
+      <div class="sdc-dates">
+        ${startD ? `<div><small><i class="fas fa-play"></i> بداية الاشتراك</small><b>${fmtArDate(startD)}</b></div>` : ''}
+        <div><small><i class="fas fa-flag-checkered"></i> نهاية الاشتراك</small><b>${fmtArDate(endD)}</b></div>
       </div>
     </div>`;
 }
