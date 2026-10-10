@@ -13,7 +13,7 @@ function renderAdmin(){
   setTxt('adImportant', (DB.files || []).filter(f => f.important).length);
   setTxt('adVideos', (DB.videos || []).length);
   setTxt('adProducts', (DB.products || []).filter(p => p.active).length);
-  setTxt('adPurchases', nonAdmins.filter(u => u.purchase_submitted).length);
+  setTxt('adPurchases', nonAdmins.filter(u => u.purchase_submitted && u.status !== 'approved').length);
 
   document.querySelectorAll('.owner-only-tab').forEach(t => {
     t.style.display = (currentUserObj && currentUserObj.role === 'owner') ? '' : 'none';
@@ -48,12 +48,16 @@ function renderUsersTable(){
   if(q) list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
 
   if(filter === 'pending') list = list.filter(u => u.status === 'pending' && u.role !== 'owner' && u.role !== 'admin');
+  else if(filter === 'purchase') list = list.filter(u => u.purchase_submitted && u.status !== 'approved' && u.role !== 'owner' && u.role !== 'admin');
   else if(filter === 'sub') list = list.filter(u => u.status === 'approved');
   else if(filter === 'off') list = list.filter(u => u.status !== 'approved');
   else if(filter === 'admins') list = list.filter(u => u.role === 'admin' || u.role === 'owner');
 
   list.sort((a,b) => {
-    const rank = u => u.role === 'owner' ? 0 : u.role === 'admin' ? 1 : u.status === 'pending' ? 2 : 3;
+    /* ⭐ طلبات الشراء أولاً بعد الإدارة */
+    const rank = u => u.role === 'owner' ? 0 : u.role === 'admin' ? 1
+      : (u.purchase_submitted && u.status !== 'approved') ? 2
+      : u.status === 'pending' ? 3 : 4;
     const ra = rank(a), rb = rank(b);
     if(ra !== rb) return ra - rb;
     return new Date(b.created_at||0) - new Date(a.created_at||0);
@@ -88,8 +92,18 @@ function renderUsersTable(){
 
       /* ⭐ بيانات الدورة والاشتراك */
       const course = (u.course_id && typeof getCourseById === 'function') ? getCourseById(u.course_id) : null;
+      const req = (u.purchase_submitted && u.status !== 'approved' && typeof getPurchaseRequest === 'function') ? getPurchaseRequest(u) : null;
       let subCell;
-      if(course && u.status === 'approved'){
+      if(req){
+        /* ⭐ طلب شراء: يظهر للأدمن ماذا اختار الطالب بالضبط */
+        subCell = `
+          <div class="purchase-req-cell" style="--rc:${req.course.color || '#5b6cff'}">
+            <div class="prc-tag"><i class="fas fa-cart-shopping"></i> طلب شراء</div>
+            <div class="prc-course"><i class="fas ${req.course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(req.course.name)}</div>
+            <div class="prc-meta">${monthsLabel(req.months)} • ${priceHTML(req.price)}</div>
+            ${u.purchase_submitted_at ? `<small>${getTimeAgo(new Date(u.purchase_submitted_at))}</small>` : ''}
+          </div>`;
+      } else if(course && u.status === 'approved'){
         const months = u.subscription_months || 0;
         const price = (course.prices && months) ? (course.prices[String(months)] || 0) : 0;
         let daysLeft = null;
@@ -105,7 +119,7 @@ function renderUsersTable(){
             <span>${escapeHtml(course.name)}</span>
           </div>
           <div style="font-size:.72rem;color:var(--muted);font-weight:700;line-height:1.6">
-            <span style="color:var(--primary);font-weight:900">${price}</span> ر.س • ${months} ${months === 1 ? 'شهر' : months === 2 ? 'شهرين' : 'أشهر'}
+            ${price ? `<span style="color:var(--primary);font-weight:900">${priceHTML(price)}</span> • ` : ''}${monthsLabel(months)}
             ${daysLeft !== null ? `<br><span style="color:${daysColor};font-weight:900">${isExpired ? '⛔ منتهي' : `⏳ متبقي ${daysLeft} يوم`}</span>` : ''}
           </div>
         `;
@@ -127,7 +141,13 @@ function renderUsersTable(){
 
       if(!isTargetOwner){
         if(u.status !== 'approved' && u.role !== 'admin'){
-          actions += `<button class="btn btn-success btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
+          if(req){
+            /* ⭐ ضغطة واحدة: يفعّل الدورة والمدة اللي اشتراها الطالب */
+            actions += `<button class="btn btn-success btn-sm quick-activate" onclick="quickActivate('${u.id}', this)" title="تفعيل ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)}"><i class="fas fa-bolt"></i> تفعيل</button>`;
+            actions += `<button class="btn btn-ghost btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل بدورة/مدة مختلفة"><i class="fas fa-sliders"></i></button>`;
+          } else {
+            actions += `<button class="btn btn-success btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
+          }
         }
         if(u.status !== 'rejected' && u.role !== 'admin'){
           actions += `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>`;
@@ -149,7 +169,7 @@ function renderUsersTable(){
         }
       }
 
-      return `<div class="trow">
+      return `<div class="trow ${req ? 'has-purchase' : ''}">
         <div class="user-cell">
           <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
           <div class="info">
@@ -171,31 +191,60 @@ window.renderUsersTable = renderUsersTable;
 window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت', 'ok'); }catch(e){} };
 
 /* ============================================================
-   مودال التفعيل — مع الدورة والمدة
+   ⭐ تفعيل بضغطة واحدة — بالدورة والمدة اللي اختارها الطالب
+============================================================ */
+window.quickActivate = async (userId, btn) => {
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(!u) return;
+  const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
+  if(!req){ openApproveModal(userId); return; }
+
+  let orig = '';
+  if(btn){ if(btn.disabled) return; orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+  const ok = await activateSubscription(userId, req.months, req.course.id);
+  if(ok){
+    renderUsersTable();
+    try{ renderAdmin(); }catch(e){}
+  } else if(btn){
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+};
+
+/* ============================================================
+   مودال التفعيل اليدوي — مع الدورة والمدة (مُعبّأ مسبقاً بطلب الطالب)
 ============================================================ */
 window.openApproveModal = (userId) => {
   const u = DB.users.find(x => x.id === userId);
   if(!u) return;
   const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
+  const selCourse = req ? req.course.id : (u.course_id || '');
+  const selMonths = req ? req.months : (u.subscription_months || 1);
+  const monthOpts = [1, 3, 6, 12];
+  if(!monthOpts.includes(selMonths)) monthOpts.push(selMonths);
+  monthOpts.sort((a, b) => a - b);
+
+  const selectStyle = 'width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
 
   openModal({
     title: 'تفعيل اشتراك الطالب',
     text: `اختر الدورة ومدة الاشتراك لـ: ${escapeHtml(u.name || u.email)}`,
     bodyHTML: `
+      ${req ? `<div style="padding:11px 13px;margin-bottom:14px;border-radius:12px;background:rgba(34,197,94,.12);color:#15803d;font-size:.8rem;font-weight:800;line-height:1.7">
+        <i class="fas fa-cart-shopping"></i> الطالب طلب: ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)} — ${priceHTML(req.price)}
+      </div>` : ''}
       <div class="form-group" style="margin-bottom:14px">
         <label>الدورة *</label>
-        <select id="approveCourse" style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+        <select id="approveCourse" style="${selectStyle}">
           <option value="">— اختر دورة —</option>
-          ${courses.map(c => `<option value="${c.id}" ${u.course_id === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+          ${courses.map(c => `<option value="${c.id}" ${selCourse === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
         </select>
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>مدة الاشتراك *</label>
-        <select id="approveDuration" style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <option value="1">شهر واحد</option>
-          <option value="3">3 أشهر</option>
-          <option value="6">6 أشهر</option>
-          <option value="12">سنة كاملة</option>
+        <select id="approveDuration" style="${selectStyle}">
+          ${monthOpts.map(m => `<option value="${m}" ${m === selMonths ? 'selected' : ''}>${monthsLabel(m)}</option>`).join('')}
         </select>
       </div>
       <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
@@ -207,14 +256,8 @@ window.openApproveModal = (userId) => {
       const courseId = document.getElementById('approveCourse').value;
       const months = parseInt(document.getElementById('approveDuration').value, 10);
       if(!courseId){ toast('اختر دورة', 'warn'); return; }
-      if(typeof activateSubscription === 'function'){
-        await activateSubscription(userId, months, courseId);
-      }
-      try{
-        const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-        DB.users = data || [];
-        renderUsersTable();
-      }catch(e){}
+      const ok = await activateSubscription(userId, months, courseId);
+      if(ok){ renderUsersTable(); try{ renderAdmin(); }catch(e){} }
     }
   });
 };
@@ -337,14 +380,16 @@ window.editUser = id => {
 
       if(statusEl && statusEl.value === 'approved'){
         const months = parseInt(document.getElementById('euMonths').value, 10) || 1;
-        const end = new Date();
-        end.setMonth(end.getMonth() + months);
+        const end = typeof calculateSubscriptionEnd === 'function'
+          ? calculateSubscriptionEnd(months, upd.course_id)
+          : (() => { const d = new Date(); d.setMonth(d.getMonth() + months); return d; })();
         upd.subscription_end = end.toISOString();
         upd.subscription_months = months;
+        upd.purchase_submitted = false;
         if(!u.subscription_start) upd.subscription_start = new Date().toISOString();
       }
 
-      const { error } = await sb.from('profiles').update(upd).eq('id', id);
+      const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', id), upd);
       if(error){ showBar('err', '<i class="fas fa-circle-xmark"></i> فشل: ' + error.message); return; }
 
       if(typeof logAdminAction === 'function') await logAdminAction('edit_user', id, 'تعديل بيانات المستخدم', upd);
@@ -421,7 +466,7 @@ window.viewReceipt = (url) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchEl = document.getElementById('userSearch');
-  if(searchEl && !searchEl.dataset.bound){ searchEl.dataset.bound = '1'; searchEl.addEventListener('input', renderUsersTable); }
+  if(searchEl && !searchEl.dataset.bound){ searchEl.dataset.bound = '1'; searchEl.addEventListener('input', debounce(renderUsersTable, 200)); }
   const filterEl = document.getElementById('userFilter');
   if(filterEl && !filterEl.dataset.bound){ filterEl.dataset.bound = '1'; filterEl.addEventListener('change', renderUsersTable); }
 });
@@ -589,7 +634,7 @@ async function handlePdfFile(file){
         const c = courseId ? getCourseById(courseId) : null;
         await sendNotification('file', '📄 ملف جديد: ' + title,
           c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
-          null, courseId || null, 'fa-file-pdf', '#ef4444');
+          id, courseId || null, 'fa-file-pdf', '#ef4444');
       }
     }catch(e){}
 
@@ -604,7 +649,9 @@ async function handlePdfFile(file){
     const inp = document.getElementById('afPdfInput'); if(inp) inp.value = '';
     currentPdfBlob = null;
 
-    toast('✓ تم رفع الملف', 'ok');
+    toast('✓ تم رفع الملف — وصل إشعار للطلاب', 'ok');
+    /* حدّث القائمة فوراً (بدون انتظار Realtime) */
+    try{ if(typeof window.loadProfilesAndFiles === 'function') window.loadProfilesAndFiles(); }catch(e){}
 
     document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
@@ -743,11 +790,11 @@ window.doLinkVideo = async (videoId, fileId) => {
     clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
 
     const thumb = youtubeThumb(ytId);
-    const { error } = await sb.from('videos').insert({
+    const { data: vRow, error } = await sb.from('videos').insert({
       title, description: desc, youtube_id: ytId, category: cat,
       important, thumbnail: thumb, duration: 0,
       created_by: currentUserObj.id, course_id: courseId || null
-    });
+    }).select('id').single();
 
     clone.disabled = false;
     clone.innerHTML = orig;
@@ -759,7 +806,7 @@ window.doLinkVideo = async (videoId, fileId) => {
         const c = courseId ? getCourseById(courseId) : null;
         await sendNotification('video', '🎬 فيديو جديد: ' + title,
           c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
-          null, courseId || null, 'fa-video', '#dc2626');
+          vRow ? vRow.id : null, courseId || null, 'fa-video', '#dc2626');
       }
     }catch(e){}
 
@@ -891,3 +938,13 @@ window.doLinkVideo = async (videoId, fileId) => {
     });
   }
 })();
+
+/* ⭐ الضغط على إحصائية «طلبات الشراء» → يعرض الطلبات مباشرة */
+window.showPurchaseRequests = () => {
+  if(typeof switchAdminPanel === 'function') switchAdminPanel('users');
+  const f = document.getElementById('userFilter');
+  if(f){ f.value = 'purchase'; }
+  renderUsersTable();
+  const t = document.getElementById('usersTable');
+  if(t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
