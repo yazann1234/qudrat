@@ -535,7 +535,7 @@ function handleScroll(){
   const fab = document.getElementById('rdTop');
   if(fab) fab.classList.toggle('top', rdBody.scrollTop > 400);
 
-  if(newPct >= 100 && oldPct < 100) toast('أكملت الملف بالكامل!', 'ok');
+  if(newPct >= 100 && oldPct < 100 && typeof onFileCompleted === 'function') onFileCompleted(RS.file);
 
   const pctTxt = document.getElementById('rdPctTxt');
   if(pctTxt) pctTxt.textContent = newPct + '%';
@@ -559,21 +559,63 @@ function scheduleProgressSync(fileId, pct, maxPage, lastPage){
   progressSyncTimer = setTimeout(flushProgressSync, 2000);
 }
 
+let progressSyncRetries = 0;
+
 async function flushProgressSync(){
-  if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
-  const rows = Object.keys(progressSyncQueue).map(fid => ({
+  clearTimeout(progressSyncTimer);
+  if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner'){ progressSyncQueue = {}; return; }
+  const queue = progressSyncQueue;
+  progressSyncQueue = {};
+  const rows = Object.keys(queue).map(fid => ({
     user_id: currentUserObj.id,
     file_id: fid,
-    pct: progressSyncQueue[fid].pct,
-    max_page: progressSyncQueue[fid].max_page,
-    last_page: progressSyncQueue[fid].last_page,
+    pct: queue[fid].pct,
+    max_page: queue[fid].max_page,
+    last_page: queue[fid].last_page,
     updated_at: new Date().toISOString()
   }));
-  progressSyncQueue = {};
   if(!rows.length) return;
-  const { error } = await sb.from('user_progress').upsert(rows, { onConflict: 'user_id,file_id' });
-  if(error) console.warn('progress sync failed', error);
+
+  let ok = false;
+  try{
+    const { error } = await sb.from('user_progress').upsert(rows, { onConflict: 'user_id,file_id' });
+    if(!error) ok = true;
+    else {
+      /* ⭐ غالباً السبب: لا يوجد unique(user_id,file_id) في الجدول → نكتب صف صف */
+      console.warn('progress upsert failed → fallback:', error.message);
+      ok = await fallbackProgressWrite(rows);
+    }
+  }catch(e){ ok = false; }
+
+  if(ok){
+    progressSyncRetries = 0;
+  } else if(progressSyncRetries < 5){
+    /* أعِد الصفوف للطابور (بدون الكتابة فوق قيم أحدث) وحاول لاحقاً */
+    progressSyncRetries++;
+    Object.keys(queue).forEach(fid => { if(!progressSyncQueue[fid]) progressSyncQueue[fid] = queue[fid]; });
+    progressSyncTimer = setTimeout(flushProgressSync, 15000);
+  }
+
+  /* XP يُحسب من التقدم المحلي (المحفوظ أيضاً في user_data) — نزامنه دائماً */
   try{ if(typeof syncMyXp === 'function') syncMyXp(); }catch(e){}
+}
+
+async function fallbackProgressWrite(rows){
+  let allOk = true;
+  for(const row of rows){
+    try{
+      const { data: ex, error: selErr } = await sb.from('user_progress')
+        .select('file_id').eq('user_id', row.user_id).eq('file_id', row.file_id).limit(1);
+      if(selErr) throw selErr;
+      const r = (ex && ex.length)
+        ? await sb.from('user_progress')
+            .update({ pct: row.pct, max_page: row.max_page, last_page: row.last_page, updated_at: row.updated_at })
+            .eq('user_id', row.user_id).eq('file_id', row.file_id)
+        : await sb.from('user_progress').insert(row);
+      if(r.error){ allOk = false; console.warn('progress write failed:', r.error.message); }
+    }catch(e){ allOk = false; console.warn('progress write failed:', e && e.message); }
+  }
+  return allOk;
 }
 
 function updateFavBtn(){
@@ -797,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleProgressSync(RS.file.id, 100, total, total);
     RS.current = total;
     updateReaderUI(); refreshAll(); checkBadges(); renderBadges();
-    if(oldPct < 100) toast('رائع! أنهيت الملف بالكامل', 'ok');
+    if(oldPct < 100 && typeof onFileCompleted === 'function') onFileCompleted(RS.file);
   });
 });
 
