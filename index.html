@@ -1122,7 +1122,7 @@
         <div class="admin-stat" style="--sc:#8b5cf6"><h3 id="adFiles">0</h3><p>إجمالي الملفات</p></div>
         <div class="admin-stat" style="--sc:#ef4444"><h3 id="adVideos">0</h3><p>إجمالي الفيديوهات</p></div>
         <div class="admin-stat" style="--sc:#22c55e"><h3 id="adProducts">0</h3><p>المنتجات المعروضة</p></div>
-        <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adPurchases">0</h3><p>طلبات الشراء</p></div>
+        <div class="admin-stat" style="--sc:#f59e0b;cursor:pointer" onclick="showPurchaseRequests()" title="عرض طلبات الشراء"><h3 id="adPurchases">0</h3><p>طلبات الشراء</p></div>
         <div class="admin-stat" style="--sc:#f59e0b"><h3 id="adImportant">0</h3><p>ملفات مميزة</p></div>
       </div>
 
@@ -1150,6 +1150,7 @@
           </div>
           <select class="sort-select" id="userFilter">
             <option value="all">كل الحالات</option>
+            <option value="purchase">🛒 طلبات الشراء</option>
             <option value="pending">قيد الانتظار</option>
             <option value="sub">مشترك</option>
             <option value="off">غير مشترك</option>
@@ -1391,9 +1392,19 @@
     <div class="form-group"><label>العنوان الفرعي</label><input type="text" id="pfSubtitle" maxlength="120" placeholder="الدورة الشاملة"></div>
     <div class="form-group"><label>الوصف</label><textarea id="pfDesc" placeholder="وصف تفصيلي..."></textarea></div>
 
+    <div class="form-group">
+      <label>أسعار الاشتراك * <small style="color:var(--muted);font-weight:600">(سعر مستقل لكل مدة — اترك المدة فارغة لإخفائها من المتجر)</small></label>
+      <div class="price-grid">
+        <label class="price-field"><span><i class="fas fa-calendar-day"></i> شهر</span><div class="pf-input"><input type="number" id="pfPrice1" min="0" step="1" placeholder="45"><i class="sar"></i></div></label>
+        <label class="price-field"><span><i class="fas fa-calendar-week"></i> 3 أشهر</span><div class="pf-input"><input type="number" id="pfPrice3" min="0" step="1" placeholder="120"><i class="sar"></i></div></label>
+        <label class="price-field"><span><i class="fas fa-calendar-days"></i> 6 أشهر</span><div class="pf-input"><input type="number" id="pfPrice6" min="0" step="1" placeholder="210"><i class="sar"></i></div></label>
+        <label class="price-field"><span><i class="fas fa-calendar-check"></i> سنة</span><div class="pf-input"><input type="number" id="pfPrice12" min="0" step="1" placeholder="360"><i class="sar"></i></div></label>
+      </div>
+    </div>
+
     <div class="two-col">
-      <div class="form-group"><label>السعر (شهري) *</label><input type="number" id="pfPrice" min="0" step="1" placeholder="45"></div>
-      <div class="form-group"><label>العملة</label><input type="text" id="pfCurrency" value="ر.س" maxlength="10"></div>
+      <div class="form-group"><label>العملة <small style="color:var(--muted);font-weight:600">(ر.س تظهر كرمز الريال)</small></label><input type="text" id="pfCurrency" value="ر.س" maxlength="10"></div>
+      <div class="form-group"><label>تاريخ نهاية ثابت <small style="color:var(--muted);font-weight:600">(اختياري — مثل دورة تنتهي بموعد الاختبار، ويُستخدم أقل سعر)</small></label><input type="date" id="pfEndDate"></div>
     </div>
 
     <div class="form-group">
