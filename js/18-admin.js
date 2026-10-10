@@ -245,8 +245,10 @@ window.openApproveModal = (userId) => {
         <label>مدة الاشتراك *</label>
         <select id="approveDuration" style="${selectStyle}">
           ${monthOpts.map(m => `<option value="${m}" ${m === selMonths ? 'selected' : ''}>${monthsLabel(m)}</option>`).join('')}
+          <option value="custom">✏️ مخصص (أيام / أشهر / تاريخ)</option>
         </select>
       </div>
+      ${customDurationHTML('approve', true)}
       <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
         <i class="fas fa-info-circle"></i> الطالب سيرى فقط ملفات وفيديوهات الدورة المختارة.
       </div>
@@ -254,12 +256,28 @@ window.openApproveModal = (userId) => {
     okText: 'تفعيل الآن',
     onOk: async () => {
       const courseId = document.getElementById('approveCourse').value;
-      const months = parseInt(document.getElementById('approveDuration').value, 10);
+      const durVal = document.getElementById('approveDuration').value;
       if(!courseId){ toast('اختر دورة', 'warn'); return; }
-      const ok = await activateSubscription(userId, months, courseId);
+      let ok;
+      if(durVal === 'custom'){
+        const c = readCustomDuration('approve');
+        if(c.error){ toast(c.error, 'warn'); return; }
+        ok = await activateSubscription(userId, c.months, courseId, { endDate: c.endDate });
+      } else {
+        ok = await activateSubscription(userId, parseInt(durVal, 10), courseId);
+      }
       if(ok){ renderUsersTable(); try{ renderAdmin(); }catch(e){} }
     }
   });
+
+  setTimeout(() => {
+    bindCustomDuration('approve');
+    const sel = document.getElementById('approveDuration');
+    if(sel) sel.addEventListener('change', () => {
+      const w = document.getElementById('approveCustomWrap');
+      if(w) w.style.display = sel.value === 'custom' ? 'block' : 'none';
+    });
+  }, 50);
 };
 
 window.approveUser = async id => openApproveModal(id);
@@ -347,9 +365,17 @@ window.editUser = id => {
         </select>
       </div>
       <div class="form-group" style="margin-bottom:12px">
-        <label>مدة الاشتراك (عدد الأشهر)</label>
-        <input type="number" id="euMonths" min="1" max="60" value="${u.subscription_months || 1}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+        <label>مدة الاشتراك ${u.subscription_end ? `<span style="color:var(--muted);font-weight:600;font-size:.74rem">(ينتهي حالياً: ${new Date(u.subscription_end).toLocaleDateString('ar-SA')})</span>` : ''}</label>
+        <select id="euDuration" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          ${u.status === 'approved' && u.subscription_end ? '<option value="keep" selected>— بدون تغيير —</option>' : ''}
+          <option value="1">شهر</option>
+          <option value="3">3 أشهر</option>
+          <option value="6">6 أشهر</option>
+          <option value="12">سنة</option>
+          <option value="custom">✏️ مخصص (أيام / أشهر / تاريخ)</option>
+        </select>
       </div>
+      ${customDurationHTML('eu', true)}
       ` : ''}
       <div id="euStatusBar" style="display:none;padding:10px 12px;border-radius:10px;font-size:.78rem;font-weight:700;text-align:center;margin-top:8px"></div>
     `,
@@ -378,15 +404,22 @@ window.editUser = id => {
       const courseEl = document.getElementById('euCourse');
       if(courseEl) upd.course_id = courseEl.value || null;
 
-      if(statusEl && statusEl.value === 'approved'){
-        const months = parseInt(document.getElementById('euMonths').value, 10) || 1;
-        const end = typeof calculateSubscriptionEnd === 'function'
-          ? calculateSubscriptionEnd(months, upd.course_id)
-          : (() => { const d = new Date(); d.setMonth(d.getMonth() + months); return d; })();
+      const durEl = document.getElementById('euDuration');
+      const durVal = durEl ? durEl.value : 'keep';
+      if(statusEl && statusEl.value === 'approved' && durVal !== 'keep'){
+        let end, months;
+        if(durVal === 'custom'){
+          const c = readCustomDuration('eu');
+          if(c.error){ showBar('err', '<i class="fas fa-circle-xmark"></i> ' + c.error); return; }
+          end = c.endDate; months = c.months;
+        } else {
+          months = parseInt(durVal, 10) || 1;
+          end = calculateSubscriptionEnd(months, upd.course_id);
+        }
         upd.subscription_end = end.toISOString();
         upd.subscription_months = months;
+        upd.subscription_start = new Date().toISOString();
         upd.purchase_submitted = false;
-        if(!u.subscription_start) upd.subscription_start = new Date().toISOString();
       }
 
       const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', id), upd);
@@ -424,6 +457,15 @@ window.editUser = id => {
       toast('✓ تم تحديث البيانات', 'ok');
     }
   });
+
+  setTimeout(() => {
+    bindCustomDuration('eu');
+    const sel = document.getElementById('euDuration');
+    if(sel) sel.addEventListener('change', () => {
+      const w = document.getElementById('euCustomWrap');
+      if(w) w.style.display = sel.value === 'custom' ? 'block' : 'none';
+    });
+  }, 50);
 };
 
 window.resetUserPassword = id => {
@@ -852,6 +894,14 @@ window.doLinkVideo = async (videoId, fileId) => {
 
   const durationSel = document.getElementById('nuDuration');
   const customWrap = document.getElementById('nuCustomMonthsWrap');
+  /* customDurationHTML معرّفة في 30-owner-features.js (تُحمّل بعد هذا الملف) */
+  const initNuCustom = () => {
+    if(!customWrap || typeof customDurationHTML !== 'function') return;
+    customWrap.innerHTML = '<label>المدة المخصصة *</label>' + customDurationHTML('nu', false);
+    bindCustomDuration('nu');
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initNuCustom);
+  else setTimeout(initNuCustom, 0);
   if(durationSel && customWrap){
     durationSel.addEventListener('change', e => {
       customWrap.style.display = e.target.value === 'custom' ? 'block' : 'none';
@@ -868,7 +918,6 @@ window.doLinkVideo = async (videoId, fileId) => {
     const pass = document.getElementById('nuPass').value;
     const courseId = document.getElementById('nuCourse') ? document.getElementById('nuCourse').value : '';
     const durationValue = document.getElementById('nuDuration') ? document.getElementById('nuDuration').value : '1';
-    const customMonths = document.getElementById('nuCustomMonths') ? parseInt(document.getElementById('nuCustomMonths').value, 10) : 1;
     const approve = document.getElementById('nuApprove').checked;
 
     if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
@@ -876,11 +925,12 @@ window.doLinkVideo = async (videoId, fileId) => {
     if(!pass || pass.length < 8){ toast('كلمة المرور 8 أحرف على الأقل', 'warn'); return; }
     if(approve && !courseId){ toast('اختر دورة للتفعيل', 'warn'); return; }
 
-    let months = 1;
+    let months = 1, customEnd = null;
     if(approve){
       if(durationValue === 'custom'){
-        months = customMonths;
-        if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return; }
+        const c = readCustomDuration('nu');
+        if(c.error){ toast(c.error, 'warn'); return; }
+        months = c.months; customEnd = c.endDate;
       } else {
         months = parseInt(durationValue, 10) || 1;
       }
@@ -902,7 +952,7 @@ window.doLinkVideo = async (videoId, fileId) => {
           upd.status = 'approved';
           upd.course_id = courseId;
           upd.subscription_start = new Date().toISOString();
-          const end = new Date(); end.setMonth(end.getMonth() + months);
+          const end = customEnd || calculateSubscriptionEnd(months, courseId);
           upd.subscription_end = end.toISOString();
           upd.subscription_months = months;
         }
