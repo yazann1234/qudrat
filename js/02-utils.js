@@ -76,3 +76,51 @@ function openModal({title, text, bodyHTML, okText, onOk, danger}){
 }
 function confirmBox(title, text, onOk, danger){ openModal({title, text, okText: danger ? 'تأكيد الحذف' : 'تأكيد', onOk, danger}); }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ============================================================
+   💰 رمز الريال السعودي (صورة SVG بدل «ر.س»)
+============================================================ */
+function sarIcon(){ return '<i class="sar" role="img" aria-label="ريال سعودي"></i>'; }
+function isSarCurrency(c){
+  const s = String(c == null ? '' : c).trim().toLowerCase();
+  return !s || s === 'ر.س' || s === 'رس' || s === 'ريال' || s === 'sar' || s === 'sr' || s === '﷼';
+}
+/* يعرض السعر مع رمز الريال (أو العملة المكتوبة إن كانت غير الريال) */
+function priceHTML(amount, currency){
+  const n = Number(amount) || 0;
+  const num = Number.isInteger(n) ? String(n) : n.toFixed(2);
+  const cur = isSarCurrency(currency) ? sarIcon() : `<span class="cur-txt">${escapeHtml(currency)}</span>`;
+  return `<span class="price-wrap"><b class="price-num">${num}</b>${cur}</span>`;
+}
+window.sarIcon = sarIcon;
+window.priceHTML = priceHTML;
+window.isSarCurrency = isSarCurrency;
+
+/* ============================================================
+   🛡️ كتابة آمنة في Supabase: لو عمود غير موجود بالجدول
+   نحذفه من الـ payload ونعيد المحاولة بدل ما تفشل العملية كلها
+============================================================ */
+async function sbSafeWrite(run, payload){
+  let p = Object.assign({}, payload);
+  let r = null;
+  for(let i = 0; i < 8; i++){
+    r = await run(p);
+    if(!r || !r.error) return r;
+    const msg = r.error.message || '';
+    const m = /'([^']+)' column/.exec(msg) || /column "?([\w]+)"? (?:of relation \S+ )?does not exist/i.exec(msg);
+    if(m && Object.prototype.hasOwnProperty.call(p, m[1])){
+      console.warn('[sbSafeWrite] عمود غير موجود، تم تجاهله:', m[1]);
+      delete p[m[1]];
+      continue;
+    }
+    return r;
+  }
+  return r;
+}
+window.sbSafeWrite = sbSafeWrite;
+
+function debounce(fn, ms){
+  let t = null;
+  return function(){ const a = arguments, c = this; clearTimeout(t); t = setTimeout(() => fn.apply(c, a), ms); };
+}
+window.debounce = debounce;
