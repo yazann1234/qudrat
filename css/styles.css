@@ -3910,3 +3910,23 @@ img{-webkit-user-drag:none;user-drag:none}
 .sdc-dates small i{color:var(--sc);margin-left:3px}
 .sdc-dates b{font-size:.8rem;font-weight:800;line-height:1.5}
 @media (max-width:520px){ .sdc-dates{grid-template-columns:1fr} .sdc-count b{font-size:2rem} }
+
+/* ============================================================
+   🛡️ ختم التوثيق (المركز السعودي للأعمال) — أسفل يسار الشاشة
+   الختم iframe ثابت (120×44) يُضاف تلقائياً، نرفع ما يتعارض معه
+============================================================ */
+.sbc-seal-frame{bottom:18px !important;left:18px !important;border-radius:12px;box-shadow:0 6px 20px rgba(20,35,80,.18)}
+/* زر المساعد الذكي والتنبيهات فوق الختم */
+.ai-fab-btn{bottom:78px}
+#toast{bottom:78px}
+/* أثناء القراءة أو مشاهدة الفيديو أو فتح نافذة: نخفي الختم حتى لا يغطي الأدوات */
+body:has(#reader.open) .sbc-seal-frame,
+body:has(#videoPlayer.open) .sbc-seal-frame,
+body:has(.ai-chat-panel.open) .sbc-seal-frame{display:none !important}
+
+@media (max-width:720px){
+  /* بالجوال: الشريط السفلي ارتفاعه 62px — نرفع الختم فوقه */
+  .sbc-seal-frame{bottom:calc(72px + var(--safe-b)) !important;left:12px !important}
+  .ai-fab-btn{bottom:calc(128px + var(--safe-b));left:16px}
+  #toast{bottom:calc(128px + var(--safe-b))}
+}
