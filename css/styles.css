@@ -3912,21 +3912,79 @@ img{-webkit-user-drag:none;user-drag:none}
 @media (max-width:520px){ .sdc-dates{grid-template-columns:1fr} .sdc-count b{font-size:2rem} }
 
 /* ============================================================
-   🛡️ ختم التوثيق (المركز السعودي للأعمال) — أسفل يسار الشاشة
-   الختم iframe ثابت (120×44) يُضاف تلقائياً، نرفع ما يتعارض معه
+   🛡️ تذييل الثقة والتوثيق (صفحة «من نحن»)
 ============================================================ */
-.sbc-seal-frame{bottom:18px !important;left:18px !important;border-radius:12px;box-shadow:0 6px 20px rgba(20,35,80,.18)}
-/* زر المساعد الذكي والتنبيهات فوق الختم */
-.ai-fab-btn{bottom:78px}
-#toast{bottom:78px}
-/* أثناء القراءة أو مشاهدة الفيديو أو فتح نافذة: نخفي الختم حتى لا يغطي الأدوات */
-body:has(#reader.open) .sbc-seal-frame,
-body:has(#videoPlayer.open) .sbc-seal-frame,
-body:has(.ai-chat-panel.open) .sbc-seal-frame{display:none !important}
+.trust-footer{
+  margin-top:28px;
+  border-radius:24px;
+  padding:30px 22px 20px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(var(--primary-rgb),.22), transparent 60%),
+    linear-gradient(180deg,#2a2d3a,#1d1f29);
+  color:#fff;
+  text-align:center;
+  box-shadow:0 18px 40px rgba(15,20,40,.22);
+  position:relative;overflow:hidden;
+}
+.trust-footer::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size:18px 18px;
+  mask-image:linear-gradient(180deg,#000,transparent 70%);
+}
+.trust-footer>*{position:relative}
 
-@media (max-width:720px){
-  /* بالجوال: الشريط السفلي ارتفاعه 62px — نرفع الختم فوقه */
-  .sbc-seal-frame{bottom:calc(72px + var(--safe-b)) !important;left:12px !important}
-  .ai-fab-btn{bottom:calc(128px + var(--safe-b));left:16px}
-  #toast{bottom:calc(128px + var(--safe-b))}
+.tf-social{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.tf-social a{
+  width:50px;height:50px;border-radius:50%;
+  display:grid;place-items:center;
+  color:#fff;font-size:1.35rem;text-decoration:none;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  transition:.25s;
+}
+.tf-social a:hover{transform:translateY(-4px);background:var(--primary);border-color:var(--primary);box-shadow:0 10px 24px rgba(var(--primary-rgb),.45)}
+
+.tf-divider{height:1px;margin:22px auto;max-width:520px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent)}
+
+.tf-verify{
+  display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;
+  max-width:560px;margin:0 auto;
+  padding:16px 18px;border-radius:18px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+}
+.tf-verify-text{display:flex;align-items:center;gap:12px;text-align:right}
+.tf-verify-ic{
+  width:46px;height:46px;border-radius:14px;flex-shrink:0;
+  display:grid;place-items:center;font-size:1.2rem;
+  background:linear-gradient(140deg,#7c3aed,#2563eb);
+  box-shadow:0 8px 20px rgba(76,90,240,.4);
+}
+.tf-verify-text b{display:block;font-size:1rem;font-weight:900}
+.tf-verify-text small{display:block;font-size:.72rem;color:rgba(255,255,255,.65);font-weight:600;line-height:1.6}
+.tf-seal{min-width:120px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.tf-seal .sbc-seal-frame{border-radius:10px;background:#fff;display:block}
+
+.tf-pay{display:flex;flex-direction:column;align-items:center;gap:10px}
+.tf-pay-title{font-size:.74rem;font-weight:800;color:rgba(255,255,255,.6)}
+.tf-pay-title i{color:#22c55e;margin-left:4px}
+.tf-pay-items{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.tf-pay-chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;border-radius:10px;
+  background:#fff;color:#1d1f29;
+  font-size:.76rem;font-weight:900;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+}
+.tf-pay-chip i{color:var(--primary)}
+.tf-pay-chip .fa-whatsapp{color:#22c55e}
+
+.tf-copy{margin-top:20px;font-size:.7rem;color:rgba(255,255,255,.45);font-weight:600}
+
+@media (max-width:520px){
+  .trust-footer{padding:24px 14px 16px;border-radius:20px}
+  .tf-social a{width:44px;height:44px;font-size:1.2rem}
+  .tf-verify{flex-direction:column;gap:12px}
+  .tf-verify-text{text-align:center;flex-direction:column}
 }
