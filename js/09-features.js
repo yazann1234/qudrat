@@ -15,3 +15,9 @@ function renderFeatures(){
   const ft = $('#featHeroTitle');
   if(ft) ft.textContent = `${FEATURES.length} ميزة احترافية صُمّمت لتُحسّن رحلتك الدراسية`;
 }
+
+/* ⭐ سنة حقوق النشر في تذييل «من نحن» */
+document.addEventListener('DOMContentLoaded', () => {
+  const y = document.getElementById('tfYear');
+  if(y) y.textContent = new Date().getFullYear();
+});
