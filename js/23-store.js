@@ -10,8 +10,8 @@ const STORE_DEFAULTS = {
   ibanNumber: 'SA0000000000000000000000',
   ibanImage: '',
   ibanHolder: '',
-  supportPhone: '0552022058',
-  supportWhatsApp: '966552022058'
+  supportPhone: '0538524983',
+  supportWhatsApp: '966538524983'
 };
 
 let receiptFile = null;
