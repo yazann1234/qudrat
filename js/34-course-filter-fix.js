@@ -1,109 +1,178 @@
 /* ============================================================
-   34) COURSE FILTER v2 — كل طالب يشوف محتوى دوراته فقط
-   - ملفات وفيديوهات الدورة (المحوسب يشوف المحوسب، الورقي يشوف الورقي)
-   - يدعم أكثر من دورة للطالب
-   - فلتر «الدورة» في الملفات والفيديوهات لمن عنده أكثر من دورة (وللأدمن)
-   (أُزيلت الحيل القديمة: تبديل DB.files مؤقتاً + MutationObserver)
+   34) COURSE FILTER FIX — فلترة الملفات حسب دورة المستخدم
+   يحل مشكلتين:
+   1) عدد الملفات في sidebar يعرض كل الملفات بدل ملفات دورته
+   2) الجدول الذكي يستخدم كل الملفات بدل ملفات دورته
 ============================================================ */
 
-/* اختيار الدورة المعروضة حالياً: 'all' | 'general' | <course id> */
-const COURSE_VIEW = { files: 'all', videos: 'all' };
-window.COURSE_VIEW = COURSE_VIEW;
-
+/* ⭐⭐⭐ دالة مساعدة: ملفات المستخدم المسموح له رؤيتها */
 function getUserCourseFiles(){
   if(!currentUserObj) return [];
-  return (DB.files || []).filter(canAccessCourseItem);
+  if(typeof isPrivileged === 'function' && isPrivileged()) return DB.files.slice();
+  if(typeof isSubscribed === 'function' && !isSubscribed()) return [];
+  const myCourseId = currentUserObj.course_id;
+  if(!myCourseId) return DB.files.filter(f => !f.course_id);
+  return DB.files.filter(f => !f.course_id || f.course_id === myCourseId);
 }
 window.getUserCourseFiles = getUserCourseFiles;
 
+/* ⭐ نفس الدالة للفيديوهات */
 function getUserCourseVideos(){
   if(!currentUserObj) return [];
-  return (DB.videos || []).filter(canAccessCourseItem);
+  if(typeof isPrivileged === 'function' && isPrivileged()) return (DB.videos || []).slice();
+  if(typeof isSubscribed === 'function' && !isSubscribed()) return [];
+  const myCourseId = currentUserObj.course_id;
+  const list = DB.videos || [];
+  if(!myCourseId) return list.filter(v => !v.course_id);
+  return list.filter(v => !v.course_id || v.course_id === myCourseId);
 }
 window.getUserCourseVideos = getUserCourseVideos;
 
+/* ============================================================
+   1) إصلاح عدد الملفات في السايدبار + الفيديوهات
+============================================================ */
 function fixNavCounts(){
   try{
     const nc = document.getElementById('navCount');
-    if(nc) nc.textContent = getUserCourseFiles().length;
+    if(nc){
+      const count = getUserCourseFiles().length;
+      if(nc.textContent !== String(count)) nc.textContent = count;
+    }
     const nvc = document.getElementById('navVideoCount');
-    if(nvc) nvc.textContent = getUserCourseVideos().length;
+    if(nvc){
+      const count = getUserCourseVideos().length;
+      if(nvc.textContent !== String(count)) nvc.textContent = count;
+    }
   }catch(e){}
 }
 window.fixNavCounts = fixNavCounts;
 
-/* ============================================================
-   فلتر الدورة (قائمة منسدلة) في صفحة الملفات والفيديوهات
-============================================================ */
-function courseFilterOptions(){
-  const priv = typeof isPrivileged === 'function' && isPrivileged();
-  const courses = priv ? (CS.courses || []) : getMyCourses();
-  return courses;
-}
-
-function renderCourseFilters(){
-  [['files', '#view-files .filter-row, #view-files .filters, #view-files .filter-chips', 'renderFiles'],
-   ['videos', '#view-videos .filter-row, #view-videos .filters, #view-videos .filter-chips', 'renderVideos']].forEach(([kind, sel, fn]) => {
-    const courses = courseFilterOptions();
-    const id = kind === 'files' ? 'fileCourseFilter' : 'videoCourseFilter';
-    let el = document.getElementById(id);
-    const show = courses.length > 1;
-
-    if(!show){
-      if(el) el.style.display = 'none';
-      COURSE_VIEW[kind] = 'all';
-      return;
-    }
-
-    if(!el){
-      const chipsHost = document.querySelector(kind === 'files' ? '[data-cat="all"]' : '[data-vcat="all"]');
-      const host = chipsHost ? chipsHost.parentNode : document.querySelector(sel);
-      if(!host) return;
-      el = document.createElement('select');
-      el.id = id;
-      el.className = 'sort-select course-filter-select';
-      el.addEventListener('change', () => {
-        COURSE_VIEW[kind] = el.value;
-        try{ window[fn](); }catch(e){}
-      });
-      host.insertBefore(el, host.firstChild);
-    }
-    el.style.display = '';
-    const cur = COURSE_VIEW[kind];
-    el.innerHTML = `<option value="all">📚 كل دوراتي</option>` +
-      courses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') +
-      `<option value="general">🌐 المحتوى العام</option>`;
-    el.value = [...el.options].some(o => o.value === cur) ? cur : 'all';
-    COURSE_VIEW[kind] = el.value;
-  });
-}
-window.renderCourseFilters = renderCourseFilters;
-
-/* بعد كل رندر للملفات: صحّح العدد */
+/* ⭐ غلّف renderFiles لإعادة تصحيح العدد بعد أي رندر */
 (function hookRenderFiles(){
-  const wrap = () => {
-    if(typeof window.renderFiles !== 'function' || window._renderFilesHooked) return false;
-    window._renderFilesHooked = true;
-    const orig = window.renderFiles;
-    window.renderFiles = function(){
-      const r = orig.apply(this, arguments);
-      fixNavCounts();
-      return r;
-    };
-    return true;
-  };
-  if(!wrap()) document.addEventListener('DOMContentLoaded', wrap);
+  const check = setInterval(() => {
+    if(typeof window.renderFiles === 'function' && !window._renderFilesHooked){
+      clearInterval(check);
+      window._renderFilesHooked = true;
+      const orig = window.renderFiles;
+      window.renderFiles = function(){
+        orig.apply(this, arguments);
+        fixNavCounts();
+      };
+    }
+  }, 100);
+  setTimeout(() => clearInterval(check), 6000);
 })();
 
-/* عند تغيّر دورات المستخدم أو تحميل الدورات → حدّث الفلاتر */
-(function watchCourseChange(){
-  let last = '';
-  setInterval(() => {
-    const cur = (currentUserObj ? getUserCourseIds().join(',') : '') + '|' + (CS.courses || []).length;
-    if(cur !== last){
-      last = cur;
-      try{ renderCourseFilters(); }catch(e){}
-      try{ fixNavCounts(); }catch(e){}
+/* ⭐ غلّف loadProfilesAndFiles حتى لا يكتب DB.files.length */
+(function hookLoadFiles(){
+  const check = setInterval(() => {
+    if(typeof window.loadProfilesAndFiles === 'function' && !window._loadFilesHooked){
+      clearInterval(check);
+      window._loadFilesHooked = true;
+      const orig = window.loadProfilesAndFiles;
+      window.loadProfilesAndFiles = async function(){
+        const r = await orig.apply(this, arguments);
+        fixNavCounts();
+        return r;
+      };
     }
-  }, 1500);
+  }, 100);
+  setTimeout(() => clearInterval(check), 6000);
 })();
+
+/* ⭐ MutationObserver: لو أحد غيّر العدد يدوياً، رجّعه */
+(function watchNavCount(){
+  const nc = document.getElementById('navCount');
+  if(!nc) return;
+  const obs = new MutationObserver(() => {
+    const correct = getUserCourseFiles().length;
+    if(nc.textContent !== String(correct)){
+      nc.textContent = correct;
+    }
+  });
+  obs.observe(nc, { childList: true, characterData: true, subtree: true });
+})();
+
+/* ============================================================
+   2) إصلاح الجدول الذكي — يستخدم ملفات الدورة فقط
+   نغلّف الدوال المحتملة: renderStudyPlan / generateStudyPlan
+   + نصلح أي استخدام مباشر لـ DB.files في هذا القسم
+============================================================ */
+
+/* ⭐ اضبط أي دالة تولّد خطة لتستخدم getUserCourseFiles() */
+function patchStudyPlanData(){
+  try{
+    /* لو الجدول الذكي يخزّن ملفات في variable عام */
+    if(window.STUDY_PLAN_DATA && Array.isArray(window.STUDY_PLAN_DATA.files)){
+      /* اتركه للدالة نفسها */
+    }
+
+    /* ⭐ استبدل DB.files على مستوى الجدول الذكي فقط */
+    /* نحفظ الأصل */
+    if(!window._origDBFilesGetter){
+      window._origDBFilesGetter = true;
+    }
+  }catch(e){}
+}
+
+/* ⭐⭐⭐ الحل الأقوى: Wrap الدوال المسؤولة */
+(function hookStudyPlan(){
+  const names = ['renderStudyPlan', 'generateStudyPlan', 'buildStudyPlan', 'createStudyPlan'];
+
+  const check = setInterval(() => {
+    let found = false;
+    names.forEach(fnName => {
+      if(typeof window[fnName] === 'function' && !window['_' + fnName + '_hooked']){
+        found = true;
+        window['_' + fnName + '_hooked'] = true;
+        const orig = window[fnName];
+        window[fnName] = function(){
+          /* ⭐ لو الدالة تعتمد على DB.files، استبدله مؤقتاً */
+          const realFiles = DB.files;
+          const filtered = getUserCourseFiles();
+
+          /* استبدل DB.files بنسخة مفلترة مؤقتاً */
+          try{
+            DB.files = filtered;
+            return orig.apply(this, arguments);
+          } finally {
+            /* أعِد الأصلي بعد الانتهاء */
+            DB.files = realFiles;
+          }
+        };
+      }
+    });
+    if(found && names.every(n => !window[n] || window['_' + n + '_hooked'])){
+      /* كل الدوال اللي وجدناها تم تغليفها */
+    }
+  }, 150);
+
+  setTimeout(() => clearInterval(check), 8000);
+})();
+
+/* ============================================================
+   3) عند تغيير دورة المستخدم — أعِد الرندر
+============================================================ */
+(function watchCourseChange(){
+  let lastCourseId = currentUserObj ? currentUserObj.course_id : null;
+  setInterval(() => {
+    const cur = currentUserObj ? currentUserObj.course_id : null;
+    if(cur !== lastCourseId){
+      lastCourseId = cur;
+      try{ fixNavCounts(); }catch(e){}
+      try{ if(typeof renderFiles === 'function') renderFiles(); }catch(e){}
+      try{ if(typeof renderStudyPlan === 'function') renderStudyPlan(); }catch(e){}
+    }
+  }, 2000);
+})();
+
+/* ============================================================
+   4) تفعيل أولي
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(fixNavCounts, 500);
+  setTimeout(fixNavCounts, 2000);
+  setTimeout(fixNavCounts, 5000);
+});
+
+console.log('✅ Course filter fix loaded');
