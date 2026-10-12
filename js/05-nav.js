@@ -14,6 +14,7 @@ const TITLES = {
   progress:['إنجازي','تقرير مفصّل عن تقدمك في كل ملف'],
   leaderboard:['قائمة المتصدرين','ترتيب الطلاب حسب نقاط XP'],
   profile:['ملفي الشخصي','عدّل بياناتك وصورتك الشخصية'],
+  suggestions:['الاقتراحات','شاركنا أفكارك ومقترحاتك لتطوير المنصة'],
   about:['من نحن','تعرّف على منصة عباقرة القدرات'],
   features:['المزايا','كل ما تقدمه لك منصة عباقرة القدرات'],
   settings:['الإعدادات','خصّص تجربتك بالشكل الذي يناسبك'],
@@ -89,6 +90,7 @@ function go(view, skipHash){
     if(view === 'studyplan' && typeof renderStudyPlan === 'function') renderStudyPlan();
     if(view === 'quiz' && typeof initQuiz === 'function') initQuiz();
     if(view === 'gifts' && typeof renderMyGifts === 'function') renderMyGifts();
+    if(view === 'suggestions' && typeof renderMySuggestions === 'function') renderMySuggestions();
   }, 180);
 }
 window.go = go;
@@ -116,8 +118,15 @@ function goFromHash(){
   go(TITLES[v] ? v : 'home', true);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => go(btn.dataset.view));
-  });
+/* ⭐ تنقل موحّد: أي زر فيه data-view (القائمة الجانبية، قائمة الجوال، أي زر جديد)
+   يشتغل تلقائياً — حتى لو أُضيف للصفحة لاحقاً */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-view]');
+  if(!btn || btn.closest('.view')) return;   /* نتجاهل عناصر داخل الصفحات نفسها */
+  const view = btn.dataset.view;
+  if(!view || !TITLES[view]) return;
+  e.preventDefault();
+  const mum = document.getElementById('mobileUserMenu');
+  if(mum) mum.classList.remove('open');
+  go(view);
 });
