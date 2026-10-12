@@ -2215,8 +2215,25 @@
 <script src="js/35-welcome-fix.js?v=20261012b"></script>
 <script src="js/36-video-whiteboard.js?v=20261012b"></script>
 <script src="js/37-study-rooms.js?v=20261012b"></script>
-<script src="js/38-suggestions.js?v=20261012b"></script>
-<script src="js/39-devices.js?v=20261012b"></script>
-
+<script src="js/38-suggestions.js?v=20261012e"></script>
+<script src="js/39-devices.js?v=20261012e"></script>
+<!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
+<script>
+(function(){
+  var META = ['الاقتراحات', 'شاركنا أفكارك ومقترحاتك لتطوير المنصة'];
+  function ensure(){
+    try{ if(typeof TITLES !== 'undefined' && !TITLES.suggestions) TITLES.suggestions = META; }catch(e){}
+  }
+  ensure();
+  document.addEventListener('DOMContentLoaded', ensure);
+  /* بعد فتح الصفحة: اعرض اقتراحاتي */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-view="suggestions"]');
+    if(!b) return;
+    ensure();
+    setTimeout(function(){ try{ if(typeof renderMySuggestions === 'function') renderMySuggestions(); }catch(x){} }, 350);
+  }, true);
+})();
+</script>
 </body>
 </html>
