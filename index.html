@@ -207,6 +207,7 @@
       <button class="nav-btn" data-view="progress"><span class="ic"><i class="fas fa-chart-line"></i></span><span>إنجازي</span></button>
       <button class="nav-btn" data-view="leaderboard"><span class="ic"><i class="fas fa-trophy"></i></span><span>المتصدرون</span></button>
       <button class="nav-btn" data-view="profile"><span class="ic"><i class="fas fa-user-circle"></i></span><span>ملفي</span></button>
+      <button class="nav-btn" data-view="suggestions"><span class="ic"><i class="fas fa-lightbulb"></i></span><span>الاقتراحات</span></button>
       <button class="nav-btn" data-view="about"><span class="ic"><i class="fas fa-info-circle"></i></span><span>من نحن</span></button>
       <button class="nav-btn" data-view="features"><span class="ic"><i class="fas fa-wand-magic-sparkles"></i></span><span>المزايا</span></button>
       <button class="nav-btn" data-view="settings"><span class="ic"><i class="fas fa-gear"></i></span><span>الإعدادات</span></button>
@@ -386,6 +387,47 @@
             <span>دقائق اليوم: <b id="tmMinutes">0</b></span>
           </div>
         </div>
+      </div>
+
+      <!-- ⭐ المذاكرة الجماعية -->
+      <div class="study-room-card" id="studyRoomCard">
+        <div id="srLobby">
+          <div class="sr-head">
+            <div class="sr-ic"><i class="fas fa-people-group"></i></div>
+            <div>
+              <h3>المذاكرة الجماعية</h3>
+              <p>ذاكر مع غيرك بنفس المؤقت — أنشئ غرفة، ادخل برمز، أو انضم لغرفة عشوائية</p>
+            </div>
+          </div>
+          <div class="sr-grid">
+            <div class="sr-box">
+              <b><i class="fas fa-plus-circle"></i> إنشاء غرفة</b>
+              <select id="srMinutes" class="sort-select">
+                <option value="25">25 دقيقة</option>
+                <option value="40">40 دقيقة</option>
+                <option value="50" selected>50 دقيقة</option>
+                <option value="60">ساعة</option>
+                <option value="90">ساعة ونص</option>
+                <option value="120">ساعتين</option>
+                <option value="180">3 ساعات</option>
+              </select>
+              <label class="sr-check"><input type="checkbox" id="srPublic" checked> غرفة عامة (يقدر أي أحد ينضم)</label>
+              <button class="btn btn-primary" id="srCreateBtn"><i class="fas fa-door-open"></i> إنشاء</button>
+            </div>
+            <div class="sr-box">
+              <b><i class="fas fa-key"></i> دخول برمز</b>
+              <input type="text" id="srCode" class="sr-code-input" maxlength="6" placeholder="123456" inputmode="numeric">
+              <button class="btn btn-ghost" id="srJoinBtn"><i class="fas fa-right-to-bracket"></i> دخول</button>
+            </div>
+            <div class="sr-box">
+              <b><i class="fas fa-shuffle"></i> انضمام عشوائي</b>
+              <p>ندخلك غرفة عامة ما بدأت بعد مع طلاب ثانيين</p>
+              <button class="btn btn-ghost" id="srRandomBtn"><i class="fas fa-shuffle"></i> انضمام عشوائي</button>
+            </div>
+          </div>
+          <small class="sr-solo"><i class="fas fa-user"></i> تبي تذاكر لوحدك؟ استخدم المؤقت بالأعلى، أو أنشئ غرفة خاصة لك وحدك.</small>
+        </div>
+        <div id="srRoom" style="display:none"></div>
       </div>
 
       <div class="sec-title"><i class="fas fa-clock-rotate-left" style="color:var(--primary)"></i> أكمل من حيث توقفت <span class="sub">آخر ملفاتك</span></div>
@@ -585,6 +627,7 @@
         <div class="quiz-reveal-box" id="quizRevealBox" style="display:none"></div>
 
         <div class="quiz-players-bar" id="quizPlayersBar"></div>
+        <button class="btn btn-ghost btn-sm quiz-leave-game" onclick="confirmBox('مغادرة اللعبة','هل تريد مغادرة اللعبة؟ ستخسر تقدمك في هذه الجلسة.', leaveQuizRoom, true)"><i class="fas fa-door-open"></i> مغادرة اللعبة</button>
       </div>
 
       <div id="quizFinalResults" class="quiz-final" style="display:none">
@@ -850,6 +893,42 @@
     <!-- ============================================================
          من نحن + الدعم + القنوات
     ============================================================ -->
+    <!-- ============================================================
+         صندوق الاقتراحات
+    ============================================================ -->
+    <section class="view" id="view-suggestions">
+      <div class="sug-hero">
+        <div class="sug-hero-ic"><i class="fas fa-lightbulb"></i></div>
+        <div>
+          <h2>صندوق الاقتراحات</h2>
+          <p>عندك فكرة تطوّر المنصة؟ لقيت مشكلة؟ تبي محتوى معيّن؟ اكتب لنا — كل اقتراح يوصل للإدارة مباشرة.</p>
+        </div>
+      </div>
+      <div class="two-col sug-layout">
+        <div class="card-basic">
+          <h3><i class="fas fa-pen-to-square"></i> اقتراح جديد</h3>
+          <div class="form-group">
+            <label>نوع الاقتراح</label>
+            <select id="sugCat">
+              <option value="feature">💡 ميزة جديدة</option>
+              <option value="bug">🐞 مشكلة / خلل</option>
+              <option value="content">📚 محتوى (ملفات/فيديو)</option>
+              <option value="other">💬 أخرى</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>اكتب اقتراحك <small id="sugCount" style="color:var(--muted);font-weight:600">0 / 1500</small></label>
+            <textarea id="sugText" maxlength="1500" style="min-height:150px" placeholder="مثال: أتمنى تضيفون اختبارات محاكية بنفس وقت الاختبار الحقيقي..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="sugSend" style="width:100%;padding:14px"><i class="fas fa-paper-plane"></i> إرسال الاقتراح</button>
+        </div>
+        <div class="card-basic">
+          <h3><i class="fas fa-inbox"></i> اقتراحاتي</h3>
+          <div class="sug-list" id="mySuggestions"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="view" id="view-about">
       <div class="about-hero">
         <h1>لماذا <em>عباقرة القدرات</em>؟</h1>
@@ -934,7 +1013,9 @@
       <!-- ⭐ تذييل الثقة والتوثيق -->
       <footer class="trust-footer">
         <div class="tf-band">
-          
+          <div class="tf-vat" title="مسجّل في ضريبة القيمة المضافة">
+            <img src="assets/trust/vat.png" alt="ضريبة القيمة المضافة VAT" loading="lazy">
+          </div>
 
           <div class="tf-logos">
             <div class="tf-our-logo"><img src="assets/trust/logo.png" alt="عباقرة القدرات"></div>
@@ -955,7 +1036,14 @@
           <b dir="ltr">0538524983</b>
         </a>
 
-        
+        <div class="tf-pay">
+          <img src="assets/trust/visa.png" alt="Visa" loading="lazy">
+          <img src="assets/trust/mastercard.png" alt="MasterCard" loading="lazy">
+          <img src="assets/trust/amex.png" alt="American Express" loading="lazy">
+          <img src="assets/trust/stcpay.png" alt="stc pay" loading="lazy">
+          <img src="assets/trust/applepay.png" alt="Apple Pay" loading="lazy">
+          <img class="tf-mada" src="assets/trust/mada.png" alt="مدى mada" loading="lazy">
+        </div>
 
         <div class="tf-copy">© <span id="tfYear"></span> عباقرة القدرات — جميع الحقوق محفوظة</div>
       </footer>
@@ -1051,9 +1139,11 @@
           <p>اضبط مدة جلسة التركيز والراحات.</p>
           <div class="set-row">
             <div class="lbl">مدة جلسة التركيز<small>بالدقائق</small></div>
-            <div class="seg" id="focusSeg">
+            <div class="seg seg-wrap" id="focusSeg">
               <button data-m="15">15</button><button data-m="25">25</button>
               <button data-m="40">40</button><button data-m="50">50</button>
+              <button data-m="60">ساعة</button><button data-m="90">1.5 س</button>
+              <button data-m="120">ساعتين</button><button data-m="180">3 ساعات</button>
             </div>
           </div>
           <div class="set-row">
@@ -1164,6 +1254,7 @@
         <button data-panel="addvideo"><i class="fas fa-plus-circle"></i> إضافة فيديو</button>
         <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة الكاهوت</button>
         <button data-panel="addquiz"><i class="fas fa-plus"></i> إضافة سؤال</button>
+        <button data-panel="suggestions"><i class="fas fa-lightbulb"></i> الاقتراحات <span class="badge-n" id="sugAdminBadge" style="display:none">0</span></button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
            <button data-panel="products"><i class="fas fa-box"></i> المنتجات</button>
 <button data-panel="addproduct"><i class="fas fa-plus-square"></i> إضافة منتج</button>
@@ -1355,8 +1446,17 @@
           <input type="hidden" id="qqId">
 
           <div class="form-group">
-            <label>السؤال *</label>
+            <label>السؤال <small style="color:var(--muted);font-weight:600">(اكتب السؤال، أو أرفق صورة له، أو الاثنين)</small></label>
             <textarea id="qqQuestion" placeholder="اكتب السؤال هنا..." style="min-height:80px"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-image" style="color:var(--primary)"></i> صورة السؤال (اختياري)</label>
+            <input type="file" id="qqImageInput" accept="image/*" onchange="previewQuizImage(this)" style="display:none">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('qqImageInput').click()">
+              <i class="fas fa-upload"></i> اختيار صورة
+            </button>
+            <div id="qqImagePreview" style="margin-top:12px"></div>
           </div>
 
           <div class="form-group">
@@ -1499,6 +1599,14 @@
   </div>
   <div class="admin-products-grid" id="adminProductsGrid"></div>
 </div>
+
+      <div class="admin-panel" id="panel-suggestions">
+        <div class="card-basic">
+          <h3><i class="fas fa-lightbulb"></i> اقتراحات الطلاب</h3>
+          <div class="filter-row" id="sugFilterBar" style="margin:10px 0 14px;flex-wrap:wrap;gap:6px"></div>
+          <div class="sug-admin-grid" id="adminSuggestions"></div>
+        </div>
+      </div>
 
       <div class="admin-panel" id="panel-storesettings">
         <div class="store-settings-header">
@@ -2114,6 +2222,10 @@
 <script src="js/33-admin-products.js"></script>
 <script src="js/34-course-filter-fix.js"></script>
 <script src="js/35-welcome-fix.js"></script>
+<script src="js/36-video-whiteboard.js"></script>
+<script src="js/37-study-rooms.js"></script>
+<script src="js/38-suggestions.js"></script>
+<script src="js/39-devices.js"></script>
 
 </body>
 </html>
