@@ -12,7 +12,7 @@ const XP_RULES = {
   fileDone: 100,    /* إكمال ملف */
   session: 25,      /* جلسة تركيز كاملة */
   badge: 15,        /* كل شارة */
-  video: 50,        /* إكمال فيديو */        /* إكمال ذكر (مرة يومياً لكل ذكر) */
+  video: 50,        /* إكمال فيديو */       /* إكمال ذكر (مرة يومياً لكل ذكر) */
   planTask: 'حسب المهمة', /* مهام الجدول الذكي */
   quizWin: 100      /* الفوز في لعبة العباقرة */
 };
@@ -183,6 +183,7 @@ async function renderLeaderboard(){
 
   /* ترتيب متسلسل واضح: 1، 2، 3... */
   users.forEach((u, i) => { u.rank = i + 1; });
+  window._lbUsers = users;   /* للشهادات */
 
   if(!users.length){
     podiumBox.innerHTML = '';
@@ -214,6 +215,7 @@ async function renderLeaderboard(){
         <span><i class="fas fa-book"></i> ${u.completed} ملف</span>
         <span><i class="fas fa-stopwatch"></i> ${u.sessions} جلسة</span>
       </div>
+      <button class="lb-cert-podium" onclick="openCertificate('${u.id}')"><i class="fas fa-award"></i> الشهادة</button>
     </div>`;
   }
   const ordered = [];
@@ -242,6 +244,7 @@ async function renderLeaderboard(){
       </div>
       <div class="lb-xp-cell">${u.xp.toLocaleString('en')}<small>XP</small></div>
       <div class="lb-badge-mini ${badgeCls}">${badgeTxt}</div>
+      <button class="lb-cert-btn ${isMe ? 'me' : ''}" onclick="openCertificate('${u.id}')" title="شهادة الشكر والتقدير"><i class="fas fa-award"></i>${isMe ? ' شهادتي' : ''}</button>
     </div>`;
   }).join('');
 
@@ -284,6 +287,7 @@ function renderLbToolbar(count){
   bar.innerHTML = `
     <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
     <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
+    ${currentUserObj && (window._lbUsers || []).some(x => x.id === currentUserObj.id) ? `<button class="btn btn-primary btn-sm" onclick="openCertificate('${currentUserObj.id}')"><i class="fas fa-award"></i> شهادتي</button>` : ''}
     <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>`;
 }
 
