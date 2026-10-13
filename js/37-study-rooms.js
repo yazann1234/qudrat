@@ -38,7 +38,9 @@ function srCanUse(){
 async function srCreateRoom(){
   if(!srCanUse() || SR.room) return;
   const minutes = Math.min(180, Math.max(5, parseInt((srEl('srMinutes') || {}).value, 10) || 25));
-  const isPublic = !!(srEl('srPublic') && srEl('srPublic').checked);
+  /* ⭐ الافتراضي «خاصة» — العامة فقط لو اختارها الطالب صراحةً */
+  const privSel = document.querySelector('input[name="srPrivacy"]:checked');
+  const isPublic = privSel ? privSel.value === 'public' : !!(srEl('srPublic') && srEl('srPublic').checked);
   const btn = srEl('srCreateBtn'); if(btn) btn.disabled = true;
 
   let room = null, err = null;
@@ -84,6 +86,8 @@ async function srJoinRandom(){
 
     const candidates = [];
     for(const r of (rooms || [])){
+      /* ⭐ تأكيد مزدوج: لا ندخل غرفة خاصة أبداً */
+      if(r.is_public !== true || r.status !== 'waiting') continue;
       const { data: mem } = await sb.from('study_room_members').select('user_id,last_seen').eq('room_id', r.id);
       const active = (mem || []).filter(m => Date.now() - Date.parse(m.last_seen || 0) < SR_STALE_MS);
       if(active.length && active.length < (r.max_members || 10) && !active.some(m => m.user_id === currentUserObj.id)){
@@ -95,7 +99,7 @@ async function srJoinRandom(){
         title: 'لا توجد غرف متاحة الآن',
         text: 'ما فيه غرفة عامة تنتظر حالياً. تبي تنشئ غرفة عامة وينضم لك غيرك؟',
         okText: 'إنشاء غرفة عامة',
-        onOk: () => { if(srEl('srPublic')) srEl('srPublic').checked = true; srCreateRoom(); }
+        onOk: () => { const pub = document.querySelector('input[name="srPrivacy"][value="public"]'); if(pub) pub.checked = true; srCreateRoom(); }
       });
       return;
     }
@@ -125,6 +129,7 @@ async function srJoinRoomRow(room){
   if(error){ toast('تعذّر الدخول: ' + error.message, 'err'); return; }
 
   SR.room = room;
+  SR.joinedAt = Date.now();
   SR.studiedSec = 0;
   SR.runKey = null;
   try{ localStorage.setItem('sr_room_' + currentUserObj.id, room.id); }catch(e){}
@@ -187,7 +192,15 @@ async function srHeartbeat(){
 
 async function srLoadMembers(){
   if(!SR.room) return;
-  const { data } = await sb.from('study_room_members').select('*').eq('room_id', SR.room.id).order('joined_at', { ascending: true });
+  const { data, error } = await sb.from('study_room_members').select('*').eq('room_id', SR.room.id).order('joined_at', { ascending: true });
+  if(error) return;
+  /* ⭐ لو المضيف أخرجني من الغرفة */
+  if(SR.joinedAt && Date.now() - SR.joinedAt > 5000 && !(data || []).some(m => m.user_id === currentUserObj.id)){
+    toast('تم إخراجك من الغرفة', 'warn');
+    if(SR.room.status === 'running') srCredit();
+    srCleanup();
+    return;
+  }
   SR.members = (data || []).filter(m => m.user_id === currentUserObj.id || Date.now() - Date.parse(m.last_seen || 0) < SR_STALE_MS);
 }
 
@@ -308,6 +321,23 @@ window.srSetMinutes = (m) => {
   srHostUpdate({ focus_minutes: m }, 'waiting');
 };
 
+window.srTogglePrivacy = () => {
+  if(!srIsHost()) return;
+  const toPublic = !SR.room.is_public;
+  srHostUpdate({ is_public: toPublic });
+  toast(toPublic ? '🌐 أصبحت الغرفة عامة' : '🔒 أصبحت الغرفة خاصة — الدخول بالرمز فقط', 'ok');
+};
+window.srKick = (userId) => {
+  if(!srIsHost() || userId === currentUserObj.id) return;
+  const m = SR.members.find(x => x.user_id === userId);
+  confirmBox('إخراج عضو', `إخراج ${escapeHtml(m ? m.name : 'العضو')} من الغرفة؟`, async () => {
+    const { error } = await sb.from('study_room_members').delete().eq('room_id', SR.room.id).eq('user_id', userId);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    await srLoadMembers(); srRenderMembers();
+    toast('تم إخراج العضو', 'ok');
+  });
+};
+
 window.srCopyCode = () => {
   if(!SR.room) return;
   try{ navigator.clipboard.writeText(SR.room.code); toast('✓ تم نسخ رمز الغرفة', 'ok'); }catch(e){}
@@ -405,7 +435,10 @@ function srRender(){
         <small>${r.is_public ? '🌐 غرفة عامة' : '🔒 غرفة خاصة'} • ${statusTxt}</small>
         <h3>غرفة المذاكرة <span class="sr-code" onclick="srCopyCode()" title="نسخ الرمز">${escapeHtml(r.code)} <i class="fas fa-copy"></i></span></h3>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="srLeave()"><i class="fas fa-door-open"></i> مغادرة</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${host ? `<button class="btn btn-ghost btn-sm" onclick="srTogglePrivacy()">${r.is_public ? '<i class="fas fa-lock"></i> اجعلها خاصة' : '<i class="fas fa-globe"></i> اجعلها عامة'}</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="srLeave()"><i class="fas fa-door-open"></i> مغادرة</button>
+      </div>
     </div>
     <div class="sr-body">
       <div class="sr-clock ${r.status}">
@@ -442,6 +475,7 @@ function srRenderMembers(){
         <div class="sr-av" style="${av}">${av ? '' : escapeHtml(String(m.name || '؟').charAt(0))}</div>
         <span>${escapeHtml(m.name || 'طالب')}${isMe ? ' (أنت)' : ''}</span>
         ${isHost ? '<i class="fas fa-crown sr-crown"></i>' : ''}
+        ${srIsHost() && !isMe ? `<button class="sr-kick" onclick="srKick('${m.user_id}')" title="إخراج"><i class="fas fa-user-xmark"></i></button>` : ''}
       </div>`;
     }).join('');
 }
