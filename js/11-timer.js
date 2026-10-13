@@ -24,7 +24,7 @@ function drawTimerDial(){
 function updateTimerUI(){
   const total = timerTotalSec(TIMER.mode);
   const remain = TIMER.running ? Math.max(0, Math.round((TIMER.endAt - Date.now()) / 1000)) : TIMER.remain;
-  const tt = $('#timerText'); if(tt) tt.textContent = fmtTime(remain);
+  const tt = $('#timerText'); if(tt){ tt.textContent = fmtTime(remain); tt.classList.toggle('long', remain >= 3600); }
   const tl = $('#timerLabel'); if(tl) tl.textContent = TIMER.mode === 'focus' ? 'جلسة تركيز' : (TIMER.mode === 'long' ? 'راحة طويلة' : 'راحة قصيرة');
   const th = $('#timerHead'); if(th) th.textContent = TIMER.mode === 'focus' ? 'اعمل بتركيز كامل' : 'وقت الراحة — استرخِ قليلاً';
   const td = $('#timerDesc');
@@ -44,6 +44,10 @@ function startTimer(){
     updateTimerUI(); return;
   }
   if(TIMER.remain <= 0) TIMER.remain = timerTotalSec(TIMER.mode);
+  /* ⭐ بداية جلسة تركيز جديدة → السيرفر يسجّل وقت البداية (النقاط حسب الدقائق الحقيقية) */
+  if(TIMER.mode === 'focus' && typeof XP !== 'undefined' && !XP.focusId && typeof xpFocusStart === 'function'){
+    xpFocusStart(Math.ceil(TIMER.remain / 60), 'timer');
+  }
   TIMER.endAt = Date.now() + TIMER.remain * 1000;
   TIMER.running = true;
   clearInterval(TIMER.int);
@@ -69,12 +73,13 @@ function finishTimer(){
     addMinutesToday(userData.focus || 25);
     todayLog().sessions = (todayLog().sessions || 0) + 1;
     if(!userData.badges.includes('focus1')) userData.badges.push('focus1');
+    /* ⭐ النقاط: نقطة لكل دقيقة — يحسبها السيرفر من وقت البداية الحقيقي */
+    try{ if(typeof xpFocusFinish === 'function') xpFocusFinish('جلسة تركيز'); }catch(e){}
     savePrefs();
     renderHomeStats(); renderBadges(); checkBadges();
     toast('أحسنت! أكملت جلسة تركيز كاملة', 'ok');
     const useLong = TIMER.doneCount % 4 === 0;
     TIMER.mode = useLong ? 'long' : 'break';
-    try{ if(typeof syncMyXp === 'function') syncMyXp(); }catch(e){}
   } else {
     toast('انتهت الراحة، لنعد للتركيز!', 'warn');
     TIMER.mode = 'focus';
@@ -86,12 +91,14 @@ function finishTimer(){
 
 $('#timerStart').addEventListener('click', startTimer);
 $('#timerReset').addEventListener('click', () => {
+  try{ if(typeof xpFocusAbandon === 'function') xpFocusAbandon(); }catch(e){}
   clearInterval(TIMER.int); TIMER.int = null;
   TIMER.running = false;
   TIMER.remain = timerTotalSec(TIMER.mode);
   updateTimerUI();
 });
 $('#timerMode').addEventListener('click', () => {
+  try{ if(typeof xpFocusAbandon === 'function') xpFocusAbandon(); }catch(e){}
   clearInterval(TIMER.int); TIMER.int = null;
   TIMER.running = false;
   TIMER.mode = TIMER.mode === 'focus' ? 'break' : 'focus';
