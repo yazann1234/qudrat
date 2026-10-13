@@ -246,6 +246,11 @@ function srTick(){
 
   if(SR.room.status === 'running'){
     SR.runKey = SR.room.id + ':' + (SR.room.started_at || '');
+    /* ⭐ بداية جولة (أو دخول أثناءها) → السيرفر يسجّل وقت البداية */
+    if(SR.xpKey !== SR.runKey && typeof xpFocusStart === 'function'){
+      SR.xpKey = SR.runKey;
+      xpFocusStart(Math.max(1, Math.ceil(srRemainingSec() / 60)), 'room');
+    }
     if(!document.hidden) SR.studiedSec += dt;   /* نحسب الوقت الفعلي فقط */
     if(srRemainingSec() <= 0) srOnFinished();
   }
@@ -271,23 +276,18 @@ function srCredit(){
   const minutes = Math.round(SR.studiedSec / 60);
   const target = SR.room.focus_minutes || 25;
   SR.studiedSec = 0;
-  if(minutes < 1) return;
+  if(minutes < 1){ try{ if(typeof xpFocusFinish === 'function') xpFocusFinish('مذاكرة جماعية'); }catch(e){} return; }
 
   addMinutesToday(minutes);
-  /* تُحسب جلسة تركيز كاملة لو حضرت 60% من الوقت على الأقل */
   if(minutes >= target * 0.6){
     userData.sessions = (userData.sessions || 0) + 1;
     todayLog().sessions = (todayLog().sessions || 0) + 1;
-    const blocks = Math.floor(Math.max(0, minutes - 25) / 25);
-    if(blocks > 0) userData.extraXp = (userData.extraXp || 0) + blocks * (typeof XP_RULES !== 'undefined' ? XP_RULES.session : 25);
-    toast(`🎉 أنهيت الجلسة الجماعية (${minutes} دقيقة) — احتُسبت جلسة تركيز`, 'ok');
-  } else {
-    toast(`⏱️ ذاكرت ${minutes} دقيقة في الجلسة الجماعية`, 'ok');
   }
+  /* ⭐ النقاط: دقيقة = نقطة (يحسبها السيرفر من الوقت الحقيقي) */
+  try{ if(typeof xpFocusFinish === 'function') xpFocusFinish('مذاكرة جماعية'); }catch(e){}
   try{ beep(); }catch(e){}
   savePrefs();
   try{ renderHomeStats(); checkBadges(); renderBadges(); }catch(e){}
-  if(typeof syncMyXp === 'function') syncMyXp();
 }
 
 /* ================== تحكم المضيف ================== */
