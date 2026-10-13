@@ -4324,3 +4324,9 @@ img{-webkit-user-drag:none;user-drag:none}
 .cert-loading{padding:60px 20px;text-align:center;font-size:.95rem;font-weight:800;color:var(--muted)}
 .cert-tip{text-align:center;font-size:.8rem;font-weight:700;color:var(--muted)}
 .cert-tip i{color:#f59e0b}
+
+/* البحث الذكي: زر الحل + حالة الكتابة */
+.aif-sol-btn{font-family:inherit;font-size:.8rem;font-weight:900;padding:9px;border-radius:12px;border:1.5px dashed var(--primary);background:var(--primary-soft);color:var(--primary);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.aif-solving{font-size:.82rem;font-weight:800;color:var(--primary);padding:8px 0;display:flex;align-items:center;gap:8px}
+.aif-retry{font-family:inherit;font-weight:900;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline}
+.aif-solution:empty{display:none}
