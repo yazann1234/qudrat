@@ -49,7 +49,7 @@ async function openFile(id){
   currentFile = f; RS.file = f;
 
   /* ⭐ العلامة المائية: رقم الجوال بدل الإيميل */
-  RS.watermarkEmail = currentUserObj.phone || currentUserObj.email || '';
+  RS.watermarkEmail = watermarkText();
 
   userData.opened = [id, ...userData.opened.filter(x => x !== id)].slice(0, 14);
   savePrefs();
