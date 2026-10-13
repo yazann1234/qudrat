@@ -103,17 +103,8 @@ document.addEventListener('click', async function(e){
     if(s){
       session = s;
       if(typeof window.enterApp === 'function'){
-        try{
-          await Promise.race([
-            window.enterApp(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-          ]);
-        }catch(err){
-          console.warn('enterApp failed:', err);
-          try{ await sb.auth.signOut(); }catch(x){}
-          session = null;
-          window.showAuthSafe();
-        }
+        const ok = await window.enterApp();
+        if(!ok && !(document.getElementById('auth') || {}).classList?.contains('open')) window.showAuthSafe();
       } else {
         window.showAuthSafe();
       }
@@ -162,15 +153,7 @@ setTimeout(async () => {
 
     if(s && typeof window.enterApp === 'function'){
       session = s;
-      try{
-        await Promise.race([
-          window.enterApp(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-        ]);
-      }catch(err){
-        console.warn('boot enterApp failed:', err);
-        window.showWelcomeSafe();
-      }
+      await window.enterApp();
     } else {
       window.showWelcomeSafe();
     }
