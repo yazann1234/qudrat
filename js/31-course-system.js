@@ -35,6 +35,12 @@ function fillCourseDropdowns(){
       CS.courses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
     if(currentVal) sel.value = currentVal;
   });
+  /* ⭐ إنشاء مستخدم: اختيار أكثر من دورة */
+  const nuBox = document.getElementById('nuCoursesBox');
+  if(nuBox && typeof courseChecklistHTML === 'function'){
+    const keep = [...nuBox.querySelectorAll('input[name="nuCourses"]:checked')].map(i => i.value);
+    nuBox.innerHTML = courseChecklistHTML('nuCourses', keep);
+  }
 }
 window.fillCourseDropdowns = fillCourseDropdowns;
 
@@ -44,17 +50,48 @@ function getCourseById(id){
 }
 window.getCourseById = getCourseById;
 
+/* ============================================================
+   ⭐ دعم أكثر من دورة للطالب الواحد
+   course_ids (مصفوفة) + course_id (الدورة الأساسية — للتوافق)
+============================================================ */
+function getUserCourseIds(u){
+  u = u || currentUserObj;
+  if(!u) return [];
+  let raw = u.course_ids;
+  if(typeof raw === 'string'){ try{ raw = JSON.parse(raw); }catch(e){ raw = []; } }
+  const ids = Array.isArray(raw) ? raw.filter(Boolean).map(String) : [];
+  if(u.course_id && !ids.includes(String(u.course_id))) ids.unshift(String(u.course_id));
+  return [...new Set(ids)];
+}
+window.getUserCourseIds = getUserCourseIds;
+
+function userHasCourse(courseId, u){
+  if(!courseId) return false;
+  return getUserCourseIds(u).includes(String(courseId));
+}
+window.userHasCourse = userHasCourse;
+
+/* هل يحق للمستخدم الحالي رؤية عنصر (ملف/فيديو)؟ */
+function canAccessCourseItem(item){
+  if(typeof isPrivileged === 'function' && isPrivileged()) return true;
+  if(!currentUserObj || currentUserObj.status !== 'approved') return false;
+  if(!item || !item.course_id) return true;
+  return userHasCourse(item.course_id);
+}
+window.canAccessCourseItem = canAccessCourseItem;
+
+function getMyCourses(){
+  return getUserCourseIds().map(id => getCourseById(id)).filter(Boolean);
+}
+window.getMyCourses = getMyCourses;
+
 function getMyCourse(){
-  if(!currentUserObj || !currentUserObj.course_id) return null;
-  return getCourseById(currentUserObj.course_id);
+  return getMyCourses()[0] || null;
 }
 window.getMyCourse = getMyCourse;
 
 function shouldSeeCourseItem(item){
-  if(typeof isPrivileged === 'function' && isPrivileged()) return true;
-  if(!currentUserObj || !currentUserObj.course_id) return false;
-  if(!item.course_id) return true;
-  return item.course_id === currentUserObj.course_id;
+  return canAccessCourseItem(item);
 }
 window.shouldSeeCourseItem = shouldSeeCourseItem;
 
@@ -154,11 +191,11 @@ function renderCoursesGrid(){
   }
 
   /* هل للمستخدم طلب شراء قيد المراجعة؟ */
-  const pendingReq = (currentUserObj && currentUserObj.purchase_submitted && currentUserObj.status !== 'approved')
+  const pendingReq = (currentUserObj && currentUserObj.purchase_submitted)
     ? getPurchaseRequest(currentUserObj) : null;
 
   grid.innerHTML = CS.courses.map(c => {
-    const isMyCourse = currentUserObj && currentUserObj.course_id === c.id && currentUserObj.status === 'approved';
+    const isMyCourse = currentUserObj && currentUserObj.status === 'approved' && userHasCourse(c.id);
     const isPendingHere = pendingReq && pendingReq.course && pendingReq.course.id === c.id;
     const prices = c.prices || {};
     const hasFixedEnd = !!(c.subscription_end_date);
@@ -205,7 +242,12 @@ function renderCoursesGrid(){
     }
 
     let btn;
-    if(isMyCourse) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-check"></i> أنت مشترك</button>';
+    const daysLeft = (currentUserObj && currentUserObj.subscription_end)
+      ? Math.ceil((new Date(currentUserObj.subscription_end) - new Date()) / 86400000) : null;
+    if(isMyCourse && !isPendingHere && daysLeft !== null && daysLeft <= 14){
+      btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-rotate"></i> جدّد اشتراكك (متبقي ${Math.max(0, daysLeft)} يوم)</button>`;
+    }
+    else if(isMyCourse) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-check"></i> أنت مشترك</button>';
     else if(isPendingHere) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-hourglass-half"></i> طلبك قيد المراجعة</button>';
     else btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-shopping-cart"></i> اشترك الآن</button>`;
 
@@ -297,11 +339,7 @@ function filterByCourse(items){
   if(!Array.isArray(items)) return [];
   if(typeof isPrivileged === 'function' && isPrivileged()) return items;
   if(!currentUserObj) return [];
-  const myCourse = currentUserObj.course_id;
-  return items.filter(item => {
-    if(!item.course_id) return true;
-    return item.course_id === myCourse;
-  });
+  return items.filter(canAccessCourseItem);
 }
 window.filterByCourse = filterByCourse;
 
