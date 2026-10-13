@@ -91,14 +91,16 @@ function renderUsersTable(){
         : '<span style="font-size:.72rem;color:var(--muted)">—</span>';
 
       /* ⭐ بيانات الدورة والاشتراك */
-      const course = (u.course_id && typeof getCourseById === 'function') ? getCourseById(u.course_id) : null;
-      const req = (u.purchase_submitted && u.status !== 'approved' && typeof getPurchaseRequest === 'function') ? getPurchaseRequest(u) : null;
+      const uCourses = getUserCourseIds(u).map(id => getCourseById(id)).filter(Boolean);
+      const course = uCourses.length ? Object.assign({}, uCourses[0], { name: uCourses.map(c => c.name).join(' + ') }) : null;
+      const req = (u.purchase_submitted && typeof getPurchaseRequest === 'function') ? getPurchaseRequest(u) : null;
+      const reqKind = !req ? '' : (u.status !== 'approved' ? 'new' : (userHasCourse(req.course.id, u) ? 'renew' : 'add'));
       let subCell;
       if(req){
         /* ⭐ طلب شراء: يظهر للأدمن ماذا اختار الطالب بالضبط */
         subCell = `
           <div class="purchase-req-cell" style="--rc:${req.course.color || '#5b6cff'}">
-            <div class="prc-tag"><i class="fas fa-cart-shopping"></i> طلب شراء</div>
+            <div class="prc-tag">${reqKind === 'renew' ? '<i class="fas fa-rotate"></i> طلب تجديد' : reqKind === 'add' ? '<i class="fas fa-plus"></i> إضافة دورة' : '<i class="fas fa-cart-shopping"></i> طلب شراء'}</div>
             <div class="prc-course"><i class="fas ${req.course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(req.course.name)}</div>
             <div class="prc-meta">${monthsLabel(req.months)} • ${priceHTML(req.price)}</div>
             ${u.purchase_submitted_at ? `<small>${getTimeAgo(new Date(u.purchase_submitted_at))}</small>` : ''}
@@ -140,7 +142,10 @@ function renderUsersTable(){
       let actions = '';
 
       if(!isTargetOwner){
-        if(u.status !== 'approved' && u.role !== 'admin'){
+        if(req && u.role !== 'admin'){
+          actions += `<button class="btn btn-success btn-sm quick-activate" onclick="quickActivate('${u.id}', this)" title="${reqKind === 'renew' ? 'تجديد' : reqKind === 'add' ? 'إضافة' : 'تفعيل'} ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)}"><i class="fas fa-bolt"></i> ${reqKind === 'renew' ? 'تجديد' : reqKind === 'add' ? 'إضافة' : 'تفعيل'}</button>`;
+          actions += `<button class="btn btn-ghost btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل بدورة/مدة مختلفة"><i class="fas fa-sliders"></i></button>`;
+        } else if(u.status !== 'approved' && u.role !== 'admin'){
           if(req){
             /* ⭐ ضغطة واحدة: يفعّل الدورة والمدة اللي اشتراها الطالب */
             actions += `<button class="btn btn-success btn-sm quick-activate" onclick="quickActivate('${u.id}', this)" title="تفعيل ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)}"><i class="fas fa-bolt"></i> تفعيل</button>`;
@@ -155,6 +160,8 @@ function renderUsersTable(){
         if(isOwnerUser || !isTargetAdmin){
           actions += `<button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل"><i class="fas fa-pen"></i></button>`;
           actions += `<button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إعادة تعيين كلمة المرور"><i class="fas fa-key"></i></button>`;
+          if(!isTargetAdmin && u.status === 'approved') actions += `<button class="btn btn-ghost btn-sm" onclick="manageUserCourses('${u.id}')" title="دورات الطالب (أكثر من دورة)" style="background:rgba(91,108,255,.12);color:var(--primary)"><i class="fas fa-layer-group"></i> الدورات</button>`;
+          if(!isTargetAdmin) actions += `<button class="btn btn-ghost btn-sm" onclick="manageUserDevices('${u.id}')" title="أجهزة الطالب"><i class="fas fa-laptop-mobile"></i></button>`;
         }
         if(u.purchase_receipt_url){
           actions += `<button class="btn btn-ghost btn-sm" onclick="viewReceipt('${escapeHtml(u.purchase_receipt_url)}')" title="عرض الإيصال" style="background:rgba(247,179,43,.15);color:#b45309;border-color:rgba(247,179,43,.3)"><i class="fas fa-receipt"></i></button>`;
@@ -188,6 +195,51 @@ function renderUsersTable(){
 }
 window.renderUsersTable = renderUsersTable;
 
+/* ⭐ قائمة اختيار دورات متعددة (checkbox) */
+function courseChecklistHTML(name, selectedIds){
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const sel = new Set((selectedIds || []).map(String));
+  if(!courses.length) return '<div style="font-size:.8rem;color:var(--muted)">لا توجد دورات</div>';
+  return `<div class="course-checklist">${courses.map(c => `
+    <label class="cc-item" style="--cc:${c.color || '#5b6cff'}">
+      <input type="checkbox" name="${name}" value="${c.id}" ${sel.has(String(c.id)) ? 'checked' : ''}>
+      <span class="cc-box"><i class="fas fa-check"></i></span>
+      <i class="fas ${c.icon || 'fa-graduation-cap'} cc-ic"></i>
+      <span class="cc-name">${escapeHtml(c.name)}</span>
+    </label>`).join('')}</div>`;
+}
+function readCourseChecklist(name){
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+}
+window.courseChecklistHTML = courseChecklistHTML;
+window.readCourseChecklist = readCourseChecklist;
+
+/* ⭐ دورات الطالب: ورقي + محوسب (أو أي عدد) بدون تغيير مدة الاشتراك */
+window.manageUserCourses = (userId) => {
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(!u) return;
+  openModal({
+    title: 'دورات الطالب',
+    text: `اختر دورة أو أكثر لـ ${escapeHtml(u.name || u.email)} — مدة الاشتراك تبقى كما هي.`,
+    bodyHTML: courseChecklistHTML('mucCourses', getUserCourseIds(u)) +
+      `<div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-size:.76rem;font-weight:700"><i class="fas fa-info-circle"></i> الطالب يشوف ملفات وفيديوهات كل الدورات المختارة.</div>`,
+    okText: 'حفظ الدورات',
+    onOk: async () => {
+      const ids = readCourseChecklist('mucCourses');
+      if(!ids.length){ toast('اختر دورة واحدة على الأقل', 'warn'); return; }
+      const upd = { course_id: ids[0], course_ids: ids };
+      const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), upd);
+      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      Object.assign(u, upd);
+      const names = ids.map(id => getCourseById(id)).filter(Boolean).map(c => c.name).join(' + ');
+      if(typeof logAdminAction === 'function') logAdminAction('edit_user', userId, 'تعديل الدورات: ' + names, upd);
+      if(typeof sendNotification === 'function') sendNotification('general', '📚 تم تحديث دوراتك', 'دوراتك الآن: ' + names, null, null, 'fa-layer-group', '#5b6cff', userId);
+      renderUsersTable();
+      toast('✓ تم حفظ الدورات: ' + names, 'ok');
+    }
+  });
+};
+
 window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت', 'ok'); }catch(e){} };
 
 /* ============================================================
@@ -202,7 +254,19 @@ window.quickActivate = async (userId, btn) => {
   let orig = '';
   if(btn){ if(btn.disabled) return; orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
 
-  const ok = await activateSubscription(userId, req.months, req.course.id);
+  let ok;
+  if(u.status === 'approved' && userHasCourse(req.course.id, u)){
+    /* تجديد نفس الدورة: يُضاف للمدة المتبقية */
+    const base = u.subscription_end && new Date(u.subscription_end) > new Date() ? new Date(u.subscription_end) : new Date();
+    const end = req.course.subscription_end_date ? calculateSubscriptionEnd(req.months, req.course.id) : new Date(base);
+    if(!req.course.subscription_end_date) end.setMonth(end.getMonth() + req.months);
+    ok = await activateSubscription(userId, req.months, getUserCourseIds(u), { endDate: end });
+  } else if(u.status === 'approved'){
+    /* دورة إضافية لمشترك حالي */
+    ok = await activateSubscription(userId, req.months, [req.course.id], { addToExisting: true });
+  } else {
+    ok = await activateSubscription(userId, req.months, [req.course.id]);
+  }
   if(ok){
     renderUsersTable();
     try{ renderAdmin(); }catch(e){}
@@ -219,7 +283,9 @@ window.openApproveModal = (userId) => {
   if(!u) return;
   const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
   const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
-  const selCourse = req ? req.course.id : (u.course_id || '');
+  const selIds = u.status === 'approved' ? getUserCourseIds(u) : [];
+  if(req && !selIds.includes(String(req.course.id))) selIds.push(String(req.course.id));
+  if(!selIds.length && u.course_id) selIds.push(String(u.course_id));
   const selMonths = req ? req.months : (u.subscription_months || 1);
   const monthOpts = [1, 3, 6, 12];
   if(!monthOpts.includes(selMonths)) monthOpts.push(selMonths);
@@ -235,11 +301,8 @@ window.openApproveModal = (userId) => {
         <i class="fas fa-cart-shopping"></i> الطالب طلب: ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)} — ${priceHTML(req.price)}
       </div>` : ''}
       <div class="form-group" style="margin-bottom:14px">
-        <label>الدورة *</label>
-        <select id="approveCourse" style="${selectStyle}">
-          <option value="">— اختر دورة —</option>
-          ${courses.map(c => `<option value="${c.id}" ${selCourse === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
-        </select>
+        <label>الدورات * <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة)</small></label>
+        ${courseChecklistHTML('approveCourses', selIds)}
       </div>
       <div class="form-group" style="margin-bottom:14px">
         <label>مدة الاشتراك *</label>
@@ -250,14 +313,14 @@ window.openApproveModal = (userId) => {
       </div>
       ${customDurationHTML('approve', true)}
       <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
-        <i class="fas fa-info-circle"></i> الطالب سيرى فقط ملفات وفيديوهات الدورة المختارة.
+        <i class="fas fa-info-circle"></i> الطالب سيرى ملفات وفيديوهات الدورات المختارة فقط.
       </div>
     `,
     okText: 'تفعيل الآن',
     onOk: async () => {
-      const courseId = document.getElementById('approveCourse').value;
+      const courseId = readCourseChecklist('approveCourses');
       const durVal = document.getElementById('approveDuration').value;
-      if(!courseId){ toast('اختر دورة', 'warn'); return; }
+      if(!courseId.length){ toast('اختر دورة واحدة على الأقل', 'warn'); return; }
       let ok;
       if(durVal === 'custom'){
         const c = readCustomDuration('approve');
@@ -285,7 +348,9 @@ window.approveUser = async id => openApproveModal(id);
 window.rejectUser = async id => {
   const { error } = await sb.from('profiles').update({ status:'rejected' }).eq('id', id);
   if(error){ toast('فشل: ' + error.message, 'err'); return; }
-  if(typeof logAdminAction === 'function') await logAdminAction('reject_user', id, 'رفض طلب مستخدم');
+  if(typeof logAdminAction === 'function') logAdminAction('reject_user', id, 'رفض طلب مستخدم');
+  const u = (DB.users || []).find(x => x.id === id); if(u) u.status = 'rejected';
+  renderUsersTable();
   toast('تم رفض المستخدم', 'warn');
 };
 
@@ -296,7 +361,7 @@ window.promoteToAdmin = (id) => {
     const { error } = await sb.from('profiles').update({ role: 'admin' }).eq('id', id);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     u.role = 'admin';
-    if(typeof logAdminAction === 'function') await logAdminAction('promote_admin', id, 'ترقية إلى أدمن');
+    if(typeof logAdminAction === 'function') logAdminAction('promote_admin', id, 'ترقية إلى أدمن');
     renderUsersTable();
     toast('✓ تم الترقية', 'ok');
   });
@@ -309,7 +374,7 @@ window.demoteAdmin = (id) => {
     const { error } = await sb.from('profiles').update({ role: 'user' }).eq('id', id);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     u.role = 'user';
-    if(typeof logAdminAction === 'function') await logAdminAction('demote_admin', id, 'إزالة صلاحية الأدمن');
+    if(typeof logAdminAction === 'function') logAdminAction('demote_admin', id, 'إزالة صلاحية الأدمن');
     renderUsersTable();
     toast('تمت الإزالة', 'warn');
   }, true);
@@ -341,11 +406,9 @@ window.editUser = id => {
       </div>
       ${!isTargetAdmin ? `
       <div class="form-group" style="margin-bottom:12px">
-        <label>الدورة</label>
-        <select id="euCourse" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <option value="">— بدون دورة —</option>
-          ${courses.map(c => `<option value="${c.id}" ${u.course_id===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
-        </select>
+        <label>الدورات <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة)</small></label>
+        ${courseChecklistHTML('euCourses', getUserCourseIds(u))}
+        <input type="hidden" id="euCourse" value="1">
       </div>
       ` : ''}
       <div class="form-group" style="margin-bottom:12px">
@@ -402,7 +465,11 @@ window.editUser = id => {
       if(statusEl) upd.status = statusEl.value;
 
       const courseEl = document.getElementById('euCourse');
-      if(courseEl) upd.course_id = courseEl.value || null;
+      if(courseEl){
+        const ids = readCourseChecklist('euCourses');
+        upd.course_id = ids[0] || null;
+        upd.course_ids = ids;
+      }
 
       const durEl = document.getElementById('euDuration');
       const durVal = durEl ? durEl.value : 'keep';
@@ -423,9 +490,12 @@ window.editUser = id => {
       }
 
       const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', id), upd);
+      if(!error && statusEl && statusEl.value === 'approved' && u.status !== 'approved' && typeof sendNotification === 'function'){
+        sendNotification('general', '✓ تم تفعيل اشتراكك', 'تم تفعيل اشتراكك. استمتع بالتعلم!', null, null, 'fa-check-circle', '#22c55e', id);
+      }
       if(error){ showBar('err', '<i class="fas fa-circle-xmark"></i> فشل: ' + error.message); return; }
 
-      if(typeof logAdminAction === 'function') await logAdminAction('edit_user', id, 'تعديل بيانات المستخدم', upd);
+      if(typeof logAdminAction === 'function') logAdminAction('edit_user', id, 'تعديل بيانات المستخدم', upd);
 
       if(newPw && newPw !== u.password_hint){
         if(newPw.length < 8){ showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور 8 أحرف على الأقل'); return; }
@@ -483,7 +553,7 @@ window.deleteUser = id => {
   if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
   const u = DB.users.find(x => x.id === id); if(!u) return;
   confirmBox('حذف المستخدم', `سيتم حذف «${escapeHtml(u.name)}» نهائيًا؟`, async () => {
-    if(typeof logAdminAction === 'function') await logAdminAction('delete_user', id, `حذف المستخدم: ${u.name}`, { email: u.email });
+    if(typeof logAdminAction === 'function') logAdminAction('delete_user', id, `حذف المستخدم: ${u.name}`, { email: u.email });
     try{ await sb.from('user_progress').delete().eq('user_id', id); }catch(e){}
     try{ await sb.from('user_drawings').delete().eq('user_id', id); }catch(e){}
     try{ await sb.from('video_progress').delete().eq('user_id', id); }catch(e){}
@@ -516,14 +586,74 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================
    ملفات الأدمن
 ============================================================ */
+/* ⭐ شارة الدورة في بطاقات الأدمن (تنبيه واضح لو المحتوى للجميع) */
+function adminCourseBadge(item){
+  const course = item.course_id && typeof getCourseById === 'function' ? getCourseById(item.course_id) : null;
+  return course
+    ? `<span class="adm-course-badge" style="--cc:${course.color || '#5b6cff'}"><i class="fas ${course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(course.name)}</span>`
+    : '<span class="adm-course-badge all"><i class="fas fa-globe"></i> للجميع (كل الدورات)</span>';
+}
+
+/* ⭐ تعديل ملف/فيديو بعد إضافته: العنوان + التصنيف + الوصف + الدورة (للجميع / ورقي / محوسب) */
+window.setItemCourse = (kind, id) => {
+  const list = kind === 'video' ? (DB.videos || []) : (DB.files || []);
+  const item = list.find(x => x.id === id);
+  if(!item) return;
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const cats = ['كمي', 'لفظي', 'عام', 'مراجعة'];
+  const fs = 'width:100%;font-family:inherit;font-size:.88rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
+  openModal({
+    title: kind === 'video' ? 'تعديل الفيديو' : 'تعديل الملف',
+    text: '',
+    bodyHTML: `
+      <div class="form-group" style="margin-bottom:12px"><label>العنوان</label>
+        <input type="text" id="eiTitle" value="${escapeHtml(item.title || '')}" style="${fs}"></div>
+      <div class="form-group" style="margin-bottom:12px"><label>التصنيف</label>
+        <select id="eiCat" style="${fs}">${cats.map(c => `<option ${item.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group" style="margin-bottom:12px"><label>الوصف</label>
+        <textarea id="eiDesc" style="${fs};min-height:70px">${escapeHtml(item.description || '')}</textarea></div>
+      <div class="form-group"><label><b>الدورة</b> — مين يشوف ${kind === 'video' ? 'الفيديو' : 'الملف'}؟</label>
+        <div class="course-pick-list">
+          ${courses.map(c => `
+            <label class="cp-item" style="--cc:${c.color || '#5b6cff'}">
+              <input type="radio" name="setItemCourse" value="${c.id}" ${String(item.course_id) === String(c.id) ? 'checked' : ''}>
+              <i class="fas ${c.icon || 'fa-graduation-cap'}"></i><span>${escapeHtml(c.name)} فقط</span>
+            </label>`).join('')}
+          <label class="cp-item" style="--cc:#d97706">
+            <input type="radio" name="setItemCourse" value="" ${!item.course_id ? 'checked' : ''}>
+            <i class="fas fa-globe"></i><span>للجميع (كل الدورات)</span>
+          </label>
+        </div>
+      </div>`,
+    okText: 'حفظ التعديلات',
+    onOk: async () => {
+      const sel = document.querySelector('input[name="setItemCourse"]:checked');
+      const upd = {
+        title: (document.getElementById('eiTitle').value || '').trim() || item.title,
+        category: document.getElementById('eiCat').value,
+        description: (document.getElementById('eiDesc').value || '').trim(),
+        course_id: sel ? (sel.value || null) : null
+      };
+      const { error } = await sb.from(kind === 'video' ? 'videos' : 'files').update(upd).eq('id', id);
+      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      Object.assign(item, upd);
+      if(kind === 'video'){ renderAdminVideos(); if(typeof renderVideos === 'function') renderVideos(); }
+      else { renderAdminFiles(); if(typeof renderFiles === 'function') renderFiles(); }
+      const c = upd.course_id ? getCourseById(upd.course_id) : null;
+      toast('✓ تم الحفظ — ' + (c ? 'يظهر لطلاب ' + c.name + ' فقط' : 'يظهر للجميع'), 'ok');
+    }
+  });
+};
+
 function renderAdminFiles(){
   const box = document.getElementById('adminFilesGrid'); if(!box) return;
   if(!DB.files.length){
     box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3></div>';
     return;
   }
-  box.innerHTML = DB.files.map(f => {
-    const course = f.course_id && typeof getCourseById === 'function' ? getCourseById(f.course_id) : null;
+  const noCourseF = DB.files.filter(f => !f.course_id).length;
+  const warnF = noCourseF ? `<div class="adm-course-warn" style="grid-column:1/-1"><i class="fas fa-triangle-exclamation"></i> ${noCourseF} ملف بدون دورة — تظهر لطلاب <b>كل</b> الدورات. اضغط «تعديل» لتحديد دورته.</div>` : '';
+  box.innerHTML = warnF + DB.files.map(f => {
     return `
     <div class="admin-file-card ${f.important ? 'important' : ''}" style="--fc:${f.color || '#5b6cff'}">
       <div class="afc-head">
@@ -533,10 +663,9 @@ function renderAdminFiles(){
           <small>${escapeHtml(f.category || '')} • ${f.page_count || '?'} صفحة</small>
         </div>
       </div>
-      <div class="afc-meta">
-        ${course ? `<span style="color:${course.color};font-weight:800"><i class="fas ${course.icon}"></i> ${escapeHtml(course.name)}</span>` : '<span style="color:var(--muted)">للجميع</span>'}
-      </div>
+      <div class="afc-meta">${adminCourseBadge(f)}</div>
       <div class="afc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="setItemCourse('file','${f.id}')" title="تعديل الملف والدورة"><i class="fas fa-pen"></i> تعديل</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${escapeHtml(f.storage_path)}')"><i class="fas fa-trash"></i></button>
       </div>
@@ -558,7 +687,7 @@ window.deleteFile = (id, path) => {
     try{ await sb.storage.from('pdfs').remove([path]); }catch(e){}
     const { error } = await sb.from('files').delete().eq('id', id);
     if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
-    if(typeof logAdminAction === 'function') await logAdminAction('delete_file', null, `حذف ملف: ${f.title}`);
+    if(typeof logAdminAction === 'function') logAdminAction('delete_file', null, `حذف ملف: ${f.title}`);
     toast('تم حذف الملف', 'ok');
   }, true);
 };
@@ -613,6 +742,11 @@ async function handlePdfFile(file){
 
     if(!title){ toast('أدخل عنوان الملف', 'warn'); return; }
     if(!currentPdfBlob){ toast('اختر ملف PDF أولاً', 'warn'); return; }
+    if(!courseId && !clone.dataset.allConfirmed){
+      confirmBox('بدون دورة؟', 'ما اخترت دورة — الملف بيظهر لطلاب <b>كل</b> الدورات (الورقي والمحوسب). متأكد؟', () => { clone.dataset.allConfirmed = '1'; clone.click(); });
+      return;
+    }
+    delete clone.dataset.allConfirmed;
 
     clone.disabled = true;
     const orig = clone.innerHTML;
@@ -668,7 +802,7 @@ async function handlePdfFile(file){
       return;
     }
 
-    if(typeof logAdminAction === 'function') await logAdminAction('upload_file', null, `رفع ملف: ${title}`, { course_id: courseId });
+    if(typeof logAdminAction === 'function') logAdminAction('upload_file', null, `رفع ملف: ${title}`, { course_id: courseId });
 
     /* إشعار */
     try{
@@ -742,8 +876,9 @@ function renderAdminVideos(){
     box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات</h3></div>';
     return;
   }
-  box.innerHTML = list.map(v => {
-    const course = v.course_id && typeof getCourseById === 'function' ? getCourseById(v.course_id) : null;
+  const noCourse = list.filter(v => !v.course_id).length;
+  const warn = noCourse ? `<div class="adm-course-warn" style="grid-column:1/-1"><i class="fas fa-triangle-exclamation"></i> ${noCourse} فيديو بدون دورة — تظهر لطلاب <b>كل</b> الدورات. اضغط «تعديل» على كل فيديو لتحديد دورته.</div>` : '';
+  box.innerHTML = warn + list.map(v => {
     return `
     <div class="admin-video-card">
       <div class="admin-video-thumb" style="background-image:url('${v.thumbnail || youtubeThumb(v.youtube_id)}')">
@@ -752,8 +887,9 @@ function renderAdminVideos(){
       <div class="admin-video-body">
         <h4>${escapeHtml(v.title)} ${v.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
         <small>${escapeHtml(v.category || '')} • ${fmtDuration(v.duration || 0)}</small>
-        <div class="afc-meta" style="margin-top:8px">${course ? `<span style="color:${course.color};font-weight:800"><i class="fas ${course.icon}"></i> ${escapeHtml(course.name)}</span>` : '<span style="color:var(--muted)">للجميع</span>'}</div>
+        <div class="afc-meta" style="margin-top:8px">${adminCourseBadge(v)}</div>
         <div class="admin-video-actions">
+          <button class="btn btn-ghost btn-sm" onclick="setItemCourse('video','${v.id}')" title="تعديل الفيديو والدورة"><i class="fas fa-pen"></i> تعديل</button>
           <button class="btn btn-ghost btn-sm" onclick="toggleVideoImportant('${v.id}')"><i class="fas fa-star"></i></button>
           <button class="btn btn-ghost btn-sm" onclick="linkVideoToFile('${v.id}')"><i class="fas fa-link"></i></button>
           <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button>
@@ -776,7 +912,7 @@ window.deleteVideo = id => {
   confirmBox('حذف الفيديو', `حذف «${escapeHtml(v.title)}»؟`, async () => {
     const { error } = await sb.from('videos').delete().eq('id', id);
     if(error){ toast('فشل', 'err'); return; }
-    if(typeof logAdminAction === 'function') await logAdminAction('delete_video', null, `حذف فيديو: ${v.title}`);
+    if(typeof logAdminAction === 'function') logAdminAction('delete_video', null, `حذف فيديو: ${v.title}`);
     toast('تم الحذف', 'ok');
   }, true);
 };
@@ -825,6 +961,11 @@ window.doLinkVideo = async (videoId, fileId) => {
     const ytId = extractYoutubeId(url);
 
     if(!ytId){ toast('رابط يوتيوب غير صالح', 'err'); return; }
+    if(!courseId && !clone.dataset.allConfirmed){
+      confirmBox('بدون دورة؟', 'ما اخترت دورة — الفيديو بيظهر لطلاب <b>كل</b> الدورات (الورقي والمحوسب). متأكد؟', () => { clone.dataset.allConfirmed = '1'; clone.click(); });
+      return;
+    }
+    delete clone.dataset.allConfirmed;
     if(!title){ toast('أدخل عنوان الفيديو', 'warn'); return; }
 
     clone.disabled = true;
@@ -842,7 +983,7 @@ window.doLinkVideo = async (videoId, fileId) => {
     clone.innerHTML = orig;
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
 
-    if(typeof logAdminAction === 'function') await logAdminAction('add_video', null, `إضافة فيديو: ${title}`, { course_id: courseId });
+    if(typeof logAdminAction === 'function') logAdminAction('add_video', null, `إضافة فيديو: ${title}`, { course_id: courseId });
     try{
       if(typeof sendNotification === 'function'){
         const c = courseId ? getCourseById(courseId) : null;
@@ -916,7 +1057,8 @@ window.doLinkVideo = async (videoId, fileId) => {
     const email = (document.getElementById('nuEmail').value || '').trim().toLowerCase();
     const phone = (document.getElementById('nuPhone') ? document.getElementById('nuPhone').value : '').trim().replace(/\D/g, '');
     const pass = document.getElementById('nuPass').value;
-    const courseId = document.getElementById('nuCourse') ? document.getElementById('nuCourse').value : '';
+    const nuIds = readCourseChecklist('nuCourses');
+    const courseId = nuIds[0] || (document.getElementById('nuCourse') ? document.getElementById('nuCourse').value : '');
     const durationValue = document.getElementById('nuDuration') ? document.getElementById('nuDuration').value : '1';
     const approve = document.getElementById('nuApprove').checked;
 
@@ -951,14 +1093,15 @@ window.doLinkVideo = async (videoId, fileId) => {
         if(approve){
           upd.status = 'approved';
           upd.course_id = courseId;
+          upd.course_ids = nuIds.length ? nuIds : [courseId];
           upd.subscription_start = new Date().toISOString();
           const end = customEnd || calculateSubscriptionEnd(months, courseId);
           upd.subscription_end = end.toISOString();
           upd.subscription_months = months;
         }
-        const { error: upErr } = await sb.from('profiles').update(upd).eq('id', data.user.id);
+        const { error: upErr } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', data.user.id), upd);
         if(upErr) console.warn('update failed', upErr);
-        if(typeof logAdminAction === 'function') await logAdminAction('create_user', data.user.id, `إنشاء حساب: ${name}`, { course_id: courseId, months });
+        if(typeof logAdminAction === 'function') logAdminAction('create_user', data.user.id, `إنشاء حساب: ${name}`, { course_id: courseId, months });
       }
 
       toast('✓ تم إنشاء الحساب', 'ok');
@@ -967,8 +1110,8 @@ window.doLinkVideo = async (videoId, fileId) => {
       if(document.getElementById('nuPhone')) document.getElementById('nuPhone').value = '';
 
       try{
-        const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-        DB.users = r.data || [];
+        const list = await fetchAdminUsers();
+        if(list) DB.users = list;
         renderAdmin();
       }catch(e){}
     }catch(e){ toast('خطأ: ' + e.message, 'err'); }
