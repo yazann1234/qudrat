@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/styles.css?v=20261012b">
+<link rel="stylesheet" href="css/styles.css?v=20261013c">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -49,7 +49,7 @@
       <div class="chip" style="animation-delay:.45s"><i class="fas fa-file-pdf"></i>لعبة العباقرة</div>
       <div class="chip" style="animation-delay:.5s"><i class="fas fa-video"></i> دروس فيديو</div>
       <div class="chip" style="animation-delay:.55s"><i class="fas fa-calendar-check"></i> جدول ذكي</div>
-      <div class="chip" style="animation-delay:.6s"><i class="fas fa-gamepad"></i> كاهوت</div>
+      <div class="chip" style="animation-delay:.6s"><i class="fas fa-gamepad"></i> لعبة العباقرة</div>
       <div class="chip" style="animation-delay:.65s"><i class="fas fa-gift"></i> هدايا</div>
     </div>
 
@@ -108,6 +108,7 @@
         <button class="auth-btn" id="loginBtn"><i class="fas fa-right-to-bracket"></i> تسجيل الدخول</button>
         <button class="forgot-link" type="button" id="forgotLink">نسيت كلمة المرور؟</button>
         <div class="auth-hint">ليس لديك حساب؟ اضغط <b>حساب جديد</b> بالأعلى</div>
+        <button type="button" class="terms-link" onclick="openTerms()"><i class="fas fa-file-contract"></i> الشروط والأحكام وسياسة الاسترجاع</button>
       </div>
 
       <div class="auth-form" id="form-register">
@@ -122,6 +123,10 @@
           <input type="password" id="regPass" placeholder="كلمة المرور (8+ أحرف)" autocomplete="new-password" style="padding-left:44px">
           <button type="button" class="eye-btn" onclick="togglePassVis('regPass',this)" title="إظهار/إخفاء"><i class="fas fa-eye"></i></button>
         </div>
+        <label class="terms-check">
+          <input type="checkbox" id="regTerms">
+          <span>أوافق على <button type="button" class="terms-inline" onclick="openTerms()">الشروط والأحكام وسياسة الاسترجاع</button></span>
+        </label>
         <div class="auth-msg" id="regMsg"></div>
         <button class="auth-btn" id="regBtn"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
         <div class="auth-hint">بعد التسجيل، حسابك ينتظر موافقة الأدمن</div>
@@ -411,7 +416,11 @@
                 <option value="120">ساعتين</option>
                 <option value="180">3 ساعات</option>
               </select>
-              <label class="sr-check"><input type="checkbox" id="srPublic" checked> غرفة عامة (يقدر أي أحد ينضم)</label>
+              <div class="sr-privacy" id="srPrivacy">
+                <label class="sr-priv-opt"><input type="radio" name="srPrivacy" value="private" checked><span><i class="fas fa-lock"></i> خاصة <small>بالرمز فقط</small></span></label>
+                <label class="sr-priv-opt"><input type="radio" name="srPrivacy" value="public"><span><i class="fas fa-globe"></i> عامة <small>للانضمام العشوائي</small></span></label>
+              </div>
+              <input type="checkbox" id="srPublic" style="display:none">
               <button class="btn btn-primary" id="srCreateBtn"><i class="fas fa-door-open"></i> إنشاء</button>
             </div>
             <div class="sr-box">
@@ -514,7 +523,7 @@
     </section>
 
     <!-- ============================================================
-         قسم الكاهوت
+         قسم لعبة العباقرة
     ============================================================ -->
     <section class="view" id="view-quiz">
       <div id="quizLobby" class="quiz-lobby">
@@ -804,7 +813,7 @@
           <div class="lb-hero-txt">
             <div class="tag"><i class="fas fa-trophy"></i> لوحة الشرف</div>
             <h2>قائمة المتصدرين 🏆</h2>
-            <p>النقاط تُحسب من: الصفحات المقروءة + الملفات المكتملة + جلسات التركيز + إكمال الفيديوهات + الفوز في لعبة العباقرة</p>
+            <p>النقاط تُحسب من: الصفحات المقروءة + الملفات المكتملة + جلسات التركيز + إكمال الفيديوهات + الفوز في لعبة العباقرة.</p>
           </div>
           <div class="lb-hero-count"><b id="lbMyRank">—</b><span>ترتيبك</span></div>
         </div>
@@ -881,8 +890,8 @@
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> اقرأ صفحة جديدة = <b style="color:var(--primary)">+٢ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أنهِ ملفاً كاملاً = <b style="color:var(--primary)">+١٠٠ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أتمم جلسة تركيز = <b style="color:var(--primary)">+٢٥ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أكمل فيديو = <b style="color:var(--primary)">+٥٠ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> افز في كاهوت = <b style="color:var(--primary)">+٢٠٠ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> شاهد فيديو كاملاً (بدون تقديم) = <b style="color:var(--primary)">+٥٠ نقطة</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> افز في لعبة العباقرة = <b style="color:var(--primary)">+١٠٠ نقطة (+١٠ لكل إجابة صحيحة)</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> احصل على شارة = <b style="color:var(--primary)">+١٥ نقطة</b></div>
             </div>
           </div>
@@ -1036,6 +1045,7 @@
 
         
 
+        <button type="button" class="tf-terms" onclick="openTerms()"><i class="fas fa-file-contract"></i> الشروط والأحكام وسياسة الاسترجاع</button>
         <div class="tf-copy">© <span id="tfYear"></span> عباقرة القدرات — جميع الحقوق محفوظة</div>
       </footer>
     </section>
@@ -1243,8 +1253,9 @@
         <button data-panel="add"><i class="fas fa-plus"></i> إضافة ملف</button>
         <button data-panel="videos"><i class="fas fa-video"></i> الفيديوهات</button>
         <button data-panel="addvideo"><i class="fas fa-plus-circle"></i> إضافة فيديو</button>
-        <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة الكاهوت</button>
+        <button data-panel="quiz"><i class="fas fa-gamepad"></i> أسئلة لعبة العباقرة</button>
         <button data-panel="addquiz"><i class="fas fa-plus"></i> إضافة سؤال</button>
+        <button data-panel="courses"><i class="fas fa-graduation-cap"></i> الدورات والأسعار</button>
         <button data-panel="suggestions"><i class="fas fa-lightbulb"></i> الاقتراحات <span class="badge-n" id="sugAdminBadge" style="display:none">0</span></button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
            <button data-panel="products"><i class="fas fa-box"></i> المنتجات</button>
@@ -1288,10 +1299,9 @@
       </div>
     </div>
     <div class="form-group">
-      <label>الدورة *</label>
-      <select id="nuCourse">
-        <option value="">— اختر دورة —</option>
-      </select>
+      <label>الدورات * <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة — مثلاً ورقي + محوسب)</small></label>
+      <div id="nuCoursesBox"></div>
+      <select id="nuCourse" style="display:none"><option value="">—</option></select>
     </div>
     <div class="form-group">
       <label>مدة الاشتراك *</label>
@@ -1338,7 +1348,7 @@
             <input type="text" id="afTitle" placeholder="مثال: أساسيات الهندسة">
           </div>
           <div class="form-group">
-  <label>الدورة *</label>
+  <label>الدورة * <small style="color:var(--danger);font-weight:700">(مهم: اختر الدورة حتى لا يظهر لطلاب الدورة الأخرى)</small></label>
   <select id="afCourse">
     <option value="">— بدون دورة (للجميع) —</option>
   </select>
@@ -1387,7 +1397,7 @@
           <div class="form-group"><label>عنوان الفيديو *</label><input type="text" id="avTitle" placeholder="مثال: شرح أساسيات الهندسة"></div>
 
           <div class="form-group">
-  <label>الدورة *</label>
+  <label>الدورة * <small style="color:var(--danger);font-weight:700">(مهم: اختر الدورة حتى لا يظهر لطلاب الدورة الأخرى)</small></label>
   <select id="avCourse">
     <option value="">— بدون دورة (للجميع) —</option>
   </select>
@@ -1590,6 +1600,16 @@
   </div>
   <div class="admin-products-grid" id="adminProductsGrid"></div>
 </div>
+
+      <div class="admin-panel" id="panel-courses">
+        <div class="card-basic">
+          <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><i class="fas fa-graduation-cap"></i> الدورات والأسعار
+            <button class="btn btn-primary btn-sm" style="margin-right:auto" onclick="editAdminCourse(null)"><i class="fas fa-plus"></i> دورة جديدة</button>
+          </h3>
+          <p style="font-size:.82rem;color:var(--muted);margin:6px 0 14px">عدّل أسعار كل دورة لكل مدة (شهر / 3 أشهر / 6 أشهر / سنة) — التغيير يظهر في المتجر فوراً.</p>
+          <div class="acs-grid" id="adminCoursesGrid"></div>
+        </div>
+      </div>
 
       <div class="admin-panel" id="panel-suggestions">
         <div class="card-basic">
@@ -2018,6 +2038,7 @@
 
     <div class="purchase-actions">
       <button class="btn btn-ghost" id="purchaseCancel">إلغاء</button>
+      <div class="purchase-terms-note"><i class="fas fa-file-contract"></i> بإتمام الدفع أنت توافق على <button type="button" class="terms-inline" onclick="openTerms()">الشروط والأحكام وسياسة الاسترجاع</button></div>
       <button class="btn btn-primary purchase-submit" id="purchaseSubmit">
         <i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم
       </button>
@@ -2091,6 +2112,7 @@
   <div class="mum-actions">
     <button class="mum-btn" id="mumProfile"><i class="fas fa-user-circle"></i> ملفي الشخصي</button>
     <button class="mum-btn" id="mumSettings"><i class="fas fa-gear"></i> الإعدادات</button>
+    <button class="mum-btn" data-view="suggestions"><i class="fas fa-lightbulb"></i> الاقتراحات</button>
     <button class="mum-btn danger" id="mumLogout"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
   </div>
 </div>
@@ -2147,7 +2169,7 @@
     <button data-q="كيف أشاهد الفيديو والملف في نفس الوقت؟"><i class="fas fa-video"></i> فيديو + ملف</button>
     <button data-q="كيف أزيد نقاط XP؟"><i class="fas fa-star"></i> زيادة XP</button>
     <button data-q="كيف أرسم على الملف؟"><i class="fas fa-pen"></i> الرسم على الملف</button>
-    <button data-q="كيف ألعب كاهوت؟"><i class="fas fa-gamepad"></i> كاهوت</button>
+    <button data-q="كيف ألعب لعبة العباقرة؟"><i class="fas fa-gamepad"></i> لعبة العباقرة</button>
   </div>
 
   <div class="ai-chat-input-wrap">
@@ -2178,45 +2200,137 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- ⭐ ترتيب السكربتات -->
-<script src="js/01-config.js?v=20261012b"></script>
-<script src="js/02-utils.js?v=20261012b"></script>
-<script src="js/03-state.js?v=20261012b"></script>
-<script src="js/04-theme.js?v=20261012b"></script>
-<script src="js/05-nav.js?v=20261012b"></script>
-<script src="js/06-stats.js?v=20261012b"></script>
-<script src="js/07-files.js?v=20261012b"></script>
-<script src="js/08-home.js?v=20261012b"></script>
-<script src="js/09-features.js?v=20261012b"></script>
-<script src="js/10-tasks.js?v=20261012b"></script>
-<script src="js/11-timer.js?v=20261012b"></script>
-<script src="js/12-settings.js?v=20261012b"></script>
-<script src="js/13-reader.js?v=20261012b"></script>
-<script src="js/14-draw.js?v=20261012b"></script>
-<script src="js/15-auth.js?v=20261012b"></script>
-<script src="js/16-user.js?v=20261012b"></script>
-<script src="js/17-leaderboard.js?v=20261012b"></script>
-<script src="js/18-admin.js?v=20261012b"></script>
-<script src="js/19-realtime.js?v=20261012b"></script>
-<script src="js/20-protection.js?v=20261012b"></script>
-<script src="js/21-app.js?v=20261012b"></script>
-<script src="js/22-videos.js?v=20261012b"></script>
-<script src="js/23-store.js?v=20261012b"></script>
-<script src="js/24-ai.js?v=20261012b"></script>
-<script src="js/25-studyplan.js?v=20261012b"></script>
-<script src="js/26-adhkar.js?v=20261012b"></script>
-<script src="js/27-testimonials.js?v=20261012b"></script>
-<script src="js/28-prayer-times.js?v=20261012b"></script>
-<script src="js/29-quiz.js?v=20261012b"></script>
-<script src="js/30-owner-features.js?v=20261012b"></script>
-<script src="js/31-course-system.js?v=20261012b"></script>
-<script src="js/32-notifications.js?v=20261012b"></script>
-<script src="js/33-admin-products.js?v=20261012b"></script>
-<script src="js/34-course-filter-fix.js?v=20261012b"></script>
-<script src="js/35-welcome-fix.js?v=20261012b"></script>
-<script src="js/36-video-whiteboard.js?v=20261012b"></script>
-<script src="js/37-study-rooms.js?v=20261012b"></script>
-<script src="js/38-suggestions.js?v=20261012e"></script>
-<script src="js/39-devices.js?v=20261012e"></script>
+
+<!-- ============================================================
+     الشروط والأحكام وسياسة الاسترجاع
+============================================================ -->
+<div class="terms-overlay" id="termsModal" onclick="if(event.target===this) closeTerms()">
+  <div class="terms-box" role="dialog" aria-labelledby="termsTitle">
+    <div class="terms-head">
+      <div class="terms-ic"><i class="fas fa-file-contract"></i></div>
+      <h3 id="termsTitle">الشروط والأحكام</h3>
+      <button class="terms-x" onclick="closeTerms()" aria-label="إغلاق"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="terms-body">
+      <section>
+        <h4><i class="fas fa-rotate-left"></i> شروط الاسترجاع والاستبدال</h4>
+        <p>1. لا يحق للعميل إرجاع المنتج واسترجاع القيمة الشرائية بحسب الجزء (ج) من الفقرة (2) من المادة الثالثة عشرة من نظام التجارة الإلكترونية الصادر من وزارة التجارة والاستثمار، والتي تنص بأنه «لا يحق للمستهلك فسخ العقد بموجب الفقرة (1) من هذه المادة في الحالات الآتية:</p>
+        <ul>
+          <li>ب- إذا كان محل العقد أشرطة فيديو أو أسطوانات أو أقراصاً مدمجة أو برامج معلوماتية جرى استخدامها.</li>
+          <li>ج- إذا كان العقد يتناول شراء صحف أو مجلات أو منشورات أو كتب.</li>
+          <li>و- إذا كان العقد يتناول شراء منتجات تحميل البرامج عبر الإنترنت، ويستثنى من ذلك البرامج التي بها عيب يحول دون إتمام التحميل أو غير المطابقة لما اتفق عليه.»</li>
+        </ul>
+        <p>ويُسمح تجاوزًا استبدال الكتاب الإلكتروني بغيره عند حصول خطأ في اختيار المنتج، شريطة أن يكون بنفس القيمة وأن يتم إبلاغنا بالخطأ خلال <b>24 ساعة</b> من وقت وقوع الخطأ.</p>
+      </section>
+      <section>
+        <h4><i class="fas fa-arrows-rotate"></i> طريقة الاستبدال</h4>
+        <p>يتم الاستبدال عن طريق التواصل مع خدمة العملاء عبر الواتساب، مع العلم بأن معالجة الطلب تكون من <b>2 إلى 5 أيام عمل</b>.</p>
+      </section>
+      <section class="terms-warn">
+        <h4><i class="fas fa-shield-halved"></i> تسريب المحتوى</h4>
+        <p>في حال ثبوت تسريب أي من محتويات الدورة بالدليل، يتم إزالة الفرد من الدورة ولا يسترد قيمة اشتراكه، ويتعرض للمقاضاة بناءً على انتهاك حقوق النشر لعباقرة القدرات.</p>
+      </section>
+      <section>
+        <h4><i class="fas fa-headset"></i> استقبال الشكاوى ومعالجتها</h4>
+        <p>يتم استقبال الشكاوى عبر:</p>
+        <div class="terms-contacts">
+          <a href="mailto:turki.23198@gmail.com"><i class="fas fa-envelope"></i> <span dir="ltr">turki.23198@gmail.com</span></a>
+          <a href="https://wa.me/966538524983" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> <span dir="ltr">0538524983</span></a>
+        </div>
+        <p>علماً أن الرد على الشكوى يستغرق من <b>1 إلى 3 أيام عمل</b>، ومعالجة الشكوى تستغرق من <b>2 إلى 5 أيام عمل</b>.</p>
+      </section>
+    </div>
+    <div class="terms-foot">
+      <button class="btn btn-primary" onclick="acceptTerms()"><i class="fas fa-check"></i> قرأت وأوافق</button>
+      <button class="btn btn-ghost" onclick="closeTerms()">إغلاق</button>
+    </div>
+  </div>
+</div>
+<script>
+function openTerms(){ var m = document.getElementById('termsModal'); if(m) m.classList.add('open'); }
+function closeTerms(){ var m = document.getElementById('termsModal'); if(m) m.classList.remove('open'); }
+function acceptTerms(){ var c = document.getElementById('regTerms'); if(c) c.checked = true; closeTerms(); }
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTerms(); });
+</script>
+<script src="js/01-config.js?v=20261013c"></script>
+<script src="js/02-utils.js?v=20261013c"></script>
+<script src="js/03-state.js?v=20261013c"></script>
+<script src="js/04-theme.js?v=20261013c"></script>
+<script src="js/05-nav.js?v=20261013c"></script>
+<script src="js/06-stats.js?v=20261013c"></script>
+<script src="js/07-files.js?v=20261013c"></script>
+<script src="js/08-home.js?v=20261013c"></script>
+<script src="js/09-features.js?v=20261013c"></script>
+<script src="js/10-tasks.js?v=20261013c"></script>
+<script src="js/11-timer.js?v=20261013c"></script>
+<script src="js/12-settings.js?v=20261013c"></script>
+<script src="js/13-reader.js?v=20261013c"></script>
+<script src="js/14-draw.js?v=20261013c"></script>
+<script src="js/15-auth.js?v=20261013c"></script>
+<script src="js/16-user.js?v=20261013c"></script>
+<script src="js/17-leaderboard.js?v=20261013c"></script>
+<script src="js/18-admin.js?v=20261013c"></script>
+<script src="js/19-realtime.js?v=20261013c"></script>
+<script src="js/20-protection.js?v=20261013c"></script>
+<script src="js/21-app.js?v=20261013c"></script>
+<script src="js/22-videos.js?v=20261013c"></script>
+<script src="js/23-store.js?v=20261013c"></script>
+<script src="js/24-ai.js?v=20261013c"></script>
+<script src="js/25-studyplan.js?v=20261013c"></script>
+<script src="js/26-adhkar.js?v=20261013c"></script>
+<script src="js/27-testimonials.js?v=20261013c"></script>
+<script src="js/28-prayer-times.js?v=20261013c"></script>
+<script src="js/29-quiz.js?v=20261013c"></script>
+<script src="js/30-owner-features.js?v=20261013c"></script>
+<script src="js/31-course-system.js?v=20261013c"></script>
+<script src="js/32-notifications.js?v=20261013c"></script>
+<script src="js/33-admin-products.js?v=20261013c"></script>
+<script src="js/34-course-filter-fix.js?v=20261013c"></script>
+<script src="js/35-welcome-fix.js?v=20261013c"></script>
+<script src="js/36-video-whiteboard.js?v=20261013c"></script>
+<script src="js/37-study-rooms.js?v=20261013c"></script>
+<script src="js/38-suggestions.js?v=20261013c"></script>
+<script src="js/39-devices.js?v=20261013c"></script>
+<script src="js/40-admin-courses.js?v=20261013c"></script>
+<!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
+<script>
+window.addEventListener('load', function(){
+  var tries = 0;
+  var t = setInterval(function(){
+    try{
+      tries++;
+      var u = typeof currentUserObj !== 'undefined' ? currentUserObj : null;
+      if(!u){ if(tries > 40) clearInterval(t); return; }
+      clearInterval(t);
+      if(u.role !== 'admin' && u.role !== 'owner') return;
+      var src = function(f){ try{ return String(f); }catch(e){ return ''; } };
+      var checks = [
+        ['05-nav.js',            typeof go === 'function' && src(go).indexOf('dataset.title') > -1],
+        ['07-files.js',          typeof canSeeItem === 'function'],
+        ['18-admin.js',          typeof window.manageUserCourses === 'function'],
+        ['22-videos.js',         typeof renderVideos === 'function' && src(renderVideos).indexOf('getUserCourseVideos') > -1],
+        ['31-course-system.js',  typeof getUserCourseIds === 'function'],
+        ['34-course-filter-fix.js', typeof renderCourseFilters === 'function'],
+        ['36-video-whiteboard.js',  typeof vwbToggle === 'function'],
+        ['37-study-rooms.js',    typeof srCreateRoom === 'function'],
+        ['38-suggestions.js',    typeof submitSuggestion === 'function'],
+        ['39-devices.js',        typeof registerDevice === 'function'],
+        ['40-admin-courses.js',  typeof renderAdminCourses === 'function'],
+        ['21-app.js',            typeof showBootLoader === 'function'],
+        ['03-state.js',          typeof flushPrefsNow === 'function']
+      ];
+      var old = checks.filter(function(c){ return !c[1]; }).map(function(c){ return c[0]; });
+      if(old.length && typeof openModal === 'function'){
+        openModal({
+          title: 'ملفات قديمة على السيرفر',
+          text: 'هذه الملفات ما زالت بالنسخة القديمة على موقعك، فبعض الميزات لن تعمل (مثل فصل فيديوهات الورقي عن المحوسب):<br><br><b dir="ltr">' + old.join('<br>') + '</b><br><br>ارفعها من مجلد js ثم حدّث الصفحة (Ctrl + Shift + R). تظهر هذه الرسالة للأدمن فقط.',
+          okText: 'حسناً'
+        });
+      }
+    }catch(e){}
+  }, 3000);
+});
+</script>
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
 <script>
 (function(){
@@ -2235,5 +2349,6 @@
   }, true);
 })();
 </script>
+
 </body>
 </html>
