@@ -41,7 +41,7 @@ function canSeeNotif(n){
   if(!n || !currentUserObj) return false;
   if(n.target_user_id && n.target_user_id !== currentUserObj.id) return false;
   if(typeof isPrivileged === 'function' && isPrivileged()) return true;
-  if(n.target_course_id && String(n.target_course_id) !== String(currentUserObj.course_id || '')) return false;
+  if(n.target_course_id && !userHasCourse(n.target_course_id)) return false;
   return true;
 }
 
@@ -395,7 +395,7 @@ function startNotifPolling(){
   NOTIF.pollTimer = setInterval(() => {
     if(document.hidden && !('Notification' in window && Notification.permission === 'granted')) return;
     pollContentChanges();
-  }, 60000);
+  }, 120000);
 }
 function stopNotifPolling(){
   if(NOTIF.pollTimer){ clearInterval(NOTIF.pollTimer); NOTIF.pollTimer = null; }
