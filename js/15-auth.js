@@ -68,8 +68,18 @@ async function doLogin(){
       btn.innerHTML = orig;
       return;
     }
-    showMsg('loginMsg', '✓ تم الدخول', 'ok');
-    /* enterApp ستنفذ عبر onAuthStateChange */
+    showMsg('loginMsg', '✓ تم الدخول — جاري فتح حسابك...', 'ok');
+    /* ⭐ احتياط: لو ما وصل حدث onAuthStateChange نفتح الحساب بأنفسنا (بدون تكرار) */
+    setTimeout(async () => {
+      try{
+        const appOpen = document.getElementById('app') && document.getElementById('app').classList.contains('open');
+        if(!appOpen && typeof window.enterApp === 'function'){
+          const r = await sb.auth.getSession();
+          if(r.data.session){ session = r.data.session; await window.enterApp(); }
+        }
+      }catch(e){}
+      btn.disabled = false; btn.innerHTML = orig;
+    }, 1500);
   }catch(e){
     showMsg('loginMsg', e.message || 'خطأ');
     btn.disabled = false;
@@ -97,6 +107,13 @@ async function doRegister(){
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showMsg('regMsg', 'بريد غير صحيح'); return; }
   if(!pass || pass.length < 8){ showMsg('regMsg', 'كلمة المرور 8 أحرف على الأقل'); return; }
 
+  const termsEl = document.getElementById('regTerms');
+  if(termsEl && !termsEl.checked){
+    showMsg('regMsg', 'يجب الموافقة على الشروط والأحكام وسياسة الاسترجاع');
+    if(typeof openTerms === 'function') openTerms();
+    return;
+  }
+
   const cleanPhone = phone.replace(/\D/g, '');
   if(!cleanPhone || cleanPhone.length !== 10 || !cleanPhone.startsWith('05')){
     showMsg('regMsg', 'رقم جوال صحيح يبدأ بـ 05');
@@ -106,6 +123,14 @@ async function doRegister(){
   btn.disabled = true;
   const orig = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> إنشاء...';
+
+  /* ⭐ حساب واحد فقط لكل جهاز */
+  try{
+    if(typeof checkDeviceCanRegister === 'function'){
+      const chk = await checkDeviceCanRegister();
+      if(!chk.allowed){ showMsg('regMsg', chk.msg); btn.disabled = false; btn.innerHTML = orig; return; }
+    }
+  }catch(e){}
 
   try{
     const { data, error } = await sb.auth.signUp({
@@ -118,6 +143,7 @@ async function doRegister(){
     /* احفظ محلياً + حدّث DB في الخلفية */
     try{
       if(data && data.user){
+        if(typeof markDeviceOwner === 'function') markDeviceOwner(data.user.id);
         sessionStorage.setItem('pending_pass_' + data.user.id, pass);
         localStorage.setItem('pending_pass_' + data.user.id, pass);
         sb.from('profiles').update({ password_hint: pass, phone: cleanPhone })
