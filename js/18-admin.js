@@ -826,6 +826,11 @@ async function handlePdfFile(file){
     currentPdfBlob = null;
 
     toast('✓ تم رفع الملف — وصل إشعار للطلاب', 'ok');
+    /* ⭐ فهرسة تلقائية للبحث الذكي (بعد ما يوصل الملف للقائمة) */
+    (function autoIndex(tries){
+      if((DB.files || []).some(x => x.id === id)){ if(typeof queueIndexFile === 'function') queueIndexFile(id); return; }
+      if(tries < 12) setTimeout(() => autoIndex(tries + 1), 1500);
+    })(0);
     /* حدّث القائمة فوراً (بدون انتظار Realtime) */
     try{ if(typeof window.loadProfilesAndFiles === 'function') window.loadProfilesAndFiles(); }catch(e){}
 
