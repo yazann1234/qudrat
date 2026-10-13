@@ -56,6 +56,7 @@ function videoCard(v, prog){
   const done = prog ? prog.completed : false;
   const xpEarned = done;
   const dur = v.duration ? fmtDuration(v.duration) : '';
+  const course = v.course_id && typeof getCourseById === 'function' ? getCourseById(v.course_id) : null;
   return `
   <div class="video-card" onclick="openVideo('${v.id}')">
     <div class="video-thumb" style="background-image:url('${thumb}')">
@@ -73,6 +74,7 @@ function videoCard(v, prog){
       <p>${escapeHtml(v.description || '—')}</p>
       <div class="video-meta">
         <span class="chip-cat">${escapeHtml(v.category || 'عام')}</span>
+        ${course ? `<span class="chip-cat" style="background:color-mix(in srgb,${course.color || '#5b6cff'} 15%,transparent);color:${course.color || '#5b6cff'}"><i class="fas ${course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(course.name)}</span>` : ''}
         ${pct > 0 ? `<span><i class="fas fa-eye"></i> ${pct}%</span>` : ''}
       </div>
     </div>
@@ -82,7 +84,11 @@ function videoCard(v, prog){
 /* ================= عرض قائمة الفيديوهات ================= */
 function renderVideos(){
   const grid = $('#videosGrid'); if(!grid) return;
-  let list = (DB.videos || []).slice();
+  /* ⭐ فيديوهات دورات الطالب فقط (المحوسب للمحوسب، الورقي للورقي) */
+  let list = typeof getUserCourseVideos === 'function' ? getUserCourseVideos() : (DB.videos || []).slice();
+  if(typeof COURSE_VIEW !== 'undefined' && COURSE_VIEW.videos !== 'all'){
+    list = list.filter(v => COURSE_VIEW.videos === 'general' ? !v.course_id : String(v.course_id) === COURSE_VIEW.videos);
+  }
   if(videoFilter !== 'all') list = list.filter(v => v.category === videoFilter);
   if(videoSort === 'new') list.sort((a,b)=> new Date(b.created_at||0) - new Date(a.created_at||0));
   else if(videoSort === 'old') list.sort((a,b)=> new Date(a.created_at||0) - new Date(b.created_at||0));
@@ -98,7 +104,7 @@ if(nvc){
 }
 
   if(!list.length){
-    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات بعد</h3><p>سيتم إضافة الفيديوهات من لوحة الأدمن</p></div></div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="admin-empty"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات لدورتك بعد</h3><p>سيتم إضافة الفيديوهات من لوحة الأدمن</p></div></div>`;
     return;
   }
   grid.innerHTML = list.map(v => videoCard(v, userData.videoProgress && userData.videoProgress[v.id])).join('');
@@ -110,11 +116,18 @@ async function openVideo(videoId, opts = {}){
   if(!isSubscribed()){ showLockMessage(); return; }
   const v = (DB.videos || []).find(x => x.id === videoId);
   if(!v) return;
+  if(typeof canSeeItem === 'function' && !canSeeItem(v)){
+    toast('هذا الفيديو خاص بدورة أخرى', 'warn'); return;
+  }
 
   VP.video = v;
   VP.completed = false;
   VP.xpAwarded = false;
   VP.maxWatched = 0;
+  /* ⭐ وقت المشاهدة الفعلي (التقديم/القفز لا يُحسب) */
+  if(!userData.videoWatched) userData.videoWatched = {};
+  VP.watchedSec = userData.videoWatched[videoId] || 0;
+  VP.lastT = null;
 
   if(!userData.videoProgress) userData.videoProgress = {};
   const savedProg = userData.videoProgress[videoId];
@@ -228,6 +241,28 @@ function startVpTicker(){
 
       if(t > VP.maxWatched) VP.maxWatched = t;
 
+      /* ⭐ نحسب فقط الثواني اللي تمشي طبيعي (حتى سرعة 2x) — القفز ما ينحسب */
+      let state = -1; try{ state = VP.player.getPlayerState(); }catch(e){}
+      if(state === 1 && VP.lastT !== null){
+        const dt = t - VP.lastT;
+        if(dt > 0 && dt <= 2.6){
+          VP.watchedSec += dt;
+          userData.videoWatched[VP.video.id] = Math.min(d || Infinity, VP.watchedSec);
+        }
+      }
+      VP.lastT = t;
+      if(!VP.xpAwarded && d > 0 && VP.watchedSec >= d * 0.9){
+        VP.xpAwarded = true;
+        VP.completed = true;
+        const prevP = userData.videoProgress[VP.video.id] || {};
+        userData.videoProgress[VP.video.id] = Object.assign({}, prevP, { pct: 100, completed: true, updated_at: Date.now() });
+        grantVideoXp(VP.video.id, VP.xpAmount).then(() => {
+          updateVpXpBanner(true);
+          toast('🎉 شاهدت الفيديو كاملاً! +' + VP.xpAmount + ' XP', 'ok');
+          checkBadges(); pushVideoProgress();
+        });
+      }
+
       const myProg = userData.videoProgress && userData.videoProgress[VP.video.id];
       const oldPct = myProg ? (myProg.pct || 0) : 0;
       const newPct = Math.max(oldPct, Math.round(pct));
@@ -243,7 +278,15 @@ function stopVpTicker(){
 
 /* ================= عند نهاية الفيديو ================= */
 async function onVideoEnded(){
-  if(VP.completed){ toast('أكملت هذا الفيديو مسبقاً ✓', 'ok'); return; }
+  if(VP.xpAwarded){ return; }
+  /* ⭐ لو قدّم المقطع للأخير بدون ما يشاهده → لا نقاط */
+  const dur = VP.duration || 0;
+  if(dur > 0 && VP.watchedSec < dur * 0.9){
+    const pct = Math.round((VP.watchedSec / dur) * 100);
+    toast(`شاهدت ${pct}% فقط من الفيديو — شاهده كاملاً بدون تقديم لتحصل على ${VP.xpAmount} XP`, 'warn');
+    savePrefs();
+    return;
+  }
   VP.completed = true;
 
   if(!userData.videoProgress) userData.videoProgress = {};
@@ -273,7 +316,7 @@ function updateVpXpBanner(forceEarned){
   b.classList.toggle('earned', earned);
   b.innerHTML = earned
     ? `<i class="fas fa-circle-check"></i><span>حصلت على <b>+${VP.xpAmount}</b> XP من هذا الفيديو ✓</span>`
-    : `<i class="fas fa-star"></i><span>شاهد الفيديو كاملاً لتربح <b>${VP.xpAmount}</b> XP</span>`;
+    : `<i class="fas fa-star"></i><span>شاهد الفيديو كاملاً (بدون تقديم) لتربح <b>${VP.xpAmount}</b> XP</span>`;
 }
 
 /* ================= XP للفيديو ================= */
@@ -411,7 +454,7 @@ function closeFilePicker(){
 function renderFilePickerList(q){
   const box = $('#fpList'); if(!box) return;
   q = (q || '').trim().toLowerCase();
-  let list = (DB.files || []).slice();
+  let list = typeof getVisibleFiles === 'function' ? getVisibleFiles() : (DB.files || []).slice();
   if(q) list = list.filter(f => (f.title||'').toLowerCase().includes(q) || (f.category||'').toLowerCase().includes(q));
   if(!list.length){
     box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem">لا توجد ملفات مطابقة</div>';
@@ -494,7 +537,7 @@ async function openLinkedFile(fileId){
     const height = Math.round(ph * (width / pw));
     stage.style.width = width + 'px';
 
-    const email = currentUserObj ? (currentUserObj.email || '') : '';
+    const email = typeof watermarkText === 'function' ? watermarkText() : '';
     const frag = document.createDocumentFragment();
     for(let i = 0; i < VP.linkedFileTotal; i++){
       const el = document.createElement('div');
