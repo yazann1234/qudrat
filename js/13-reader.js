@@ -162,6 +162,8 @@ async function openFile(id){
 
     startReadClock();
     refreshAll();
+    /* ⭐ نقاط الصفحات: نحمّل الصفحات المحسوبة سابقاً ثم نبدأ التتبع */
+    try{ if(typeof xpLoadFile === 'function') xpLoadFile(f.id).then(() => { if(typeof xpTrackPage === 'function') xpTrackPage(); }); }catch(e){}
 
     if(typeof loadDrawingsForFile === 'function'){
       loadDrawingsForFile(f.id).then(() => {
@@ -423,6 +425,7 @@ function scrollToPage(num, smooth){
 
   updateReaderUI();
   highlightThumb(num);
+  try{ if(typeof xpTrackPage === 'function') xpTrackPage(); }catch(e){}
 
   requestRender(num);
   requestRender(num + 1);
@@ -522,6 +525,7 @@ function handleScroll(){
 
     requestRender(page + 1);
     requestRender(page - 1);
+    try{ if(typeof xpTrackPage === 'function') xpTrackPage(); }catch(e){}
   }
 
   const oldPct = getPct(RS.file.id);
