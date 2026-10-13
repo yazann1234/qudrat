@@ -111,12 +111,6 @@ window.incrementAdhkar = (key, max) => {
     return;
   }
 
-  /* +2 XP لكل ذكر */
-  if(adhkarState.counters[key] <= max){
-    userData.extraXp = (userData.extraXp || 0) + 2;
-    savePrefs();
-  }
-
   if(adhkarState.counters[key] === max){
     toast('🌸 تقبل الله', 'ok');
   }
