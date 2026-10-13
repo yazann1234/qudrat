@@ -2290,47 +2290,9 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTe
 <script src="js/36-video-whiteboard.js?v=20261013c"></script>
 <script src="js/37-study-rooms.js?v=20261013c"></script>
 <script src="js/38-suggestions.js?v=20261013c"></script>
-<script src="js/39-devices.js?v=20261013c"></script>
 <script src="js/40-admin-courses.js?v=20261013c"></script>
 <!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
-<script>
-window.addEventListener('load', function(){
-  var tries = 0;
-  var t = setInterval(function(){
-    try{
-      tries++;
-      var u = typeof currentUserObj !== 'undefined' ? currentUserObj : null;
-      if(!u){ if(tries > 40) clearInterval(t); return; }
-      clearInterval(t);
-      if(u.role !== 'admin' && u.role !== 'owner') return;
-      var src = function(f){ try{ return String(f); }catch(e){ return ''; } };
-      var checks = [
-        ['05-nav.js',            typeof go === 'function' && src(go).indexOf('dataset.title') > -1],
-        ['07-files.js',          typeof canSeeItem === 'function'],
-        ['18-admin.js',          typeof window.manageUserCourses === 'function'],
-        ['22-videos.js',         typeof renderVideos === 'function' && src(renderVideos).indexOf('getUserCourseVideos') > -1],
-        ['31-course-system.js',  typeof getUserCourseIds === 'function'],
-        ['34-course-filter-fix.js', typeof renderCourseFilters === 'function'],
-        ['36-video-whiteboard.js',  typeof vwbToggle === 'function'],
-        ['37-study-rooms.js',    typeof srCreateRoom === 'function'],
-        ['38-suggestions.js',    typeof submitSuggestion === 'function'],
-        ['39-devices.js',        typeof registerDevice === 'function'],
-        ['40-admin-courses.js',  typeof renderAdminCourses === 'function'],
-        ['21-app.js',            typeof showBootLoader === 'function'],
-        ['03-state.js',          typeof flushPrefsNow === 'function']
-      ];
-      var old = checks.filter(function(c){ return !c[1]; }).map(function(c){ return c[0]; });
-      if(old.length && typeof openModal === 'function'){
-        openModal({
-          title: 'ملفات قديمة على السيرفر',
-          text: 'هذه الملفات ما زالت بالنسخة القديمة على موقعك، فبعض الميزات لن تعمل (مثل فصل فيديوهات الورقي عن المحوسب):<br><br><b dir="ltr">' + old.join('<br>') + '</b><br><br>ارفعها من مجلد js ثم حدّث الصفحة (Ctrl + Shift + R). تظهر هذه الرسالة للأدمن فقط.',
-          okText: 'حسناً'
-        });
-      }
-    }catch(e){}
-  }, 3000);
-});
-</script>
+
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
 <script>
 (function(){
