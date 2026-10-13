@@ -137,7 +137,7 @@ async function openVideo(videoId, opts = {}){
     else startAt = Math.max(0, (savedProg.last_position || 0) - 3);
     VP.maxWatched = savedProg.max_watched || 0;
     VP.completed = !!savedProg.completed;
-    VP.xpAwarded = !!savedProg.completed;
+    VP.xpAwarded = false;   /* السيرفر يحدد إذا أخذ النقاط سابقاً */
   }
 
   $('#vpTitle').textContent = v.title;
@@ -151,6 +151,7 @@ async function openVideo(videoId, opts = {}){
   closeLinkedFile(true);
 
   try{ history.replaceState(null, '', '#watch=' + videoId); }catch(e){}
+  try{ if(typeof xpVideoStart === 'function') xpVideoStart(videoId); }catch(e){}
 
   await mountYouTube(v.youtube_id, startAt);
 }
@@ -258,7 +259,6 @@ function startVpTicker(){
         userData.videoProgress[VP.video.id] = Object.assign({}, prevP, { pct: 100, completed: true, updated_at: Date.now() });
         grantVideoXp(VP.video.id, VP.xpAmount).then(() => {
           updateVpXpBanner(true);
-          toast('🎉 شاهدت الفيديو كاملاً! +' + VP.xpAmount + ' XP', 'ok');
           checkBadges(); pushVideoProgress();
         });
       }
@@ -303,7 +303,6 @@ async function onVideoEnded(){
     VP.xpAwarded = true;
     await grantVideoXp(VP.video.id, VP.xpAmount);
     updateVpXpBanner(true);
-    toast('🎉 أكملت الفيديو! +' + VP.xpAmount + ' XP', 'ok');
     checkBadges();
     renderVideos();
   }
@@ -321,16 +320,9 @@ function updateVpXpBanner(forceEarned){
 
 /* ================= XP للفيديو ================= */
 async function grantVideoXp(videoId, amount){
-  try{
-    if(!userData.awardedVideoXp) userData.awardedVideoXp = {};
-    if(userData.awardedVideoXp[videoId]) return;
-    userData.awardedVideoXp[videoId] = true;
-
-    userData.extraXp = (userData.extraXp || 0) + amount;
-    savePrefs();
-
-    if(typeof syncMyXp === 'function') syncMyXp();
-  }catch(e){ console.warn(e); }
+  /* ⭐ النقاط من السيرفر: يتحقق إن وقت المشاهدة الحقيقي يغطي مدة الفيديو */
+  try{ if(typeof xpVideoClaim === 'function') await xpVideoClaim(videoId, VP.duration || 0); }
+  catch(e){ console.warn(e); }
 }
 
 /* ================= مزامنة تقدم الفيديو مع DB ================= */
