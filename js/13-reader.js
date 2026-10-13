@@ -125,7 +125,17 @@ async function openFile(id){
       if(prog.bookmark) startPage = prog.bookmark;
       else if(prog.lastPage) startPage = prog.lastPage;
     }
+    /* ⭐ فتح على صفحة محددة (من نتيجة البحث الذكي) */
+    let flashPage = 0;
+    if(window._openAtPage){ startPage = parseInt(window._openAtPage, 10) || startPage; flashPage = startPage; window._openAtPage = null; }
     startPage = Math.max(1, Math.min(startPage, RS.numPages));
+    if(flashPage){
+      setTimeout(() => {
+        const el = RS.pageEls[startPage - 1];
+        if(el){ el.classList.add('pg-flash'); setTimeout(() => el.classList.remove('pg-flash'), 4000); }
+        toast('📍 هذه الصفحة ' + startPage + ' — السؤال هنا', 'ok');
+      }, 700);
+    }
     RS.current = startPage;
     if(pi) pi.value = startPage;
     renderThumbs();
