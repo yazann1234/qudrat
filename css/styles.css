@@ -4135,3 +4135,109 @@ img{-webkit-user-drag:none;user-drag:none}
 .xp-rules-grid small{font-size:.7rem;color:var(--muted);font-weight:700}
 .xp-rules-mine{margin-top:12px;font-size:.76rem;font-weight:700;color:var(--muted);line-height:1.8;padding:10px 12px;border-radius:10px;background:var(--primary-soft)}
 .xp-rules-mine b{color:var(--primary)}
+
+/* ============================================================
+   دورة الملف/الفيديو في لوحة الأدمن
+============================================================ */
+.adm-course-badge{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:900;padding:4px 10px;border-radius:100px;color:var(--cc);background:color-mix(in srgb,var(--cc) 13%,transparent)}
+.adm-course-badge.all{--cc:#d97706}
+.adm-course-warn{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:12px;background:rgba(247,179,43,.14);color:#b45309;font-size:.8rem;font-weight:800;line-height:1.7}
+.course-pick-list{display:flex;flex-direction:column;gap:8px}
+.cp-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:.86rem;font-weight:800}
+.cp-item i{color:var(--cc)}
+.cp-item input{accent-color:var(--cc)}
+.cp-item:has(input:checked){border-color:var(--cc);background:color-mix(in srgb,var(--cc) 10%,transparent)}
+
+/* ============================================================
+   شاشة تحميل الدخول (بدل الشاشة البيضاء)
+============================================================ */
+#bootLoader{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;background:var(--bg)}
+#bootLoader.show{display:flex}
+#bootLoader .bl-box{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:20px}
+#bootLoader img{width:110px;height:110px;object-fit:contain;border-radius:24px;background:#fff;box-shadow:var(--shadow)}
+#bootLoader .bl-spin{width:38px;height:38px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--primary);animation:blSpin .8s linear infinite}
+#bootLoader p{font-size:.92rem;font-weight:800;color:var(--muted)}
+@keyframes blSpin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   الشروط والأحكام
+============================================================ */
+.terms-link{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px auto 0;font-family:inherit;font-size:.78rem;font-weight:800;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.terms-check{display:flex;align-items:flex-start;gap:8px;margin:4px 0 10px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.7}
+.terms-check input{margin-top:4px;width:17px;height:17px;accent-color:var(--primary);flex-shrink:0}
+.terms-inline{font-family:inherit;font-size:inherit;font-weight:900;color:var(--primary);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.purchase-terms-note{font-size:.76rem;font-weight:700;color:var(--muted);text-align:center;margin:10px 0 6px;line-height:1.7}
+.purchase-terms-note i{color:var(--primary)}
+.purchase-wa-note{font-size:.8rem;font-weight:800;text-align:center;margin:4px 0 10px;padding:8px 12px;border-radius:10px;background:rgba(37,211,102,.1);color:#15803d}
+.purchase-wa-note i{color:#25d366}
+.tf-terms{display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-family:inherit;font-size:.76rem;font-weight:800;color:rgba(255,255,255,.75);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.tf-terms:hover{color:#fff}
+.terms-overlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,12,30,.6);backdrop-filter:blur(4px)}
+.terms-overlay.open{display:flex}
+.terms-box{width:min(680px,100%);max-height:88vh;display:flex;flex-direction:column;background:var(--card);color:var(--text);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;direction:rtl;text-align:right}
+.terms-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);background:linear-gradient(120deg,rgba(var(--primary-rgb),.1),transparent)}
+.terms-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(140deg,var(--primary),var(--primary-2));flex-shrink:0}
+.terms-head h3{font-size:1.08rem;font-weight:900;flex:1}
+.terms-x{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card-2);color:var(--muted);cursor:pointer}
+.terms-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.terms-body section{padding:14px;border-radius:14px;background:var(--card-2);border:1px solid var(--border)}
+.terms-body h4{font-size:.92rem;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.terms-body h4 i{color:var(--primary)}
+.terms-body p,.terms-body li{font-size:.84rem;line-height:1.95;color:var(--text)}
+.terms-body ul{padding-right:18px;margin:6px 0}
+.terms-warn{border-color:rgba(239,68,68,.35)!important;background:rgba(239,68,68,.06)!important}
+.terms-warn h4 i{color:var(--danger)}
+.terms-contacts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.terms-contacts a{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.82rem;font-weight:800}
+.terms-contacts .fa-whatsapp{color:#25d366}
+.terms-contacts .fa-envelope{color:var(--primary)}
+.terms-foot{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);background:var(--card-2)}
+.terms-foot .btn{flex:1;justify-content:center}
+
+/* ============================================================
+   المتصدرين: شارات حسب المركز + شريط التحديث
+============================================================ */
+.lb-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 8px;font-size:.78rem;font-weight:800;color:var(--muted)}
+.lb-toolbar .lb-updated{margin-right:auto}
+.lb-toolbar i{color:var(--primary)}
+.lb-rank-num.r-top10{background:linear-gradient(140deg,#8b5cf6,#6366f1);color:#fff}
+.lb-rank-num.r-top25{background:linear-gradient(140deg,#0ea5e9,#22c55e);color:#fff}
+.lb-badge-mini.tier-top10{background:rgba(139,92,246,.14);color:#7c3aed}
+.lb-badge-mini.tier-top25{background:rgba(14,165,233,.14);color:#0284c7}
+.lb-badge-mini.tier-lvl4{background:rgba(236,72,153,.14);color:#db2777}
+.lb-badge-mini.tier-lvl3{background:rgba(249,115,22,.14);color:#ea580c}
+.lb-badge-mini.tier-lvl2{background:rgba(34,197,94,.14);color:#16a34a}
+.lb-badge-mini.tier-lvl1{background:rgba(148,163,184,.18);color:#64748b}
+
+/* ============================================================
+   خصوصية غرف المذاكرة
+============================================================ */
+.sr-privacy{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sr-priv-opt{cursor:pointer}
+.sr-priv-opt input{position:absolute;opacity:0;pointer-events:none}
+.sr-priv-opt span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 6px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);font-size:.8rem;font-weight:900;text-align:center;transition:.2s}
+.sr-priv-opt span small{font-size:.66rem;font-weight:700;color:var(--muted)}
+.sr-priv-opt input:checked + span{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+.sr-kick{margin-right:4px;width:26px;height:26px;border-radius:8px;border:none;background:rgba(239,68,68,.1);color:var(--danger);cursor:pointer;font-size:.72rem}
+.sr-member .sr-crown + .sr-kick{margin-right:4px}
+
+/* ============================================================
+   إدارة الدورات والأسعار
+============================================================ */
+.acs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.acs-card{background:var(--card-2);border:1px solid var(--border);border-top:4px solid var(--cc);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.acs-card.off{opacity:.65}
+.acs-head{display:flex;align-items:center;gap:10px}
+.acs-ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:1.1rem;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent)}
+.acs-head h4{font-size:.98rem;font-weight:900}
+.acs-head small{font-size:.7rem;color:var(--muted);font-weight:700}
+.acs-off{font-size:.66rem;font-weight:900;padding:3px 8px;border-radius:100px;background:rgba(148,163,184,.2);color:var(--muted)}
+.acs-prices{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.acs-p{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:10px;background:var(--card);border:1px solid var(--border)}
+.acs-p small{font-size:.64rem;font-weight:800;color:var(--muted)}
+.acs-p .price-wrap{color:var(--cc);font-size:.95rem}
+.acs-p.none{opacity:.5}
+.acs-fixed{grid-column:1/-1;font-size:.82rem;font-weight:800;padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acs-fixed i{color:var(--cc)}
+.acs-meta{font-size:.76rem;font-weight:800;color:var(--muted)}
+.acs-meta i{color:var(--cc)}
