@@ -21,15 +21,27 @@ function getActiveProducts(){
   return (DB.products || []).filter(p => p.active !== false);
 }
 
+/* ⭐ توحيد رقم الواتساب لصيغة دولية صحيحة: 05xxxxxxxx → 9665xxxxxxxx */
+function normalizeWhatsApp(num){
+  let d = String(num || '').replace(/\D/g, '');
+  if(d.startsWith('00')) d = d.slice(2);
+  if(d.startsWith('05') && d.length === 10) d = '966' + d.slice(1);
+  else if(d.startsWith('5') && d.length === 9) d = '966' + d;
+  return d;
+}
+window.normalizeWhatsApp = normalizeWhatsApp;
+
 function getStoreConfig(){
   const s = DB.storeSettings || {};
-  return {
+  const cfgRaw = {
     ibanNumber: s.iban_number || STORE_DEFAULTS.ibanNumber,
     ibanImage: s.iban_image || STORE_DEFAULTS.ibanImage,
     ibanHolder: s.iban_holder || STORE_DEFAULTS.ibanHolder,
     supportPhone: s.support_phone || STORE_DEFAULTS.supportPhone,
     supportWhatsApp: s.support_whatsapp || STORE_DEFAULTS.supportWhatsApp
   };
+  cfgRaw.supportWhatsApp = normalizeWhatsApp(cfgRaw.supportWhatsApp) || STORE_DEFAULTS.supportWhatsApp;
+  return cfgRaw;
 }
 
 function getActualPassword(){
@@ -129,6 +141,21 @@ function renderPurchaseModal(){
   }
 
   applyStoreSettings();
+
+  /* ⭐ وضّح للطالب رقم الواتساب اللي بينرسل له الطلب */
+  const cfgW = getStoreConfig();
+  let waNote = document.getElementById('purchaseWaNote');
+  const subBtn = document.getElementById('purchaseSubmit');
+  if(!waNote && subBtn){
+    waNote = document.createElement('div');
+    waNote.id = 'purchaseWaNote';
+    waNote.className = 'purchase-wa-note';
+    subBtn.parentNode.insertBefore(waNote, subBtn);
+  }
+  if(waNote){
+    const local = '0' + String(cfgW.supportWhatsApp).replace(/^966/, '');
+    waNote.innerHTML = `<i class="fab fa-whatsapp"></i> سيُرسل طلبك لواتساب الدعم: <b dir="ltr">${escapeHtml(local)}</b>`;
+  }
 
   receiptFile = null;
   const prev = document.getElementById('receiptPreview'); if(prev) prev.style.display = 'none';
