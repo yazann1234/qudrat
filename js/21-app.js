@@ -25,8 +25,8 @@ async function loadProfilesAndFiles(retry){
   /* ⭐ الأدمن: حمّل قائمة المستخدمين أيضاً (كانت لا تُحمّل إلا عند حدوث تغيير) */
   if(typeof isPrivileged === 'function' && isPrivileged()){
     try{
-      const r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-      if(!r.error) DB.users = r.data || [];
+      const list = await fetchAdminUsers();
+      if(list) DB.users = list;
     }catch(e){}
   }
   try{ renderFiles(); renderRecent(); renderHomeStats(); renderAdmin(); }catch(e){}
@@ -120,11 +120,13 @@ async function loadMyProgress(){
         if(n) flushProgressSync();
       }catch(e){}
     }, 3000);
-  }catch(e){
-    console.warn('loadMyProgress failed:', e && e.message);
-  }finally{
     window._progressReady = true;
     try{ syncMyXp(); }catch(e){}
+  }catch(e){
+    /* ⭐ لو فشل التحميل لا نكتب نقاط (حتى لا تُصفّر) — نعيد المحاولة */
+    console.warn('loadMyProgress failed:', e && e.message);
+    window._loadProgressTries = (window._loadProgressTries || 0) + 1;
+    if(window._loadProgressTries < 4) setTimeout(loadMyProgress, 4000 * window._loadProgressTries);
   }
 }
 
@@ -228,6 +230,51 @@ function showAuthScreen(){
 }
 window.showAuthScreen = showAuthScreen;
 
+/* ================== شاشة التحميل (بدل الشاشة البيضاء) ================== */
+function showBootLoader(txt){
+  let el = document.getElementById('bootLoader');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'bootLoader';
+    el.innerHTML = '<div class="bl-box"><img src="assets/logo.png" alt=""><div class="bl-spin"></div><p id="bootLoaderTxt"></p></div>';
+    document.body.appendChild(el);
+  }
+  const t = document.getElementById('bootLoaderTxt');
+  if(t) t.textContent = txt || 'جاري تسجيل الدخول...';
+  el.classList.add('show');
+}
+function hideBootLoader(){
+  const el = document.getElementById('bootLoader');
+  if(el) el.classList.remove('show');
+}
+window.showBootLoader = showBootLoader;
+window.hideBootLoader = hideBootLoader;
+
+/* جلب الملف الشخصي مع إعادة المحاولة (الشبكة/الخادم قد يتأخر) */
+async function fetchMyProfile(uid){
+  let lastErr = null;
+  for(let i = 0; i < 4; i++){
+    try{
+      const r = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+      if(!r.error && r.data) return { data: r.data };
+      if(!r.error && !r.data) lastErr = { notFound: true };
+      else lastErr = r.error;
+    }catch(e){ lastErr = e; }
+    showBootLoader(i === 0 ? 'الاتصال بطيء... نحاول مرة ثانية' : 'لحظات... نحاول الاتصال بالخادم');
+    await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+  }
+  return { error: lastErr || { message: 'تعذّر الاتصال' } };
+}
+
+function showLoginRetryMessage(msg){
+  try{
+    showAuthScreen();
+    if(typeof showMsg === 'function') showMsg('loginMsg', msg || 'تعذّر الاتصال بالخادم — حاول مرة أخرى بعد لحظات');
+    const btn = document.getElementById('loginBtn');
+    if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> تسجيل الدخول'; }
+  }catch(e){}
+}
+
 /* ================== enterApp ================== */
 async function enterApp(){
   window._progressReady = false;
@@ -237,31 +284,30 @@ async function enterApp(){
       window._appInitialized = true;
     }
 
-    hideAllScreens();
-    if(!session){ await showWelcome(); return false; }
+    if(!session){ hideBootLoader(); await showWelcome(); return false; }
 
-    let profileData = null;
-    try{
-      const r = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-      if(r.error) throw r.error;
-      profileData = r.data;
-    }catch(err){
-      try{ await sb.auth.signOut(); }catch(e){}
-      session = null; currentUserObj = null;
+    /* ⭐ شاشة تحميل واضحة بدل الشاشة البيضاء */
+    showBootLoader('جاري تسجيل الدخول...');
+    const wEl = document.getElementById('welcome'); if(wEl){ wEl.style.display = 'none'; }
+    const aEl = document.getElementById('auth'); if(aEl) aEl.classList.remove('open');
+
+    const pr = await fetchMyProfile(session.user.id);
+    if(pr.error){
+      /* ⭐ لا نسجّل خروج المستخدم بسبب بطء الخادم — نعطيه رسالة ويعيد المحاولة */
+      hideBootLoader();
       window._appInitialized = false;
       window._lastInitializedUserId = null;
-      forceShowWelcome();
+      showLoginRetryMessage(pr.error.notFound
+        ? 'حسابك قيد التجهيز — انتظر ثواني ثم سجّل الدخول مرة ثانية'
+        : 'الخادم مشغول حالياً — اضغط تسجيل الدخول مرة ثانية بعد لحظات');
       return false;
     }
-
-    if(!profileData){
-      try{ await sb.auth.signOut(); }catch(e){}
-      session = null; currentUserObj = null;
-      forceShowWelcome();
-      return false;
-    }
+    const profileData = pr.data;
+    hideAllScreens();
 
     currentUserObj = profileData;
+    /* ⭐ حماية الحساب: تسجيل الجهاز (حد جهازين) */
+    try{ if(typeof registerDevice === 'function') registerDevice(); }catch(e){}
 
     try{ loadPrefs(); }catch(e){}
     try{ loadPrefsFromDB(); }catch(e){}
@@ -304,6 +350,7 @@ async function enterApp(){
     }
 
     if(appEl) appEl.classList.add('ready');
+    hideBootLoader();
 
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
@@ -338,6 +385,8 @@ async function enterApp(){
       }
       refreshAll();
       try{ if(typeof primeNotifications === 'function') primeNotifications(); }catch(e){}
+      try{ if(typeof srRestore === 'function') srRestore(); }catch(e){}
+      try{ if(privileged && typeof subscribeSuggestionsForAdmin === 'function') subscribeSuggestionsForAdmin(); }catch(e){}
       try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
       try{ if(typeof initOwnerFeatures === 'function') await initOwnerFeatures(); }catch(e){}
       try{ if(typeof checkAndShowUnopenedGifts === 'function') await checkAndShowUnopenedGifts(); }catch(e){}
@@ -367,14 +416,22 @@ async function enterApp(){
     return true;
   }catch(err){
     console.error('enterApp fatal:', err);
-    try{ await sb.auth.signOut(); }catch(e){}
-    session = null; currentUserObj = null;
+    hideBootLoader();
     window._appInitialized = false;
     window._lastInitializedUserId = null;
-    forceShowWelcome();
+    showLoginRetryMessage('حدث خطأ أثناء الدخول — حاول مرة ثانية');
     return false;
   }
 }
+
+/* ⭐ منع تشغيل enterApp أكثر من مرة بنفس الوقت (كان يُستدعى من 3 أماكن) */
+const _rawEnterApp = enterApp;
+let _enterPromise = null;
+window.enterApp = function(){
+  if(_enterPromise) return _enterPromise;
+  _enterPromise = _rawEnterApp().finally(() => { _enterPromise = null; });
+  return _enterPromise;
+};
 
 function refreshAll(){
   try{
@@ -418,18 +475,7 @@ function bindEmergencyButtons(){
 
         if(s){
           session = s;
-          try{
-            await Promise.race([
-              enterApp(),
-              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-            ]);
-          }catch(err){
-            try{ await sb.auth.signOut(); }catch(e){}
-            session = null; currentUserObj = null;
-            window._appInitialized = false;
-            window._lastInitializedUserId = null;
-            showAuthScreen();
-          }
+          await window.enterApp();
         } else {
           showAuthScreen();
         }
@@ -446,9 +492,10 @@ function bindEmergencyButtons(){
   if(wl && !wl.dataset.bound){
     wl.dataset.bound = '1';
     wl.addEventListener('click', async () => {
+      try{ if(typeof unregisterDevice === 'function') await unregisterDevice(); }catch(e){}
       try{ await sb.auth.signOut(); }catch(e){}
       try{ sessionStorage.clear(); }catch(e){}
-      try{ localStorage.clear(); }catch(e){}
+      try{ clearLocalStoragePreserve(); }catch(e){}
       window._appInitialized = false;
       window._lastInitializedUserId = null;
       forceShowWelcome();
@@ -490,20 +537,9 @@ window.bindEmergencyButtons = bindEmergencyButtons;
         const uid = newSession.user ? newSession.user.id : null;
         if(window._appInitialized && window._lastInitializedUserId === uid) return;
 
-        window._lastInitializedUserId = uid;
-        window._appInitialized = true;
-
-        try{
-          await Promise.race([
-            enterApp(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-          ]);
-        }catch(e){
-          try{ await sb.auth.signOut(); }catch(err){}
-          window._appInitialized = false;
-          window._lastInitializedUserId = null;
-          forceShowWelcome();
-        }
+        /* ⭐ مهم: لا ننتظر أي استعلام داخل هذا الـ callback — Supabase يقفل الجلسة
+           أثناءه فيتعلّق الاستعلام (كان هذا سبب: تحميل ثم شاشة بيضاء ثم "سجّل دخول") */
+        setTimeout(() => { window.enterApp(); }, 0);
         return;
       }
 
@@ -513,16 +549,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     /* ⭐⭐⭐ الاختيار الصحيح للشاشة الأولى */
     if(session){
       /* فيه جلسة → دخول مباشر */
-      try{
-        await Promise.race([
-          enterApp(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-        ]);
-      }catch(e){
-        try{ await sb.auth.signOut(); }catch(err){}
-        session = null; currentUserObj = null;
-        forceShowWelcome();
-      }
+      await window.enterApp();
     } else {
       /* ما فيه جلسة → دائماً اعرض الترحيب */
       try{ localStorage.setItem('abdq_has_visited', '1'); }catch(e){}
@@ -563,7 +590,7 @@ window.bindEmergencyButtons = bindEmergencyButtons;
 })();
 
 window.addEventListener('beforeunload', () => {
-  try{ clearTimeout(prefsSaveTimer); sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
+  try{ if(typeof flushPrefsNow === 'function') flushPrefsNow(); }catch(e){}
   try{ saveDrawings(); }catch(e){}
   try{ flushProgressSync(); }catch(e){}
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
