@@ -1,11 +1,11 @@
 /* ============================================================
    41) AI INDEX v2 — فهرسة سريعة جداً للبحث الذكي (للأدمن)
-   ⚡ الوضع السريع (الافتراضي):
-      - نص PDF المضمّن يُقرأ مباشرة بدون ذكاء اصطناعي (لحظي)
-      - الذكاء الاصطناعي فقط للصفحات المصوّرة أو النص المخربط
-   🎯 الوضع الدقيق: الذكاء الاصطناعي يقرأ كل الصفحات
-   - طلبات متوازية (4) × 3 صفحات في كل طلب
-   - تحكم تلقائي بالسرعة عند ضغط Gemini (429)
+   ⚡ الوضع السريع (الافتراضي) — بدون أي حدود:
+      - نص PDF المضمّن يُقرأ مباشرة (لحظي)
+      - الصفحات المصوّرة تُقرأ داخل المتصفح نفسه (Tesseract OCR عربي)
+        → لا يستهلك Gemini أبداً، ولا يوجد حد يومي
+   🎯 وضع Gemini: الذكاء الاصطناعي يقرأ كل الصفحات (أدق للمعادلات)
+      - بإيقاع منضبط يحترم حدود الحساب المجاني (لا رسائل «تجاوزنا الحد»)
    - حفظ دفعات + استكمال من حيث توقف
 ============================================================ */
 
@@ -16,9 +16,11 @@ const AIX = {
   current: null,     /* { fileId, title, done, total } */
   stats: {},         /* fileId → pages indexed */
   log: [],
-  conc: 4,           /* عدد الطلبات المتوازية (يتغير تلقائياً) */
-  maxConc: 6,
-  batch: 3,          /* صفحات في كل طلب */
+  conc: 1,           /* طلبات Gemini المتوازية (حساب مجاني = 1-2) */
+  maxConc: 2,
+  batch: 2,          /* صفحات في كل طلب Gemini */
+  gapMs: 4500,       /* أقل فاصل بين طلبات Gemini (~13 طلب/دقيقة) */
+  lastReq: 0,
   startedAt: 0,
   pagesDone: 0       /* صفحات هذه الجلسة (لحساب السرعة) */
 };
@@ -29,7 +31,7 @@ function aixMode(){
 window.setIndexMode = (m) => {
   try{ localStorage.setItem('aix_mode', m); }catch(e){}
   aixRenderControls();
-  toast(m === 'fast' ? '⚡ الوضع السريع: نص الملف مباشرة + الذكاء للصفحات المصوّرة' : '🎯 الوضع الدقيق: الذكاء الاصطناعي يقرأ كل صفحة', 'ok');
+  toast(m === 'fast' ? '⚡ الوضع السريع: القراءة داخل المتصفح — بدون حدود' : '🎯 وضع Gemini: أدق للمعادلات لكن أبطأ وله حد استخدام', 'ok');
 };
 
 function aixLog(msg, kind){
@@ -108,13 +110,13 @@ function aixRenderControls(){
   const eta = speed > 0 ? Math.ceil(remainAll / speed) : 0;
   c.innerHTML = `
     <div class="aix-mode">
-      <button class="${mode === 'fast' ? 'on' : ''}" onclick="setIndexMode('fast')" ${AIX.running ? 'disabled' : ''}><i class="fas fa-bolt"></i> سريع</button>
-      <button class="${mode === 'precise' ? 'on' : ''}" onclick="setIndexMode('precise')" ${AIX.running ? 'disabled' : ''}><i class="fas fa-bullseye"></i> دقيق</button>
+      <button class="${mode === 'fast' ? 'on' : ''}" onclick="setIndexMode('fast')" ${AIX.running ? 'disabled' : ''} title="قراءة داخل المتصفح — بدون حدود ولا تكلفة"><i class="fas fa-bolt"></i> سريع (بدون حدود)</button>
+      <button class="${mode === 'precise' ? 'on' : ''}" onclick="setIndexMode('precise')" ${AIX.running ? 'disabled' : ''} title="Gemini يقرأ كل صفحة — أدق للمعادلات لكن له حد استخدام"><i class="fas fa-bullseye"></i> Gemini (أدق، أبطأ)</button>
     </div>
     <button class="btn btn-primary" onclick="indexAllFiles()" ${AIX.running ? 'disabled' : ''}><i class="fas fa-wand-magic-sparkles"></i> فهرسة كل الملفات غير المكتملة</button>
     ${AIX.running ? `<button class="btn btn-ghost" onclick="toggleIndexPause()"><i class="fas ${AIX.paused ? 'fa-play' : 'fa-pause'}"></i> ${AIX.paused ? 'استئناف' : 'إيقاف مؤقت'}</button>` : ''}
     ${cur ? `<span class="aix-now"><i class="fas fa-spinner fa-spin"></i> ${escapeHtml(cur.title)} — ${cur.done}/${cur.total}</span>` : ''}
-    ${AIX.running && speed ? `<span class="aix-speed"><i class="fas fa-gauge-high"></i> ${Math.round(speed)} صفحة/دقيقة • ${AIX.conc} متوازي${eta ? ` • متبقي ≈ ${eta} د` : ''}</span>` : ''}`;
+    ${AIX.running && speed ? `<span class="aix-speed"><i class="fas fa-gauge-high"></i> ${Math.round(speed)} صفحة/دقيقة${AIX.tessWorkers ? ` • ${AIX.tessWorkers} قارئ محلي` : ''}${eta ? ` • متبقي ≈ ${eta} د` : ''}</span>` : ''}`;
 }
 
 function aixRenderLog(){
@@ -173,6 +175,7 @@ async function aixRun(){
     }
   } finally {
     try{ if(wake) wake.release(); }catch(e){}
+    try{ await aixTessStop(); }catch(e){}
     const mins = ((Date.now() - AIX.startedAt) / 60000).toFixed(1);
     AIX.running = false; AIX.current = null; AIX.paused = false;
     aixRenderControls();
@@ -238,7 +241,7 @@ function aixCheckText(raw){
 /* استخراج الأسئلة المرقّمة من النص (تقريبي — البحث يعتمد على النص كاملاً أصلاً) */
 function aixExtractQuestions(text){
   const out = [];
-  const re = /(?:^|\n|\s)(\d{1,3})\s*[-.)٫]\s+/g;
+  const re = /(?:^|\n|\s)(\d{1,3})\s*[-.)(\u066B]\s*/g;
   const marks = [];
   let m;
   while((m = re.exec(text))) marks.push({ n: m[1], i: m.index + m[0].length });
@@ -266,10 +269,22 @@ async function aixRenderPage(doc, num){
   return data;
 }
 
-/* طلب قراءة دفعة صفحات — مع تحكم تلقائي بالسرعة */
+/* ⭐ بوابة الإيقاع: لا نرسل لـ Gemini أسرع من حد الحساب المجاني */
+let _aixGate = Promise.resolve();
+function aixRateGate(){
+  _aixGate = _aixGate.then(async () => {
+    const wait = AIX.lastReq + AIX.gapMs - Date.now();
+    if(wait > 0) await aixSleep(wait);
+    AIX.lastReq = Date.now();
+  });
+  return _aixGate;
+}
+
+/* طلب قراءة دفعة صفحات عبر Gemini — مع احترام الحدود */
 async function aixOcrBatch(fileTitle, items){
-  for(let attempt = 0; attempt < 5; attempt++){
+  for(let attempt = 0; attempt < 6; attempt++){
     await aixWaitPause();
+    await aixRateGate();
     const token = await aixToken();
     let res, j = null;
     try{
@@ -282,16 +297,24 @@ async function aixOcrBatch(fileTitle, items){
     }catch(e){ res = { ok: false, status: 0 }; }
 
     if(res.ok && j && Array.isArray(j.pages)){
-      /* نجاح → نرفع السرعة تدريجياً */
-      if(AIX.conc < AIX.maxConc && Math.random() < 0.25) AIX.conc++;
+      /* نجاح → نسرّع شوي (بحدود) */
+      if(AIX.gapMs > 3000) AIX.gapMs -= 250;
+      if(AIX.conc < AIX.maxConc && Math.random() < 0.2) AIX.conc++;
       return j.pages;
     }
     const msg = (j && j.error) || ('HTTP ' + res.status);
     if(res.status === 403) throw new Error(msg);
     const limited = res.status === 429 || /حد الاستخدام|مزدحمة|بطيئة/.test(msg);
-    if(limited) AIX.conc = Math.max(1, AIX.conc - 1);
-    aixLog(`صفحات ${items.map(i => i.page).join('،')}: ${msg} — إعادة المحاولة`, 'warn');
-    await aixSleep(limited ? 8000 * (attempt + 1) : 2500 * (attempt + 1));
+    if(limited){
+      /* حد الدقيقة → ننتظر دقيقة كاملة ونبطّئ الإيقاع */
+      AIX.conc = 1;
+      AIX.gapMs = Math.min(12000, AIX.gapMs + 2000);
+      aixLog(`Gemini وصل حدّه — ننتظر دقيقة ثم نكمل تلقائياً (لا تقفل الصفحة)`, 'warn');
+      await aixSleep(62000);
+    } else {
+      aixLog(`صفحات ${items.map(i => i.page).join('،')}: ${msg} — إعادة المحاولة`, 'warn');
+      await aixSleep(3000 * (attempt + 1));
+    }
   }
   throw new Error('تعذّرت قراءة الصفحات ' + items.map(i => i.page).join('،'));
 }
@@ -307,6 +330,90 @@ async function aixSaveRows(fileId, rows){
   AIX.stats[fileId] = AIX.current.done;
   AIX.pagesDone += rows.length;
   aixRenderControls();
+}
+
+/* ================== ⚡ قراءة محلية داخل المتصفح (Tesseract) ================== */
+const TESS_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let _tessScheduler = null;
+let _tessLoading = null;
+
+function aixLoadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  if(_tessLoading) return _tessLoading;
+  _tessLoading = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = TESS_URL; sc.async = true;
+    sc.onload = () => res();
+    sc.onerror = () => { _tessLoading = null; rej(new Error('تعذّر تحميل قارئ النصوص')); };
+    document.head.appendChild(sc);
+  });
+  return _tessLoading;
+}
+
+async function aixTessScheduler(){
+  if(_tessScheduler) return _tessScheduler;
+  await aixLoadTesseract();
+  const cores = navigator.hardwareConcurrency || 4;
+  const n = Math.max(1, Math.min(4, cores - 1));
+  aixLog(`⚙️ تجهيز ${n} قارئ نصوص عربي داخل المتصفح (أول مرة تحتاج تحميل بسيط)...`);
+  const sch = Tesseract.createScheduler();
+  for(let i = 0; i < n; i++){
+    const w = await Tesseract.createWorker('ara+eng', 1, { logger: () => {} });
+    await w.setParameters({ preserve_interword_spaces: '1' });
+    sch.addWorker(w);
+  }
+  AIX.tessWorkers = n;
+  _tessScheduler = sch;
+  return sch;
+}
+
+async function aixTessStop(){
+  if(_tessScheduler){ try{ await _tessScheduler.terminate(); }catch(e){} }
+  _tessScheduler = null; AIX.tessWorkers = 0;
+}
+
+/* صفحة → canvas بدقة مناسبة للقراءة المحلية */
+async function aixRenderCanvas(doc, num){
+  const page = await doc.getPage(num);
+  const vp1 = page.getViewport({ scale: 1 });
+  const scale = Math.min(2.4, 1600 / (vp1.width || 600));
+  const vp = page.getViewport({ scale });
+  const c = document.createElement('canvas');
+  c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+  const ctx = c.getContext('2d', { alpha: false, willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  try{ page.cleanup(); }catch(e){}
+  return c;
+}
+
+/* قراءة صفحات محلياً (متوازي حسب عدد القرّاء) */
+async function aixTessPages(doc, fileId, pages){
+  const sch = await aixTessScheduler();
+  let next = 0, failed = [];
+  let buf = [];
+  const flush = async (force) => {
+    if(buf.length >= 10 || (force && buf.length)){ const rows = buf; buf = []; await aixSaveRows(fileId, rows); }
+  };
+  const worker = async () => {
+    while(next < pages.length){
+      await aixWaitPause();
+      const p = pages[next++];
+      try{
+        const canvas = await aixRenderCanvas(doc, p);
+        const { data } = await sch.addJob('recognize', canvas);
+        canvas.width = canvas.height = 1;
+        const txt = String((data && data.text) || '').replace(/[\u200E\u200F\u202A-\u202E]/g, '').replace(/[ \t]+/g, ' ').trim();
+        if(txt.length > 10){
+          buf.push({ page: p, content: txt.slice(0, 20000), questions: aixExtractQuestions(txt), method: 'tess' });
+          await flush(false);
+        } else failed.push(p);
+      }catch(e){ failed.push(p); }
+    }
+  };
+  await Promise.all(Array.from({ length: AIX.tessWorkers || 1 }, worker));
+  await flush(true);
+  return failed;
 }
 
 /* ================== فهرسة ملف ================== */
@@ -360,7 +467,22 @@ async function aixIndexFile(fileId, force){
     needOcr.push(...pending);
   }
 
-  /* 🤖 المرحلة 2: الصفحات المصوّرة → الذكاء الاصطناعي (دفعات متوازية) */
+  /* ⚡ المرحلة 2 (الوضع السريع): الصفحات المصوّرة تُقرأ داخل المتصفح — بدون حدود */
+  if(needOcr.length && mode === 'fast'){
+    try{
+      aixLog(`📖 قراءة ${needOcr.length} صفحة مصوّرة داخل المتصفح...`);
+      const failedLocal = await aixTessPages(doc, fileId, needOcr);
+      needOcr.length = 0;
+      if(failedLocal.length){
+        aixLog(`${failedLocal.length} صفحة ما انقرأت محلياً — نرسلها لـ Gemini`, 'warn');
+        needOcr.push(...failedLocal);
+      }
+    }catch(e){
+      aixLog('القارئ المحلي غير متاح (' + (e.message || e) + ') — نستخدم Gemini بإيقاع منضبط', 'warn');
+    }
+  }
+
+  /* 🤖 المرحلة 3: Gemini (وضع Gemini، أو الصفحات اللي فشلت محلياً) — بإيقاع يحترم الحدود */
   if(needOcr.length){
     const batches = [];
     for(let i = 0; i < needOcr.length; i += AIX.batch) batches.push(needOcr.slice(i, i + AIX.batch));
