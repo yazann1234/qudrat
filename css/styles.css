@@ -4330,3 +4330,10 @@ img{-webkit-user-drag:none;user-drag:none}
 .aif-solving{font-size:.82rem;font-weight:800;color:var(--primary);padding:8px 0;display:flex;align-items:center;gap:8px}
 .aif-retry{font-family:inherit;font-weight:900;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline}
 .aif-solution:empty{display:none}
+
+/* الفهرسة: اختيار الوضع + السرعة */
+.aix-mode{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--bg);border:1px solid var(--border)}
+.aix-mode button{font-family:inherit;font-size:.78rem;font-weight:900;padding:7px 12px;border-radius:9px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px}
+.aix-mode button.on{background:var(--card);color:var(--primary);box-shadow:var(--shadow-sm)}
+.aix-mode button:disabled{cursor:not-allowed;opacity:.7}
+.aix-speed{font-size:.78rem;font-weight:800;color:#16a34a;display:flex;align-items:center;gap:6px}
