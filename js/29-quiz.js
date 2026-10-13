@@ -729,14 +729,14 @@ async function finalizeMyQuizStats(sorted){
 
   const me = sorted.find(p => p.user_id === currentUserObj.id);
   if(!me) return;
-  const won = sorted[0] && sorted[0].user_id === currentUserObj.id && (me.score || 0) > 0;
   const myScore = Math.max(me.score || 0, QZ.myScore);
 
-  /* XP: مشاركة 20 + 10 لكل إجابة صحيحة + 100 للفائز */
-  const xp = 20 + (Math.max(me.correct_count || 0, QZ.myCorrect) * 10) + (won ? 100 : 0);
-  userData.extraXp = (userData.extraXp || 0) + xp;
-  savePrefs();
-  toast(won ? `🏆 فزت! +${xp} XP` : `🎮 انتهت اللعبة — +${xp} XP`, 'ok');
+  /* ⭐ النقاط يحسبها السيرفر من بنك الأسئلة نفسه (الإجابات الصحيحة + الفائز) */
+  let won = sorted[0] && sorted[0].user_id === currentUserObj.id && (me.score || 0) > 0;
+  try{
+    const r = typeof xpQuizClaim === 'function' ? await xpQuizClaim(sid) : null;
+    if(r && typeof r.won === 'boolean') won = r.won;
+  }catch(e){}
 
   try{
     const { data: prof } = await sb.from('profiles').select('kahoot_wins,kahoot_games,kahoot_total_score').eq('id', currentUserObj.id).single();
@@ -749,7 +749,6 @@ async function finalizeMyQuizStats(sorted){
     Object.assign(currentUserObj, upd);
   }catch(e){}
 
-  if(typeof syncMyXp === 'function') syncMyXp();
   renderQuizMyStats();
 }
 
