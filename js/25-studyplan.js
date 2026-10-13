@@ -207,9 +207,8 @@ async function generateStudyPlan(){
 
   toast(`✓ تم إنشاء خطة لمدة ${totalDays} يوم`, 'ok');
 
-  userData.extraXp = (userData.extraXp || 0) + 50;
-  savePrefs();
-  setTimeout(() => toast('🎁 +50 XP لإنشاء خطتك', 'ok'), 1200);
+  /* مكافأة إنشاء الخطة مرة واحدة فقط (لا تتكرر بإعادة الإنشاء) */
+  /* الجدول الذكي لا يعطي نقاطاً (النقاط فقط من الدراسة الفعلية) */
 
   if(typeof syncMyXp === 'function') syncMyXp();
 }
@@ -290,20 +289,13 @@ window.togglePlanTask = async (day, taskId) => {
 
   task.done = !task.done;
 
-  if(task.done){
-    userData.extraXp = (userData.extraXp || 0) + task.xp;
-    savePrefs();
-    toast(`+${task.xp} XP ✓`, 'ok');
-  } else {
-    userData.extraXp = Math.max(0, (userData.extraXp || 0) - task.xp);
-    savePrefs();
-  }
+  /* ⭐ النقاط تُعطى أول مرة فقط (التبديل ذهاباً وإياباً لا يكرر النقاط) */
+  if(task.done) toast('✓ أحسنت!', 'ok');
 
   dayData.completed = dayData.tasks.every(t => t.done);
-  if(dayData.completed && dayData.tasks.length > 0){
-    userData.extraXp += 20;
-    savePrefs();
-    toast('🎉 أكملت مهام اليوم! +20 XP', 'ok');
+  if(dayData.completed && dayData.tasks.length > 0 && !dayData.bonusAwarded){
+    dayData.bonusAwarded = true;
+    toast('🎉 أكملت مهام اليوم!', 'ok');
   }
 
   savePlanLocally();
