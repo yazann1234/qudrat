@@ -8,13 +8,13 @@
 
 /* ⭐ نظام النقاط الرسمي */
 const XP_RULES = {
-  page: 2,          /* كل صفحة جديدة تقرأها */
-  fileDone: 100,    /* إكمال ملف */
-  session: 25,      /* جلسة تركيز كاملة */
-  badge: 15,        /* كل شارة */
-  video: 50,        /* إكمال فيديو */       /* إكمال ذكر (مرة يومياً لكل ذكر) */
-  planTask: 'حسب المهمة', /* مهام الجدول الذكي */
-  quizWin: 100      /* الفوز في لعبة العباقرة */
+  page: 2,          /* كل صفحة تقرأها (8 ثوانٍ على الأقل) */
+  fileDone: 100,    /* إكمال ملف (بعد قراءة 90% من صفحاته) */
+  minute: 1,        /* كل دقيقة تركيز حقيقية */
+  video: 50,        /* مشاهدة فيديو كامل */
+  quizPlay: 20,     /* المشاركة في لعبة العباقرة */
+  quizCorrect: 10,  /* كل إجابة صحيحة */
+  quizWin: 100      /* الفوز */
 };
 window.XP_RULES = XP_RULES;
 
@@ -22,7 +22,12 @@ function calcXp(pages, completed, sessions, badges){
   return (pages * XP_RULES.page) + (completed * XP_RULES.fileDone) + (sessions * XP_RULES.session) + ((badges || 0) * XP_RULES.badge);
 }
 
+/* ⭐ نقاطي من السيرفر (السجل) — المتصفح لا يحسب النقاط */
 function myStats(){
+  const m = (typeof XP !== 'undefined' && XP.mine) ? XP.mine : { xp: 0, pages: 0, files: 0, minutes: 0 };
+  return { pages: m.pages, completed: m.files, sessions: m.minutes, badges: (userData && userData.badges || []).length, xp: m.xp, extraXp: 0 };
+}
+function _oldLocalStats(){
   let pages = 0, completed = 0;
   for(const fid in userData.progress){
     const p = userData.progress[fid];
@@ -44,64 +49,23 @@ let _xpSyncing = null;
 
 /* ⭐ مزامنة XP مع السيرفر (debounce) */
 function syncMyXp(){
-  if(!currentUserObj) return;
-  if(currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
+  /* النقاط تُسجّل في السيرفر مباشرة — هنا نحدّث العرض فقط */
   clearTimeout(_xpSyncTimer);
-  _xpSyncTimer = setTimeout(pushMyXpNow, 600);
+  _xpSyncTimer = setTimeout(() => { if(typeof xpRefreshMine === 'function') xpRefreshMine(); }, 800);
 }
 window.syncMyXp = syncMyXp;
 
 async function pushMyXpNow(){
-  if(!currentUserObj) return;
-  if(currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
-  if(!window._progressReady) return;
-  if(_xpSyncing) return _xpSyncing;
-  clearTimeout(_xpSyncTimer);
-
-  _xpSyncing = (async () => {
-    const s = myStats();
-    /* ⭐ لا ننقص النقاط المحفوظة أبداً (لو الجهاز ما حمّل كل التقدم لا نكتب رقم أقل) */
-    const cu = currentUserObj;
-    const upd = {
-      xp_points: Math.max(s.xp, Number(cu.xp_points) || 0),
-      focus_sessions: Math.max(s.sessions, Number(cu.focus_sessions) || 0),
-      completed_files: Math.max(s.completed, Number(cu.completed_files) || 0),
-      pages_read: Math.max(s.pages, Number(cu.pages_read) || 0)
-    };
-    /* ⭐ الطريقة الأساسية: السيرفر يحسب النقاط من التقدم الفعلي ويحفظها */
-    try{ if(typeof pushUserDataToDB === 'function') await pushUserDataToDB(); }catch(e){}
-    try{
-      const rr = await sb.rpc('sync_my_xp');
-      if(!rr.error){
-        if(typeof rr.data === 'number') upd.xp_points = Math.max(upd.xp_points, rr.data);
-        Object.assign(currentUserObj, upd);
-        return;
-      }
-    }catch(e){}
-    /* احتياطي (لو دوال السيرفر غير مثبتة) */
-    try{
-      const r = await sbSafeWrite(
-        p => sb.from('profiles').update(p).eq('id', currentUserObj.id),
-        upd
-      );
-      if(r && r.error) console.warn('XP sync failed:', r.error.message);
-      else {
-        Object.assign(currentUserObj, upd);
-      }
-    }catch(e){ console.warn('XP sync error:', e); }
-    try{ if(typeof pushUserDataToDB === 'function') pushUserDataToDB(); }catch(e){}
-  })();
-  try{ await _xpSyncing; } finally { _xpSyncing = null; }
+  if(typeof xpRefreshMine === 'function') await xpRefreshMine();
 }
 window.pushMyXpNow = pushMyXpNow;
 
 /* ⭐ عند إكمال ملف: احتفال + نقاط فورية */
 function onFileCompleted(file){
   if(!file) return;
-  toast(`🎉 أكملت «${file.title}» — +${XP_RULES.fileDone} XP`, 'ok');
-  try{ if(typeof beep === 'function') beep(); }catch(e){}
   try{ flushProgressSync(); }catch(e){}
   try{ checkBadges(); renderBadges(); }catch(e){}
+  if(typeof xpFileComplete === 'function') xpFileComplete(file);
 }
 window.onFileCompleted = onFileCompleted;
 
@@ -213,7 +177,7 @@ async function renderLeaderboard(){
       <div class="lb-stats-mini">
         <span><i class="fas fa-file-lines"></i> ${u.pages} صفحة</span>
         <span><i class="fas fa-book"></i> ${u.completed} ملف</span>
-        <span><i class="fas fa-stopwatch"></i> ${u.sessions} جلسة</span>
+        <span><i class="fas fa-stopwatch"></i> ${u.sessions} دقيقة</span>
       </div>
       <button class="lb-cert-podium" onclick="openCertificate('${u.id}')"><i class="fas fa-award"></i> الشهادة</button>
     </div>`;
@@ -239,12 +203,13 @@ async function renderLeaderboard(){
         <div class="lb-user-av" style="${av}">${av ? '' : escapeHtml(avatarInitialFor(u))}</div>
         <div style="min-width:0">
           <b>${escapeHtml(u.name)} ${isMe ? '<span style="color:var(--primary);font-size:.72rem">(أنت)</span>' : ''}</b>
-          <small>${u.pages} صفحة • ${u.completed} ملف • ${u.sessions} جلسة</small>
+          <small>${u.pages} صفحة • ${u.completed} ملف • ${u.sessions} دقيقة تركيز</small>
         </div>
       </div>
       <div class="lb-xp-cell">${u.xp.toLocaleString('en')}<small>XP</small></div>
       <div class="lb-badge-mini ${badgeCls}">${badgeTxt}</div>
       <button class="lb-cert-btn ${isMe ? 'me' : ''}" onclick="openCertificate('${u.id}')" title="شهادة الشكر والتقدير"><i class="fas fa-award"></i>${isMe ? ' شهادتي' : ''}</button>
+      ${typeof isPrivileged === 'function' && isPrivileged() ? `<button class="lb-cert-btn" onclick="resetUserPoints('${u.id}','${escapeHtml(u.name).replace(/'/g, '')}')" title="تصفير نقاط هذا الطالب" style="color:var(--danger)"><i class="fas fa-eraser"></i></button>` : ''}
     </div>`;
   }).join('');
 
@@ -288,7 +253,8 @@ function renderLbToolbar(count){
     <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
     <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
     ${currentUserObj && (window._lbUsers || []).some(x => x.id === currentUserObj.id) ? `<button class="btn btn-primary btn-sm" onclick="openCertificate('${currentUserObj.id}')"><i class="fas fa-award"></i> شهادتي</button>` : ''}
-    <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>`;
+    <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>
+    ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-danger btn-sm" onclick="resetAllPoints()"><i class="fas fa-trash-can"></i> تصفير كل النقاط</button>' : ''}`;
 }
 
 /* ⭐ بطاقة «كيف تُحسب النقاط» */
@@ -304,15 +270,15 @@ function renderXpRulesCard(){
   }
   const s = currentUserObj && currentUserObj.role !== 'admin' && currentUserObj.role !== 'owner' ? myStats() : null;
   card.innerHTML = `
-    <h4><i class="fas fa-circle-info"></i> كيف تُحسب النقاط؟</h4>
+    <h4><i class="fas fa-circle-info"></i> كيف تُحسب النقاط؟ <small style="font-weight:700;color:var(--muted)">(يحسبها السيرفر — دقيقة وما فيها تلاعب)</small></h4>
     <div class="xp-rules-grid">
-      <div><i class="fas fa-file-lines"></i><b>+${XP_RULES.page}</b><small>لكل صفحة جديدة</small></div>
+      <div><i class="fas fa-file-lines"></i><b>+${XP_RULES.page}</b><small>لكل صفحة تقرأها</small></div>
       <div><i class="fas fa-book"></i><b>+${XP_RULES.fileDone}</b><small>إكمال ملف</small></div>
-      <div><i class="fas fa-stopwatch"></i><b>+${XP_RULES.session}</b><small>جلسة تركيز</small></div>
-      <div><i class="fas fa-video"></i><b>+${XP_RULES.video}</b><small>إكمال فيديو</small></div>
-      <div><i class="fas fa-medal"></i><b>+${XP_RULES.badge}</b><small>كل شارة</small></div>
-      <div><i class="fas fa-gamepad"></i><b>+${XP_RULES.quizWin}</b><small>فوز في اللعبة</small></div>
+      <div><i class="fas fa-stopwatch"></i><b>+${XP_RULES.minute}</b><small>لكل دقيقة تركيز</small></div>
+      <div><i class="fas fa-video"></i><b>+${XP_RULES.video}</b><small>مشاهدة فيديو كامل</small></div>
+      <div><i class="fas fa-gamepad"></i><b>+${XP_RULES.quizCorrect}</b><small>كل إجابة صحيحة باللعبة</small></div>
+      <div><i class="fas fa-trophy"></i><b>+${XP_RULES.quizWin}</b><small>الفوز باللعبة</small></div>
     </div>
-    ${s ? `<div class="xp-rules-mine">نقاطك: <b>${s.xp.toLocaleString('en')} XP</b> = ${s.pages} صفحة × ${XP_RULES.page} + ${s.completed} ملف × ${XP_RULES.fileDone} + ${s.sessions} جلسة × ${XP_RULES.session} + ${s.badges} شارة × ${XP_RULES.badge} + ${s.extraXp} مكافآت</div>` : ''}
+    ${s ? `<div class="xp-rules-mine">نقاطك: <b>${s.xp.toLocaleString('en')} XP</b> = ${s.pages} صفحة × ${XP_RULES.page} + ${s.completed} ملف × ${XP_RULES.fileDone} + ${s.sessions} دقيقة تركيز + الفيديوهات واللعبة</div>` : ''}
   `;
 }
