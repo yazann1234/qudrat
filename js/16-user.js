@@ -284,11 +284,17 @@ document.addEventListener('click', (e) => {
 /* ============================================================
    ⭐ تسجيل الخروج — معالج موحّد يعمل من كل الأزرار
 ============================================================ */
-async function performLogout(skipConfirm){
+async function performLogout(skipConfirm, opts){
+  opts = opts || {};
   const doLogout = async () => {
     try{
+      /* حرّر مكان الجهاز + اخرج من الغرف */
+      try{ if(!opts.keepDevice && typeof unregisterDevice === 'function') await unregisterDevice(); else if(typeof stopDeviceWatch === 'function') stopDeviceWatch(); }catch(e){}
+      try{ if(typeof SR !== 'undefined' && SR.room && typeof srDoLeave === 'function') await srDoLeave(); }catch(e){}
+      try{ if(typeof QZ !== 'undefined' && QZ.session && typeof leaveQuizRoom === 'function') await leaveQuizRoom(); }catch(e){}
+
       /* احفظ التقدم */
-      try{ savePrefs(); }catch(e){}
+      try{ if(typeof flushPrefsNow === 'function') await flushPrefsNow(); else savePrefs(); }catch(e){}
       try{ saveDrawings(); }catch(e){}
       try{ flushProgressSync(); }catch(e){}
       try{ if(typeof pushVideoProgress === 'function') pushVideoProgress(); }catch(e){}
@@ -316,7 +322,7 @@ async function performLogout(skipConfirm){
 
       /* امسح sessionStorage و localStorage */
       try{ sessionStorage.clear(); }catch(e){}
-      try{ localStorage.clear(); }catch(e){}
+      try{ clearLocalStoragePreserve(); }catch(e){}
 
       /* امسح الحقول */
       ['loginEmail','loginPass','adminEmail','adminPass'].forEach(id => {
