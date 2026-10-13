@@ -94,7 +94,7 @@ async function registerDevice(){
   await enforceDeviceLimit();
   subscribeDevices();
   clearInterval(DEV.timer);
-  DEV.timer = setInterval(checkThisDevice, 45000);
+  DEV.timer = setInterval(checkThisDevice, 120000);
 }
 window.registerDevice = registerDevice;
 
