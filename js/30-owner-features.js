@@ -28,18 +28,23 @@ async function checkSubscriptionOnLogin(){
 
   if(isSubscriptionExpired()){
     try{
-      await sb.from('profiles').update({
+      /* ⭐ السيرفر هو اللي ينهي الاشتراك (الطالب ما يقدر يغيّر حالته بنفسه) */
+      let done = false;
+      try{ const rr = await sb.rpc('expire_my_subscription'); if(!rr.error) done = true; }catch(e){}
+      if(!done) await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', currentUserObj.id), {
         status: 'pending',
         subscription_end: null,
         subscription_start: null,
         subscription_months: 0,
-        course_id: null
-      }).eq('id', currentUserObj.id);
+        course_id: null,
+        course_ids: []
+      });
 
       currentUserObj.status = 'pending';
       currentUserObj.subscription_end = null;
       currentUserObj.subscription_start = null;
       currentUserObj.course_id = null;
+      currentUserObj.course_ids = [];
 
       toast('⏰ انتهى اشتراكك — يرجى التجديد', 'warn');
       return true;
@@ -198,6 +203,14 @@ async function activateSubscription(userId, months, courseId, opts){
   if(!isPrivileged()){ toast('غير مصرح', 'err'); return false; }
   opts = opts || {};
 
+  /* ⭐ دورة واحدة أو أكثر: courseId ممكن يكون مصفوفة */
+  const target = (DB.users || []).find(x => x.id === userId) || null;
+  let courseIds = Array.isArray(courseId) ? courseId.filter(Boolean).map(String) : (courseId ? [String(courseId)] : []);
+  if(opts.addToExisting && target && target.status === 'approved'){
+    courseIds = [...new Set([...getUserCourseIds(target), ...courseIds])];
+  }
+  courseId = courseIds[0] || null;
+
   const start = new Date();
   let end;
   if(opts.endDate){
@@ -219,7 +232,14 @@ async function activateSubscription(userId, months, courseId, opts){
     /* ⭐ الطلب تمت معالجته — لو انتهى الاشتراك لاحقاً يقدر يشتري من جديد */
     purchase_submitted: false
   };
-  if(courseId) payload.course_id = courseId;
+  if(courseIds.length){ payload.course_id = courseIds[0]; payload.course_ids = courseIds; }
+
+  /* إضافة دورة لمشترك حالي: لا نقصّر اشتراكه */
+  if(opts.addToExisting && target && target.status === 'approved' && target.subscription_end){
+    const curEnd = new Date(target.subscription_end);
+    if(curEnd > end){ payload.subscription_end = curEnd.toISOString(); }
+    if(target.subscription_start) payload.subscription_start = target.subscription_start;
+  }
 
   const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), payload);
   if(error){ toast('فشل: ' + error.message, 'err'); return false; }
@@ -228,17 +248,19 @@ async function activateSubscription(userId, months, courseId, opts){
   const u = (DB.users || []).find(x => x.id === userId);
   if(u) Object.assign(u, payload);
 
-  const course = courseId && typeof getCourseById === 'function' ? getCourseById(courseId) : null;
+  const courseNames = courseIds.map(id => getCourseById(id)).filter(Boolean).map(c => c.name);
+  const course = courseNames.length ? { name: courseNames.join(' + ') } : null;
 
+  /* ⭐ السجل والإشعار في الخلفية — التفعيل يخلص فوراً بدون انتظار */
   if(typeof logAdminAction === 'function'){
-    await logAdminAction('activate_subscription', userId,
+    logAdminAction('activate_subscription', userId,
       `تفعيل اشتراك ${course ? course.name + ' ' : ''}لمدة ${durTxt} (حتى ${end.toLocaleDateString('ar-SA')})`,
       { months, course_id: courseId, end: end.toISOString(), custom: !!opts.endDate });
   }
 
   /* ⭐ إشعار موجّه للطالب نفسه فقط (كان يصل لكل الطلاب بالخطأ) */
   if(typeof sendNotification === 'function'){
-    await sendNotification('general', '✓ تم تفعيل اشتراكك',
+    sendNotification('general', '✓ تم تفعيل اشتراكك',
       `تم تفعيل اشتراكك في ${course ? course.name : 'المنصة'} حتى ${end.toLocaleDateString('ar-SA')}. استمتع بالتعلم!`,
       null, null, 'fa-check-circle', '#22c55e', userId);
   }
@@ -256,8 +278,12 @@ async function logAdminAction(action, targetId, label, details){
   try{
     let targetName = null;
     if(targetId){
-      const { data: t } = await sb.from('profiles').select('name').eq('id', targetId).maybeSingle();
-      targetName = t ? t.name : null;
+      const known = (DB.users || []).find(x => x.id === targetId);
+      if(known) targetName = known.name || known.email || null;
+      else{
+        const { data: t } = await sb.from('profiles').select('name').eq('id', targetId).maybeSingle();
+        targetName = t ? t.name : null;
+      }
     }
 
     await sb.from('admin_logs').insert({
@@ -408,7 +434,17 @@ async function openGiftBox(giftId){
     const { data: g, error } = await sb.from('student_gifts').select('*').eq('id', giftId).maybeSingle();
     if(error || !g) return;
 
+    let serverDone = false;
     if(!g.opened){
+      /* ⭐ السيرفر ينفّذ إجراء الهدية بأمان (مرة واحدة) */
+      try{ const rr = await sb.rpc('open_gift', { p_gift: giftId }); if(!rr.error) serverDone = true; }catch(e){}
+    }
+    if(!g.opened && serverDone){
+      if(g.gift_action === 'extend' && g.gift_extra_months) toast(`🎁 تم تمديد اشتراكك ${g.gift_extra_months} شهر`, 'ok');
+      else if(g.gift_action === 'course' && g.gift_course_id){ const c = getCourseById(g.gift_course_id); toast(`🎁 تم تحويلك إلى ${c ? c.name : 'دورة جديدة'}`, 'ok'); }
+      else if(g.gift_action === 'cancel') toast('تم إلغاء اشتراكك', 'warn');
+    }
+    if(!g.opened && !serverDone){
       await sb.from('student_gifts').update({
         opened: true, opened_at: new Date().toISOString()
       }).eq('id', giftId);
@@ -457,13 +493,14 @@ async function switchUserCourse(userId, courseId, months){
     const end = new Date();
     end.setMonth(end.getMonth() + months);
 
-    await sb.from('profiles').update({
+    await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), {
       course_id: courseId,
+      course_ids: [courseId],
       status: 'approved',
       subscription_start: start.toISOString(),
       subscription_end: end.toISOString(),
       subscription_months: months
-    }).eq('id', userId);
+    });
 
     const c = getCourseById(courseId);
     toast(`🎁 تم تحويلك إلى ${c ? c.name : 'دورة جديدة'}`, 'ok');
@@ -472,12 +509,13 @@ async function switchUserCourse(userId, courseId, months){
 
 async function cancelUserSubscription(userId){
   try{
-    await sb.from('profiles').update({
+    await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), {
       status: 'pending',
       subscription_end: null,
       subscription_start: null,
-      course_id: null
-    }).eq('id', userId);
+      course_id: null,
+      course_ids: []
+    });
     toast('تم إلغاء اشتراكك', 'warn');
   }catch(e){}
 }
@@ -770,7 +808,8 @@ function renderSubscriptionInfo(){
     return;
   }
 
-  const course = getMyCourse();
+  const myCourses = getMyCourses();
+  const course = myCourses.length ? Object.assign({}, myCourses[0], { name: myCourses.map(c => c.name).join(' + ') }) : null;
   const startD = currentUserObj.subscription_start ? new Date(currentUserObj.subscription_start) : null;
   const endD = currentUserObj.subscription_end ? new Date(currentUserObj.subscription_end) : null;
 
