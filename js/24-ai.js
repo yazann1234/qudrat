@@ -119,6 +119,7 @@ function initAI(){
   const rdAiHelp = document.getElementById('rdAiHelp');
   if(rdAiHelp) rdAiHelp.addEventListener('click', openFileAiHelp);
 
+  try{ initAIFindUI(); }catch(e){ console.warn('find ui', e); }
   updateSuggestions();
   updateAIFabVisibility();
 
@@ -190,6 +191,7 @@ function updateSuggestions(){
       '<button data-q="كيف أرسم على الملف؟"><i class="fas fa-pen"></i> الرسم على الملف</button>' +
       '<button data-q="كيف أشتري دورة؟"><i class="fas fa-shopping-bag"></i> شراء دورة</button>' +
       '<button data-q="كيف أحفظ موضعي في الفيديو؟"><i class="fas fa-bookmark"></i> حفظ الموضع</button>';
+    box.insertAdjacentHTML('afterbegin', '<button class="ai-find-chip" type="button" onclick="setAISearchMode(true)"><i class="fas fa-magnifying-glass"></i> ابحث عن سؤال في الملفات</button>');
   }
 
   box.querySelectorAll('button[data-q]').forEach(function(b){
@@ -238,6 +240,11 @@ async function sendAIMessage(textOverride){
   if(!AI.initialized) initAI();
 
   const text = (typeof textOverride === 'string' ? textOverride : (AI.inputEl.value || '')).trim();
+  /* ⭐ صورة مرفقة أو وضع البحث → البحث عن السؤال في الملفات */
+  if(typeof textOverride !== 'string' && (AI.pendingImage || AI.searchMode)){
+    AI.sending = false;
+    return findQuestionInFiles(text);
+  }
   if(!text) return;
 
   AI.sending = true;
@@ -407,3 +414,187 @@ if(document.readyState === 'loading'){
 } else {
   setTimeout(bootAI, 300);
 }
+
+
+/* ============================================================
+   ⭐ البحث عن سؤال داخل ملفات المنصة (نص أو صورة)
+============================================================ */
+AI.pendingImage = null;   /* { data: base64, mime, url } */
+AI.searchMode = false;
+
+function initAIFindUI(){
+  const wrap = document.querySelector('#aiChatPanel .ai-chat-input-wrap');
+  if(!wrap || document.getElementById('aiAttachBtn')) return;
+
+  const file = document.createElement('input');
+  file.type = 'file'; file.accept = 'image/*'; file.id = 'aiImageInput'; file.style.display = 'none';
+  file.addEventListener('change', e => { const f = e.target.files[0]; if(f) aiAttachImage(f); e.target.value = ''; });
+
+  const btn = document.createElement('button');
+  btn.id = 'aiAttachBtn'; btn.className = 'ai-attach-btn'; btn.type = 'button';
+  btn.title = 'أرفق صورة سؤال';
+  btn.innerHTML = '<i class="fas fa-camera"></i>';
+  btn.addEventListener('click', () => file.click());
+
+  wrap.insertBefore(btn, wrap.firstChild);
+  wrap.appendChild(file);
+
+  const bar = document.createElement('div');
+  bar.id = 'aiFindBar'; bar.className = 'ai-find-bar';
+  wrap.parentNode.insertBefore(bar, wrap);
+
+  /* لصق صورة مباشرة (Ctrl+V) */
+  AI.inputEl.addEventListener('paste', e => {
+    const items = (e.clipboardData && e.clipboardData.items) || [];
+    for(const it of items){
+      if(it.type && it.type.startsWith('image/')){ e.preventDefault(); aiAttachImage(it.getAsFile()); break; }
+    }
+  });
+  renderAIFindBar();
+}
+
+window.setAISearchMode = (on) => {
+  if(!AI.initialized) initAI();
+  if(!AI.open) openAIChat();
+  AI.searchMode = !!on;
+  renderAIFindBar();
+  if(on){
+    showAIMessage('assistant', '🔎 أرسل لي **نص السؤال** أو **صورته** (زر الكاميرا 📷)، وبدوّر عليه في كل ملفات دورتك:\n• لو لقيته أقولك الملف والصفحة ورقم السؤال\n• ولو ما لقيته أشرح لك حله بالتفصيل');
+    setTimeout(() => AI.inputEl && AI.inputEl.focus(), 100);
+  }
+};
+
+async function aiAttachImage(f){
+  if(!f || !f.type || !f.type.startsWith('image/')){ toast('اختر صورة', 'warn'); return; }
+  if(f.size > 12 * 1024 * 1024){ toast('الصورة كبيرة جداً', 'warn'); return; }
+  try{
+    const blob = typeof resizeImageToBlob === 'function' ? await resizeImageToBlob(f, 1600, 0.88) : f;
+    const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+    AI.pendingImage = { data: String(dataUrl).split(',')[1], mime: 'image/jpeg', url: dataUrl };
+    AI.searchMode = true;
+    renderAIFindBar();
+    if(!AI.open) openAIChat();
+  }catch(e){ toast('تعذّر قراءة الصورة', 'err'); }
+}
+
+function renderAIFindBar(){
+  const bar = document.getElementById('aiFindBar');
+  if(!bar) return;
+  if(!AI.searchMode && !AI.pendingImage){
+    bar.innerHTML = ''; bar.style.display = 'none';
+    if(AI.inputEl) AI.inputEl.placeholder = 'اسألني عن أي شيء في المنصة...';
+    return;
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span class="aif-mode"><i class="fas fa-magnifying-glass"></i> وضع البحث عن سؤال في الملفات</span>
+    ${AI.pendingImage ? `<span class="aif-thumb"><img src="${AI.pendingImage.url}" alt=""><button type="button" onclick="aiClearImage()" title="إزالة"><i class="fas fa-xmark"></i></button></span>` : ''}
+    <button type="button" class="aif-off" onclick="aiClearImage();setAISearchMode(false)" title="إلغاء البحث"><i class="fas fa-xmark"></i> إلغاء</button>`;
+  if(AI.inputEl) AI.inputEl.placeholder = AI.pendingImage ? 'أضف ملاحظة (اختياري) ثم اضغط إرسال...' : 'اكتب نص السؤال أو أرفق صورته...';
+}
+window.aiClearImage = () => { AI.pendingImage = null; renderAIFindBar(); };
+
+function showAIHTML(html){
+  const div = document.createElement('div');
+  div.className = 'ai-msg assistant';
+  div.innerHTML = '<div class="ai-msg-avatar bot"><i class="fas fa-robot"></i></div>';
+  const bubble = document.createElement('div');
+  bubble.className = 'ai-msg-bubble ai-find-bubble';
+  bubble.innerHTML = html;
+  div.appendChild(bubble);
+  AI.bodyEl.appendChild(div);
+  AI.bodyEl.scrollTop = AI.bodyEl.scrollHeight;
+}
+
+async function findQuestionInFiles(text){
+  if(AI.sending) return;
+  if(!canUseAI()){ toast('هذه الميزة متاحة للمشتركين فقط', 'warn'); return; }
+  const img = AI.pendingImage;
+  if(!text && !img){ toast('اكتب نص السؤال أو أرفق صورته', 'warn'); return; }
+
+  AI.sending = true;
+  AI.inputEl.value = ''; AI.inputEl.style.height = 'auto';
+
+  /* رسالة الطالب (مع الصورة) */
+  const um = document.createElement('div');
+  um.className = 'ai-msg user';
+  um.innerHTML = '<div class="ai-msg-avatar user"><i class="fas fa-user"></i></div>';
+  const ub = document.createElement('div');
+  ub.className = 'ai-msg-bubble';
+  if(img){ const im = document.createElement('img'); im.src = img.url; im.className = 'ai-user-img'; ub.appendChild(im); }
+  if(text){ const t = document.createElement('div'); t.textContent = text; ub.appendChild(t); }
+  um.appendChild(ub);
+  AI.bodyEl.appendChild(um);
+  AI.bodyEl.scrollTop = AI.bodyEl.scrollHeight;
+
+  AI.pendingImage = null;
+  renderAIFindBar();
+  showAITyping();
+  const st = document.getElementById('aiChatStatus');
+  if(st) st.textContent = 'يبحث في الملفات... 🔎';
+  const sendBtn = document.getElementById('aiChatSend'); if(sendBtn) sendBtn.disabled = true;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 90000);
+  try{
+    const r = await sb.auth.getSession();
+    const token = r && r.data && r.data.session ? r.data.session.access_token : '';
+    if(!token) throw new Error('انتهت الجلسة، أعد تسجيل الدخول');
+    const res = await fetch(getAIUrl(), {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '') },
+      body: JSON.stringify({ mode: 'find_question', text, image: img ? img.data : null, mime: img ? img.mime : null })
+    });
+    hideAITyping();
+    let j = null; try{ j = await res.json(); }catch(e){}
+    if(!res.ok || !j || j.error) throw new Error((j && j.error) || 'تعذّر البحث');
+    showAIHTML(renderFindResult(j));
+    /* سياق للمحادثة اللاحقة (لو سأل «اشرح أكثر») */
+    AI.history.push({ role: 'user', content: '[بحث عن سؤال] ' + String(j.extracted_question || text || '').slice(0, 800) });
+    AI.history.push({ role: 'assistant', content: (j.found ? `السؤال موجود في ملف «${j.file_title}» صفحة ${j.page}${j.question_number ? ' سؤال رقم ' + j.question_number : ''}. ` : 'السؤال غير موجود في الملفات. ') + 'الإجابة: ' + (j.answer || '') + '\n' + String(j.solution || '').slice(0, 1500) });
+    if(AI.history.length > 30) AI.history = AI.history.slice(-30);
+  }catch(e){
+    hideAITyping();
+    showAIMessage('assistant', '⚠️ ' + (e && e.name === 'AbortError' ? 'استغرق البحث وقتاً طويلاً، حاول مرة ثانية.' : (e.message || 'تعذّر البحث')));
+  }finally{
+    clearTimeout(timer);
+    AI.sending = false;
+    if(sendBtn) sendBtn.disabled = false;
+    if(st) st.textContent = 'متصل • جاهز للمساعدة';
+  }
+}
+window.findQuestionInFiles = findQuestionInFiles;
+
+function renderFindResult(j){
+  const sol = j.solution ? aiFormat(j.solution) : '';
+  const ans = j.answer ? `<div class="aif-answer"><i class="fas fa-circle-check"></i> الإجابة: <b>${aiEsc(j.answer)}</b></div>` : '';
+  if(j.notQuestion) return `<div class="aif-card miss">${aiFormat(j.solution || '')}</div>`;
+  if(j.found){
+    return `
+      <div class="aif-card found">
+        <div class="aif-title"><i class="fas fa-circle-check"></i> السؤال موجود في ملفاتك!</div>
+        <div class="aif-loc">
+          <div><i class="fas fa-file-pdf"></i><small>الملف</small><b>${aiEsc(j.file_title || '')}</b></div>
+          <div><i class="fas fa-file-lines"></i><small>الصفحة</small><b>${aiEsc(j.page)}</b></div>
+          <div><i class="fas fa-hashtag"></i><small>رقم السؤال</small><b>${j.question_number ? aiEsc(j.question_number) : 'غير مرقّم'}</b></div>
+        </div>
+        <button class="aif-open" onclick="aiOpenFilePage('${aiEsc(j.file_id)}', ${parseInt(j.page, 10) || 1})"><i class="fas fa-book-open"></i> افتح الملف على الصفحة ${aiEsc(j.page)}</button>
+        ${sol ? `<details class="aif-sol"><summary><i class="fas fa-lightbulb"></i> عرض الحل بالتفصيل</summary>${ans}<div>${sol}</div></details>` : ''}
+      </div>`;
+  }
+  return `
+    <div class="aif-card miss">
+      <div class="aif-title"><i class="fas fa-magnifying-glass-minus"></i> السؤال ليس موجوداً ضمن ملفات المنصة</div>
+      <p class="aif-note">بحثت في كل ملفات دورتك ولم أجد نفس السؤال بنفس الأرقام والمعطيات. وهذا حله بالتفصيل 👇</p>
+      ${ans}
+      <div class="aif-solution">${sol || 'تعذّر توليد الحل، حاول مرة ثانية.'}</div>
+    </div>`;
+}
+
+window.aiOpenFilePage = (fileId, page) => {
+  const f = (DB.files || []).find(x => x.id === fileId);
+  if(!f){ toast('الملف غير متاح لحسابك', 'warn'); return; }
+  closeAIChat();
+  window._openAtPage = page;
+  if(typeof openFile === 'function') openFile(fileId);
+};
