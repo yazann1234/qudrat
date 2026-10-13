@@ -37,28 +37,76 @@ function pickLocalFields(ud){
     videoProgress: ud.videoProgress,
     awardedVideoXp: ud.awardedVideoXp,
     extraXp: ud.extraXp,
+    adhkarXp: ud.adhkarXp,
+    videoWatched: ud.videoWatched,
+    planXpGiven: ud.planXpGiven,
     /* ⭐ نسخة احتياطية من التقدم — حتى لا تضيع النقاط لو فشلت مزامنة user_progress */
     progress: ud.progress
   };
 }
 
+/* ⭐ أعمدة قائمة المستخدمين للأدمن (بدون user_data الضخم) */
+const PROFILE_LIST_COLS = 'id,name,email,phone,role,status,avatar_url,created_at,course_id,course_ids,subscription_start,subscription_end,subscription_months,purchase_submitted,purchase_product,purchase_course_id,purchase_months,purchase_price,purchase_submitted_at,purchase_receipt_url,purchase_receipt_path,password_hint,xp_points';
+async function fetchAdminUsers(){
+  try{
+    let r = await sb.from('profiles').select(PROFILE_LIST_COLS).order('created_at', { ascending: false });
+    if(r.error){
+      /* بعض الأعمدة غير موجودة بعد → نجلب الكل (احتياط) */
+      r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+    }
+    if(r.error) return null;
+    return (r.data || []).map(u => { if(u.user_data) delete u.user_data; return u; });
+  }catch(e){ return null; }
+}
+window.fetchAdminUsers = fetchAdminUsers;
+
 let prefsSaveTimer = null;
+let _localSaveTimer = null;
+let _dbDirty = false;
+let _dbLastPush = 0;
+let _dbPushTimer = null;
+let _dbLastPayload = '';
+const DB_PUSH_INTERVAL = 30000; /* ⭐ حفظ في السيرفر كل 30 ثانية كحد أقصى (كان كل ثانية → يضغط القاعدة) */
 
 function savePrefs(){
   if(!session) return;
-  try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
-  clearTimeout(prefsSaveTimer);
-  prefsSaveTimer = setTimeout(pushUserDataToDB, 900);
+  /* حفظ محلي (خفيف، مؤجل 400ms حتى لا يتكرر مع كل حركة تمرير) */
+  clearTimeout(_localSaveTimer);
+  _localSaveTimer = setTimeout(() => {
+    try{ sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
+  }, 400);
+  /* حفظ في السيرفر: مرة كل 30 ثانية فقط */
+  _dbDirty = true;
+  if(_dbPushTimer) return;
+  const wait = Math.max(2000, DB_PUSH_INTERVAL - (Date.now() - _dbLastPush));
+  _dbPushTimer = setTimeout(() => { _dbPushTimer = null; pushUserDataToDB(); }, wait);
 }
+prefsSaveTimer = null;
+
+/* حفظ فوري (عند الخروج من الصفحة / تسجيل الخروج) */
+function flushPrefsNow(){
+  try{ clearTimeout(_localSaveTimer); if(session) sessionStorage.setItem(prefsKey(), JSON.stringify(pickLocalFields(userData))); }catch(e){}
+  if(_dbPushTimer){ clearTimeout(_dbPushTimer); _dbPushTimer = null; }
+  if(_dbDirty) return pushUserDataToDB();
+}
+window.flushPrefsNow = flushPrefsNow;
 
 async function pushUserDataToDB(){
   if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return;
   try{
     const payload = pickLocalFields(userData);
+    const json = JSON.stringify(payload);
+    _dbDirty = false;
+    _dbLastPush = Date.now();
+    if(json === _dbLastPayload) return;          /* ما تغيّر شيء → لا نرسل */
     const { error } = await sb.from('profiles').update({ user_data: payload }).eq('id', currentUserObj.id);
-    if(error) console.warn('user_data sync failed:', error.message);
-  }catch(e){}
+    if(error){ _dbDirty = true; console.warn('user_data sync failed:', error.message); }
+    else _dbLastPayload = json;
+  }catch(e){ _dbDirty = true; }
 }
+
+document.addEventListener('visibilitychange', () => { if(document.hidden) flushPrefsNow(); });
+window.addEventListener('pagehide', () => { try{ flushPrefsNow(); }catch(e){} });
 
 function loadPrefs(){
   resetUD();
