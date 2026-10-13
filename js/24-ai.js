@@ -535,7 +535,7 @@ async function findQuestionInFiles(text){
   const sendBtn = document.getElementById('aiChatSend'); if(sendBtn) sendBtn.disabled = true;
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 90000);
+  const timer = setTimeout(() => ctrl.abort(), 60000);
   try{
     const r = await sb.auth.getSession();
     const token = r && r.data && r.data.session ? r.data.session.access_token : '';
@@ -548,10 +548,14 @@ async function findQuestionInFiles(text){
     hideAITyping();
     let j = null; try{ j = await res.json(); }catch(e){}
     if(!res.ok || !j || j.error) throw new Error((j && j.error) || 'تعذّر البحث');
-    showAIHTML(renderFindResult(j));
+    const solveId = 'aifs' + Date.now();
+    AI.lastFind = { id: solveId, question: j.extracted_question || text || '', image: img ? img.data : null, mime: img ? img.mime : null };
+    showAIHTML(renderFindResult(j, solveId));
+    /* غير موجود → نبدأ كتابة الحل تلقائياً تحت النتيجة */
+    if(!j.found && !j.notQuestion) aiLoadSolution(solveId);
     /* سياق للمحادثة اللاحقة (لو سأل «اشرح أكثر») */
     AI.history.push({ role: 'user', content: '[بحث عن سؤال] ' + String(j.extracted_question || text || '').slice(0, 800) });
-    AI.history.push({ role: 'assistant', content: (j.found ? `السؤال موجود في ملف «${j.file_title}» صفحة ${j.page}${j.question_number ? ' سؤال رقم ' + j.question_number : ''}. ` : 'السؤال غير موجود في الملفات. ') + 'الإجابة: ' + (j.answer || '') + '\n' + String(j.solution || '').slice(0, 1500) });
+    AI.history.push({ role: 'assistant', content: j.found ? `السؤال موجود في ملف «${j.file_title}» صفحة ${j.page}${j.question_number ? ' سؤال رقم ' + j.question_number : ''}.` : 'السؤال غير موجود في ملفات المنصة.' });
     if(AI.history.length > 30) AI.history = AI.history.slice(-30);
   }catch(e){
     hideAITyping();
@@ -565,10 +569,8 @@ async function findQuestionInFiles(text){
 }
 window.findQuestionInFiles = findQuestionInFiles;
 
-function renderFindResult(j){
-  const sol = j.solution ? aiFormat(j.solution) : '';
-  const ans = j.answer ? `<div class="aif-answer"><i class="fas fa-circle-check"></i> الإجابة: <b>${aiEsc(j.answer)}</b></div>` : '';
-  if(j.notQuestion) return `<div class="aif-card miss">${aiFormat(j.solution || '')}</div>`;
+function renderFindResult(j, solveId){
+  if(j.notQuestion) return `<div class="aif-card miss">ما قدرت أقرأ سؤالاً واضحاً في الصورة 🌸 جرّب صورة أوضح للسؤال كاملاً مع الاختيارات.</div>`;
   if(j.found){
     return `
       <div class="aif-card found">
@@ -579,17 +581,55 @@ function renderFindResult(j){
           <div><i class="fas fa-hashtag"></i><small>رقم السؤال</small><b>${j.question_number ? aiEsc(j.question_number) : 'غير مرقّم'}</b></div>
         </div>
         <button class="aif-open" onclick="aiOpenFilePage('${aiEsc(j.file_id)}', ${parseInt(j.page, 10) || 1})"><i class="fas fa-book-open"></i> افتح الملف على الصفحة ${aiEsc(j.page)}</button>
-        ${sol ? `<details class="aif-sol"><summary><i class="fas fa-lightbulb"></i> عرض الحل بالتفصيل</summary>${ans}<div>${sol}</div></details>` : ''}
+        <button class="aif-sol-btn" id="${solveId}Btn" onclick="aiLoadSolution('${solveId}')"><i class="fas fa-lightbulb"></i> اعرض لي الحل بالتفصيل</button>
+        <div class="aif-solution" id="${solveId}"></div>
       </div>`;
   }
   return `
     <div class="aif-card miss">
       <div class="aif-title"><i class="fas fa-magnifying-glass-minus"></i> السؤال ليس موجوداً ضمن ملفات المنصة</div>
       <p class="aif-note">بحثت في كل ملفات دورتك ولم أجد نفس السؤال بنفس الأرقام والمعطيات. وهذا حله بالتفصيل 👇</p>
-      ${ans}
-      <div class="aif-solution">${sol || 'تعذّر توليد الحل، حاول مرة ثانية.'}</div>
+      <div class="aif-solution" id="${solveId}"></div>
     </div>`;
 }
+
+const _aiSolveCache = {};
+async function aiLoadSolution(id){
+  const box = document.getElementById(id);
+  const btn = document.getElementById(id + 'Btn');
+  if(!box) return;
+  if(btn) btn.style.display = 'none';
+  if(_aiSolveCache[id]){ box.innerHTML = _aiSolveCache[id]; return; }
+  const f = AI.lastFind && AI.lastFind.id === id ? AI.lastFind : null;
+  if(!f){ box.innerHTML = '<p class="aif-note">أعد البحث لعرض الحل.</p>'; return; }
+  box.innerHTML = '<div class="aif-solving"><i class="fas fa-spinner fa-spin"></i> العبقري يكتب الحل خطوة بخطوة...</div>';
+  AI.bodyEl.scrollTop = AI.bodyEl.scrollHeight;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 70000);
+  try{
+    const r = await sb.auth.getSession();
+    const token = r && r.data && r.data.session ? r.data.session.access_token : '';
+    const res = await fetch(getAIUrl(), {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': (typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : '') },
+      body: JSON.stringify({ mode: 'solve_question', question: f.question, image: f.image, mime: f.mime })
+    });
+    let j = null; try{ j = await res.json(); }catch(e){}
+    if(!res.ok || !j || j.error) throw new Error((j && j.error) || 'تعذّر كتابة الحل');
+    const html = (j.answer ? `<div class="aif-answer"><i class="fas fa-circle-check"></i> الإجابة: <b>${aiEsc(j.answer)}</b></div>` : '') +
+      `<div>${aiFormat(j.solution || '')}</div>`;
+    _aiSolveCache[id] = html;
+    box.innerHTML = html;
+    AI.history.push({ role: 'assistant', content: 'الحل: ' + (j.answer || '') + '\n' + String(j.solution || '').slice(0, 1500) });
+    if(AI.history.length > 30) AI.history = AI.history.slice(-30);
+  }catch(e){
+    box.innerHTML = `<div class="aif-note">⚠️ ${e && e.name === 'AbortError' ? 'تأخر الحل' : aiEsc(e.message || 'تعذّر كتابة الحل')} — <button class="aif-retry" onclick="aiLoadSolution('${id}')">حاول مرة ثانية</button></div>`;
+  }finally{
+    clearTimeout(t);
+    AI.bodyEl.scrollTop = AI.bodyEl.scrollHeight;
+  }
+}
+window.aiLoadSolution = aiLoadSolution;
 
 window.aiOpenFilePage = (fileId, page) => {
   const f = (DB.files || []).find(x => x.id === fileId);
