@@ -61,17 +61,33 @@ async function pushMyXpNow(){
 
   _xpSyncing = (async () => {
     const s = myStats();
+    /* ⭐ لا ننقص النقاط المحفوظة أبداً (لو الجهاز ما حمّل كل التقدم لا نكتب رقم أقل) */
+    const cu = currentUserObj;
+    const upd = {
+      xp_points: Math.max(s.xp, Number(cu.xp_points) || 0),
+      focus_sessions: Math.max(s.sessions, Number(cu.focus_sessions) || 0),
+      completed_files: Math.max(s.completed, Number(cu.completed_files) || 0),
+      pages_read: Math.max(s.pages, Number(cu.pages_read) || 0)
+    };
+    /* ⭐ الطريقة الأساسية: السيرفر يحسب النقاط من التقدم الفعلي ويحفظها */
+    try{ if(typeof pushUserDataToDB === 'function') await pushUserDataToDB(); }catch(e){}
+    try{
+      const rr = await sb.rpc('sync_my_xp');
+      if(!rr.error){
+        if(typeof rr.data === 'number') upd.xp_points = Math.max(upd.xp_points, rr.data);
+        Object.assign(currentUserObj, upd);
+        return;
+      }
+    }catch(e){}
+    /* احتياطي (لو دوال السيرفر غير مثبتة) */
     try{
       const r = await sbSafeWrite(
         p => sb.from('profiles').update(p).eq('id', currentUserObj.id),
-        { xp_points: s.xp, focus_sessions: s.sessions, completed_files: s.completed, pages_read: s.pages }
+        upd
       );
       if(r && r.error) console.warn('XP sync failed:', r.error.message);
       else {
-        currentUserObj.xp_points = s.xp;
-        currentUserObj.focus_sessions = s.sessions;
-        currentUserObj.completed_files = s.completed;
-        currentUserObj.pages_read = s.pages;
+        Object.assign(currentUserObj, upd);
       }
     }catch(e){ console.warn('XP sync error:', e); }
     try{ if(typeof pushUserDataToDB === 'function') pushUserDataToDB(); }catch(e){}
@@ -103,6 +119,16 @@ let _lbLoading = false;
 let _lbAutoTimer = null;
 
 async function fetchLeaderboardRows(){
+  /* ⭐ الأفضل: حساب موحّد في السيرفر (نفس النتيجة لكل الطلاب) */
+  try{
+    const rr = await sb.rpc('get_leaderboard');
+    if(!rr.error && Array.isArray(rr.data)){
+      return rr.data.map(r => ({
+        id: r.id, name: r.name, avatar_url: r.avatar_url, status: r.status || 'approved',
+        xp_points: r.xp, pages_read: r.pages, completed_files: r.completed, focus_sessions: r.sessions, created_at: r.created_at
+      }));
+    }
+  }catch(e){}
   const cols = 'id, name, avatar_url, role, status, xp_points, focus_sessions, completed_files, pages_read, created_at';
   let r = await sb.from('profiles').select(cols).not('role', 'in', '(admin,owner)');
   if(r.error){
@@ -156,12 +182,8 @@ async function renderLeaderboard(){
     (b.xp - a.xp) || (b.completed - a.completed) || (b.pages - a.pages) ||
     (a.created - b.created) || String(a.id).localeCompare(String(b.id)));
 
-  /* المتساوون في كل شيء ياخذون نفس المركز */
-  let rank = 0, prev = null;
-  users.forEach((u, i) => {
-    if(!prev || u.xp !== prev.xp || u.completed !== prev.completed || u.pages !== prev.pages) rank = i + 1;
-    u.rank = rank; prev = u;
-  });
+  /* ترتيب متسلسل واضح: 1، 2، 3... */
+  users.forEach((u, i) => { u.rank = i + 1; });
 
   if(!users.length){
     podiumBox.innerHTML = '';
@@ -201,13 +223,15 @@ async function renderLeaderboard(){
   if(top3[2]) ordered.push(podiumCard(top3[2]));
   podiumBox.innerHTML = ordered.join('');
 
+  renderLbToolbar(users.length);
   listBox.innerHTML = users.map(u => {
     const r = u.rank;
     const av = avatarStyleFor(u);
     const isMe = currentUserObj && u.id === currentUserObj.id;
-    const rankCls = r === 1 ? 'g1' : r === 2 ? 'g2' : r === 3 ? 'g3' : '';
-    const badgeCls = r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
-    const badgeTxt = r === 1 ? '🥇 ذهبي' : r === 2 ? '🥈 فضي' : r === 3 ? '🥉 برونزي' : 'مشارك';
+    const t = lbTier(r, u.xp);
+    const rankCls = t.rankCls;
+    const badgeCls = t.cls;
+    const badgeTxt = t.txt;
     return `<div class="lb-row ${isMe ? 'me' : ''}" ${isMe ? 'id="lbMeRow"' : ''}>
       <div class="lb-rank-num ${rankCls}">${r}</div>
       <div class="lb-user-cell">
@@ -229,9 +253,40 @@ async function renderLeaderboard(){
   _lbAutoTimer = setTimeout(() => {
     const v = document.getElementById('view-leaderboard');
     if(v && v.classList.contains('active') && !document.hidden) renderLeaderboard();
-  }, 30000);
+  }, 60000);
 }
 window.renderLeaderboard = renderLeaderboard;
+
+/* ⭐ شارة لكل مركز (بدل «مشارك» للجميع) */
+function lbTier(rank, xp){
+  if(rank === 1) return { cls: 'gold', rankCls: 'g1', txt: '🥇 ذهبي' };
+  if(rank === 2) return { cls: 'silver', rankCls: 'g2', txt: '🥈 فضي' };
+  if(rank === 3) return { cls: 'bronze', rankCls: 'g3', txt: '🥉 برونزي' };
+  if(rank <= 10) return { cls: 'tier-top10', rankCls: 'r-top10', txt: '⭐ نخبة العشرة' };
+  if(rank <= 25) return { cls: 'tier-top25', rankCls: 'r-top25', txt: '🔥 متميّز' };
+  if(xp >= 3000) return { cls: 'tier-lvl4', rankCls: '', txt: '🧠 عبقري' };
+  if(xp >= 1000) return { cls: 'tier-lvl3', rankCls: '', txt: '🚀 متقدّم' };
+  if(xp >= 200)  return { cls: 'tier-lvl2', rankCls: '', txt: '📘 مجتهد' };
+  return { cls: 'tier-lvl1', rankCls: '', txt: '🌱 مبتدئ' };
+}
+
+let _lbUpdatedAt = 0;
+function renderLbToolbar(count){
+  const list = document.getElementById('lbList');
+  if(!list) return;
+  let bar = document.getElementById('lbToolbar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'lbToolbar';
+    bar.className = 'lb-toolbar';
+    list.parentNode.insertBefore(bar, list);
+  }
+  _lbUpdatedAt = Date.now();
+  bar.innerHTML = `
+    <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
+    <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
+    <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>`;
+}
 
 /* ⭐ بطاقة «كيف تُحسب النقاط» */
 function renderXpRulesCard(){
