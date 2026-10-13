@@ -56,7 +56,12 @@ function beep(){
 }
 
 function dayKey(d){ const dt = d || new Date(); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); }
-function fmtTime(s){ const m = Math.floor(Math.max(0,s)/60), ss = Math.max(0,s)%60; return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0'); }
+function fmtTime(s){
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  if(h > 0) return h + ':' + String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+}
 
 function openModal({title, text, bodyHTML, okText, onOk, danger}){
   const m = $('#modal');
@@ -118,6 +123,33 @@ async function sbSafeWrite(run, payload){
   return r;
 }
 window.sbSafeWrite = sbSafeWrite;
+
+/* ⭐ العلامة المائية على الملفات: رقم الجوال (وليس الإيميل) */
+function watermarkText(){
+  const u = (typeof currentUserObj !== 'undefined' && currentUserObj) ? currentUserObj : null;
+  if(!u) return '';
+  let phone = String(u.phone || '').replace(/\D/g, '');
+  if(!phone){
+    try{ const meta = u.user_data && u.user_data.phone; if(meta) phone = String(meta).replace(/\D/g, ''); }catch(e){}
+  }
+  if(phone) return phone;
+  return u.name || '';
+}
+window.watermarkText = watermarkText;
+
+/* مسح localStorage مع الإبقاء على مفاتيح الجهاز (للحماية: جهاز ↔ حساب) */
+function clearLocalStoragePreserve(){
+  try{
+    const keep = {};
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && (k.startsWith('abdq_device') || k.startsWith('qz_done_') || k.startsWith('sr_cred_'))) keep[k] = localStorage.getItem(k);
+    }
+    localStorage.clear();
+    Object.keys(keep).forEach(k => localStorage.setItem(k, keep[k]));
+  }catch(e){}
+}
+window.clearLocalStoragePreserve = clearLocalStoragePreserve;
 
 function debounce(fn, ms){
   let t = null;
