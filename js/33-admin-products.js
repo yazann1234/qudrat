@@ -149,6 +149,7 @@ window.adminNewProduct = () => {
   if(document.getElementById('pfEndDate')) document.getElementById('pfEndDate').value = '';
   if(document.getElementById('pfCourseCode')) document.getElementById('pfCourseCode').value = '';
   document.getElementById('pfFeatures').value = '';
+  if(document.getElementById('pfAbout')) document.getElementById('pfAbout').value = '';
   document.getElementById('pfPopular').checked = false;
   document.getElementById('pfActive').checked = true;
   pfSelectedIcon = 'fa-graduation-cap';
@@ -170,6 +171,10 @@ window.adminEditProduct = id => {
   document.getElementById('pfTitle').value = p.title || '';
   document.getElementById('pfSubtitle').value = p.subtitle || '';
   document.getElementById('pfDesc').value = p.description || '';
+  if(document.getElementById('pfAbout')){
+    const linked = (typeof CS !== 'undefined' ? CS.courses : []).find(c => c.code === (p.course_code || ('auto_' + p.id)));
+    document.getElementById('pfAbout').value = p.about || (linked && linked.about) || '';
+  }
   fillPriceInputs(getProductPrices(p));
   document.getElementById('pfCurrency').value = p.currency || 'ر.س';
   if(document.getElementById('pfEndDate')) document.getElementById('pfEndDate').value = p.subscription_end_date ? String(p.subscription_end_date).slice(0, 10) : '';
@@ -283,6 +288,7 @@ window.clearProductImage = function(){
     const title       = document.getElementById('pfTitle').value.trim();
     const subtitle    = document.getElementById('pfSubtitle').value.trim();
     const description = document.getElementById('pfDesc').value.trim();
+    const about       = document.getElementById('pfAbout') ? document.getElementById('pfAbout').value.trim() : '';
     const prices      = readPriceInputs();
     const priceVals   = Object.values(prices);
     const price       = priceVals.length ? Math.min(...priceVals) : 0;
@@ -342,7 +348,7 @@ window.clearProductImage = function(){
     }
 
     const payload = {
-      title, subtitle, description, price, currency,
+      title, subtitle, description, about, price, currency,
       prices,
       subscription_end_date: endDate,
       icon: pfSelectedIcon, color: pfSelectedColor,
