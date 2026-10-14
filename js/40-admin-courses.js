@@ -67,6 +67,8 @@ window.editAdminCourse = (id) => {
       ${c ? '' : acsField('acsCode', 'كود الدورة (إنجليزي بدون مسافات) *', '', 'text', 'dir="ltr" placeholder="computerized"')}
       <div class="form-group" style="margin-bottom:10px"><label>الوصف</label>
         <textarea id="acsDesc" style="width:100%;min-height:60px;font-family:inherit;font-size:.86rem;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text)">${escapeHtml(c ? (c.description || '') : '')}</textarea></div>
+      <div class="form-group" style="margin-bottom:10px"><label>نبذة الدورة <small style="color:var(--muted);font-weight:600">(كل نقطة في سطر — تظهر للطلاب في المتجر)</small></label>
+        <textarea id="acsAbout" style="width:100%;min-height:150px;font-family:inherit;font-size:.86rem;line-height:1.8;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text)" placeholder="140 قسم كمي تنزل بالتدريج&#10;يوجد لها مقاطع شرح">${escapeHtml(c ? (c.about || '') : '')}</textarea></div>
       <label style="font-weight:800;font-size:.84rem">الأسعار لكل مدة</label>
       <div class="price-grid" style="margin:8px 0 12px">
         ${ACS_DURS.map(m => `
@@ -89,6 +91,7 @@ window.editAdminCourse = (id) => {
       const payload = {
         name,
         description: (document.getElementById('acsDesc').value || '').trim(),
+        about: (document.getElementById('acsAbout').value || '').trim(),
         prices: newPrices,
         subscription_end_date: document.getElementById('acsEnd').value || null,
         color: document.getElementById('acsColor').value || '#5b6cff',
@@ -111,7 +114,7 @@ window.editAdminCourse = (id) => {
       if(c && c.code){
         try{
           await sbSafeWrite(p => sb.from('products').update(p).eq('course_code', c.code),
-            { prices: newPrices, price: Math.min(...Object.values(newPrices)), subscription_end_date: payload.subscription_end_date });
+            { prices: newPrices, price: Math.min(...Object.values(newPrices)), subscription_end_date: payload.subscription_end_date, about: payload.about });
         }catch(e){}
       }
       if(typeof logAdminAction === 'function') logAdminAction('update_settings', null, (c ? 'تعديل دورة: ' : 'إضافة دورة: ') + name, payload);
