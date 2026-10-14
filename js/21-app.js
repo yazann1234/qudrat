@@ -511,6 +511,11 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     applyTheme();
     bindEmergencyButtons();
 
+    /* 🔑 الطالب فتح رابط «نسيت كلمة المرور» → شاشة كلمة المرور الجديدة */
+    if(window.__AUTH_RECOVERY && typeof handlePasswordRecovery === 'function'){
+      try{ await handlePasswordRecovery(); }catch(e){}
+    }
+
     let s = null;
     try{ const r = await sb.auth.getSession(); s = r.data.session; }catch(e){}
     session = s;
