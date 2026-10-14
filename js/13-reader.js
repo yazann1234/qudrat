@@ -192,6 +192,8 @@ function teardownReader(closeUI){
   RS.renderQueue.forEach(t => { try{ t.cancel(); }catch(e){} });
   RS.renderQueue.clear();
   RS.pendingQueue = [];
+  if(RS.inflight) RS.inflight.clear();
+  RS.failCount = {};
   RS.rendered.clear();
   RS.inView.clear();
   RS.pageEls = [];
@@ -256,66 +258,52 @@ function computeOffsets(){
   });
 }
 
+/* ⭐ محرك العرض: طابور بأولوية للصفحة الحالية + صفحتين بالتوازي + إصلاح ذاتي.
+   (الخلل السابق: كانت ترجع RenderTask بدل Promise فيتوقف الطابور وتبقى الصفحات بيضاء) */
+RS.inflight = new Map();     /* num → Promise */
+RS.failCount = {};
+const RENDER_CONCURRENCY = 2;
+
 function requestRender(num){
+  if(!RS.doc || num < 1 || num > RS.numPages) return;
   const holder = RS.pageEls[num - 1];
   if(!holder || holder.dataset.done === '1') return;
-  if(RS.renderQueue.has(num)) return;
-  if(!RS.doc) return;
-  if(RS.pendingQueue.includes(num)) return;
-
+  if(RS.inflight.has(num) || RS.pendingQueue.includes(num)) return;
   RS.pendingQueue.push(num);
   processQueue();
 }
 
 function processQueue(){
-  if(RS.isProcessing) return;
-  RS.isProcessing = true;
-
-  const step = () => {
-    if(!RS.doc){ RS.isProcessing = false; return; }
-    if(!RS.pendingQueue.length){ RS.isProcessing = false; return; }
-
+  if(!RS.doc) return;
+  while(RS.inflight.size < RENDER_CONCURRENCY && RS.pendingQueue.length){
     RS.pendingQueue.sort((a, b) => Math.abs(a - RS.current) - Math.abs(b - RS.current));
     const num = RS.pendingQueue.shift();
-
-    renderPageNow(num).finally(() => {
-      if(RS.pendingQueue.length){
-        if(window.requestIdleCallback){
-          window.requestIdleCallback(step, { timeout: 100 });
-        } else {
-          setTimeout(step, 16);
-        }
-      } else {
-        RS.isProcessing = false;
-      }
-    });
-  };
-
-  step();
+    const holder = RS.pageEls[num - 1];
+    if(!holder || holder.dataset.done === '1' || RS.inflight.has(num)) continue;
+    renderPageNow(num);
+  }
 }
 
 function renderPageNow(num){
   const holder = RS.pageEls[num - 1];
-  if(!holder || holder.dataset.done === '1') return Promise.resolve();
-  if(RS.renderQueue.has(num)) return RS.renderQueue.get(num);
-  if(!RS.doc) return Promise.resolve();
+  if(!holder || holder.dataset.done === '1' || !RS.doc) return Promise.resolve();
+  if(RS.inflight.has(num)) return RS.inflight.get(num);
 
+  const token = RS.token;
+  const doc = RS.doc;
   const promise = (async () => {
-    const token = RS.token;
+    let page = null;
     try{
-      const page = await RS.doc.getPage(num);
-      if(token !== RS.token) return;
-      if(holder.dataset.done === '1') return;
+      page = await doc.getPage(num);
+      if(token !== RS.token || holder.dataset.done === '1') return;
 
       const cssW = pageWidth();
       const scale = cssW / RS.pageW;
-
       let dprCap = 1.6;
       if(RS.numPages > 300) dprCap = 1.0;
       else if(RS.numPages > 150) dprCap = 1.15;
       else if(RS.numPages > 60) dprCap = 1.35;
       const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-
       const vp = page.getViewport({ scale: scale * dpr });
 
       const canvas = document.createElement('canvas');
@@ -323,35 +311,36 @@ function renderPageNow(num){
       canvas.height = Math.max(1, Math.floor(vp.height));
       canvas.style.width = '100%';
       canvas.style.height = '100%';
-
-      const ctx = canvas.getContext('2d', {
-        alpha: false,
-        desynchronized: true,
-        willReadFrequently: false
-      });
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const task = page.render({ canvasContext: ctx, viewport: vp });
       RS.renderQueue.set(num, task);
-
       await task.promise;
-      RS.renderQueue.delete(num);
-
       if(token !== RS.token) return;
 
       const inner = holder.querySelector('.pg-inner');
-      if(inner){
-        inner.innerHTML = '';
-        inner.appendChild(canvas);
-      }
+      if(inner){ inner.innerHTML = ''; inner.appendChild(canvas); }
       holder.dataset.done = '1';
-      try{ page.cleanup(); }catch(e){}
+      delete RS.failCount[num];
     }catch(e){
-      RS.renderQueue.delete(num);
       if(e && (e.name === 'RenderingCancelledException' || /cancel/i.test(e.message || ''))) return;
       console.warn('render error', num, e);
+      RS.failCount[num] = (RS.failCount[num] || 0) + 1;
+      /* إعادة المحاولة تلقائياً (3 مرات) */
+      if(RS.failCount[num] <= 3 && token === RS.token){
+        setTimeout(() => { if(RS.inView.has(num) || Math.abs(num - RS.current) <= 2) requestRender(num); }, 600 * RS.failCount[num]);
+      }
+    }finally{
+      RS.renderQueue.delete(num);
+      RS.inflight.delete(num);
+      try{ if(page) page.cleanup(); }catch(e){}
+      if(token === RS.token) setTimeout(processQueue, 0);
     }
   })();
 
+  RS.inflight.set(num, promise);
   return promise;
 }
 
@@ -364,6 +353,16 @@ function cancelRender(num){
   const idx = RS.pendingQueue.indexOf(num);
   if(idx > -1) RS.pendingQueue.splice(idx, 1);
 }
+
+/* 🩺 إصلاح ذاتي: أي صفحة ظاهرة وما انرسمت → نطلب رسمها */
+setInterval(() => {
+  if(!RS.doc || !RS.pageEls.length || document.hidden) return;
+  const r = document.getElementById('reader');
+  if(!r || !r.classList.contains('open')) return;
+  const set = new Set(RS.inView);
+  for(let d = -2; d <= 2; d++) set.add(RS.current + d);
+  set.forEach(n => requestRender(n));
+}, 1200);
 
 function cleanupFarPages(){
   if(!RS.file) return;
@@ -863,6 +862,8 @@ function setZoom(z){
   if(z === RS.zoom){ updateZoomLabel(); return; }
   RS.zoom = z;
   const cur = RS.current;
+  RS.token++;   /* أي رسم قديم بالمقاس السابق يُلغى */
+  if(RS.inflight) RS.inflight.clear();
 
   RS.renderQueue.forEach(t => { try{ t.cancel(); }catch(e){} });
   RS.renderQueue.clear();
