@@ -179,7 +179,6 @@ async function renderLeaderboard(){
         <span><i class="fas fa-book"></i> ${u.completed} ملف</span>
         <span><i class="fas fa-stopwatch"></i> ${u.sessions} دقيقة</span>
       </div>
-      ${u.xp > 0 ? `<button class="lb-cert-podium" onclick="openCertificate('${u.id}')"><i class="fas fa-award"></i> الشهادة</button>` : ''}
     </div>`;
   }
   const ordered = [];
@@ -208,7 +207,6 @@ async function renderLeaderboard(){
       </div>
       <div class="lb-xp-cell">${u.xp.toLocaleString('en')}<small>XP</small></div>
       <div class="lb-badge-mini ${badgeCls}">${badgeTxt}</div>
-      ${r <= 3 && u.xp > 0 ? `<button class="lb-cert-btn ${isMe ? 'me' : ''}" onclick="openCertificate('${u.id}')" title="شهادة الشكر والتقدير"><i class="fas fa-award"></i>${isMe ? ' شهادتي' : ''}</button>` : ''}
       ${typeof isPrivileged === 'function' && isPrivileged() ? `<button class="lb-cert-btn" onclick="resetUserPoints('${u.id}','${escapeHtml(u.name).replace(/'/g, '')}')" title="تصفير نقاط هذا الطالب" style="color:var(--danger)"><i class="fas fa-eraser"></i></button>` : ''}
     </div>`;
   }).join('');
@@ -252,9 +250,10 @@ function renderLbToolbar(count){
   bar.innerHTML = `
     <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
     <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
-    ${currentUserObj && (window._lbUsers || []).some(x => x.id === currentUserObj.id && x.rank <= 3 && x.xp > 0) ? `<button class="btn btn-primary btn-sm" onclick="openCertificate('${currentUserObj.id}')"><i class="fas fa-award"></i> شهادتي</button>` : ''}
+    ${typeof isOwner === 'function' && isOwner() ? '<button class="btn btn-primary btn-sm" onclick="openMonthlyAwards()"><i class="fas fa-award"></i> إرسال شهادات الشهر</button>' : ''}
     <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>
     ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-danger btn-sm" onclick="resetAllPoints()"><i class="fas fa-trash-can"></i> تصفير كل النقاط</button>' : ''}`;
+  try{ if(typeof renderHallOfFame === 'function') renderHallOfFame(); }catch(e){}
 }
 
 /* ⭐ بطاقة «كيف تُحسب النقاط» */
