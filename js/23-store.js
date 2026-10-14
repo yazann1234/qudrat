@@ -92,35 +92,50 @@ window.startPurchase = function(productId){
 /* ============================================================
    نافذة الشراء
 ============================================================ */
+/* توافق قديم: أي شراء مباشر يمر الحين عبر السلة */
 function openPurchaseModalInline(course, months, price){
   if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
-  currentPurchaseData = { course, months: parseInt(months, 10) || 1, price: Number(price) || 0 };
-  renderPurchaseModal();
-  const modal = document.getElementById('purchaseModal');
-  if(modal) modal.classList.add('open');
+  if(!course) return;
+  cartAdd(course.id, months);
+  openCart();
 }
 window.openPurchaseModalInline = openPurchaseModalInline;
 
 function renderPurchaseModal(){
   const d = currentPurchaseData;
-  if(!d) return;
+  if(!d || !d.cart) return;
 
-  const durationTxt = d.course.subscription_end_date
-    ? 'اشتراك حتى ' + (typeof formatEndDate === 'function' ? formatEndDate(d.course.subscription_end_date) : d.course.subscription_end_date)
-    : 'اشتراك ' + (typeof monthsLabel === 'function' ? monthsLabel(d.months) : d.months + ' شهر');
-
+  /* ⭐ محتويات السلة + الخصم + الإجمالي */
   const pp = document.getElementById('purchaseProduct');
   if(pp){
+    pp.classList.add('pp-cart');
     pp.innerHTML = `
-      <div class="pp-icon" style="background:color-mix(in srgb,${d.course.color || '#5b6cff'} 15%,transparent);color:${d.course.color || '#5b6cff'}">
-        <i class="fas ${d.course.icon || 'fa-graduation-cap'}"></i>
+      <div class="pp-lines">
+        ${d.lines.map(l => {
+          const durTxt = l.fixed_end ? 'اشتراك حتى ' + formatEndDate(l.fixed_end) : 'اشتراك ' + monthsLabel(l.months);
+          const col = l.course.color || '#5b6cff';
+          return `<div class="pp-line">
+            <div class="pp-icon" style="background:color-mix(in srgb,${col} 15%,transparent);color:${col}"><i class="fas ${l.course.icon || 'fa-graduation-cap'}"></i></div>
+            <div class="pp-info"><b>${escapeHtml(l.course.name)}</b><small>${escapeHtml(durTxt)}</small></div>
+            <div class="pp-price"><b>${l.price}</b> <span>${sarIcon()}</span></div>
+          </div>`;
+        }).join('')}
       </div>
-      <div class="pp-info">
-        <b>${escapeHtml(d.course.name)}</b>
-        <small>${escapeHtml(durationTxt)}</small>
+      <div class="pp-totals">
+        ${d.discount > 0 ? `<div><span>المجموع</span><b>${d.subtotal} ${sarIcon()}</b></div>
+        <div class="disc"><span>خصم (${escapeHtml(d.coupon || '')})</span><b>− ${d.discount} ${sarIcon()}</b></div>` : ''}
+        <div class="total"><span>المبلغ المطلوب تحويله</span><b>${d.total} ${sarIcon()}</b></div>
       </div>
-      <div class="pp-price"><b>${d.price}</b> <span>${sarIcon()}</span></div>
     `;
+  }
+
+  /* ⭐ التراخيص الموثوقة داخل صفحة الشراء */
+  const box = document.querySelector('#purchaseModal .purchase-box');
+  if(box && !document.getElementById('purchaseTrust') && typeof trustBadgeHTML === 'function'){
+    const w = document.createElement('div');
+    w.id = 'purchaseTrust';
+    w.innerHTML = trustBadgeHTML();
+    box.appendChild(w);
   }
 
   const nameEl = document.getElementById('puName'); if(nameEl) nameEl.textContent = currentUserObj.name || '—';
@@ -230,37 +245,58 @@ async function submitPurchase(){
   const cfg = getStoreConfig();
   const pass = getActualPassword() || '(غير متاحة)';
   const d = currentPurchaseData;
-  const durTxt = d.course.subscription_end_date
-    ? 'حتى ' + (typeof formatEndDate === 'function' ? formatEndDate(d.course.subscription_end_date) : d.course.subscription_end_date)
-    : (typeof monthsLabel === 'function' ? monthsLabel(d.months) : d.months + ' شهر');
+
+  /* ⭐ السيرفر يعيد حساب الأسعار + يستهلك كود الخصم + يحفظ الطلب */
+  let res;
+  try{
+    const { data, error } = await sb.rpc('submit_cart', {
+      p_items: d.items, p_coupon: d.coupon || null,
+      p_receipt_url: uploaded.url, p_receipt_path: uploaded.path
+    });
+    if(error) throw error;
+    res = data;
+  }catch(e){
+    const msg = String(e.message || '');
+    const nice = /coupon_used_up/.test(msg) ? 'كود الخصم انتهى عدد استخداماته — أزله من السلة'
+      : /coupon_already_used/.test(msg) ? 'استخدمت كود الخصم هذا من قبل'
+      : /coupon_expired/.test(msg) ? 'كود الخصم منتهي الصلاحية'
+      : /coupon_invalid/.test(msg) ? 'كود الخصم غير صحيح'
+      : /course_not_found|price_not_found/.test(msg) ? 'إحدى الدورات لم تعد متاحة — حدّث السلة'
+      : 'تعذّر إرسال الطلب: ' + msg;
+    toast(nice, 'err');
+    if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم'; }
+    return;
+  }
+
+  const lines = (res.lines || []).map(l => {
+    const dur = l.fixed_end ? 'حتى ' + formatEndDate(l.fixed_end) : monthsLabel(l.months);
+    return `• *${l.name}* — ${dur} (${Number(l.price)} ريال)`;
+  }).join('\n');
 
   /* رسالة واتساب نصية — لا تدعم الصور، لذلك نكتب «ريال» */
   const msg =
     `السلام عليكم 🌹\n` +
-    `طلب اشتراك: *${d.course.name}* — *${durTxt}* (${d.price} ريال)\n\n` +
+    `طلب اشتراك:\n${lines}\n` +
+    (Number(res.discount) > 0 ? `🎟️ كود الخصم: ${res.coupon} (− ${Number(res.discount)} ريال)\n` : '') +
+    `💰 الإجمالي: *${Number(res.total)} ريال*
+\n` +
     `👤 ${currentUserObj.name || '—'}\n` +
     `📧 ${currentUserObj.email || '—'}\n` +
-    `🔑 ${pass}\n\n` +
+    `🔑 ${pass}
+\n` +
     `🧾 الإيصال: ${uploaded.url}`;
 
-  /* ⭐ احفظ تفاصيل الطلب كاملة (الدورة + المدة + السعر) */
-  const nowIso = new Date().toISOString();
-  const upd = {
-    purchase_submitted: true,
-    purchase_product: (d.course.code || d.course.id) + '_' + d.months + 'm',
-    purchase_course_id: d.course.id,
-    purchase_months: d.months,
-    purchase_price: d.price,
-    purchase_submitted_at: nowIso,
-    purchase_receipt_url: uploaded.url,
-    purchase_receipt_path: uploaded.path
-  };
   try{
+    const nowIso = new Date().toISOString();
     localStorage.setItem('purchase_submitted_' + currentUserObj.id, nowIso);
-    const r = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', currentUserObj.id), upd);
-    if(r && r.error) console.warn('purchase save failed:', r.error.message);
-    Object.assign(currentUserObj, upd);
-  }catch(e){ console.warn('purchase save failed', e); }
+    Object.assign(currentUserObj, {
+      purchase_submitted: true, purchase_items: res.lines, purchase_price: res.total,
+      purchase_subtotal: res.subtotal, purchase_discount: res.discount, purchase_coupon: res.coupon,
+      purchase_course_id: res.lines[0] && res.lines[0].course_id, purchase_months: res.lines[0] && res.lines[0].months,
+      purchase_submitted_at: nowIso, purchase_receipt_url: uploaded.url, purchase_receipt_path: uploaded.path
+    });
+  }catch(e){}
+  try{ if(typeof cartClearAfterSubmit === 'function') cartClearAfterSubmit(); }catch(e){}
 
   openWhatsApp('https://wa.me/' + cfg.supportWhatsApp + '?text=' + encodeURIComponent(msg));
 
