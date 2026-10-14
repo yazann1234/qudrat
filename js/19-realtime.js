@@ -172,7 +172,7 @@ function adminNoticeChanges(prev, u){
   if(!u) return;
   if(u.purchase_submitted && (!prev || !prev.purchase_submitted)){
     const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
-    toast(`🛒 طلب شراء جديد من ${u.name || u.email}${req && req.course ? ' — ' + req.course.name : ''}`, 'ok');
+    toast(`🛒 طلب شراء جديد من ${u.name || u.email}${req && req.items ? ' — ' + req.items.map(it => it.course.name).join(' + ') : ''}`, 'ok');
     try{ if(typeof beep === 'function') beep(); }catch(e){}
   } else if(!prev){
     toast(`👤 مستخدم جديد سجّل: ${u.name || u.email}`, 'ok');
