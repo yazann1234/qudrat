@@ -207,92 +207,239 @@ async function doAdminLogin(){
 }
 window.doAdminLogin = doAdminLogin;
 
-/* ================== نسيت كلمة المرور ================== */
-function doForgotPassword(){
-  openModal({
-    title: 'استعادة كلمة المرور',
-    text: 'أدخل بريدك المسجّل وسنرسل رابطاً لإعادة التعيين.',
-    bodyHTML: `
-      <div class="form-group">
-        <label>البريد الإلكتروني</label>
-        <input type="email" id="fpEmail" placeholder="example@email.com"
-          style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+/* ============================================================
+   🔑 نسيت كلمة المرور — تجربة كاملة وسلسة
+   1) الطالب يكتب بريده → يوصله رابط (يشتغل من أي تبويب/جهاز)
+   2) يضغط الرابط → تطلع له شاشة «كلمة مرور جديدة» مباشرة
+   3) يحفظ → يدخل حسابه فوراً
+   + رابط منتهي؟ يطلب رابط جديد من نفس الشاشة
+   + ما وصله الإيميل؟ زر الدعم واتساب
+============================================================ */
+let _pwCooldownUntil = 0;
+
+function pwOverlay(){
+  let o = document.getElementById('pwReset');
+  if(!o){
+    o = document.createElement('div');
+    o.id = 'pwReset';
+    o.className = 'pw-overlay';
+    document.body.appendChild(o);
+  }
+  o.classList.add('open');
+  return o;
+}
+function pwClose(){
+  const o = document.getElementById('pwReset');
+  if(o) o.classList.remove('open');
+}
+window.pwClose = pwClose;
+
+function pwSupportLink(){
+  const num = (typeof getStoreConfig === 'function' ? getStoreConfig().supportWhatsApp : '') || '966538524983';
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent('السلام عليكم، نسيت كلمة المرور وما وصلني رابط الاستعادة 🙏');
+}
+
+function pwFriendlyError(msg){
+  msg = String(msg || '');
+  if(/rate limit|too many|only request this after|security purposes/i.test(msg)){
+    const m = /(\d+)\s*second/i.exec(msg);
+    return m ? `انتظر ${m[1]} ثانية قبل طلب رابط جديد` : 'طلبت روابط كثيرة — انتظر دقائق وحاول مرة ثانية';
+  }
+  if(/network|fetch/i.test(msg)) return 'تأكد من اتصالك بالإنترنت وحاول مرة ثانية';
+  if(/same.*password|different from the old/i.test(msg)) return 'كلمة المرور الجديدة لازم تختلف عن القديمة';
+  if(/weak|at least|short/i.test(msg)) return 'كلمة المرور ضعيفة — خلها 8 أحرف أو أكثر';
+  if(/expired|invalid|otp/i.test(msg)) return 'الرابط منتهي أو مستخدم — اطلب رابط جديد';
+  return msg || 'حدث خطأ غير متوقع';
+}
+
+/* ---------- الخطوة 1: طلب الرابط ---------- */
+function doForgotPassword(prefill){
+  const o = pwOverlay();
+  const email = (typeof prefill === 'string' && prefill) || ((document.getElementById('loginEmail') || {}).value || '').trim();
+  o.innerHTML = `
+    <div class="pw-box">
+      <button class="pw-x" onclick="pwClose()" title="إغلاق"><i class="fas fa-xmark"></i></button>
+      <div class="pw-ic"><i class="fas fa-key"></i></div>
+      <h2>نسيت كلمة المرور؟</h2>
+      <p>اكتب بريدك المسجّل ونرسل لك رابط تعيّن فيه كلمة مرور جديدة خلال ثواني.</p>
+      <div class="pw-field">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="pwEmail" dir="ltr" placeholder="example@email.com" autocomplete="email" value="${escapeHtml(email)}">
       </div>
-      <div id="fpStatus" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:.82rem;text-align:center"></div>
-    `,
-    okText: 'إرسال',
-    onOk: async () => {
-      const emailEl = document.getElementById('fpEmail');
-      const email = (emailEl ? emailEl.value : '').trim().toLowerCase();
-      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صحيح', 'err'); return; }
-      const { error } = await sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
-      });
-      if(error){ toast('فشل: ' + error.message, 'err'); return; }
-      toast('✓ تم إرسال الرابط', 'ok');
-    }
-  });
+      <div class="pw-msg" id="pwMsg"></div>
+      <button class="btn btn-primary pw-main" id="pwSend"><i class="fas fa-paper-plane"></i> أرسل رابط الاستعادة</button>
+      <button class="pw-link" onclick="pwClose()"><i class="fas fa-arrow-right"></i> رجوع لتسجيل الدخول</button>
+    </div>`;
+  const inp = document.getElementById('pwEmail');
+  setTimeout(() => { try{ inp.focus(); }catch(e){} }, 80);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') pwSendLink(); });
+  document.getElementById('pwSend').addEventListener('click', pwSendLink);
 }
 window.doForgotPassword = doForgotPassword;
 
-/* ================== تعيين كلمة مرور جديدة ================== */
-let recoveryModalShown = false;
-function showRecoveryModal(){
-  if(recoveryModalShown) return;
-  recoveryModalShown = true;
+async function pwSendLink(){
+  const btn = document.getElementById('pwSend');
+  const msg = document.getElementById('pwMsg');
+  const email = ((document.getElementById('pwEmail') || {}).value || '').trim().toLowerCase();
+  const show = (t, ok) => { if(msg){ msg.className = 'pw-msg ' + (ok ? 'ok' : 'err'); msg.innerHTML = t; } };
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ show('<i class="fas fa-circle-exclamation"></i> اكتب بريد إلكتروني صحيح'); return; }
+  const left = Math.ceil((_pwCooldownUntil - Date.now()) / 1000);
+  if(left > 0){ show(`<i class="fas fa-hourglass-half"></i> انتظر ${left} ثانية قبل طلب رابط جديد`); return; }
+  if(btn.disabled) return;
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+  try{
+    const { error } = await sbRecovery.auth.resetPasswordForEmail(email, { redirectTo: RESET_REDIRECT });
+    if(error) throw error;
+    _pwCooldownUntil = Date.now() + 60000;
+    pwShowSent(email);
+  }catch(e){
+    show('<i class="fas fa-circle-exclamation"></i> ' + escapeHtml(pwFriendlyError(e.message)));
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> أرسل رابط الاستعادة';
+  }
+}
 
-  openModal({
-    title: 'تعيين كلمة مرور جديدة',
-    text: 'أدخل كلمة المرور الجديدة.',
-    bodyHTML: `
-      <div class="form-group" style="margin-bottom:12px">
-        <label>كلمة المرور الجديدة</label>
-        <div style="position:relative">
-          <input type="password" id="npPass" placeholder="8 أحرف على الأقل"
-            style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button type="button" onclick="togglePassVis('npPass',this)"
-            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:12px">
-        <label>تأكيد كلمة المرور</label>
-        <div style="position:relative">
-          <input type="password" id="npPass2" placeholder="أعد الكتابة"
-            style="width:100%;font-family:inherit;font-size:.9rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button type="button" onclick="togglePassVis('npPass2',this)"
-            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-      </div>
-    `,
-    okText: 'حفظ',
-    onOk: async () => {
-      const p1El = document.getElementById('npPass');
-      const p2El = document.getElementById('npPass2');
-      const p1 = p1El ? p1El.value : '';
-      const p2 = p2El ? p2El.value : '';
-      if(!p1 || p1.length < 8){
-        toast('كلمة المرور قصيرة', 'err');
-        recoveryModalShown = false;
-        setTimeout(showRecoveryModal, 100);
-        return;
-      }
-      if(p1 !== p2){
-        toast('غير متطابقتين', 'err');
-        recoveryModalShown = false;
-        setTimeout(showRecoveryModal, 100);
-        return;
-      }
-      const { error } = await sb.auth.updateUser({ password: p1 });
-      if(error){ toast(error.message, 'err'); return; }
-      toast('✓ تم تعيين كلمة المرور', 'ok');
-      recoveryModalShown = false;
-      try{ history.replaceState(null, '', window.location.pathname + '#home'); }catch(e){}
-    }
+function pwShowSent(email){
+  const o = pwOverlay();
+  o.innerHTML = `
+    <div class="pw-box">
+      <button class="pw-x" onclick="pwClose()" title="إغلاق"><i class="fas fa-xmark"></i></button>
+      <div class="pw-ic ok"><i class="fas fa-envelope-circle-check"></i></div>
+      <h2>تم إرسال الرابط ✉️</h2>
+      <p>أرسلنا رابط الاستعادة إلى<br><b dir="ltr">${escapeHtml(email)}</b></p>
+      <ul class="pw-tips">
+        <li><i class="fas fa-check"></i> افتح الإيميل واضغط على الرابط (صالح لمدة ساعة)</li>
+        <li><i class="fas fa-check"></i> ما لقيته؟ شيّك على مجلد <b>الرسائل غير المرغوبة (Spam)</b></li>
+        <li><i class="fas fa-check"></i> الرابط يشتغل من الجوال أو الكمبيوتر</li>
+      </ul>
+      <button class="btn btn-ghost pw-main" id="pwResend" disabled><i class="fas fa-rotate"></i> إعادة الإرسال <span id="pwCd">(60)</span></button>
+      <a class="pw-support" href="${pwSupportLink()}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> ما وصلني الإيميل — تواصل مع الدعم</a>
+      <button class="pw-link" onclick="pwClose()"><i class="fas fa-arrow-right"></i> رجوع لتسجيل الدخول</button>
+    </div>`;
+  const rb = document.getElementById('pwResend');
+  const t = setInterval(() => {
+    const left = Math.ceil((_pwCooldownUntil - Date.now()) / 1000);
+    const cd = document.getElementById('pwCd');
+    if(!cd){ clearInterval(t); return; }
+    if(left > 0){ cd.textContent = `(${left})`; }
+    else { clearInterval(t); cd.textContent = ''; rb.disabled = false; }
+  }, 1000);
+  rb.addEventListener('click', () => doForgotPassword(email));
+}
+
+/* ---------- الخطوة 2: الطالب فتح الرابط ---------- */
+async function handlePasswordRecovery(){
+  const r = window.__AUTH_RECOVERY;
+  if(!r) return;
+  window.__AUTH_RECOVERY = null;
+  window.__PW_RECOVERING = true;
+  const o = pwOverlay();
+  o.innerHTML = `<div class="pw-box"><div class="pw-ic"><i class="fas fa-spinner fa-spin"></i></div><h2>نتحقق من الرابط...</h2></div>`;
+  try{
+    if(r.error) throw new Error(r.error === 'no_token' ? 'invalid' : (r.desc || r.error));
+    let res;
+    if(r.access_token) res = await sb.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+    else if(r.code) res = await sb.auth.exchangeCodeForSession(r.code);
+    if(!res || res.error || !res.data || !res.data.session) throw new Error((res && res.error && res.error.message) || 'invalid');
+    session = res.data.session;
+    pwShowNewPassword(res.data.session.user && res.data.session.user.email);
+  }catch(e){
+    window.__PW_RECOVERING = false;
+    pwShowExpired();
+  }
+}
+window.handlePasswordRecovery = handlePasswordRecovery;
+
+function pwShowExpired(){
+  const o = pwOverlay();
+  o.innerHTML = `
+    <div class="pw-box">
+      <button class="pw-x" onclick="pwClose()" title="إغلاق"><i class="fas fa-xmark"></i></button>
+      <div class="pw-ic warn"><i class="fas fa-link-slash"></i></div>
+      <h2>الرابط منتهي أو مستخدم</h2>
+      <p>روابط الاستعادة تشتغل مرة وحدة ولمدة ساعة فقط. لا تشيل هم — اطلب رابط جديد الحين 👇</p>
+      <button class="btn btn-primary pw-main" onclick="doForgotPassword()"><i class="fas fa-paper-plane"></i> اطلب رابط جديد</button>
+      <a class="pw-support" href="${pwSupportLink()}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> تواصل مع الدعم</a>
+    </div>`;
+}
+
+function pwStrength(p){
+  let s = 0;
+  if(p.length >= 8) s++;
+  if(p.length >= 12) s++;
+  if(/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+  if(/\d/.test(p)) s++;
+  if(/[^A-Za-z0-9]/.test(p)) s++;
+  return Math.min(4, s);
+}
+
+function pwShowNewPassword(email){
+  const o = pwOverlay();
+  const eye = id => `<button type="button" class="pw-eye" onclick="togglePassVis('${id}',this)"><i class="fas fa-eye"></i></button>`;
+  o.innerHTML = `
+    <div class="pw-box">
+      <div class="pw-ic"><i class="fas fa-lock-open"></i></div>
+      <h2>كلمة مرور جديدة</h2>
+      <p>${email ? `للحساب <b dir="ltr">${escapeHtml(email)}</b><br>` : ''}اختر كلمة مرور قوية وسهلة تتذكرها.</p>
+      <div class="pw-field"><i class="fas fa-lock"></i><input type="password" id="pwNew1" dir="ltr" placeholder="كلمة المرور الجديدة" autocomplete="new-password">${eye('pwNew1')}</div>
+      <div class="pw-meter"><i id="pwMeter"></i></div>
+      <small class="pw-meter-txt" id="pwMeterTxt">8 أحرف على الأقل</small>
+      <div class="pw-field"><i class="fas fa-lock"></i><input type="password" id="pwNew2" dir="ltr" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password">${eye('pwNew2')}</div>
+      <div class="pw-msg" id="pwMsg"></div>
+      <button class="btn btn-primary pw-main" id="pwSave"><i class="fas fa-check"></i> حفظ كلمة المرور</button>
+    </div>`;
+  const p1 = document.getElementById('pwNew1'), p2 = document.getElementById('pwNew2');
+  const labels = ['ضعيفة جداً', 'ضعيفة', 'مقبولة', 'جيدة', 'قوية 💪'];
+  const colors = ['#ef4444', '#f97316', '#f59e0b', '#22c55e', '#16a34a'];
+  p1.addEventListener('input', () => {
+    const s = p1.value ? pwStrength(p1.value) : 0;
+    const m = document.getElementById('pwMeter');
+    m.style.width = p1.value ? ((s + 1) * 20) + '%' : '0';
+    m.style.background = colors[s];
+    const t = document.getElementById('pwMeterTxt');
+    t.textContent = !p1.value ? '8 أحرف على الأقل' : p1.value.length < 8 ? `باقي ${8 - p1.value.length} أحرف` : 'القوة: ' + labels[s];
+    t.style.color = p1.value.length < 8 ? 'var(--muted)' : colors[s];
   });
+  [p1, p2].forEach(el => el.addEventListener('keydown', e => { if(e.key === 'Enter') pwSaveNew(); }));
+  document.getElementById('pwSave').addEventListener('click', pwSaveNew);
+  setTimeout(() => { try{ p1.focus(); }catch(e){} }, 80);
+}
+
+async function pwSaveNew(){
+  const btn = document.getElementById('pwSave');
+  const msg = document.getElementById('pwMsg');
+  const a = (document.getElementById('pwNew1') || {}).value || '';
+  const b = (document.getElementById('pwNew2') || {}).value || '';
+  const show = t => { msg.className = 'pw-msg err'; msg.innerHTML = '<i class="fas fa-circle-exclamation"></i> ' + t; };
+  if(a.length < 8){ show('كلمة المرور لازم تكون 8 أحرف أو أكثر'); return; }
+  if(a !== b){ show('كلمتا المرور غير متطابقتين'); return; }
+  if(btn.disabled) return;
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+  try{
+    const { error } = await sb.auth.updateUser({ password: a });
+    if(error) throw error;
+    window.__PW_RECOVERING = false;
+    const o = pwOverlay();
+    o.innerHTML = `
+      <div class="pw-box">
+        <div class="pw-ic ok"><i class="fas fa-circle-check"></i></div>
+        <h2>تم تغيير كلمة المرور 🎉</h2>
+        <p>استخدم كلمة المرور الجديدة في المرات الجاية. أنت الحين داخل حسابك.</p>
+        <button class="btn btn-primary pw-main" id="pwEnter"><i class="fas fa-right-to-bracket"></i> ادخل للمنصة</button>
+      </div>`;
+    document.getElementById('pwEnter').addEventListener('click', () => {
+      pwClose();
+      try{ if(!window._appInitialized && typeof window.enterApp === 'function') window.enterApp(); }catch(e){}
+    });
+  }catch(e){
+    show(escapeHtml(pwFriendlyError(e.message)));
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> حفظ كلمة المرور';
+  }
+}
+
+/* توافق: الحدث القديم من Supabase */
+function showRecoveryModal(){
+  if(document.getElementById('pwReset') && document.getElementById('pwReset').classList.contains('open')) return;
+  pwShowNewPassword(session && session.user ? session.user.email : '');
 }
 window.showRecoveryModal = showRecoveryModal;
 
