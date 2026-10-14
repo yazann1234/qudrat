@@ -35,17 +35,19 @@ function srCanUse(){
 }
 
 /* ================== إنشاء ================== */
-async function srCreateRoom(){
+async function srCreateRoom(opts){
   if(!srCanUse() || SR.room) return;
-  const minutes = Math.min(180, Math.max(5, parseInt((srEl('srMinutes') || {}).value, 10) || 25));
+  if(!opts || opts instanceof Event) opts = {};
+  const schedule = opts.schedule || null;
+  const minutes = schedule ? schedule.focus : Math.min(180, Math.max(5, parseInt((srEl('srMinutes') || {}).value, 10) || 25));
   /* ⭐ الافتراضي «خاصة» — العامة فقط لو اختارها الطالب صراحةً */
   const privSel = document.querySelector('input[name="srPrivacy"]:checked');
-  const isPublic = privSel ? privSel.value === 'public' : !!(srEl('srPublic') && srEl('srPublic').checked);
+  const isPublic = typeof opts.isPublic === 'boolean' ? opts.isPublic : (privSel ? privSel.value === 'public' : !!(srEl('srPublic') && srEl('srPublic').checked));
   const btn = srEl('srCreateBtn'); if(btn) btn.disabled = true;
 
   let room = null, err = null;
   for(let i = 0; i < 4 && !room; i++){
-    const r = await sb.from('study_rooms').insert({
+    const row = {
       code: srCode(),
       host_id: currentUserObj.id,
       host_name: currentUserObj.name || 'طالب',
@@ -53,8 +55,16 @@ async function srCreateRoom(){
       is_public: isPublic,
       status: 'waiting',
       max_members: 10
-    }).select().single();
+    };
+    if(schedule){ row.schedule = schedule; row.phase_index = 0; }
+    const r = await sb.from('study_rooms').insert(row).select().single();
     if(r.error) err = r.error; else room = r.data;
+    if(err && /schedule|phase_index/.test(err.message || '')) break;
+  }
+  if(!room && err && /schedule|phase_index/.test(err.message || '')){
+    if(btn) btn.disabled = false;
+    toast('ميزة الجدول تحتاج تشغيل ملف supabase-update-8.sql', 'err');
+    return;
   }
   if(btn) btn.disabled = false;
   if(!room){ toast('تعذّر إنشاء الغرفة: ' + (err ? err.message : ''), 'err'); return; }
@@ -221,7 +231,13 @@ function srApplyRoom(n){
   const old = SR.room;
   SR.room = n;
   if(n.status === 'closed'){ toast('أُغلقت الغرفة', 'warn'); srCleanup(); return; }
-  if(old.status !== n.status || old.host_id !== n.host_id || old.ends_at !== n.ends_at){
+  if(old.status !== n.status || old.host_id !== n.host_id || old.ends_at !== n.ends_at || old.phase_index !== n.phase_index){
+    if(n.schedule && n.status === 'running' && old.status === 'running' && old.phase_index !== n.phase_index){
+      const p = schPhases(n.schedule)[n.phase_index || 0];
+      if(p) toast(p.type === 'break' ? `☕ بريك ${p.min} دقائق — ارتاح شوي` : `🔥 بدأت الجلسة ${p.n} — ركّز!`, 'ok');
+      try{ beep(); }catch(e){}
+    }
+    if(n.status === 'finished' && old.status === 'running' && n.schedule) toast('🎉 خلصتوا الجدول كامل — فخورين فيكم!', 'ok');
     if(n.status === 'running' && old.status !== 'running'){ toast('▶️ بدأت الجلسة الجماعية — بالتوفيق!', 'ok'); try{ beep(); }catch(e){} }
     if(n.status === 'paused' && old.status === 'running') toast('⏸️ أوقف المضيف الجلسة مؤقتاً', 'warn');
     srRender();
@@ -229,12 +245,23 @@ function srApplyRoom(n){
 }
 
 /* ================== الوقت ================== */
+/* 📅 مراحل الجدول (جلسة/بريك) — null لو الغرفة بدون جدول */
+function srPhases(){ return SR.room && SR.room.schedule && typeof schPhases === 'function' ? schPhases(SR.room.schedule) : null; }
+function srPhase(){
+  const ph = srPhases();
+  if(!ph) return null;
+  return ph[Math.max(0, Math.min(ph.length - 1, SR.room.phase_index || 0))];
+}
+function srIsBreak(){ const p = srPhase(); return !!(p && p.type === 'break'); }
+
 function srRemainingSec(){
   const r = SR.room;
   if(!r) return 0;
   if(r.status === 'running' && r.ends_at) return Math.max(0, Math.round((Date.parse(r.ends_at) - Date.now()) / 1000));
   if(r.status === 'paused') return Math.max(0, r.paused_remaining || 0);
   if(r.status === 'finished') return 0;
+  const ph = srPhases();
+  if(ph) return ph[0].min * 60;
   return (r.focus_minutes || 25) * 60;
 }
 
@@ -245,25 +272,71 @@ function srTick(){
   SR.lastTickAt = now;
 
   if(SR.room.status === 'running'){
-    SR.runKey = SR.room.id + ':' + (SR.room.started_at || '');
-    /* ⭐ بداية جولة (أو دخول أثناءها) → السيرفر يسجّل وقت البداية */
-    if(SR.xpKey !== SR.runKey && typeof xpFocusStart === 'function'){
+    SR.runKey = SR.room.id + ':' + (SR.room.started_at || '') + (SR.room.schedule ? ':' + (SR.room.phase_index || 0) : '');
+    const brk = srIsBreak();
+    /* ⭐ بداية جولة/جلسة (أو دخول أثناءها) → السيرفر يسجّل وقت البداية */
+    if(!brk && SR.xpKey !== SR.runKey && typeof xpFocusStart === 'function'){
       SR.xpKey = SR.runKey;
       xpFocusStart(Math.max(1, Math.ceil(srRemainingSec() / 60)), 'room');
     }
-    if(!document.hidden) SR.studiedSec += dt;   /* نحسب الوقت الفعلي فقط */
+    if(!brk && !document.hidden) SR.studiedSec += dt;   /* نحسب وقت التركيز الفعلي فقط (بدون البريك) */
     if(srRemainingSec() <= 0) srOnFinished();
+  } else if(SR.room.status === 'waiting' && SR.room.schedule && SR.room.schedule.start_at && srIsHost()){
+    /* ⏰ بداية تلقائية في الوقت المحدد */
+    if(Date.now() >= Date.parse(SR.room.schedule.start_at) && SR.autoStartKey !== SR.room.id + SR.room.schedule.start_at){
+      SR.autoStartKey = SR.room.id + SR.room.schedule.start_at;
+      window.srStart();
+    }
+  }
+  /* تحديث أوقات بطاقة الجدول كل 30 ثانية */
+  if(SR.room.schedule && now - (SR.cardAt || 0) > 30000){
+    SR.cardAt = now;
+    const card = srEl('srSchCard');
+    if(card && typeof schCardHTML === 'function') card.innerHTML = schCardHTML(SR.room);
   }
   srRenderTime();
 }
 
 async function srOnFinished(){
+  if(SR.room && SR.room.schedule) return srPhaseEnd();
   srCredit();
   if(srIsHost() && SR.room.status === 'running'){
     const { data } = await sb.from('study_rooms').update({ status: 'finished' })
       .eq('id', SR.room.id).eq('status', 'running').select().maybeSingle();
     if(data) srApplyRoom(data);
   }
+}
+
+/* 📅 نهاية مرحلة في الجدول → ننتقل للي بعدها (المضيف، أو أي عضو لو المضيف تأخر) */
+async function srPhaseEnd(){
+  const r = SR.room;
+  const ph = srPhases();
+  if(!r || !ph) return;
+  const idx = r.phase_index || 0;
+  const key = r.id + ':' + (r.started_at || '') + ':' + idx;
+  if(SR.phaseEndKey !== key){
+    SR.phaseEndKey = key;
+    SR.phaseEndAt = Date.now();
+    if(ph[idx] && ph[idx].type === 'focus') srCredit();
+    if(srIsHost()) await srAdvance(idx);
+    return;
+  }
+  if(!srIsHost() && Date.now() - SR.phaseEndAt > 6000 && Date.now() - (SR.advanceTry || 0) > 5000){
+    SR.advanceTry = Date.now();
+    await srAdvance(idx);
+  }
+}
+
+async function srAdvance(idx){
+  const ph = srPhases();
+  if(!ph || !SR.room) return;
+  const next = idx + 1;
+  const patch = next >= ph.length
+    ? { status: 'finished' }
+    : { phase_index: next, ends_at: new Date(Date.now() + ph[next].min * 60000).toISOString() };
+  const { data } = await sb.from('study_rooms').update(patch)
+    .eq('id', SR.room.id).eq('status', 'running').eq('phase_index', idx).select().maybeSingle();
+  if(data) srApplyRoom(data);
 }
 
 /* ⭐ احتساب الجلسة للطالب — مرة واحدة لكل جولة */
@@ -301,10 +374,13 @@ async function srHostUpdate(patch, guard){
 }
 
 window.srStart = () => {
-  const secs = (SR.room.focus_minutes || 25) * 60;
+  const ph = srPhases();
+  const secs = ph ? ph[0].min * 60 : (SR.room.focus_minutes || 25) * 60;
   const now = new Date();
   SR.studiedSec = 0;
-  srHostUpdate({ status: 'running', started_at: now.toISOString(), ends_at: new Date(now.getTime() + secs * 1000).toISOString(), paused_remaining: null });
+  const patch = { status: 'running', started_at: now.toISOString(), ends_at: new Date(now.getTime() + secs * 1000).toISOString(), paused_remaining: null };
+  if(ph) patch.phase_index = 0;
+  srHostUpdate(patch, 'waiting');
 };
 window.srPause = () => srHostUpdate({ status: 'paused', paused_remaining: srRemainingSec() }, 'running');
 window.srResume = () => {
@@ -315,7 +391,14 @@ window.srEndNow = () => confirmBox('إنهاء الجلسة', 'إنهاء الج
   srCredit();
   srHostUpdate({ status: 'finished' });
 });
-window.srNewRound = () => srHostUpdate({ status: 'waiting', started_at: null, ends_at: null, paused_remaining: null });
+window.srNewRound = () => {
+  const patch = { status: 'waiting', started_at: null, ends_at: null, paused_remaining: null };
+  if(SR.room && SR.room.schedule){
+    patch.phase_index = 0;
+    patch.schedule = Object.assign({}, SR.room.schedule, { start_at: null });
+  }
+  srHostUpdate(patch);
+};
 window.srSetMinutes = (m) => {
   m = Math.min(180, Math.max(5, parseInt(m, 10) || 25));
   srHostUpdate({ focus_minutes: m }, 'waiting');
@@ -410,7 +493,9 @@ function srRender(){
 
   let controls = '';
   if(host){
-    if(r.status === 'waiting'){
+    if(r.status === 'waiting' && r.schedule){
+      controls = `<button class="btn btn-primary" onclick="srStart()"><i class="fas fa-play"></i> ابدأ الجدول الآن</button>`;
+    } else if(r.status === 'waiting'){
       controls = `
         <select class="sort-select" onchange="srSetMinutes(this.value)">
           ${minuteOpts.map(m => `<option value="${m}" ${m === r.focus_minutes ? 'selected' : ''}>${m >= 60 ? (m / 60) + ' ساعة' : m + ' دقيقة'}</option>`).join('')}
@@ -440,8 +525,10 @@ function srRender(){
         <button class="btn btn-ghost btn-sm" onclick="srLeave()"><i class="fas fa-door-open"></i> مغادرة</button>
       </div>
     </div>
+    ${r.schedule && typeof schCardHTML === 'function' ? `<div id="srSchCard">${schCardHTML(r)}</div>` : ''}
     <div class="sr-body">
-      <div class="sr-clock ${r.status}">
+      <div class="sr-clock ${r.status} ${srIsBreak() && r.status !== 'waiting' ? 'is-break' : ''}">
+        ${r.schedule ? `<div class="sr-phase" id="srPhase"></div>` : ''}
         <div class="sr-time" id="srTime">${fmtTime(srRemainingSec())}</div>
         <div class="sr-bar"><i id="srBar"></i></div>
         <small id="srStudied"></small>
@@ -457,7 +544,20 @@ function srRender(){
 function srRenderTime(){
   if(!SR.room) return;
   const t = srEl('srTime'); if(t) t.textContent = fmtTime(srRemainingSec());
-  const total = (SR.room.focus_minutes || 25) * 60;
+  const cur = srPhase();
+  const total = cur && SR.room.status !== 'waiting' ? cur.min * 60 : (srPhases() ? srPhases()[0].min * 60 : (SR.room.focus_minutes || 25) * 60);
+  const ph = srEl('srPhase');
+  if(ph && cur){
+    const n = srPhases().filter(p => p.type === 'focus').length;
+    const clock = ph.closest('.sr-clock');
+    if(clock) clock.classList.toggle('is-break', cur.type === 'break' && SR.room.status !== 'waiting');
+    ph.innerHTML = SR.room.status === 'waiting'
+      ? (SR.room.schedule.start_at && Date.parse(SR.room.schedule.start_at) > Date.now()
+          ? `⏰ يبدأ تلقائياً بعد <b>${fmtTime(Math.round((Date.parse(SR.room.schedule.start_at) - Date.now()) / 1000))}</b>`
+          : `📅 جاهزين — ${n} جلسات`)
+      : SR.room.status === 'finished' ? '🎉 انتهى الجدول'
+      : cur.type === 'break' ? `☕ بريك ${cur.min} دقائق` : `🔥 الجلسة ${cur.n} من ${n}`;
+  }
   const bar = srEl('srBar'); if(bar) bar.style.width = Math.min(100, ((total - srRemainingSec()) / total) * 100) + '%';
   const st = srEl('srStudied');
   if(st) st.textContent = SR.studiedSec >= 60 ? `ذاكرت ${Math.floor(SR.studiedSec / 60)} دقيقة في هذه الجولة` : (SR.room.status === 'waiting' ? `مدة الجلسة: ${SR.room.focus_minutes} دقيقة` : '');
