@@ -546,7 +546,7 @@ window.resetUserPassword = id => {
   const u = DB.users.find(x => x.id === id); if(!u) return;
   confirmBox('إعادة تعيين كلمة السر', `سيتم إرسال رابط إعادة تعيين كلمة السر إلى: ${escapeHtml(u.email)}`, async () => {
     try{
-      const { error } = await sb.auth.resetPasswordForEmail(u.email, { redirectTo: window.location.origin + window.location.pathname });
+      const { error } = await sbRecovery.auth.resetPasswordForEmail(u.email, { redirectTo: RESET_REDIRECT });
       if(error){ toast('فشل الإرسال: ' + error.message, 'err'); return; }
       toast('✓ تم إرسال رابط إعادة التعيين', 'ok');
     }catch(e){ toast('خطأ: ' + e.message, 'err'); }
