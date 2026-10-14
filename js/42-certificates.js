@@ -42,9 +42,26 @@ setTimeout(() => certImg('assets/cert/template.jpg'), 2000);
 const FONT_SANS = "Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif";
 const FONT_NASKH = "'Noto Naskh Arabic', Tajawal, 'Traditional Arabic', serif";
 
+/* يصغّر الخط لو السطر أعرض من المساحة */
+const CERT_MAX_LINE = 880;
+function fitFont(font, width){
+  if(width <= CERT_MAX_LINE) return font;
+  return font.replace(/(\d+)px/, (m, n) => Math.floor(Number(n) * CERT_MAX_LINE / width) + 'px');
+}
+function fitText(ctx, font, text, x, y){
+  ctx.font = font;
+  ctx.font = fitFont(font, ctx.measureText(text).width);
+  ctx.fillText(text, x, y);
+}
+
 /* سطر بأجزاء ملونة (من اليمين لليسار) */
 function drawRichLine(ctx, parts, cx, y){
-  const widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
+  let widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
+  const sum = widths.reduce((a, b) => a + b, 0);
+  if(sum > CERT_MAX_LINE){
+    parts = parts.map(p => Object.assign({}, p, { font: fitFont(p.font, sum) }));
+    widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
+  }
   const total = widths.reduce((a, b) => a + b, 0);
   let x = cx + total / 2;
   ctx.textAlign = 'right';
@@ -139,16 +156,30 @@ async function drawCertificate(u){
   /* ---- نص الشهادة ---- */
   const cx = 706;
   const F = `700 27px ${FONT_NASKH}`, FB = `800 28px ${FONT_NASKH}`;
-  drawRichLine(ctx, [
-    { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
-    { text: 'المركز ' + t.word, font: FB, color: t.accent },
-    { text: '، تقديرًا لتميّزه الاستثنائي واجتهاده المستمر،', font: F, color: CERT_NAVY }
-  ], cx, 624);
-  ctx.fillStyle = CERT_NAVY; ctx.font = F;
-  ctx.fillText('وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
-  ctx.fillText('وإننا في منصة عباقرة القدرات، إذ نبارك له هذا الإنجاز المستحق، لنتمنى له دوام التوفيق', cx, 713);
-  ctx.fillText('ومزيدًا من النجاحات والإنجازات في مسيرته العلمية، سائلين الله أن يجعل هذا التفوق', cx, 751);
-  ctx.fillText('بدايةً لمستقبل حافل بالتميّز والعطاء.', cx, 790);
+  if(u.monthLabel){
+    /* ⭐ شهادة الشهر */
+    drawRichLine(ctx, [
+      { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
+      { text: 'المركز ' + t.word, font: FB, color: t.accent },
+      { text: ' في صدارة ', font: F, color: CERT_NAVY },
+      { text: 'شهر ' + u.monthLabel, font: FB, color: t.accent },
+      { text: '،', font: F, color: CERT_NAVY }
+    ], cx, 624);
+    ctx.fillStyle = CERT_NAVY;
+    fitText(ctx, F, 'تقديرًا لتميّزه الاستثنائي واجتهاده المستمر، وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
+  } else {
+    drawRichLine(ctx, [
+      { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
+      { text: 'المركز ' + t.word, font: FB, color: t.accent },
+      { text: '، تقديرًا لتميّزه الاستثنائي واجتهاده المستمر،', font: F, color: CERT_NAVY }
+    ], cx, 624);
+    ctx.fillStyle = CERT_NAVY;
+    fitText(ctx, F, 'وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
+  }
+  ctx.fillStyle = CERT_NAVY;
+  fitText(ctx, F, 'وإننا في منصة عباقرة القدرات، إذ نبارك له هذا الإنجاز المستحق، لنتمنى له دوام التوفيق', cx, 713);
+  fitText(ctx, F, 'ومزيدًا من النجاحات والإنجازات في مسيرته العلمية، سائلين الله أن يجعل هذا التفوق', cx, 751);
+  fitText(ctx, F, 'بدايةً لمستقبل حافل بالتميّز والعطاء.', cx, 790);
 
   return c;
 }
@@ -159,6 +190,12 @@ async function openCertificate(userId){
   const u = list.find(x => x.id === userId);
   if(!u){ toast('افتح قائمة المتصدرين أولاً', 'warn'); return; }
   if(!certTier(u.rank) || !(u.xp > 0)){ toast('الشهادة لأول 3 في الصدارة فقط 🏆', 'warn'); return; }
+  return showCertificateModal(u);
+}
+window.openCertificate = openCertificate;
+
+/* ⭐ شهادة محفوظة (شهادات الشهر): { id, name, rank, xp, monthLabel } */
+async function showCertificateModal(u){
 
   let m = document.getElementById('certModal');
   if(!m){
@@ -175,11 +212,11 @@ async function openCertificate(userId){
     const canvas = await drawCertificate(u);
     const url = canvas.toDataURL('image/png');
     const isMe = currentUserObj && currentUserObj.id === u.id;
-    const fileName = `شهادة-عباقرة-القدرات-${String(u.name).replace(/\s+/g, '-')}.png`;
+    const fileName = `شهادة-عباقرة-القدرات-${u.monthLabel ? String(u.monthLabel).replace(/\s+/g, '-') + '-' : ''}${String(u.name).replace(/\s+/g, '-')}.png`;
     m.innerHTML = `
       <div class="cert-box">
         <div class="cert-head">
-          <b><i class="fas fa-award"></i> ${isMe ? 'شهادتك' : 'شهادة ' + escapeHtml(u.name)} — المركز ${u.rank}</b>
+          <b><i class="fas fa-award"></i> ${isMe ? 'شهادتك' : 'شهادة ' + escapeHtml(u.name)} — المركز ${u.rank}${u.monthLabel ? ' • ' + escapeHtml(u.monthLabel) : ''}</b>
           <button class="cert-x" onclick="closeCertificate()"><i class="fas fa-xmark"></i></button>
         </div>
         <img class="cert-img" src="${url}" alt="شهادة ${escapeHtml(u.name)}">
@@ -188,7 +225,7 @@ async function openCertificate(userId){
           ${navigator.share ? '<button class="btn btn-ghost" id="certShareBtn"><i class="fas fa-share-nodes"></i> مشاركة</button>' : ''}
           <button class="btn btn-ghost" onclick="closeCertificate()">إغلاق</button>
         </div>
-        ${isMe ? '<p class="cert-tip"><i class="fas fa-lightbulb"></i> كل ما تقدّمت في الترتيب تتحدّث شهادتك تلقائياً — حافظ على مركزك! 🔥</p>' : ''}
+        ${isMe ? '<p class="cert-tip"><i class="fas fa-lightbulb"></i> مبروك! 🎉 شهادتك محفوظة في «أبطال الشهر» بصفحة المتصدرين — تقدر ترجع لها أي وقت.</p>' : ''}
       </div>`;
     const sh = document.getElementById('certShareBtn');
     if(sh) sh.addEventListener('click', async () => {
@@ -203,7 +240,7 @@ async function openCertificate(userId){
     m.innerHTML = `<div class="cert-box"><div class="cert-loading">تعذّر تجهيز الشهادة</div><div class="cert-actions"><button class="btn btn-ghost" onclick="closeCertificate()">إغلاق</button></div></div>`;
   }
 }
-window.openCertificate = openCertificate;
+window.showCertificateModal = showCertificateModal;
 
 function closeCertificate(){
   const m = document.getElementById('certModal');
