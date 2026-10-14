@@ -94,15 +94,15 @@ function renderUsersTable(){
       const uCourses = getUserCourseIds(u).map(id => getCourseById(id)).filter(Boolean);
       const course = uCourses.length ? Object.assign({}, uCourses[0], { name: uCourses.map(c => c.name).join(' + ') }) : null;
       const req = (u.purchase_submitted && typeof getPurchaseRequest === 'function') ? getPurchaseRequest(u) : null;
-      const reqKind = !req ? '' : (u.status !== 'approved' ? 'new' : (userHasCourse(req.course.id, u) ? 'renew' : 'add'));
+      const reqKind = !req ? '' : (u.status !== 'approved' ? 'new' : (req.items.every(it => userHasCourse(it.course.id, u)) ? 'renew' : 'add'));
       let subCell;
       if(req){
         /* ⭐ طلب شراء: يظهر للأدمن ماذا اختار الطالب بالضبط */
         subCell = `
           <div class="purchase-req-cell" style="--rc:${req.course.color || '#5b6cff'}">
             <div class="prc-tag">${reqKind === 'renew' ? '<i class="fas fa-rotate"></i> طلب تجديد' : reqKind === 'add' ? '<i class="fas fa-plus"></i> إضافة دورة' : '<i class="fas fa-cart-shopping"></i> طلب شراء'}</div>
-            <div class="prc-course"><i class="fas ${req.course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(req.course.name)}</div>
-            <div class="prc-meta">${monthsLabel(req.months)} • ${priceHTML(req.price)}</div>
+            ${req.items.map(it => `<div class="prc-course"><i class="fas ${it.course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(it.course.name)} <small style="opacity:.75">— ${it.fixed_end ? 'حتى ' + formatEndDate(it.fixed_end) : monthsLabel(it.months)}</small></div>`).join('')}
+            <div class="prc-meta">${req.discount > 0 ? `<s style="opacity:.6">${priceHTML(req.subtotal)}</s> ` : ''}${priceHTML(req.total)}${req.coupon ? ` • <i class="fas fa-ticket"></i> ${escapeHtml(req.coupon)}` : ''}</div>
             ${u.purchase_submitted_at ? `<small>${getTimeAgo(new Date(u.purchase_submitted_at))}</small>` : ''}
           </div>`;
       } else if(course && u.status === 'approved'){
@@ -254,19 +254,23 @@ window.quickActivate = async (userId, btn) => {
   let orig = '';
   if(btn){ if(btn.disabled) return; orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
 
-  let ok;
-  if(u.status === 'approved' && userHasCourse(req.course.id, u)){
-    /* تجديد نفس الدورة: يُضاف للمدة المتبقية */
-    const base = u.subscription_end && new Date(u.subscription_end) > new Date() ? new Date(u.subscription_end) : new Date();
-    const end = req.course.subscription_end_date ? calculateSubscriptionEnd(req.months, req.course.id) : new Date(base);
-    if(!req.course.subscription_end_date) end.setMonth(end.getMonth() + req.months);
-    ok = await activateSubscription(userId, req.months, getUserCourseIds(u), { endDate: end });
-  } else if(u.status === 'approved'){
-    /* دورة إضافية لمشترك حالي */
-    ok = await activateSubscription(userId, req.months, [req.course.id], { addToExisting: true });
-  } else {
-    ok = await activateSubscription(userId, req.months, [req.course.id]);
-  }
+  /* ⭐ كل دورات السلة: نهاية الاشتراك = أبعد تاريخ بين البنود
+     (التجديد يُضاف على المدة المتبقية) */
+  const now = new Date();
+  const base = (u.status === 'approved' && u.subscription_end && new Date(u.subscription_end) > now) ? new Date(u.subscription_end) : now;
+  let end = null;
+  req.items.forEach(it => {
+    let e;
+    if(it.fixed_end || it.course.subscription_end_date){
+      e = new Date(it.fixed_end || it.course.subscription_end_date);
+    } else {
+      e = new Date(userHasCourse(it.course.id, u) && u.status === 'approved' ? base : now);
+      e.setMonth(e.getMonth() + (it.months || 1));
+    }
+    if(!isNaN(e.getTime()) && (!end || e > end)) end = e;
+  });
+  const ids = req.items.map(it => it.course.id);
+  const ok = await activateSubscription(userId, req.months, ids, { endDate: end, addToExisting: u.status === 'approved' });
   if(ok){
     renderUsersTable();
     try{ renderAdmin(); }catch(e){}
@@ -284,7 +288,7 @@ window.openApproveModal = (userId) => {
   const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
   const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
   const selIds = u.status === 'approved' ? getUserCourseIds(u) : [];
-  if(req && !selIds.includes(String(req.course.id))) selIds.push(String(req.course.id));
+  if(req) req.items.forEach(it => { if(!selIds.includes(String(it.course.id))) selIds.push(String(it.course.id)); });
   if(!selIds.length && u.course_id) selIds.push(String(u.course_id));
   const selMonths = req ? req.months : (u.subscription_months || 1);
   const monthOpts = [1, 3, 6, 12];
@@ -298,7 +302,7 @@ window.openApproveModal = (userId) => {
     text: `اختر الدورة ومدة الاشتراك لـ: ${escapeHtml(u.name || u.email)}`,
     bodyHTML: `
       ${req ? `<div style="padding:11px 13px;margin-bottom:14px;border-radius:12px;background:rgba(34,197,94,.12);color:#15803d;font-size:.8rem;font-weight:800;line-height:1.7">
-        <i class="fas fa-cart-shopping"></i> الطالب طلب: ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)} — ${priceHTML(req.price)}
+        <i class="fas fa-cart-shopping"></i> الطالب طلب: ${req.items.map(it => escapeHtml(it.course.name) + ' (' + (it.fixed_end ? 'حتى ' + formatEndDate(it.fixed_end) : monthsLabel(it.months)) + ')').join(' + ')} — ${priceHTML(req.total)}${req.coupon ? ' — كود ' + escapeHtml(req.coupon) : ''}
       </div>` : ''}
       <div class="form-group" style="margin-bottom:14px">
         <label>الدورات * <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة)</small></label>
