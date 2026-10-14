@@ -138,9 +138,29 @@ function monthsUntilFixedEnd(course){
 }
 window.monthsUntilFixedEnd = monthsUntilFixedEnd;
 
-/* ⭐⭐⭐ ماذا اشترى المستخدم؟ (الدورة + المدة + السعر) — للتفعيل بضغطة واحدة */
+/* ⭐⭐⭐ ماذا اشترى المستخدم؟ (دورة أو أكثر من السلة + المدة + السعر + الخصم) */
 function getPurchaseRequest(u){
   if(!u) return null;
+  let items = u.purchase_items;
+  if(typeof items === 'string'){ try{ items = JSON.parse(items); }catch(e){ items = null; } }
+  if(Array.isArray(items) && items.length){
+    const list = items.map(it => {
+      const course = getCourseById(it.course_id) || (it.name ? { id: it.course_id, name: it.name, icon: 'fa-graduation-cap', color: '#5b6cff' } : null);
+      return course ? { course, months: parseInt(it.months, 10) || 1, price: Number(it.price) || 0, fixed_end: it.fixed_end || null } : null;
+    }).filter(Boolean);
+    if(list.length){
+      const total = (u.purchase_price != null && u.purchase_price !== '') ? Number(u.purchase_price) : list.reduce((a, b) => a + b.price, 0);
+      return {
+        course: list[0].course, months: list[0].months, price: total,
+        items: list,
+        subtotal: Number(u.purchase_subtotal) || list.reduce((a, b) => a + b.price, 0),
+        discount: Number(u.purchase_discount) || 0,
+        coupon: u.purchase_coupon || null,
+        total
+      };
+    }
+  }
+  /* الصيغة القديمة: دورة واحدة */
   let course = null, months = 0;
   const code = String(u.purchase_product || '');
   const m = /^(.*)_(\d+)m$/.exec(code);
@@ -148,7 +168,6 @@ function getPurchaseRequest(u){
   if(u.purchase_course_id) course = getCourseById(u.purchase_course_id);
   if(!course && m) course = (CS.courses || []).find(c => c.code === m[1]) || null;
   if(!course && code){
-    /* الصيغة القديمة: كان يُحفظ id المنتج */
     const prod = (DB.products || []).find(p => p.id === code);
     if(prod) course = (CS.courses || []).find(c => c.code === (prod.course_code || ('auto_' + prod.id))) || null;
   }
@@ -166,7 +185,7 @@ function getPurchaseRequest(u){
     ? Number(u.purchase_price)
     : (course.subscription_end_date ? getCourseDisplayPrice(course) : getCoursePrice(course, months));
 
-  return { course, months, price };
+  return { course, months, price, items: [{ course, months, price }], subtotal: price, discount: 0, coupon: null, total: price };
 }
 window.getPurchaseRequest = getPurchaseRequest;
 
@@ -196,7 +215,9 @@ function renderCoursesGrid(){
 
   grid.innerHTML = CS.courses.map(c => {
     const isMyCourse = currentUserObj && currentUserObj.status === 'approved' && userHasCourse(c.id);
-    const isPendingHere = pendingReq && pendingReq.course && pendingReq.course.id === c.id;
+    const pendingItem = pendingReq ? pendingReq.items.find(it => it.course && it.course.id === c.id) : null;
+    const isPendingHere = !!pendingItem;
+    const inCart = typeof cartHas === 'function' && cartHas(c.id);
     const prices = c.prices || {};
     const hasFixedEnd = !!(c.subscription_end_date);
     const p1 = Number(prices['1']) || 0;
@@ -245,19 +266,31 @@ function renderCoursesGrid(){
     const daysLeft = (currentUserObj && currentUserObj.subscription_end)
       ? Math.ceil((new Date(currentUserObj.subscription_end) - new Date()) / 86400000) : null;
     if(isMyCourse && !isPendingHere && daysLeft !== null && daysLeft <= 14){
-      btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-rotate"></i> جدّد اشتراكك (متبقي ${Math.max(0, daysLeft)} يوم)</button>`;
+      btn = inCart
+        ? `<button class="course-subscribe-btn in-cart" onclick="openCart()"><i class="fas fa-cart-shopping"></i> في السلة — افتح السلة</button>`
+        : `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-rotate"></i> جدّد اشتراكك (متبقي ${Math.max(0, daysLeft)} يوم)</button>`;
     }
     else if(isMyCourse) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-check"></i> أنت مشترك</button>';
     else if(isPendingHere) btn = '<button class="course-subscribe-btn" disabled><i class="fas fa-hourglass-half"></i> طلبك قيد المراجعة</button>';
-    else btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-shopping-cart"></i> اشترك الآن</button>`;
+    else if(inCart) btn = `<button class="course-subscribe-btn in-cart" onclick="openCart()"><i class="fas fa-circle-check"></i> في السلة — افتح السلة</button>`;
+    else btn = `<button class="course-subscribe-btn" onclick="startCourseSubscription('${c.id}')"><i class="fas fa-cart-plus"></i> أضف للسلة</button>`;
+
+    const aboutLines = String(c.about || '').split(/\n+/).map(x => x.replace(/^[\s•*\-–]+/, '').trim()).filter(Boolean);
+    const aboutBlock = aboutLines.length ? `
+        <details class="course-about">
+          <summary><i class="fas fa-circle-info"></i> نبذة عن الدورة <i class="fas fa-chevron-down ca-arrow"></i></summary>
+          <div class="ca-title">${escapeHtml(c.name)} تحتوي على 👇🏻</div>
+          <ul>${aboutLines.map(l => `<li><i class="fas fa-check"></i> ${escapeHtml(l)}</li>`).join('')}</ul>
+        </details>` : '';
 
     return `
       <div class="course-card ${isMyCourse ? 'mine' : ''}" style="--cc:${c.color || '#5b6cff'}">
         ${isMyCourse ? '<div class="course-active-badge"><i class="fas fa-check-circle"></i> دورتك الحالية</div>' : ''}
-        ${isPendingHere ? `<div class="course-active-badge" style="background:linear-gradient(120deg,#f7b32b,#d97706)"><i class="fas fa-clock"></i> ${monthsLabel(pendingReq.months)} — قيد المراجعة</div>` : ''}
+        ${isPendingHere ? `<div class="course-active-badge" style="background:linear-gradient(120deg,#f7b32b,#d97706)"><i class="fas fa-clock"></i> ${monthsLabel(pendingItem.months)} — قيد المراجعة</div>` : ''}
         <div class="course-icon"><i class="fas ${c.icon || 'fa-graduation-cap'}"></i></div>
         <h3>${escapeHtml(c.name)}</h3>
         <p class="course-desc">${escapeHtml(c.description || '')}</p>
+        ${aboutBlock}
         ${priceBlock}
         ${btn}
       </div>
@@ -273,7 +306,7 @@ function startCourseSubscription(courseId){
   if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
 
   if(c.subscription_end_date){
-    openPurchaseModalInline(c, monthsUntilFixedEnd(c), getCourseDisplayPrice(c));
+    cartAdd(c.id, monthsUntilFixedEnd(c));
     return;
   }
 
@@ -309,12 +342,11 @@ function startCourseSubscription(courseId){
         }).join('')}
       </div>
     `,
-    okText: 'متابعة للدفع',
+    okText: '🛒 أضف للسلة',
     onOk: async () => {
       const selected = document.querySelector('input[name="courseDuration"]:checked');
       if(!selected) return;
-      const months = parseInt(selected.value, 10);
-      openPurchaseModalInline(c, months, Number(prices[String(months)]));
+      cartAdd(c.id, parseInt(selected.value, 10));
     }
   });
 
@@ -373,6 +405,7 @@ async function syncProductToCourse(product){
       active: product.active !== false,
       subscription_end_date: product.subscription_end_date || null
     };
+    if(typeof product.about === 'string') payload.about = product.about;
 
     const check = await sb.from('courses').select('id').eq('code', code).maybeSingle();
     const r = check.data
