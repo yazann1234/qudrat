@@ -40,6 +40,7 @@ function pickLocalFields(ud){
     adhkarXp: ud.adhkarXp,
     videoWatched: ud.videoWatched,
     planXpGiven: ud.planXpGiven,
+    reviewList: ud.reviewList,
     /* ⭐ نسخة احتياطية من التقدم — حتى لا تضيع النقاط لو فشلت مزامنة user_progress */
     progress: ud.progress
   };
