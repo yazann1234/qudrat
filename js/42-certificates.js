@@ -1,240 +1,154 @@
 /* ============================================================
-   42) CERTIFICATES — شهادات شكر وتقدير للمتصدرين
-   - شهادة لكل طالب في قائمة المتصدرين: اسمه + مركزه + نقاطه
-   - تصميم المنصة + شعار القناة + ختم المركز + توقيع الإدارة
-   - لون الشهادة حسب المركز (ذهبي / فضي / برونزي / نخبة / تقدير)
-   - معاينة + تحميل PNG + مشاركة
+   42) CERTIFICATES — شهادة شكر وتقدير لأول 3 في الصدارة فقط
+   - التصميم الرسمي للمنصة (assets/cert/template.jpg) + توقيع تركي الظفيري
+   - الأول: وسام ذهبي • الثاني: فضي • الثالث: برونزي
+   - الاسم والمركز يُكتبان تلقائياً — معاينة + تحميل PNG + مشاركة
 ============================================================ */
 
-const CERT_W = 2000, CERT_H = 1414;
-const CERT_NAVY = '#0b1250';
+const CERT_BASE_W = 1536, CERT_BASE_H = 1024, CERT_SCALE = 1.5;
+const CERT_NAVY = '#14234d';
 
 function certTier(rank){
-  if(rank === 1) return { key: 'gold',   label: 'وسام المركز الأول',   main: '#b8860b', light: '#f7d774', dark: '#6b4e00' };
-  if(rank === 2) return { key: 'silver', label: 'وسام المركز الثاني',  main: '#7c8796', light: '#e6eaf0', dark: '#3f4753' };
-  if(rank === 3) return { key: 'bronze', label: 'وسام المركز الثالث',  main: '#b0683a', light: '#f3c9a2', dark: '#5e3214' };
-  if(rank <= 10) return { key: 'elite',  label: 'شهادة نخبة العشرة',   main: '#6d28d9', light: '#d6c8fb', dark: '#3b1078' };
-  return { key: 'merit', label: 'شهادة تميّز', main: '#1d4ed8', light: '#c7d7fb', dark: '#13306f' };
-}
-
-function rankWord(r){
-  const w = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
-  return w[r] || String(r);
-}
-
-function certNumber(userId){
-  let h = 0; const s = String(userId || '') + new Date().getFullYear();
-  for(let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
-  return 'ABQ-' + new Date().getFullYear() + '-' + Math.abs(h).toString(36).toUpperCase().slice(0, 6).padStart(6, '0');
+  if(rank === 1) return { key: 'gold',   word: 'الأول',  accent: '#b8860b', ink: '#4a3010', ramp: null };
+  if(rank === 2) return { key: 'silver', word: 'الثاني', accent: '#6b7584', ink: '#262c36', ramp: [[0,[40,44,52]],[.35,[105,112,124]],[.6,[178,186,198]],[.8,[222,228,236]],[1,[255,255,255]]] };
+  if(rank === 3) return { key: 'bronze', word: 'الثالث', accent: '#a0522d', ink: '#3d1c09', ramp: [[0,[45,20,8]],[.35,[120,62,30]],[.6,[184,110,62]],[.8,[226,160,112]],[1,[255,226,196]]] };
+  return null;
 }
 
 function loadImg(src){
-  return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+  /* صورة عادية، ولو فشلت نجرب fetch + ImageBitmap (أضمن على بعض المتصفحات) */
+  return new Promise(res => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = async () => {
+      try{
+        const r = await fetch(src, { cache: 'force-cache' });
+        if(!r.ok) return res(null);
+        res(await createImageBitmap(await r.blob()));
+      }catch(e){ res(null); }
+    };
+    i.src = src;
+  });
 }
 
-/* ⭐ تحميل الشعار مسبقاً (يكون جاهز لحظة فتح الشهادة) */
-let _certLogoPromise = null;
-function getCertLogo(){
-  if(!_certLogoPromise) _certLogoPromise = loadImg('assets/logo.png');
-  return _certLogoPromise;
+/* ⭐ تحميل القالب مسبقاً (يكون جاهز لحظة فتح الشهادة) */
+const _certImgs = {};
+function certImg(src){
+  if(!_certImgs[src]) _certImgs[src] = loadImg(src + '?v=2');
+  return _certImgs[src];
 }
-setTimeout(getCertLogo, 1500);
+setTimeout(() => certImg('assets/cert/template.jpg'), 2000);
 
-const FONT = "Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif";
+const FONT_SANS = "Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif";
+const FONT_NASKH = "'Noto Naskh Arabic', Tajawal, 'Traditional Arabic', serif";
 
-function wrapLines(ctx, text, maxW){
-  const words = String(text).split(/\s+/);
-  const lines = []; let line = '';
-  for(const w of words){
-    const test = line ? line + ' ' + w : w;
-    if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = w; }
-    else line = test;
+/* سطر بأجزاء ملونة (من اليمين لليسار) */
+function drawRichLine(ctx, parts, cx, y){
+  const widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
+  const total = widths.reduce((a, b) => a + b, 0);
+  let x = cx + total / 2;
+  ctx.textAlign = 'right';
+  parts.forEach((p, i) => {
+    ctx.font = p.font; ctx.fillStyle = p.color;
+    ctx.fillText(p.text, x, y);
+    x -= widths[i];
+  });
+  ctx.textAlign = 'center';
+}
+
+/* يلوّن بكسلات الوسام الذهبية فقط (داخل دائرة الوسام) بتدرّج فضي أو برونزي */
+function recolorSeal(ctx, ramp){
+  const S = CERT_SCALE, x0 = Math.round(1200 * S), y0 = Math.round(90 * S), w = Math.round(300 * S), h = w;
+  const cx = 150 * S, cy = 150 * S, rOut = 145 * S, rIn = 118 * S;
+  const img = ctx.getImageData(x0, y0, w, h), d = img.data;
+  const lut = new Uint8ClampedArray(256 * 3);
+  for(let v = 0; v < 256; v++){
+    const L = v / 255;
+    let k = 0; while(k < ramp.length - 2 && L > ramp[k + 1][0]) k++;
+    const [a, ca] = ramp[k], [b, cb] = ramp[k + 1];
+    const f = Math.max(0, Math.min(1, (L - a) / (b - a)));
+    for(let c = 0; c < 3; c++) lut[v * 3 + c] = ca[c] + (cb[c] - ca[c]) * f;
   }
-  if(line) lines.push(line);
-  return lines;
-}
-
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
-
-function drawStar(ctx, cx, cy, spikes, outer, inner){
-  let rot = Math.PI / 2 * 3; const step = Math.PI / spikes;
-  ctx.beginPath(); ctx.moveTo(cx, cy - outer);
-  for(let i = 0; i < spikes; i++){
-    ctx.lineTo(cx + Math.cos(rot) * outer, cy + Math.sin(rot) * outer); rot += step;
-    ctx.lineTo(cx + Math.cos(rot) * inner, cy + Math.sin(rot) * inner); rot += step;
+  for(let y = 0; y < h; y++){
+    for(let x = 0; x < w; x++){
+      const dist = Math.hypot(x - cx, y - cy);
+      if(dist > rOut) continue;
+      const i = (y * w + x) * 4, r = d[i], g = d[i + 1], b = d[i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      if(dist > rIn){
+        /* الحافة: فقط الألوان الذهبية/البنية (نتجاهل الشريط الكحلي والخلفية) */
+        if(mx === 0 || (mx - mn) / mx < 0.2) continue;
+        let hue = mx === r ? 60 * (((g - b) / (mx - mn)) % 6) : mx === g ? 60 * ((b - r) / (mx - mn) + 2) : 60 * ((r - g) / (mx - mn) + 4);
+        if(hue < 0) hue += 360;
+        if(hue < 10 || hue > 70) continue;
+      }
+      const L = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+      d[i] = lut[L * 3]; d[i + 1] = lut[L * 3 + 1]; d[i + 2] = lut[L * 3 + 2];
+    }
   }
-  ctx.closePath();
+  ctx.putImageData(img, x0, y0);
 }
 
 async function drawCertificate(u){
   const t = certTier(u.rank);
-  /* الخط والشعار مع مهلة (لو الشبكة بطيئة نكمل بخط بديل بدل ما نعلّق) */
+  if(!t) throw new Error('not top 3');
   const timeout = ms => new Promise(r => setTimeout(r, ms));
   try{
     await Promise.race([
-      Promise.all([document.fonts.load('900 100px Tajawal'), document.fonts.load('700 40px Tajawal'), document.fonts.load('500 36px Tajawal')]),
-      timeout(2500)
+      Promise.all([
+        document.fonts.load('800 46px Tajawal'), document.fonts.load('800 40px Tajawal'),
+        document.fonts.load('500 24px "Noto Naskh Arabic"'), document.fonts.load('700 24px "Noto Naskh Arabic"')
+      ]),
+      timeout(3000)
     ]);
   }catch(e){}
-  const logo = await Promise.race([getCertLogo(), timeout(6000).then(() => null)]);
+  const tpl = await Promise.race([certImg('assets/cert/template.jpg'), timeout(20000).then(() => null)]);
+  if(!tpl) throw new Error('template');
 
   const c = document.createElement('canvas');
-  c.width = CERT_W; c.height = CERT_H;
+  c.width = CERT_BASE_W * CERT_SCALE; c.height = CERT_BASE_H * CERT_SCALE;
   const ctx = c.getContext('2d');
+  ctx.scale(CERT_SCALE, CERT_SCALE);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(tpl, 0, 0, CERT_BASE_W, CERT_BASE_H);
+
+  /* ---- الوسام: نحوّل الذهبي إلى فضي / برونزي ---- */
+  if(t.ramp) recolorSeal(ctx, t.ramp);
+
   ctx.direction = 'rtl';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  /* ---- الخلفية ---- */
-  const bg = ctx.createRadialGradient(CERT_W / 2, CERT_H / 2, 200, CERT_W / 2, CERT_H / 2, 1300);
-  bg.addColorStop(0, '#fffefa'); bg.addColorStop(1, '#f7f1e3');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, CERT_W, CERT_H);
+  /* نص الوسام */
+  ctx.fillStyle = t.ink;
+  ctx.font = `800 31px ${FONT_SANS}`;
+  ctx.fillText('المركز', 1350, 214);
+  let ws = 46;
+  ctx.font = `900 ${ws}px ${FONT_SANS}`;
+  while(ctx.measureText(t.word).width > 118 && ws > 30){ ws -= 2; ctx.font = `900 ${ws}px ${FONT_SANS}`; }
+  ctx.fillText(t.word, 1350, 258);
 
-  /* نقش خفيف */
-  ctx.save();
-  ctx.globalAlpha = 0.05; ctx.strokeStyle = t.main; ctx.lineWidth = 2;
-  for(let x = -CERT_H; x < CERT_W; x += 46){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CERT_H, CERT_H); ctx.stroke(); }
-  ctx.restore();
-
-  /* علامة مائية كبيرة للشعار */
-  if(logo){
-    ctx.save(); ctx.globalAlpha = 0.045;
-    const s = 900; ctx.drawImage(logo, CERT_W / 2 - s / 2, CERT_H / 2 - s / 2 + 40, s, s);
-    ctx.restore();
-  }
-
-  /* ---- الإطار ---- */
-  const fg = ctx.createLinearGradient(0, 0, CERT_W, CERT_H);
-  fg.addColorStop(0, t.dark); fg.addColorStop(0.25, t.light); fg.addColorStop(0.5, t.main); fg.addColorStop(0.75, t.light); fg.addColorStop(1, t.dark);
-  ctx.lineWidth = 26; ctx.strokeStyle = fg;
-  roundRect(ctx, 38, 38, CERT_W - 76, CERT_H - 76, 26); ctx.stroke();
-  ctx.lineWidth = 3; ctx.strokeStyle = t.main;
-  roundRect(ctx, 82, 82, CERT_W - 164, CERT_H - 164, 16); ctx.stroke();
-  ctx.lineWidth = 1.5; ctx.strokeStyle = CERT_NAVY; ctx.globalAlpha = 0.35;
-  roundRect(ctx, 96, 96, CERT_W - 192, CERT_H - 192, 12); ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  /* زخارف الزوايا */
-  [[110, 110, 0], [CERT_W - 110, 110, 1], [110, CERT_H - 110, 2], [CERT_W - 110, CERT_H - 110, 3]].forEach(([x, y]) => {
-    ctx.save(); ctx.translate(x, y);
-    ctx.fillStyle = t.main; drawStar(ctx, 0, 0, 8, 34, 14); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  });
-
-  /* ---- الشعار ---- */
-  const lx = CERT_W / 2, ly = 205, lr = 98;
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-  ctx.lineWidth = 8; ctx.strokeStyle = fg; ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.stroke();
-  if(logo){
-    ctx.save(); ctx.beginPath(); ctx.arc(lx, ly, lr - 10, 0, Math.PI * 2); ctx.clip();
-    ctx.drawImage(logo, lx - (lr - 10), ly - (lr - 10), (lr - 10) * 2, (lr - 10) * 2);
-    ctx.restore();
-  }
-
-  /* ---- العنوان ---- */
+  /* ---- اسم الطالب ---- */
+  let ns = 50;
+  const name = String(u.name || '').trim();
+  ctx.font = `800 ${ns}px ${FONT_SANS}`;
+  while(ctx.measureText(name).width > 560 && ns > 26){ ns -= 2; ctx.font = `800 ${ns}px ${FONT_SANS}`; }
   ctx.fillStyle = CERT_NAVY;
-  ctx.font = `900 104px ${FONT}`;
-  ctx.fillText('شهادة شكر وتقدير', CERT_W / 2, 395);
+  ctx.fillText(name, 768, 536);
 
-  /* شريط اسم الوسام */
-  ctx.font = `800 36px ${FONT}`;
-  const tw = ctx.measureText(t.label).width + 90;
-  const rg = ctx.createLinearGradient(CERT_W / 2 - tw / 2, 0, CERT_W / 2 + tw / 2, 0);
-  rg.addColorStop(0, t.dark); rg.addColorStop(0.5, t.main); rg.addColorStop(1, t.dark);
-  ctx.fillStyle = rg; roundRect(ctx, CERT_W / 2 - tw / 2, 455, tw, 62, 31); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.fillText(t.label, CERT_W / 2, 487);
-
-  /* ---- المقدمة ---- */
-  ctx.fillStyle = '#4b5563';
-  ctx.font = `500 40px ${FONT}`;
-  ctx.fillText('تتشرّف منصة عباقرة القدرات بأن تمنح هذه الشهادة إلى', CERT_W / 2, 585);
-
-  /* ---- الاسم ---- */
-  let ns = 118;
-  ctx.font = `900 ${ns}px ${FONT}`;
-  while(ctx.measureText(u.name).width > 1300 && ns > 60){ ns -= 6; ctx.font = `900 ${ns}px ${FONT}`; }
-  const nameW = ctx.measureText(u.name).width;
-  const ng = ctx.createLinearGradient(CERT_W / 2 - nameW / 2, 0, CERT_W / 2 + nameW / 2, 0);
-  ng.addColorStop(0, t.dark); ng.addColorStop(0.5, t.main); ng.addColorStop(1, t.dark);
-  ctx.fillStyle = ng;
-  ctx.fillText(u.name, CERT_W / 2, 705);
-  /* خطوط جانبية للاسم */
-  ctx.strokeStyle = t.main; ctx.lineWidth = 3;
-  const half = Math.min(700, nameW / 2 + 60);
-  [[-1], [1]].forEach(([d]) => {
-    ctx.beginPath(); ctx.moveTo(CERT_W / 2 + d * half, 705); ctx.lineTo(CERT_W / 2 + d * (half + 160), 705); ctx.stroke();
-    ctx.fillStyle = t.main; drawStar(ctx, CERT_W / 2 + d * (half + 175), 705, 4, 13, 5); ctx.fill();
-  });
-
-  /* ---- نص الشكر ---- */
-  ctx.fillStyle = '#1f2937';
-  ctx.font = `500 42px ${FONT}`;
-  const body = `تقديراً للتميّز والمثابرة في رحلة الاستعداد لاختبار القدرات، وتحقيق المركز ${rankWord(u.rank)} في قائمة متصدري المنصة برصيد ${Number(u.xp || 0).toLocaleString('en')} نقطة. مع خالص تمنياتنا بدوام التفوق والنجاح وتحقيق أعلى الدرجات.`;
-  wrapLines(ctx, body, 1450).forEach((line, i) => ctx.fillText(line, CERT_W / 2, 815 + i * 66));
-
-  /* ---- الإحصائيات ---- */
-  const stats = [
-    ['نقطة XP', Number(u.xp || 0).toLocaleString('en')],
-    ['صفحة مقروءة', Number(u.pages || 0).toLocaleString('en')],
-    ['ملف مكتمل', Number(u.completed || 0).toLocaleString('en')],
-    ['جلسة تركيز', Number(u.sessions || 0).toLocaleString('en')]
-  ];
-  const pw = 250, gap = 34, totalW = stats.length * pw + (stats.length - 1) * gap;
-  stats.forEach((s, i) => {
-    const x = CERT_W / 2 + totalW / 2 - pw - i * (pw + gap);   /* من اليمين لليسار */
-    ctx.fillStyle = '#fff'; roundRect(ctx, x, 985, pw, 112, 20); ctx.fill();
-    ctx.lineWidth = 2.5; ctx.strokeStyle = t.light; roundRect(ctx, x, 985, pw, 112, 20); ctx.stroke();
-    ctx.fillStyle = t.dark; ctx.font = `900 48px ${FONT}`; ctx.fillText(s[1], x + pw / 2, 1028);
-    ctx.fillStyle = '#6b7280'; ctx.font = `700 26px ${FONT}`; ctx.fillText(s[0], x + pw / 2, 1072);
-  });
-
-  /* ---- الختم (يمين) ---- */
-  const sx = 330, sy = 1180;
-  ctx.save();
-  /* أشرطة */
-  ctx.fillStyle = t.dark;
-  ctx.beginPath(); ctx.moveTo(sx - 60, sy + 40); ctx.lineTo(sx - 95, sy + 175); ctx.lineTo(sx - 55, sy + 150); ctx.lineTo(sx - 25, sy + 185); ctx.lineTo(sx - 5, sy + 60); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(sx + 60, sy + 40); ctx.lineTo(sx + 95, sy + 175); ctx.lineTo(sx + 55, sy + 150); ctx.lineTo(sx + 25, sy + 185); ctx.lineTo(sx + 5, sy + 60); ctx.fill();
-  const sg = ctx.createRadialGradient(sx - 30, sy - 30, 10, sx, sy, 130);
-  sg.addColorStop(0, t.light); sg.addColorStop(0.6, t.main); sg.addColorStop(1, t.dark);
-  ctx.fillStyle = sg; drawStar(ctx, sx, sy, 24, 125, 108); ctx.fill();
-  ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(sx, sy, 88, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#fff';
-  ctx.font = `800 26px ${FONT}`; ctx.fillText('المركز', sx, sy - 38);
-  ctx.font = `900 76px ${FONT}`; ctx.fillText(String(u.rank), sx, sy + 18);
-  ctx.font = `700 20px ${FONT}`; ctx.fillText('عباقرة القدرات', sx, sy + 62);
-  ctx.restore();
-
-  /* ---- التوقيع (يسار) ---- */
-  const gx = CERT_W - 360, gy = 1205;
-  ctx.fillStyle = CERT_NAVY; ctx.font = `800 34px ${FONT}`;
-  ctx.fillText('إدارة منصة عباقرة القدرات', gx, gy + 38);
-  ctx.strokeStyle = CERT_NAVY; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(gx - 210, gy); ctx.lineTo(gx + 210, gy); ctx.stroke();
-  ctx.save(); ctx.strokeStyle = t.main; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(gx - 150, gy - 22);
-  ctx.bezierCurveTo(gx - 90, gy - 90, gx - 40, gy + 10, gx + 10, gy - 50);
-  ctx.bezierCurveTo(gx + 50, gy - 95, gx + 90, gy - 10, gx + 150, gy - 45);
-  ctx.stroke(); ctx.restore();
-
-  /* ---- التاريخ ورقم الشهادة (وسط) ---- */
-  const dateStr = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
-  ctx.fillStyle = '#374151'; ctx.font = `700 30px ${FONT}`;
-  ctx.fillText('بتاريخ: ' + dateStr, CERT_W / 2, 1195);
-  ctx.fillStyle = '#9ca3af'; ctx.font = `600 24px ${FONT}`;
-  ctx.direction = 'ltr';
-  ctx.fillText(certNumber(u.id), CERT_W / 2, 1245);
-  ctx.direction = 'rtl';
-  ctx.fillStyle = t.main; ctx.font = `700 24px ${FONT}`;
-  ctx.fillText('رقم الشهادة', CERT_W / 2, 1282);
+  /* ---- نص الشهادة ---- */
+  const cx = 706;
+  const F = `700 27px ${FONT_NASKH}`, FB = `800 28px ${FONT_NASKH}`;
+  drawRichLine(ctx, [
+    { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
+    { text: 'المركز ' + t.word, font: FB, color: t.accent },
+    { text: '، تقديرًا لتميّزه الاستثنائي واجتهاده المستمر،', font: F, color: CERT_NAVY }
+  ], cx, 624);
+  ctx.fillStyle = CERT_NAVY; ctx.font = F;
+  ctx.fillText('وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
+  ctx.fillText('وإننا في منصة عباقرة القدرات، إذ نبارك له هذا الإنجاز المستحق، لنتمنى له دوام التوفيق', cx, 713);
+  ctx.fillText('ومزيدًا من النجاحات والإنجازات في مسيرته العلمية، سائلين الله أن يجعل هذا التفوق', cx, 751);
+  ctx.fillText('بدايةً لمستقبل حافل بالتميّز والعطاء.', cx, 790);
 
   return c;
 }
@@ -244,6 +158,7 @@ async function openCertificate(userId){
   const list = window._lbUsers || [];
   const u = list.find(x => x.id === userId);
   if(!u){ toast('افتح قائمة المتصدرين أولاً', 'warn'); return; }
+  if(!certTier(u.rank) || !(u.xp > 0)){ toast('الشهادة لأول 3 في الصدارة فقط 🏆', 'warn'); return; }
 
   let m = document.getElementById('certModal');
   if(!m){
