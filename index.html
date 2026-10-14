@@ -8,9 +8,9 @@
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Noto+Naskh+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/styles.css?v=20261014e">
+<link rel="stylesheet" href="css/styles.css?v=20261015a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -246,11 +246,11 @@
         <div class="store-hero-inner">
           <div class="store-hero-badge"><i class="fas fa-crown"></i> المتجر</div>
           <h1>اختر <em>رحلتك</em> نحو التفوق</h1>
-          <p>اختر دورتك ومدتها، ثم أرسل الإيصال للدعم لتفعيل الحساب</p>
+          <p>أضف دورتك ومدتها للسلة، طبّق كود الخصم إن وجد، ثم أرسل الإيصال للدعم لتفعيل الحساب</p>
           <div class="store-steps">
             <div class="store-step">
               <div class="step-num">1</div>
-              <div><b>اختر الدورة والمدة</b><small>المناسبة لك</small></div>
+              <div><b>أضف الدورة والمدة</b><small>للسلة</small></div>
             </div>
             <div class="store-step-arrow"><i class="fas fa-arrow-left"></i></div>
             <div class="store-step">
@@ -269,6 +269,7 @@
       <!-- الدورات -->
       <div class="sec-title"><i class="fas fa-graduation-cap" style="color:var(--primary)"></i> اختر دورتك</div>
       <div class="courses-grid" id="coursesGrid"></div>
+      <div class="store-trust" id="storeTrust"></div>
 
       <div class="testimonials-section" id="testimonialsSection"></div>
     </section>
@@ -1258,6 +1259,7 @@
         <button data-panel="courses"><i class="fas fa-graduation-cap"></i> الدورات والأسعار</button>
         <button data-panel="aiindex"><i class="fas fa-magnifying-glass-chart"></i> البحث الذكي</button>
         <button data-panel="suggestions"><i class="fas fa-lightbulb"></i> الاقتراحات <span class="badge-n" id="sugAdminBadge" style="display:none">0</span></button>
+        <button data-panel="coupons"><i class="fas fa-ticket"></i> أكواد الخصم</button>
         <button data-panel="storesettings"><i class="fas fa-cog"></i> إعدادات المتجر</button>
            <button data-panel="products"><i class="fas fa-box"></i> المنتجات</button>
 <button data-panel="addproduct"><i class="fas fa-plus-square"></i> إضافة منتج</button>
@@ -1522,6 +1524,7 @@
     <div class="form-group"><label>اسم المنتج *</label><input type="text" id="pfTitle" maxlength="80" placeholder="مثال: دورة الأقسام"></div>
     <div class="form-group"><label>العنوان الفرعي</label><input type="text" id="pfSubtitle" maxlength="120" placeholder="الدورة الشاملة"></div>
     <div class="form-group"><label>الوصف</label><textarea id="pfDesc" placeholder="وصف تفصيلي..."></textarea></div>
+    <div class="form-group"><label>نبذة الدورة <small style="color:var(--muted);font-weight:600">(كل نقطة في سطر — تظهر للطلاب في المتجر)</small></label><textarea id="pfAbout" rows="7" placeholder="140 قسم كمي تنزل بالتدريج&#10;يوجد لها مقاطع شرح&#10;يوجد لها جداول"></textarea></div>
 
     <div class="form-group">
       <label>أسعار الاشتراك * <small style="color:var(--muted);font-weight:600">(سعر مستقل لكل مدة — اترك المدة فارغة لإخفائها من المتجر)</small></label>
@@ -1632,6 +1635,39 @@
           <h3><i class="fas fa-lightbulb"></i> اقتراحات الطلاب</h3>
           <div class="filter-row" id="sugFilterBar" style="margin:10px 0 14px;flex-wrap:wrap;gap:6px"></div>
           <div class="sug-admin-grid" id="adminSuggestions"></div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="panel-coupons">
+        <div class="card-basic">
+          <h3><i class="fas fa-ticket"></i> إنشاء كود خصم</h3>
+          <p style="font-size:.8rem;color:var(--muted);margin:4px 0 14px">الطالب يكتب الكود في السلة ويتخصم من مجموع الدورات اللي أضافها. كل طالب يستخدم الكود مرة وحدة فقط.</p>
+          <div class="cp-form">
+            <div class="form-group"><label>الكود <small style="color:var(--muted);font-weight:600">(اتركه فارغ لتوليد كود تلقائي)</small></label>
+              <input type="text" id="cpCode" dir="ltr" maxlength="30" placeholder="SAVE20" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+            <div class="form-group"><label>نوع الخصم</label>
+              <select id="cpKind" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"><option value="percent">نسبة مئوية %</option><option value="amount">مبلغ ثابت (ريال)</option></select></div>
+            <div class="form-group"><label>قيمة الخصم (<span id="cpValueUnit">%</span>)</label>
+              <input type="number" id="cpValue" min="1" step="1" placeholder="20" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+            <div class="form-group"><label>مرات الاستخدام</label>
+              <select id="cpUsage" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+                <option value="once">مرة واحدة فقط (ينتهي بعد أول استخدام)</option>
+                <option value="unlimited">أكثر من مرة (بدون حد)</option>
+                <option value="limited">عدد محدد من المرات</option>
+              </select></div>
+            <div class="form-group" id="cpMaxWrap" style="display:none"><label>عدد المرات</label>
+              <input type="number" id="cpMax" min="1" step="1" placeholder="10" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+            <div class="form-group"><label>ينتهي بتاريخ <small style="color:var(--muted);font-weight:600">(اختياري)</small></label>
+              <input type="date" id="cpExpires" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+            <div class="form-group" style="grid-column:1/-1"><label>ملاحظة <small style="color:var(--muted);font-weight:600">(اختياري — للأدمن فقط)</small></label>
+              <input type="text" id="cpNote" maxlength="80" placeholder="مثال: عرض اليوم الوطني" style="width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+          </div>
+          <button class="btn btn-primary" onclick="createCoupon()" style="margin-top:6px"><i class="fas fa-plus"></i> إنشاء الكود</button>
+        </div>
+        <div class="card-basic" style="margin-top:14px">
+          <h3 style="display:flex;align-items:center;gap:10px"><i class="fas fa-list"></i> الأكواد
+            <button class="btn btn-ghost btn-sm" style="margin-right:auto" onclick="renderAdminCoupons()"><i class="fas fa-rotate"></i> تحديث</button></h3>
+          <div class="cp-grid" id="adminCouponsList"></div>
         </div>
       </div>
 
@@ -2164,7 +2200,10 @@
 <!-- ============================================================
      زر الذكاء الاصطناعي
 ============================================================ -->
-
+<button id="aiFabBtn" class="ai-fab-btn" title="المساعد الذكي">
+  <i class="fas fa-robot"></i>
+  <span class="ai-fab-pulse"></span>
+</button>
 
 <div id="aiChatPanel" class="ai-chat-panel">
   <div class="ai-chat-head">
@@ -2265,48 +2304,49 @@ function closeTerms(){ var m = document.getElementById('termsModal'); if(m) m.cl
 function acceptTerms(){ var c = document.getElementById('regTerms'); if(c) c.checked = true; closeTerms(); }
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTerms(); });
 </script>
-<script src="js/01-config.js?v=20261014e"></script>
-<script src="js/02-utils.js?v=20261014e"></script>
-<script src="js/03-state.js?v=20261014e"></script>
-<script src="js/04-theme.js?v=20261014e"></script>
-<script src="js/05-nav.js?v=20261014e"></script>
-<script src="js/06-stats.js?v=20261014e"></script>
-<script src="js/07-files.js?v=20261014e"></script>
-<script src="js/08-home.js?v=20261014e"></script>
-<script src="js/09-features.js?v=20261014e"></script>
-<script src="js/10-tasks.js?v=20261014e"></script>
-<script src="js/11-timer.js?v=20261014e"></script>
-<script src="js/12-settings.js?v=20261014e"></script>
-<script src="js/13-reader.js?v=20261014e"></script>
-<script src="js/14-draw.js?v=20261014e"></script>
-<script src="js/15-auth.js?v=20261014e"></script>
-<script src="js/16-user.js?v=20261014e"></script>
-<script src="js/17-leaderboard.js?v=20261014e"></script>
-<script src="js/18-admin.js?v=20261014e"></script>
-<script src="js/19-realtime.js?v=20261014e"></script>
-<script src="js/20-protection.js?v=20261014e"></script>
-<script src="js/21-app.js?v=20261014e"></script>
-<script src="js/22-videos.js?v=20261014e"></script>
-<script src="js/23-store.js?v=20261014e"></script>
-<script src="js/24-ai.js?v=20261014e"></script>
-<script src="js/25-studyplan.js?v=20261014e"></script>
-<script src="js/26-adhkar.js?v=20261014e"></script>
-<script src="js/27-testimonials.js?v=20261014e"></script>
-<script src="js/28-prayer-times.js?v=20261014e"></script>
-<script src="js/29-quiz.js?v=20261014e"></script>
-<script src="js/30-owner-features.js?v=20261014e"></script>
-<script src="js/31-course-system.js?v=20261014e"></script>
-<script src="js/32-notifications.js?v=20261014e"></script>
-<script src="js/33-admin-products.js?v=20261014e"></script>
-<script src="js/34-course-filter-fix.js?v=20261014e"></script>
-<script src="js/35-welcome-fix.js?v=20261014e"></script>
-<script src="js/36-video-whiteboard.js?v=20261014e"></script>
-<script src="js/37-study-rooms.js?v=20261014e"></script>
-<script src="js/38-suggestions.js?v=20261014e"></script>
-<script src="js/40-admin-courses.js?v=20261014e"></script>
-<script src="js/41-ai-index.js?v=20261014e"></script>
-<script src="js/42-certificates.js?v=20261014e"></script>
-<script src="js/43-xp.js?v=20261014e"></script>
+<script src="js/01-config.js?v=20261015a"></script>
+<script src="js/02-utils.js?v=20261015a"></script>
+<script src="js/03-state.js?v=20261015a"></script>
+<script src="js/04-theme.js?v=20261015a"></script>
+<script src="js/05-nav.js?v=20261015a"></script>
+<script src="js/06-stats.js?v=20261015a"></script>
+<script src="js/07-files.js?v=20261015a"></script>
+<script src="js/08-home.js?v=20261015a"></script>
+<script src="js/09-features.js?v=20261015a"></script>
+<script src="js/10-tasks.js?v=20261015a"></script>
+<script src="js/11-timer.js?v=20261015a"></script>
+<script src="js/12-settings.js?v=20261015a"></script>
+<script src="js/13-reader.js?v=20261015a"></script>
+<script src="js/14-draw.js?v=20261015a"></script>
+<script src="js/15-auth.js?v=20261015a"></script>
+<script src="js/16-user.js?v=20261015a"></script>
+<script src="js/17-leaderboard.js?v=20261015a"></script>
+<script src="js/18-admin.js?v=20261015a"></script>
+<script src="js/19-realtime.js?v=20261015a"></script>
+<script src="js/20-protection.js?v=20261015a"></script>
+<script src="js/21-app.js?v=20261015a"></script>
+<script src="js/22-videos.js?v=20261015a"></script>
+<script src="js/23-store.js?v=20261015a"></script>
+<script src="js/24-ai.js?v=20261015a"></script>
+<script src="js/25-studyplan.js?v=20261015a"></script>
+<script src="js/26-adhkar.js?v=20261015a"></script>
+<script src="js/27-testimonials.js?v=20261015a"></script>
+<script src="js/28-prayer-times.js?v=20261015a"></script>
+<script src="js/29-quiz.js?v=20261015a"></script>
+<script src="js/30-owner-features.js?v=20261015a"></script>
+<script src="js/31-course-system.js?v=20261015a"></script>
+<script src="js/32-notifications.js?v=20261015a"></script>
+<script src="js/33-admin-products.js?v=20261015a"></script>
+<script src="js/34-course-filter-fix.js?v=20261015a"></script>
+<script src="js/35-welcome-fix.js?v=20261015a"></script>
+<script src="js/36-video-whiteboard.js?v=20261015a"></script>
+<script src="js/37-study-rooms.js?v=20261015a"></script>
+<script src="js/38-suggestions.js?v=20261015a"></script>
+<script src="js/40-admin-courses.js?v=20261015a"></script>
+<script src="js/41-ai-index.js?v=20261015a"></script>
+<script src="js/42-certificates.js?v=20261015a"></script>
+<script src="js/43-xp.js?v=20261015a"></script>
+<script src="js/44-cart.js?v=20261015a"></script>
 <!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
 
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
