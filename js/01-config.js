@@ -18,6 +18,35 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
+/* ⭐ عميل خاص لإرسال روابط «نسيت كلمة المرور» (implicit):
+   الرابط يرجع بالتوكن مباشرة فيشتغل حتى لو انفتح في تبويب أو جهاز ثاني
+   (مع pkce + sessionStorage كان الرابط يفشل لأن الـ verifier في تبويب ثاني) */
+const sbRecovery = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { flowType: 'implicit', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sb-recovery-' + Date.now() }
+});
+const RESET_REDIRECT = window.location.origin + window.location.pathname + '?reset=1';
+
+/* ⭐ نلتقط رابط الاستعادة فوراً (قبل ما يتغيّر الرابط بالتنقل) */
+window.__AUTH_RECOVERY = (function(){
+  try{
+    const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    const q = new URLSearchParams(location.search || '');
+    const isReset = q.get('reset') === '1' || h.get('type') === 'recovery';
+    let r = null;
+    if(h.get('access_token') && h.get('type') === 'recovery'){
+      r = { access_token: h.get('access_token'), refresh_token: h.get('refresh_token') || '' };
+    } else if(isReset && (h.get('error') || h.get('error_code') || q.get('error'))){
+      r = { error: h.get('error_code') || h.get('error') || q.get('error'), desc: h.get('error_description') || q.get('error_description') || '' };
+    } else if(isReset && q.get('code')){
+      r = { code: q.get('code') };
+    } else if(isReset){
+      r = { error: 'no_token' };
+    }
+    if(r){ try{ history.replaceState(null, '', location.pathname + '#home'); }catch(e){} }
+    return r;
+  }catch(e){ return null; }
+})();
+
 const sbTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { storage: window.sessionStorage, storageKey: 'sb-temp-' + Date.now(), persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
@@ -99,5 +128,9 @@ const FEATURES = [
   { i:'fa-mobile-screen',    t:'تجربة جوال ممتازة',    d:'تصميم متجاوب مع قائمة مستخدم خاصة للجوال.', c:'#22c55e' },
    { i:'fa-gamepad',        t:'لعبة العباقرة',  d:'تحدَّ أصدقاءك في مسابقة سريعة — 20 سؤال، 20 ثانية لكل سؤال، واربح نقاط XP.', c:'#8b5cf6' },
   { i:'fa-calendar-check', t:'الجدول الذكي',   d:'خطة مذاكرة ذكية تُبنى تلقائياً حسب موعد اختبارك، وعدد الأيام المتاحة، والملفات المتبقية.', c:'#22c55e' },
+  { i:'fa-people-group',   t:'المذاكرة الجماعية', d:'غرف مذاكرة بمؤقت مشترك حتى 3 ساعات — أنشئ غرفة، ادخل برمز، أو انضم لغرفة عشوائية.', c:'#0ea5e9' },
+  { i:'fa-chalkboard',      t:'سبورة مع الفيديو',  d:'سبورة مصغّرة تتحرك وتكبر وتصغر فوق الفيديو والملف في الوضع المنقسم.', c:'#14b8a6' },
+  { i:'fa-lightbulb',       t:'صندوق الاقتراحات',  d:'أرسل أفكارك ومشاكلك للإدارة وتابع ردهم عليها.', c:'#f59e0b' },
+  { i:'fa-shield-halved',   t:'حماية الحساب',      d:'جهازان كحد أقصى لكل حساب، مع إخراج الجهاز الأقدم تلقائياً.', c:'#ef4444' },
   { i:'fa-gift',           t:'صندوق الهدايا',  d:'هدايا ومكافآت من إدارة المنصة — جوائز، تمديد اشتراك، وتغيير دورة، مع احتفال عند الفتح 🎉.', c:'#f7b32b' }
 ];
