@@ -4,6 +4,8 @@
 
 const TITLES = {
   home:['الرئيسية','أهلاً بك مجدداً، لنواصل رحلة التفوق'],
+  announcements:['الإعلانات','أخبار وتنبيهات منصة عباقرة القدرات'],
+  community:['مجتمع العباقرة','شارك زملاءك أسئلتك وإنجازاتك'],
   store:['المتجر','اختر دورتك وفعّل اشتراكك'],
   files:['الملفات','مكتبتك التعليمية الكاملة'],
   videos:['الفيديوهات','مكتبة الدروس المرئية'],
@@ -27,7 +29,12 @@ function canAccess(view){
 }
 
 function go(view, skipHash){
-  if(!TITLES[view]) view = 'home';
+  /* لو الصفحة موجودة في HTML لكن غير مسجلة هنا → سجّلها بدل ما نرجع للرئيسية */
+  if(!TITLES[view]){
+    const el = document.getElementById('view-' + view);
+    if(el) TITLES[view] = [el.dataset.title || (view === 'suggestions' ? 'الاقتراحات' : 'عباقرة القدرات'), el.dataset.sub || ''];
+    else view = 'home';
+  }
 
   /* حماية #admin */
   if(!canAccess(view)){
@@ -91,6 +98,8 @@ function go(view, skipHash){
     if(view === 'quiz' && typeof initQuiz === 'function') initQuiz();
     if(view === 'gifts' && typeof renderMyGifts === 'function') renderMyGifts();
     if(view === 'suggestions' && typeof renderMySuggestions === 'function') renderMySuggestions();
+    if(view === 'announcements' && typeof renderAnnouncements === 'function') renderAnnouncements();
+    if(view === 'community' && typeof renderCommunity === 'function') renderCommunity();
   }, 180);
 }
 window.go = go;
@@ -104,7 +113,7 @@ window.addEventListener('hashchange', () => {
     go('home', true);
     return;
   }
-  if(TITLES[v]) go(v, true);
+  if(TITLES[v] || document.getElementById('view-' + v)) go(v, true);
 });
 
 function goFromHash(){
@@ -124,7 +133,7 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-view]');
   if(!btn || btn.closest('.view')) return;   /* نتجاهل عناصر داخل الصفحات نفسها */
   const view = btn.dataset.view;
-  if(!view || !TITLES[view]) return;
+  if(!view || (!TITLES[view] && !document.getElementById('view-' + view))) return;
   e.preventDefault();
   const mum = document.getElementById('mobileUserMenu');
   if(mum) mum.classList.remove('open');
