@@ -250,12 +250,18 @@ function hideBootLoader(){
 window.showBootLoader = showBootLoader;
 window.hideBootLoader = hideBootLoader;
 
+/* ⭐ أي عملية لها حد زمني — ما يعلّق الموقع للأبد */
+function withTimeout(promise, ms, fallback){
+  return Promise.race([promise, new Promise(res => setTimeout(() => res(fallback), ms))]);
+}
+window.withTimeout = withTimeout;
+
 /* جلب الملف الشخصي مع إعادة المحاولة (الشبكة/الخادم قد يتأخر) */
 async function fetchMyProfile(uid){
   let lastErr = null;
   for(let i = 0; i < 4; i++){
     try{
-      const r = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+      const r = await withTimeout(sb.from('profiles').select('*').eq('id', uid).maybeSingle(), 12000, { error: { message: 'timeout' } });
       if(!r.error && r.data) return { data: r.data };
       if(!r.error && !r.data) lastErr = { notFound: true };
       else lastErr = r.error;
@@ -288,6 +294,18 @@ async function enterApp(){
 
     /* ⭐ شاشة تحميل واضحة بدل الشاشة البيضاء */
     showBootLoader('جاري تسجيل الدخول...');
+    /* 🛟 حارس: لو التحميل طوّل أكثر من 45 ثانية → نرجّعه لشاشة الدخول بدل التعليق */
+    clearTimeout(window._bootGuard);
+    window._bootGuard = setTimeout(() => {
+      const bl = document.getElementById('bootLoader');
+      const ready = document.getElementById('app') && document.getElementById('app').classList.contains('ready');
+      if(bl && bl.classList.contains('show') && !ready){
+        hideBootLoader();
+        window._appInitialized = false;
+        window._lastInitializedUserId = null;
+        showLoginRetryMessage('الاتصال بطيء — اضغط تسجيل الدخول مرة ثانية');
+      }
+    }, 45000);
     const wEl = document.getElementById('welcome'); if(wEl){ wEl.style.display = 'none'; }
     const aEl = document.getElementById('auth'); if(aEl) aEl.classList.remove('open');
 
@@ -351,6 +369,7 @@ async function enterApp(){
 
     if(appEl) appEl.classList.add('ready');
     hideBootLoader();
+    clearTimeout(window._bootGuard);
 
     try{ renderTasks(); }catch(e){}
     try{ renderBadges(); }catch(e){}
@@ -470,7 +489,7 @@ function bindEmergencyButtons(){
       enterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
 
       try{
-        const r = await sb.auth.getSession();
+        const r = await withTimeout(sb.auth.getSession(), 8000, { data: { session: null } });
         const s = r.data.session;
 
         if(s){
@@ -517,7 +536,19 @@ window.bindEmergencyButtons = bindEmergencyButtons;
     }
 
     let s = null;
-    try{ const r = await sb.auth.getSession(); s = r.data.session; }catch(e){}
+    try{
+      const r = await withTimeout(sb.auth.getSession(), 8000, { data: { session: null }, timedOut: true });
+      s = r && r.data ? r.data.session : null;
+      if(r && r.timedOut){
+        /* الخادم ما رد → نعرض الترحيب ونحاول مرة ثانية بالخلفية */
+        setTimeout(async () => {
+          try{
+            const r2 = await sb.auth.getSession();
+            if(r2.data.session && !window._appInitialized){ session = r2.data.session; window.enterApp(); }
+          }catch(e){}
+        }, 1500);
+      }
+    }catch(e){}
     session = s;
 
     sb.auth.onAuthStateChange(async (event, newSession) => {
@@ -601,3 +632,44 @@ window.addEventListener('beforeunload', () => {
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
   try{ if(NOTIF.channel) sb.removeChannel(NOTIF.channel); }catch(e){}
 });
+
+/* ============================================================
+   🔄 التحديث التلقائي: لو رفعت نسخة جديدة للموقع، المتصفح ياخذها
+   بدل ما يبقى على ملفات قديمة من الكاش (سبب مشاكل «الزر ما يشتغل»)
+============================================================ */
+(function autoUpdate(){
+  function currentVersion(){
+    const el = document.querySelector('script[src*="js/01-config.js"]');
+    const m = el && /[?&]v=([^&"]+)/.exec(el.getAttribute('src') || '');
+    return m ? m[1] : '';
+  }
+  function busy(){
+    /* ما نحدّث والطالب يقرأ ملف / يشاهد فيديو / يدفع / داخل غرفة */
+    const open = id => { const el = document.getElementById(id); return el && el.classList.contains('open'); };
+    if(open('reader') || open('videoPlayer') || open('payCheckout') || open('payResult') || open('pwReset')) return true;
+    try{ if(typeof SR !== 'undefined' && SR.room) return true; }catch(e){}
+    try{ if(typeof TIMER !== 'undefined' && TIMER.running) return true; }catch(e){}
+    return false;
+  }
+  async function check(){
+    if(document.hidden || busy()) return;
+    const cur = currentVersion();
+    if(!cur) return;
+    try{
+      const r = await fetch(location.pathname + '?_vc=' + Date.now(), { cache: 'no-store' });
+      if(!r.ok) return;
+      const html = await r.text();
+      const m = /js\/01-config\.js\?v=([^"']+)/.exec(html);
+      if(!m || m[1] === cur) return;
+      const key = 'abq_updated_to_' + m[1];
+      if(sessionStorage.getItem(key)) return;          /* حاولنا مرة — ما نكرر */
+      sessionStorage.setItem(key, '1');
+      try{ if(typeof flushPrefsNow === 'function') await flushPrefsNow(); }catch(e){}
+      try{ toast('✨ تحديث جديد للمنصة — نحمّله لك الحين', 'ok'); }catch(e){}
+      setTimeout(() => location.reload(), 1200);
+    }catch(e){}
+  }
+  setTimeout(check, 15000);
+  setInterval(check, 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(check, 2000); });
+})();
