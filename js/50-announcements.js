@@ -258,22 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1000);
 });
 
-/* ================== ربط الصفحات الجديدة بالتنقل ================== */
+/* ================== ربط الصفحات بالتنقل ==================
+   (العناوين والعرض صارت في 05-nav.js — هنا احتياط لو ملف التنقل قديم من الكاش) */
 (function(){
-  if(typeof TITLES !== 'undefined'){
-    TITLES.community = ['مجتمع العباقرة', 'شارك زملاءك أسئلتك وإنجازاتك'];
-    TITLES.announcements = ['الإعلانات', 'أخبار وتنبيهات منصة عباقرة القدرات'];
-  }
-  const orig = window.go;
-  if(typeof orig !== 'function' || orig._wrapped) return;
-  const wrapped = function(view){
-    const r = orig.apply(this, arguments);
-    setTimeout(() => {
-      if(view === 'community' && typeof renderCommunity === 'function') renderCommunity();
-      if(view === 'announcements') renderAnnouncements();
-    }, 200);
-    return r;
-  };
-  wrapped._wrapped = true;
-  window.go = wrapped;
+  try{
+    if(typeof TITLES !== 'undefined'){
+      if(!TITLES.community) TITLES.community = ['مجتمع العباقرة', 'شارك زملاءك أسئلتك وإنجازاتك'];
+      if(!TITLES.announcements) TITLES.announcements = ['الإعلانات', 'أخبار وتنبيهات منصة عباقرة القدرات'];
+    }
+  }catch(e){}
 })();
