@@ -229,6 +229,19 @@ async function srMaybeTakeOver(){
 function srApplyRoom(n){
   if(!SR.room || !n || n.id !== SR.room.id) return;
   const old = SR.room;
+  /* ⭐ نقاط الجلسات الجماعية: لو الجولة/الجلسة انتهت عند المضيف قبل جهازي
+     (أو أنهاها المضيف) → نحتسب وقتي قبل ما يتغير شيء */
+  if(old.status === 'running'){
+    const phaseChanged = !!n.schedule && (old.phase_index || 0) !== (n.phase_index || 0);
+    const roundChanged = (old.started_at || '') !== (n.started_at || '');
+    if(n.status === 'finished' || n.status === 'waiting' || n.status === 'closed' || roundChanged || phaseChanged){
+      const wasBreak = !!old.schedule && (() => { const ph = schPhases(old.schedule)[old.phase_index || 0]; return ph && ph.type === 'break'; })();
+      if(!wasBreak){
+        SR.runKey = old.id + ':' + (old.started_at || '') + (old.schedule ? ':' + (old.phase_index || 0) : '');
+        srCredit();
+      }
+    }
+  }
   SR.room = n;
   if(n.status === 'closed'){ toast('أُغلقت الغرفة', 'warn'); srCleanup(); return; }
   if(old.status !== n.status || old.host_id !== n.host_id || old.ends_at !== n.ends_at || old.phase_index !== n.phase_index){
