@@ -356,7 +356,7 @@ function payShowPending(id, token){
 async function checkPaymentNow(id, token, manual){
   if(manual) toast('نتحقق من الدفع...', 'ok');
   try{
-    const r = await payCall({ action: 'status', id, t: token }, false);
+    const r = await payCall({ action: 'sync_status', id, t: token }, false)
     const p = r && r.payment;
 
     if(p && p.status === 'paid'){
