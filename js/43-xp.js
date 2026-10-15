@@ -141,20 +141,33 @@ async function xpFileComplete(file){
 window.xpFileComplete = xpFileComplete;
 
 /* ================== ⏱️ جلسات التركيز ================== */
+/* رقم الجلسة يُحفظ في التبويب (لو حدّث الصفحة ما تضيع النقاط) */
+function xpSaveFocus(){
+  try{
+    if(XP.focusId) sessionStorage.setItem('abq_focus_id', XP.focusId);
+    else sessionStorage.removeItem('abq_focus_id');
+  }catch(e){}
+}
+try{ XP.focusId = sessionStorage.getItem('abq_focus_id') || null; }catch(e){}
+
 async function xpFocusStart(minutes, source){
   if(!xpEligible()) return null;
   const id = await xpRpc('start_focus', { p_minutes: Math.round(minutes || 25), p_source: source || 'timer' });
   XP.focusId = id || null;
   XP.focusSource = source || 'timer';
+  xpSaveFocus();
   return id;
 }
 window.xpFocusStart = xpFocusStart;
 
 async function xpFocusFinish(label){
-  if(!XP.focusId) return 0;
+  if(!xpEligible()) return 0;
   const id = XP.focusId;
   XP.focusId = null;
-  const r = await xpRpc('finish_focus', { p_id: id });
+  xpSaveFocus();
+  /* لو رقم الجلسة ضاع → السيرفر ينهي آخر جلسة مفتوحة للطالب (ما تضيع الدقائق) */
+  let r = id ? await xpRpc('finish_focus', { p_id: id }) : null;
+  if(!r || r.reason === 'no_session') r = await xpRpc('finish_my_focus');
   if(r && r.xp > 0){
     toast(`⏱️ ${r.minutes} دقيقة تركيز — +${r.xp} XP`, 'ok');
     xpFlash(r.xp, label || 'تركيز');
@@ -165,7 +178,12 @@ async function xpFocusFinish(label){
 }
 window.xpFocusFinish = xpFocusFinish;
 
-function xpFocusAbandon(){ XP.focusId = null; }
+/* إيقاف/إعادة ضبط المؤقت → تنحسب الدقائق اللي ذاكرها فعلاً (بهدوء) */
+function xpFocusAbandon(){
+  const id = XP.focusId;
+  XP.focusId = null; xpSaveFocus();
+  if(id && xpEligible()) xpRpc('finish_focus', { p_id: id }).then(r => { if(r && r.xp > 0){ xpFlash(r.xp, 'تركيز'); xpRefreshSoon(); } });
+}
 window.xpFocusAbandon = xpFocusAbandon;
 
 /* ================== 🎬 الفيديو ================== */
