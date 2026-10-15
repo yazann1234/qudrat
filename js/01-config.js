@@ -6,6 +6,25 @@ const SUPABASE_URL = 'https://turhxyetqlxrfizggtaf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1cmh4eWV0cWx4cmZpemdndGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzc0NjcsImV4cCI6MjEwNjAxMzQ2N30._hxx8iQCnWzgiNS-0nACHluQvmsgtj3nsldTDr5QFGU';
 const CHANGE_PASS_URL = SUPABASE_URL + '/functions/v1/change-user-password';
 
+/* ⭐ منع تعليق الموقع: أي طلب للخادم له مهلة — ما يعلّق للأبد لو الشبكة ضعيفة
+   (رفع الملفات والدوال لها مهلة أطول) */
+function sbFetchWithTimeout(input, init){
+  const url = typeof input === 'string' ? input : (input && input.url) || '';
+  const method = String((init && init.method) || 'GET').toUpperCase();
+  const ms = /\/storage\/v1\/object/.test(url) && method !== 'GET' ? 180000
+           : /\/functions\/v1\//.test(url) ? 60000
+           : /\/auth\/v1\//.test(url) ? 20000
+           : 25000;
+  if(init && init.signal) return fetch(input, init);   /* الطلب له إلغاء خاص به */
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(input, Object.assign({}, init, { signal: ctrl.signal })).finally(() => clearTimeout(t));
+}
+
+/* كل تبويب له جلسته (sessionStorage) → ما نحتاج قفل بين التبويبات.
+   القفل الافتراضي (navigator.locks) كان أحد أسباب «تعليق» تسجيل الدخول */
+const sbNoLock = async (name, acquireTimeout, fn) => await fn();
+
 // sessionStorage: كل تبويب له جلسة مستقلة
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -14,8 +33,10 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    flowType: 'pkce'
-  }
+    flowType: 'pkce',
+    lock: sbNoLock
+  },
+  global: { fetch: sbFetchWithTimeout }
 });
 
 /* ⭐ عميل خاص لإرسال روابط «نسيت كلمة المرور» (implicit):
