@@ -331,7 +331,7 @@ function payShowPending(id, token){
     if(cd) cd.innerHTML = `<i class="fas fa-spinner fa-spin"></i> نتحقق تلقائياً… (${secs}ث)`;
 
     try{
-      const r = await payCall({ action: 'status', id, t: token }, false);
+      const r = await payCall({ action: 'sync_status', id, t: token }, false)
       const p = r && r.payment;
 
       if(p && p.status === 'paid'){
@@ -478,7 +478,7 @@ async function payAfterSuccess(){
     /* فحص خفيف بالخلفية بعد 3 ثواني */
     setTimeout(async () => {
       try{
-        const r = await payCall({ action: 'status', id: p.id, t: p.t }, false);
+        const r = await payCall({ action: 'sync_status', id, t: token }, false)
         const pm = r && r.payment;
 
         if(pm && pm.status === 'paid'){
