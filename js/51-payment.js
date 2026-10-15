@@ -1,13 +1,12 @@
 /* ============================================================
    51) PAYMENT — الدفع الإلكتروني عبر طويق باي 💳
-   - السلة ← «ادفع الآن» ← صفحة الدفع الآمنة (مدى / فيزا / ماستركارد)
-   - بعد الدفع يرجع للموقع ← نتحقق من السيرفر ← يتفعل اشتراكه فوراً 🎉
-   - الدفع فشل (رصيد غير كافٍ / بطاقة مرفوضة)؟ «عملية الدفع لم تستكمل»
-     ويرجع تلقائياً لنفس صفحة الدفع يحاول مرة ثانية
-   - التفعيل يصير في السيرفر فقط بعد تأكيد البوابة (ما يمكن التلاعب فيه)
+   - السلة ← «ادفع الآن» ← صفحة الدفع الآمنة
+   - بعد الدفع يرجع الطالب لموقعنا مباشرة (?pay=xxx&t=yyy)
+   - نتحقق من السيرفر → يتفعل اشتراكه فوراً 🎉
+   - لو فشل → «عملية الدفع لم تستكمل» + إعادة تلقائية
 ============================================================ */
 
-const PAY = { busy: false, poll: null, cd: null, current: null };
+const PAY = { busy: false, poll: null, cd: null, current: null, visibilityWatcher: null };
 const PAY_FN = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '') + '/functions/v1/tuwaiqpay';
 const PAY_PENDING_KEY = 'abq_pay_pending';
 
@@ -45,6 +44,7 @@ function payErrText(msg){
     not_authenticated: 'انتهت جلستك — سجّل الدخول مرة ثانية',
     gateway_not_configured: 'بوابة الدفع قيد التجهيز — تواصل مع الدعم',
     gateway_auth_failed: 'بوابة الدفع غير متاحة حالياً — حاول بعد دقائق',
+    site_url_not_configured: 'إعدادات الموقع ناقصة — تواصل مع الدعم',
     aborted: 'الاتصال بطيء — حاول مرة ثانية'
   };
   for(const k in map) if(msg.includes(k)) return map[k];
@@ -244,7 +244,6 @@ function payShowResult(id, token, hint){
       return;
     }
     if(p && p.status === 'failed'){ clearInterval(PAY.poll); render('failed', p); return; }
-    /* البوابة رجّعت «فشل» والسيرفر ما وصله شي → نعتبره فشل بعد ثواني */
     if(p && hint === 'failed' && Date.now() - started > 6000){ clearInterval(PAY.poll); render('failed', p); return; }
     if(Date.now() - started > 90000){ clearInterval(PAY.poll); render('timeout', p); return; }
   };
@@ -280,7 +279,6 @@ async function payAfterSuccess(){
     return;
   }
   await payRefreshProfile();
-  /* نحمّل الملفات والفيديوهات اللي صارت متاحة له */
   try{ if(typeof loadProfilesAndFiles === 'function') loadProfilesAndFiles(); }catch(e){}
   try{ if(typeof loadVideos === 'function') loadVideos(); }catch(e){}
   try{ go('home'); }catch(e){}
@@ -293,27 +291,65 @@ async function payAfterSuccess(){
     const q = new URLSearchParams(location.search);
     if(q.get('pay') && q.get('t')) ret = { id: q.get('pay'), t: q.get('t'), hint: payGatewayHint() };
     if(ret){
-      /* نشيل بيانات الدفع من الرابط (بدون إعادة تحميل) */
+      // ⭐ نظّف الرابط بدون إعادة تحميل (نحتفظ بالهاش)
       const clean = location.pathname + (location.hash || '#home');
       history.replaceState(null, '', clean);
     }
   }catch(e){}
 
-  const run = () => {
-    if(ret){ setTimeout(() => payShowResult(ret.id, ret.t, ret.hint), 400); return; }
-    /* طالب رجع للموقع بدون صفحة الرجوع (قفل التبويب مثلاً) → نتحقق بهدوء */
+  // ⭐ لو رجعنا من البوابة، نستقبله فوراً بدون انتظار تحميل الصفحة كلها
+  if(ret){
+    const fire = () => {
+      if(typeof window.enterApp === 'function' && !window._appInitialized){
+        // ننتظر الإقلاع يكمل
+        setTimeout(() => payShowResult(ret.id, ret.t, ret.hint), 600);
+      } else {
+        setTimeout(() => payShowResult(ret.id, ret.t, ret.hint), 400);
+      }
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fire);
+    else fire();
+  } else {
+    // ما فيه params → نتحقق من طلب دفع معلّق (رجع بدون رابط، مثلاً قفل التبويب)
+    const run = () => {
+      try{
+        const pend = JSON.parse(localStorage.getItem(PAY_PENDING_KEY) || 'null');
+        if(!pend || !pend.id) return;
+        if(Date.now() - pend.at > 6 * 3600 * 1000){ localStorage.removeItem(PAY_PENDING_KEY); return; }
+        setTimeout(async () => {
+          try{
+            const p = (await payCall({ action: 'status', id: pend.id, t: pend.t }, false)).payment;
+            if(p && p.status === 'paid') payShowResult(pend.id, pend.t);
+            else if(p && p.status === 'failed') localStorage.removeItem(PAY_PENDING_KEY);
+          }catch(e){}
+        }, 5000);
+      }catch(e){}
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+  }
+
+  // ⭐ حارس إضافي: لو رجع المستخدم للتبويب ونحن داخل نافذة الدفع، نفحص الحالة
+  let watcherFired = false;
+  PAY.visibilityWatcher = () => {
+    if(document.hidden || watcherFired) return;
+    watcherFired = true;
+    const o = document.getElementById('payResult');
+    if(!o || !o.classList.contains('open')) return;
     try{
       const pend = JSON.parse(localStorage.getItem(PAY_PENDING_KEY) || 'null');
       if(!pend || !pend.id) return;
-      if(Date.now() - pend.at > 6 * 3600 * 1000){ localStorage.removeItem(PAY_PENDING_KEY); return; }
-      setTimeout(async () => {
-        try{
-          const p = (await payCall({ action: 'status', id: pend.id, t: pend.t }, false)).payment;
-          if(p && p.status === 'paid') payShowResult(pend.id, pend.t);
-          else if(p && p.status === 'failed') localStorage.removeItem(PAY_PENDING_KEY);
-        }catch(e){}
-      }, 5000);
+      payCall({ action: 'status', id: pend.id, t: pend.t }, false).then(r => {
+        const p = r && r.payment;
+        if(p && p.status === 'paid'){
+          try{ localStorage.removeItem(PAY_PENDING_KEY); }catch(e){}
+          try{ if(typeof cartClearAfterSubmit === 'function') cartClearAfterSubmit(); }catch(e){}
+          payShowResult(pend.id, pend.t);
+          payRefreshProfile();
+        }
+      }).catch(() => {});
     }catch(e){}
+    setTimeout(() => { watcherFired = false; }, 4000);
   };
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+  document.addEventListener('visibilitychange', PAY.visibilityWatcher);
 })();
