@@ -1,8 +1,15 @@
 /* ============================================================
-   51) PAYMENT — طويق باي (بدون returnUrl — نعتمد على Webhook)
-   - نفتح صفحة الدفع في تاب جديد → المستخدم يعرف يرجع لنا
-   - فحص تلقائي كل 5 ثواني + عند رجوع التبويب
-   - زر "تحقق يدوي" للأمان
+   51) PAYMENT — الدفع الإلكتروني عبر طويق باي 💳
+   
+   ✨ التجربة:
+   1) الطالب يضغط "ادفع الآن" → نفتح تاب جديد فوراً (قبل أي await)
+   2) التاب يعرض "جاري التحويل..." ثم يحوّل لبوابة طويق باي
+   3) الموقع الأصلي يعرض "بانتظار إتمام الدفع" + فحص تلقائي
+   4) بعد نجاح الدفع → الـ Webhook يفعّل الاشتراك فوراً
+   5) الفحص التلقائي يكتشف النجاح ويعرض "تم الدفع 🎉"
+   
+   🔑 المفتاح: window.open يجب أن يُستدعى قبل أي await
+      وإلا المتصفح يعتبره ليس من ضغط المستخدم ويحجبه
 ============================================================ */
 
 const PAY = {
@@ -10,10 +17,11 @@ const PAY = {
   poll: null,
   cd: null,
   current: null,
-  autoChecker: null,   // ← فاحص الخلفية
 };
 const PAY_FN = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '') + '/functions/v1/tuwaiqpay';
 const PAY_PENDING_KEY = 'abq_pay_pending';
+
+/* ================== أدوات مساعدة ================== */
 
 async function payCall(body, needAuth){
   const headers = { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY };
@@ -72,11 +80,16 @@ function payOverlay(id){
   o.classList.add('open');
   return o;
 }
+
 function payCloseAll(){
   ['payCheckout', 'payResult'].forEach(id => { const o = document.getElementById(id); if(o) o.classList.remove('open'); });
   clearInterval(PAY.poll); clearInterval(PAY.cd); PAY.poll = PAY.cd = null;
 }
 window.payCloseAll = payCloseAll;
+
+function getPending(){
+  try{ return JSON.parse(localStorage.getItem(PAY_PENDING_KEY) || 'null'); }catch(e){ return null; }
+}
 
 const PAY_BRANDS = `
   <span class="pb mada">مدى</span><span class="pb visa">VISA</span>
@@ -128,6 +141,9 @@ function payCheckout(items, pv){
 }
 window.payCheckout = payCheckout;
 
+/* ================== 2) بدء الدفع ==================
+   ⭐ المفتاح: نفتح التاب فوراً قبل أي await
+============================================================ */
 async function payStart(){
   if(PAY.busy || !PAY.current) return;
   const btn = document.getElementById('payNowBtn');
@@ -135,47 +151,126 @@ async function payStart(){
   PAY.busy = true;
   if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> نجهّز صفحة الدفع...'; }
   if(msg){ msg.className = 'pay-msg'; msg.textContent = ''; }
+
+  /* ⭐⭐⭐ المفتاح: افتح التاب فوراً (قبل أي await) عشان المتصفح يعتبره ضغط مستخدم */
+  const popup = window.open('about:blank', 'tuwaiqpay_checkout_win',
+    'width=520,height=780,scrollbars=yes,resizable=yes');
+
+  /* عرض مؤقت جميل في التاب الفاضي */
+  try{
+    if(popup && popup.document){
+      popup.document.write(`
+        <!DOCTYPE html><html dir="rtl" lang="ar"><head>
+        <meta charset="UTF-8"><title>جاري التحميل…</title>
+        <style>
+          *{box-sizing:border-box;margin:0;padding:0}
+          body{font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;display:flex;align-items:center;
+               justify-content:center;min-height:100vh;
+               background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%);color:#141d38}
+          .box{text-align:center;padding:30px}
+          .logo{width:70px;height:70px;border-radius:20px;margin:0 auto 20px;
+                background:linear-gradient(140deg,#5b6cff,#8b5cf6);
+                display:grid;place-items:center;color:#fff;font-size:1.8rem;
+                box-shadow:0 12px 30px rgba(91,108,255,.35)}
+          .sp{width:44px;height:44px;border-radius:50%;border:4px solid #e4e9f6;
+              border-top-color:#5b6cff;margin:0 auto 18px;animation:s .8s linear infinite}
+          @keyframes s{to{transform:rotate(360deg)}}
+          h2{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:#141d38}
+          p{font-weight:700;color:#6b7a99;font-size:.9rem}
+        </style></head><body>
+        <div class="box">
+          <div class="logo"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="currentColor"/></svg></div>
+          <div class="sp"></div>
+          <h2>جاري تحويلك لصفحة الدفع الآمنة…</h2>
+          <p>لحظات من فضلك</p>
+        </div>
+        </body></html>`);
+    }
+  }catch(e){ /* cross-origin — تجاهل */ }
+
   try{
     const { items, pv } = PAY.current;
     const res = await payCall({ action: 'create', items, coupon: pv.coupon && pv.coupon.ok ? pv.coupon.code : null }, true);
-    try{ localStorage.setItem(PAY_PENDING_KEY, JSON.stringify({ id: res.id, t: res.token, at: Date.now() })); }catch(e){}
+
+    /* نحفظ الطلب + الرابط في localStorage للرجوع */
+    try{
+      localStorage.setItem(PAY_PENDING_KEY, JSON.stringify({
+        id: res.id, t: res.token, link: res.link || null, at: Date.now()
+      }));
+    }catch(e){}
+
+    /* حالة الدفع المجاني (كود 100%) */
     if(res.free){
+      if(popup && !popup.closed){ try{ popup.close(); }catch(e){} }
       payCloseAll();
       payShowResult(res.id, res.token);
       return;
     }
+
     if(!res.link) throw new Error('bill_failed');
 
-    // ⭐ نفتح البوابة في تاب جديد (بدل ما نطير من الموقع)
-    // هذي أفضل تجربة: الطالب يقدر يرجع لموقعنا بسهولة
-    const newWin = window.open(res.link, '_blank', 'noopener');
-    if(!newWin){
-      // لو المتصفح منع النوافذ — نروح مباشرة
-      if(btn) btn.innerHTML = '<i class="fas fa-arrow-up-right-from-square"></i> نحوّلك...';
-      setTimeout(() => { window.location.href = res.link; }, 400);
+    /* ⭐ وجّه التاب المفتوح مسبقاً لصفحة الدفع */
+    if(popup && !popup.closed){
+      try{
+        popup.location.href = res.link;
+        try{ popup.focus(); }catch(e){}
+      }catch(e){
+        /* فشل التوجيه — نعرض الرابط في الموقع الأصلي */
+        throw new Error('popup_redirect_failed');
+      }
+    } else {
+      /* المتصفح منع الـ popup (نادراً) → نعرض زر يدوي + شاشة الانتظار */
+      PAY.busy = false;
+      if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}`; }
+      if(msg){
+        msg.className = 'pay-msg';
+        msg.innerHTML = `
+          <div style="text-align:center;padding:14px;border-radius:12px;background:rgba(247,179,43,.14);
+                      color:#b45309;font-weight:800;line-height:1.7;font-size:.86rem">
+            <i class="fas fa-triangle-exclamation"></i> المتصفح منع فتح نافذة الدفع تلقائياً.<br>
+            اضغط الزر تحت عشان تكمل الدفع:
+            <div style="margin-top:10px">
+              <a href="${escapeHtml(res.link)}" target="_blank" rel="noopener" 
+                 style="display:inline-block;padding:11px 20px;background:#16a34a;color:#fff;
+                        border-radius:10px;text-decoration:none;font-weight:900;font-size:.9rem">
+                <i class="fas fa-arrow-up-right-from-square"></i> افتح صفحة الدفع
+              </a>
+            </div>
+          </div>`;
+      }
+      payShowPending(res.id, res.token);
       return;
     }
 
-    // ⭐ نعرض للطالب تعليمات بعد ما تفتح البوابة
+    /* نعرض شاشة الانتظار في موقعنا (التاب الحالي) بينما الطالب يدفع */
     PAY.busy = false;
     if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}`; }
     payShowPending(res.id, res.token);
 
   }catch(e){
     PAY.busy = false;
+    if(popup && !popup.closed){ try{ popup.close(); }catch(x){} }
     if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(PAY.current.pv.total)}`; }
-    if(msg){ msg.className = 'pay-msg err'; msg.innerHTML = '<i class="fas fa-circle-exclamation"></i> ' + escapeHtml(payErrText(e.message)); }
+    if(msg){
+      msg.className = 'pay-msg err';
+      msg.innerHTML = '<i class="fas fa-circle-exclamation"></i> ' +
+        escapeHtml(e.message === 'popup_redirect_failed'
+          ? 'تعذّر فتح صفحة الدفع — جرّب مرة ثانية'
+          : payErrText(e.message));
+    }
   }
 }
 window.payStart = payStart;
 
-/* ================== 2) شاشة "بانتظار الدفع" ==================
+/* ================== 3) شاشة "بانتظار الدفع" ==================
    نعرضها في موقعنا، بينما البوابة مفتوحة في تاب ثاني
-   نفحص كل 4 ثواني + عند رجوع المستخدم للتبويب
+   - نفحص كل 4 ثواني
+   - + عند رجوع المستخدم للتبويب
 ============================================================ */
 function payShowPending(id, token){
   const o = payOverlay('payResult');
   let secs = 0;
+
   const render = () => {
     o.innerHTML = `
       <div class="pay-box pay-res">
@@ -198,38 +293,47 @@ function payShowPending(id, token){
         <button class="pay-link" id="payCancelWaitBtn">إغلاق ومتابعة لاحقاً</button>
         <p style="font-size:.78rem;color:var(--muted);line-height:1.7;margin-top:6px">
           💡 <b>ملاحظة:</b> حتى لو قفلت الصفحة، الاشتراك يتفعل تلقائياً.
-          ترجع للمنصة بأي وقت — يكون جاهز.
+          ارجع للمنصة بأي وقت — يكون جاهز.
         </p>
       </div>`;
+
     const reopen = document.getElementById('payReopenBtn');
     const check = document.getElementById('payCheckNowBtn');
     const cancel = document.getElementById('payCancelWaitBtn');
+
     if(reopen) reopen.onclick = () => {
       const p = getPending();
-      if(p && p.link) window.open(p.link, '_blank', 'noopener');
-      else {
-        // ما عندنا رابط محفوظ؟ نطلب واحد جديد من السيرفر
+      if(p && p.link){
+        window.open(p.link, 'tuwaiqpay_checkout_win',
+          'width=520,height=780,scrollbars=yes,resizable=yes');
+      } else {
+        /* ما عندنا رابط محفوظ؟ نطلب واحد من السيرفر */
         payCall({ action: 'status', id, t: token }, false).then(r => {
           const link = r && r.payment && r.payment.link;
-          if(link) window.open(link, '_blank', 'noopener');
+          if(link) window.open(link, 'tuwaiqpay_checkout_win', 'width=520,height=780');
           else toast('انتهت صلاحية الرابط — اطلب طلب جديد من السلة', 'warn');
-        }).catch(()=>{});
+        }).catch(() => {});
       }
     };
     if(check) check.onclick = () => checkPaymentNow(id, token, true);
-    if(cancel) cancel.onclick = () => { payCloseAll(); toast('تقدر ترجع للمنصة بأي وقت — الاشتراك يتفعل تلقائياً', 'ok'); };
+    if(cancel) cancel.onclick = () => {
+      payCloseAll();
+      toast('تقدر ترجع للمنصة بأي وقت — الاشتراك يتفعل تلقائياً', 'ok');
+    };
   };
   render();
 
-  // ⭐ فاحص تلقائي كل 4 ثواني
+  /* ⭐ فاحص تلقائي كل 4 ثواني */
   clearInterval(PAY.poll);
   PAY.poll = setInterval(async () => {
     secs += 4;
     const cd = document.querySelector('#payResult .pay-cd');
     if(cd) cd.innerHTML = `<i class="fas fa-spinner fa-spin"></i> نتحقق تلقائياً… (${secs}ث)`;
+
     try{
       const r = await payCall({ action: 'status', id, t: token }, false);
       const p = r && r.payment;
+
       if(p && p.status === 'paid'){
         clearInterval(PAY.poll);
         try{ localStorage.removeItem(PAY_PENDING_KEY); }catch(e){}
@@ -239,24 +343,22 @@ function payShowPending(id, token){
       } else if(p && p.status === 'failed'){
         clearInterval(PAY.poll);
         renderFailed(p);
-      } else if(secs > 600){    // 10 دقائق → نوقف
+      } else if(secs > 600){  /* 10 دقائق → نوقف */
         clearInterval(PAY.poll);
         const cd2 = document.querySelector('#payResult .pay-cd');
         if(cd2) cd2.innerHTML = '⏱️ ننتظرك… الاشتراك يتفعل تلقائياً بمجرد نجاح الدفع';
       }
-    }catch(e){}
+    }catch(e){ /* نتجاهل الأخطاء المؤقتة */ }
   }, 4000);
 }
 
-function getPending(){
-  try{ return JSON.parse(localStorage.getItem(PAY_PENDING_KEY) || 'null'); }catch(e){ return null; }
-}
-
+/* ================== فحص يدوي أو من الخلفية ================== */
 async function checkPaymentNow(id, token, manual){
-  if(manual){ toast('نتحقق من الدفع...', 'ok'); }
+  if(manual) toast('نتحقق من الدفع...', 'ok');
   try{
     const r = await payCall({ action: 'status', id, t: token }, false);
     const p = r && r.payment;
+
     if(p && p.status === 'paid'){
       clearInterval(PAY.poll);
       try{ localStorage.removeItem(PAY_PENDING_KEY); }catch(e){}
@@ -280,7 +382,12 @@ async function checkPaymentNow(id, token, manual){
 /* ================== شاشة النجاح ================== */
 function renderPaid(p){
   const o = payOverlay('payResult');
-  const items = (p.items || []).map(l => `<li><i class="fas fa-check"></i> ${escapeHtml(l.name)} — ${l.fixed_end ? 'حتى ' + formatEndDate(l.fixed_end) : monthsLabel(l.months)}</li>`).join('');
+  const items = (p.items || []).map(l =>
+    `<li><i class="fas fa-check"></i> ${escapeHtml(l.name)} — ${
+      l.fixed_end ? 'حتى ' + formatEndDate(l.fixed_end) : monthsLabel(l.months)
+    }</li>`
+  ).join('');
+
   o.innerHTML = `
     <div class="pay-box pay-res">
       <div class="pay-confetti">${'<i></i>'.repeat(24)}</div>
@@ -291,9 +398,18 @@ function renderPaid(p){
       <div class="pay-res-amount">المبلغ المدفوع: <b>${payMoney(p.amount)}</b></div>
       <button class="pay-btn ok" id="payGoBtn"><i class="fas fa-rocket"></i> ابدأ المذاكرة الحين</button>
     </div>`;
-  document.getElementById('payGoBtn').addEventListener('click', payAfterSuccess);
+
+  const btn = document.getElementById('payGoBtn');
+  if(btn) btn.addEventListener('click', payAfterSuccess);
+
+  /* أطلق الاحتفال */
+  try{ if(typeof beep === 'function') beep(); }catch(e){}
+  setTimeout(() => {
+    try{ toast('🎉 تم تفعيل اشتراكك — أهلاً بك', 'ok'); }catch(e){}
+  }, 300);
 }
 
+/* ================== شاشة الفشل ================== */
 function renderFailed(p){
   const o = payOverlay('payResult');
   o.innerHTML = `
@@ -301,8 +417,14 @@ function renderFailed(p){
       <div class="pay-res-ic fail"><i class="fas fa-xmark"></i></div>
       <h2>عملية الدفع لم تستكمل</h2>
       <p>ما تم خصم أي مبلغ. تأكد من <b>رصيد البطاقة</b> أو صلاحيتها، أو جرّب بطاقة ثانية.</p>
-      <button class="pay-btn" onclick="payCloseAll();openCart()"><i class="fas fa-cart-shopping"></i> حاول مرة ثانية من السلة</button>
-      <a class="pw-support" href="https://wa.me/${(typeof getStoreConfig === 'function' ? getStoreConfig().supportWhatsApp : '966538524983')}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> تحتاج مساعدة؟ الدعم الفني</a>
+      <button class="pay-btn" onclick="payCloseAll();openCart()">
+        <i class="fas fa-cart-shopping"></i> حاول مرة ثانية من السلة
+      </button>
+      <a class="pw-support" href="https://wa.me/${
+        (typeof getStoreConfig === 'function' ? getStoreConfig().supportWhatsApp : '966538524983')
+      }" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i> تحتاج مساعدة؟ الدعم الفني
+      </a>
     </div>`;
 }
 
@@ -315,7 +437,8 @@ async function payRefreshProfile(){
       if(data && data.status === 'approved'){
         currentUserObj = data;
         try{ applyUserUI(); }catch(e){}
-        const app = document.getElementById('app'); if(app) app.classList.remove('store-only');
+        const app = document.getElementById('app');
+        if(app) app.classList.remove('store-only');
         try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
         try{ if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo(); }catch(e){}
         return data;
@@ -338,20 +461,26 @@ async function payAfterSuccess(){
   try{ go('home'); }catch(e){}
 }
 
-/* ================== 3) التشغيل عند فتح الموقع ==================
+/* ================== 4) التشغيل عند فتح الموقع ==================
    - نفحص لو فيه دفعة معلّقة (رجع للتبويب أو فتح الموقع)
+   - الفحص عند رجوع المستخدم للتبويب
 ============================================================ */
 (function payBoot(){
-  // فحص أول عند فتح الموقع — لو فيه دفعة معلّقة، نتحقق
+  /* فحص أول عند فتح الموقع */
   const bootCheck = () => {
     const p = getPending();
     if(!p || !p.id) return;
-    if(Date.now() - p.at > 6 * 3600 * 1000){ localStorage.removeItem(PAY_PENDING_KEY); return; }
-    // ما نعرض النافذة كاملة — نفحص بالخلفية
+    if(Date.now() - p.at > 6 * 3600 * 1000){
+      localStorage.removeItem(PAY_PENDING_KEY);
+      return;
+    }
+
+    /* فحص خفيف بالخلفية بعد 3 ثواني */
     setTimeout(async () => {
       try{
         const r = await payCall({ action: 'status', id: p.id, t: p.t }, false);
         const pm = r && r.payment;
+
         if(pm && pm.status === 'paid'){
           localStorage.removeItem(PAY_PENDING_KEY);
           try{ if(typeof cartClearAfterSubmit === 'function') cartClearAfterSubmit(); }catch(e){}
@@ -359,21 +488,37 @@ async function payAfterSuccess(){
           payRefreshProfile();
         } else if(pm && pm.status === 'failed'){
           localStorage.removeItem(PAY_PENDING_KEY);
-        } else if(pm && pm.status === 'pending'){
-          // لسه معلّق — نعرض شاشة الانتظار لو المستخدم ما زال مهتم
+        } else if(pm && pm.status === 'pending' && pm.link){
+          /* لسه معلّق — نعرض شاشة الانتظار لو المستخدم مهتم */
           payShowPending(p.id, p.t);
         }
       }catch(e){}
     }, 3000);
   };
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootCheck);
-  else bootCheck();
 
-  // ⭐ فاحص عن رجوع التبويب — لو المستخدم رجع من البوابة
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootCheck);
+  } else {
+    bootCheck();
+  }
+
+  /* ⭐ فاحص عند رجوع المستخدم للتبويب */
   document.addEventListener('visibilitychange', () => {
     if(document.hidden) return;
     const p = getPending();
     if(!p || !p.id) return;
-    setTimeout(() => checkPaymentNow(p.id, p.t, false), 800);
+    /* تأخير بسيط عشان يلحق السيرفر */
+    setTimeout(() => {
+      checkPaymentNow(p.id, p.t, false).then(ok => {
+        if(ok && typeof beep === 'function'){ try{ beep(); }catch(e){} }
+      });
+    }, 1200);
+  });
+
+  /* ⭐ فاحص عند رجوع المتصفح للتركيز (Tab Focus) */
+  window.addEventListener('focus', () => {
+    const p = getPending();
+    if(!p || !p.id) return;
+    setTimeout(() => checkPaymentNow(p.id, p.t, false), 1500);
   });
 })();
