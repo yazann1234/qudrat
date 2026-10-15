@@ -186,7 +186,7 @@ function renderCartModal(){
         </div>
 
         <button class="btn btn-primary cart-checkout" onclick="cartCheckout()" ${CART.busy ? 'disabled' : ''}>
-          <i class="fas fa-lock"></i> إتمام الدفع — ${money(total)}
+          <i class="fas fa-lock"></i> ادفع الآن — ${money(total)}
         </button>
         <button class="btn btn-ghost cart-more" onclick="closeCart();go('store')"><i class="fas fa-plus"></i> أضف دورة ثانية</button>
       `}
@@ -250,7 +250,9 @@ window.cartCheckout = async () => {
     toast('كود الخصم غير صالح — أزله أو صحّحه', 'warn'); renderCartModal(); return;
   }
   closeCart();
-  openCartPurchase(items, pv);
+  /* 💳 الدفع الإلكتروني (طويق باي) — يتفعل الاشتراك فوراً بعد الدفع */
+  if(typeof payCheckout === 'function') payCheckout(items, pv);
+  else openCartPurchase(items, pv);
 };
 
 /* يفتح نافذة الدفع المعتادة بمحتويات السلة */
