@@ -54,6 +54,7 @@ function initQuiz(){
 window.initQuiz = initQuiz;
 
 function renderQuizMyStats(){
+  try{ renderQuizPlaysLeft(); }catch(e){}
   const box = qzEl('quizMyStats');
   if(!box || !currentUserObj) return;
   const wins = currentUserObj.kahoot_wins || 0;
@@ -67,10 +68,36 @@ function renderQuizMyStats(){
 }
 
 /* ================== إنشاء / انضمام ================== */
+/* ⭐ حد اللعب اليومي: 3 محاولات (جلسات بدأت فعلاً) — السيرفر يتحقق أيضاً */
+const QUIZ_DAILY_LIMIT = 3;
+async function quizPlaysLeft(){
+  if(typeof isPrivileged === 'function' && isPrivileged()) return QUIZ_DAILY_LIMIT;
+  try{
+    const { data, error } = await sb.rpc('my_quiz_plays_today');
+    if(error) return QUIZ_DAILY_LIMIT;
+    return Math.max(0, QUIZ_DAILY_LIMIT - (Number(data) || 0));
+  }catch(e){ return QUIZ_DAILY_LIMIT; }
+}
+async function quizCheckDailyLimit(){
+  const left = await quizPlaysLeft();
+  if(left <= 0){ toast(`وصلت الحد اليومي للعبة (${QUIZ_DAILY_LIMIT} محاولات) — ارجع بكرة 💪`, 'warn'); return false; }
+  return true;
+}
+async function renderQuizPlaysLeft(){
+  const hero = document.querySelector('.quiz-hero');
+  if(!hero || !currentUserObj) return;
+  let el = document.getElementById('quizPlaysLeft');
+  if(!el){ el = document.createElement('p'); el.id = 'quizPlaysLeft'; el.style.fontWeight = '800'; hero.appendChild(el); }
+  if(typeof isPrivileged === 'function' && isPrivileged()){ el.textContent = ''; return; }
+  const left = await quizPlaysLeft();
+  el.innerHTML = `<i class="fas fa-ticket"></i> محاولاتك المتبقية اليوم: <b>${left}</b> من ${QUIZ_DAILY_LIMIT}`;
+}
+window.renderQuizPlaysLeft = renderQuizPlaysLeft;
 async function createQuizRoom(){
   if(!currentUserObj){ toast('سجل الدخول أولاً', 'warn'); return; }
   if(!isSubscribed()){ toast('تحتاج اشتراكاً مفعّلاً', 'warn'); return; }
   if(QZ.session){ toast('أنت داخل غرفة بالفعل', 'warn'); return; }
+  if(!(await quizCheckDailyLimit())) return;
 
   const totalQ = parseInt(qzEl('quizTotalQuestions').value, 10) || 20;
   const seconds = parseInt(qzEl('quizSeconds').value, 10) || 20;
@@ -96,7 +123,8 @@ async function createQuizRoom(){
   resetQuizLocalState();
   QZ.session = data;
   QZ.isHost = true;
-  await addPlayerToSession(data.id);
+  try{ await addPlayerToSession(data.id); }
+  catch(e){ try{ await sb.from('quiz_sessions').delete().eq('id', data.id); }catch(x){} QZ.session = null; QZ.isHost = false; return; }
   enterQuizRoom();
 }
 window.createQuizRoom = createQuizRoom;
@@ -108,6 +136,7 @@ async function joinQuizRoom(){
 
   const code = (qzEl('quizJoinCode').value || '').trim();
   if(!/^\d{6}$/.test(code)){ toast('أدخل رمز غرفة صحيح (6 أرقام)', 'warn'); return; }
+  if(!(await quizCheckDailyLimit())) return;
 
   const { data, error } = await sb.from('quiz_sessions')
     .select('*').eq('room_code', code).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -121,13 +150,14 @@ async function joinQuizRoom(){
   resetQuizLocalState();
   QZ.session = data;
   QZ.isHost = data.host_id === currentUserObj.id;
-  await addPlayerToSession(data.id);
+  try{ await addPlayerToSession(data.id); }
+  catch(e){ QZ.session = null; QZ.isHost = false; return; }
   enterQuizRoom();
 }
 window.joinQuizRoom = joinQuizRoom;
 
 async function addPlayerToSession(sessionId){
-  await sb.from('quiz_players').upsert({
+  const r = await sb.from('quiz_players').upsert({
     session_id: sessionId,
     user_id: currentUserObj.id,
     name: currentUserObj.name || 'لاعب',
@@ -135,6 +165,10 @@ async function addPlayerToSession(sessionId){
     score: 0,
     correct_count: 0
   }, { onConflict: 'session_id,user_id' });
+  if(r && r.error && /daily_limit/.test(r.error.message || '')){
+    toast(`وصلت الحد اليومي للعبة (${QUIZ_DAILY_LIMIT} محاولات) — ارجع بكرة 💪`, 'warn');
+    throw new Error('daily_limit');
+  }
 }
 
 function resetQuizLocalState(){
