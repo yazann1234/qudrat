@@ -11,7 +11,7 @@ const DRAW_COLORS = [
 const DRAW_SIZES = [2, 4, 7, 12, 20, 32];
 const DRAW = {
   active: false, wb: false, tool: 'pen', color: '#ef4444', size: 4,
-  drawing: false, targetCanvas: null, current: null, lastKey: null
+  drawing: false, targetCanvas: null, current: null, lastKey: null, raf: 0
 };
 
 function drawKeyPdf(fileId, page){ return 'pdf:' + fileId + ':' + page; }
@@ -51,11 +51,20 @@ async function loadDrawingsForFile(fileId){
 function saveDrawings(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
   clearTimeout(drawingsSaveTimer);
-  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 1000);
+  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 2500);
 }
+/* لو قفل الصفحة قبل الحفظ → احفظ فوراً */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden && drawingsSaveTimer){ clearTimeout(drawingsSaveTimer); drawingsSaveTimer = null; pushDrawingsToDB(); }
+});
 
+let drawingsPushing = false, drawingsPushAgain = false;
 async function pushDrawingsToDB(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
+  drawingsSaveTimer = null;
+  /* طلب واحد في نفس الوقت (ما تتكدس الطلبات على النت الضعيف) */
+  if(drawingsPushing){ drawingsPushAgain = true; return; }
+  drawingsPushing = true;
   const payload = userData.drawings || {};
   try{
     const { error } = await sb
@@ -66,6 +75,10 @@ async function pushDrawingsToDB(){
       );
     if(error) console.warn('drawings save failed:', error.message);
   }catch(e){}
+  finally{
+    drawingsPushing = false;
+    if(drawingsPushAgain){ drawingsPushAgain = false; saveDrawings(); }
+  }
 }
 
 function drawStrokeOnCtx(ctx, s, w, h){
@@ -84,7 +97,11 @@ function drawStrokeOnCtx(ctx, s, w, h){
   else { ctx.beginPath(); ctx.moveTo(pts[0].x * w, pts[0].y * h); for(let i = 1; i < pts.length; i++){ const p = pts[i]; ctx.lineTo(p.x * w, p.y * h); } ctx.stroke(); }
   ctx.restore();
 }
-function redrawCanvas(canvas, key, includeCurrent){
+/* ⭐ طبقة مخزّنة للرسم المحفوظ: أثناء الرسم نرسم الخط الحالي فقط فوقها
+   (سابقاً كل حركة قلم تعيد رسم كل الخطوط → السبورة تعلّق عند اللي رسم كثير) */
+const _drawBase = new WeakMap();
+const _noStrokes = [];
+function paintCanvas(canvas, strokes, current){
   if(!canvas) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const rect = canvas.getBoundingClientRect();
@@ -92,12 +109,33 @@ function redrawCanvas(canvas, key, includeCurrent){
   const h = Math.max(1, Math.round(rect.height));
   const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
   if(canvas.width !== bw || canvas.height !== bh){ canvas.width = bw; canvas.height = bh; }
+  strokes = strokes || _noStrokes;
+  let base = _drawBase.get(canvas);
+  const last = strokes[strokes.length - 1] || null;
+  if(!base || base.strokes !== strokes || base.n !== strokes.length || base.last !== last || base.w !== bw || base.h !== bh){
+    const off = (base && base.off) || document.createElement('canvas');
+    off.width = bw; off.height = bh;
+    const octx = off.getContext('2d');
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    octx.clearRect(0, 0, w, h);
+    strokes.forEach(s => { try{ drawStrokeOnCtx(octx, s, w, h); }catch(e){} });
+    base = { off, strokes, n: strokes.length, last, w: bw, h: bh };
+    _drawBase.set(canvas, base);
+  }
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-  const strokes = ((userData.drawings && userData.drawings[key]) || []).slice();
-  if(includeCurrent && DRAW.current) strokes.push(DRAW.current);
-  strokes.forEach(s => drawStrokeOnCtx(ctx, s, w, h));
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, bw, bh);
+  ctx.drawImage(base.off, 0, 0);
+  if(current){
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    try{ drawStrokeOnCtx(ctx, current, w, h); }catch(e){}
+  }
+}
+window.paintCanvas = paintCanvas;
+
+function redrawCanvas(canvas, key, includeCurrent){
+  if(!canvas) return;
+  paintCanvas(canvas, userData.drawings && userData.drawings[key], includeCurrent ? DRAW.current : null);
 }
 function redrawAllPdfDrawings(){
   if(!RS.file) return;
@@ -177,7 +215,12 @@ function moveStroke(e, canvas){
   const last = DRAW.current.points[DRAW.current.points.length - 1];
   if(last && Math.abs(last.x - p.x) < 0.0015 && Math.abs(last.y - p.y) < 0.0015) return;
   DRAW.current.points.push(p);
-  redrawCanvas(canvas, DRAW.lastKey, true);
+  /* ⭐ رسم واحد لكل إطار شاشة (مو لكل حدث حركة) */
+  if(DRAW.raf) return;
+  DRAW.raf = requestAnimationFrame(() => {
+    DRAW.raf = 0;
+    if(DRAW.drawing && DRAW.targetCanvas) redrawCanvas(DRAW.targetCanvas, DRAW.lastKey, true);
+  });
 }
 function endStroke(e, canvas){
   if(!DRAW.drawing || !DRAW.current) return;
@@ -187,6 +230,7 @@ function endStroke(e, canvas){
   if(userData.drawings[key].length > 500) userData.drawings[key].shift();
   userData.drawings[key].push(DRAW.current);
   DRAW.drawing = false; DRAW.current = null; DRAW.targetCanvas = null;
+  if(DRAW.raf){ cancelAnimationFrame(DRAW.raf); DRAW.raf = 0; }
   saveDrawings();
   redrawCanvas(canvas, key, false);
   if(key && key.startsWith('wb:')) updateWbEmpty();
