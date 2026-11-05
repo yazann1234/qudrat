@@ -670,6 +670,7 @@ function renderAdminFiles(){
       <div class="afc-meta">${adminCourseBadge(f)}</div>
       <div class="afc-actions">
         <button class="btn btn-ghost btn-sm" onclick="setItemCourse('file','${f.id}')" title="تعديل الملف والدورة"><i class="fas fa-pen"></i> تعديل</button>
+        <button class="btn btn-ghost btn-sm" onclick="replaceFile('${f.id}')" title="استبدال ملف الـ PDF بنسخة جديدة"><i class="fas fa-file-import"></i> استبدال</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${escapeHtml(f.storage_path)}')"><i class="fas fa-trash"></i></button>
       </div>
@@ -695,6 +696,65 @@ window.deleteFile = (id, path) => {
     toast('تم حذف الملف', 'ok');
   }, true);
 };
+
+/* ⭐ استبدال ملف PDF بنسخة جديدة — نفس الملف (العنوان، الدورة، تقدّم الطلاب) بدون حذف وإعادة رفع */
+window.replaceFile = (id) => {
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+  const f = DB.files.find(x => x.id === id); if(!f) return;
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'application/pdf,.pdf';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('PDF فقط', 'warn'); return; }
+    if(file.size > 100 * 1024 * 1024){ toast('الحد 100 ميجا', 'warn'); return; }
+    confirmBox('استبدال الملف', `استبدال ملف «${escapeHtml(f.title)}» بالملف الجديد «${escapeHtml(file.name)}»؟<br><small>العنوان والدورة وتقدّم الطلاب تبقى كما هي.</small>`, () => doReplaceFile(f, file));
+  };
+  inp.click();
+};
+
+async function doReplaceFile(f, file){
+  toast('⏳ جاري رفع الملف الجديد...', 'ok');
+  const safeName = file.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
+  const newPath = currentUserObj.id + '/' + f.id + '_' + Date.now() + '_' + safeName;
+  let pages = 0, uploadError = null;
+  await Promise.all([
+    (async () => {
+      const { error } = await sb.storage.from('pdfs').upload(newPath, file, {
+        cacheControl: '3600', upsert: false, contentType: 'application/pdf'
+      });
+      if(error) uploadError = error;
+    })(),
+    (async () => {
+      try{
+        const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        pages = doc.numPages;
+        try{ doc.destroy(); }catch(e){}
+      }catch(e){ pages = 0; }
+    })()
+  ]);
+  if(uploadError){ toast('فشل الرفع: ' + uploadError.message, 'err'); return; }
+
+  const upd = { storage_path: newPath };
+  if(pages) upd.page_count = pages;
+  const { error } = await sb.from('files').update(upd).eq('id', f.id);
+  if(error){
+    try{ await sb.storage.from('pdfs').remove([newPath]); }catch(e){}
+    toast('فشل: ' + error.message, 'err');
+    return;
+  }
+  const oldPath = f.storage_path;
+  Object.assign(f, upd);
+  if(oldPath && oldPath !== newPath){ try{ await sb.storage.from('pdfs').remove([oldPath]); }catch(e){} }
+  if(typeof logAdminAction === 'function') logAdminAction('upload_file', null, `استبدال ملف: ${f.title}`);
+  /* المحتوى تغيّر → نعيد فهرسة البحث الذكي */
+  try{ if(typeof queueIndexFile === 'function') queueIndexFile(f.id, true); }catch(e){}
+  renderAdminFiles();
+  if(typeof renderFiles === 'function') renderFiles();
+  try{ if(typeof window.loadProfilesAndFiles === 'function') window.loadProfilesAndFiles(); }catch(e){}
+  toast('✓ تم استبدال الملف', 'ok');
+}
 
 /* ============================================================
    ⭐ رفع ملف — نسخة نظيفة سريعة بدون تكرار
