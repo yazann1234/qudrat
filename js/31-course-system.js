@@ -104,6 +104,7 @@ window.getCoursePrice = getCoursePrice;
 /* ⭐ المدد المعتمدة للاشتراك */
 const COURSE_DURATIONS = [
   { m: 1,  label: 'شهر',   long: 'شهر واحد' },
+  { m: 2,  label: 'شهرين', long: 'شهرين' },
   { m: 3,  label: '3 أشهر', long: '3 أشهر' },
   { m: 6,  label: '6 أشهر', long: '6 أشهر' },
   { m: 12, label: 'سنة',   long: 'سنة كاملة' }
@@ -250,11 +251,14 @@ function renderCoursesGrid(){
           <div class="course-prices">
             ${durations.map(d => {
               const price = Number(prices[String(d.m)]);
-              const save = (p1 && d.m > 1) ? Math.round((1 - price / (p1 * d.m)) * 100) : 0;
+              /* ⭐ السعر قبل الخصم (compare_prices) → «بدال 90» + نسبة التوفير منه */
+              const was = Number((c.compare_prices || {})[String(d.m)]) || 0;
+              const save = was > price ? Math.floor((1 - price / was) * 100)
+                : (p1 && d.m > 1) ? Math.round((1 - price / (p1 * d.m)) * 100) : 0;
               return `
               <div class="course-price-item" data-course="${c.id}" data-months="${d.m}">
                 <span class="months">${d.label}${save > 0 ? ` <em class="price-save">وفّر ${save}%</em>` : ''}</span>
-                <b>${price}${sarIcon()}</b>
+                <b>${was > price ? `<s style="opacity:.55;font-weight:700;font-size:.8em;margin-left:6px">${was}</s>` : ''}${price}${sarIcon()}</b>
               </div>`;
             }).join('')}
           </div>
