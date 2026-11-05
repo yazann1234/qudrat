@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Noto+Naskh+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/styles.css?v=20261017a">
+<link rel="stylesheet" href="css/styles.css?v=20261105a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -904,7 +904,7 @@
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أنهِ ملفاً كاملاً (بعد قراءة ٩٠٪ من صفحاته) = <b style="color:var(--primary)">+١٠٠ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> كل دقيقة تركيز حقيقية (المؤقت أو المذاكرة الجماعية) = <b style="color:var(--primary)">+١ نقطة</b></div>
               <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> شاهد فيديو كاملاً = <b style="color:var(--primary)">+٥٠ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> لعبة العباقرة = <b style="color:var(--primary)">+٢٠ مشاركة +١٠ لكل إجابة صحيحة +١٠٠ للفائز</b></div>
+              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> لعبة العباقرة = <b style="color:var(--primary)">١٠ أسئلة +٥٠ • ١٥ سؤال +١٠٠ • ٢٠ سؤال +١٥٠ • ٣٠ سؤال +٢٠٠</b> (٣ محاولات يومياً)</div>
               <div style="font-size:.76rem;opacity:.85"><i class="fas fa-shield-halved" style="margin-left:6px"></i> النقاط يحسبها السيرفر مباشرة — ما يمكن التلاعب فيها.</div>
             </div>
           </div>
@@ -1543,6 +1543,7 @@
       <label>أسعار الاشتراك * <small style="color:var(--muted);font-weight:600">(سعر مستقل لكل مدة — اترك المدة فارغة لإخفائها من المتجر)</small></label>
       <div class="price-grid">
         <label class="price-field"><span><i class="fas fa-calendar-day"></i> شهر</span><div class="pf-input"><input type="number" id="pfPrice1" min="0" step="1" placeholder="45"><i class="sar"></i></div></label>
+        <label class="price-field"><span><i class="fas fa-calendar-week"></i> شهرين</span><div class="pf-input"><input type="number" id="pfPrice2" min="0" step="1" placeholder="75"><i class="sar"></i></div></label>
         <label class="price-field"><span><i class="fas fa-calendar-week"></i> 3 أشهر</span><div class="pf-input"><input type="number" id="pfPrice3" min="0" step="1" placeholder="120"><i class="sar"></i></div></label>
         <label class="price-field"><span><i class="fas fa-calendar-days"></i> 6 أشهر</span><div class="pf-input"><input type="number" id="pfPrice6" min="0" step="1" placeholder="210"><i class="sar"></i></div></label>
         <label class="price-field"><span><i class="fas fa-calendar-check"></i> سنة</span><div class="pf-input"><input type="number" id="pfPrice12" min="0" step="1" placeholder="360"><i class="sar"></i></div></label>
@@ -2321,56 +2322,56 @@ function closeTerms(){ var m = document.getElementById('termsModal'); if(m) m.cl
 function acceptTerms(){ var c = document.getElementById('regTerms'); if(c) c.checked = true; closeTerms(); }
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTerms(); });
 </script>
-<script src="js/01-config.js?v=20261017a"></script>
-<script src="js/02-utils.js?v=20261017a"></script>
-<script src="js/03-state.js?v=20261017a"></script>
-<script src="js/04-theme.js?v=20261017a"></script>
-<script src="js/05-nav.js?v=20261017a"></script>
-<script src="js/06-stats.js?v=20261017a"></script>
-<script src="js/07-files.js?v=20261017a"></script>
-<script src="js/08-home.js?v=20261017a"></script>
-<script src="js/09-features.js?v=20261017a"></script>
-<script src="js/10-tasks.js?v=20261017a"></script>
-<script src="js/11-timer.js?v=20261017a"></script>
-<script src="js/12-settings.js?v=20261017a"></script>
-<script src="js/13-reader.js?v=20261017a"></script>
-<script src="js/14-draw.js?v=20261017a"></script>
-<script src="js/15-auth.js?v=20261017a"></script>
-<script src="js/16-user.js?v=20261017a"></script>
-<script src="js/17-leaderboard.js?v=20261017a"></script>
-<script src="js/18-admin.js?v=20261017a"></script>
-<script src="js/19-realtime.js?v=20261017a"></script>
-<script src="js/20-protection.js?v=20261017a"></script>
-<script src="js/21-app.js?v=20261017a"></script>
-<script src="js/22-videos.js?v=20261017a"></script>
-<script src="js/23-store.js?v=20261017a"></script>
-<script src="js/24-ai.js?v=20261017a"></script>
-<script src="js/25-studyplan.js?v=20261017a"></script>
-<script src="js/26-adhkar.js?v=20261017a"></script>
-<script src="js/27-testimonials.js?v=20261017a"></script>
-<script src="js/28-prayer-times.js?v=20261017a"></script>
-<script src="js/29-quiz.js?v=20261017a"></script>
-<script src="js/30-owner-features.js?v=20261017a"></script>
-<script src="js/31-course-system.js?v=20261017a"></script>
-<script src="js/32-notifications.js?v=20261017a"></script>
-<script src="js/33-admin-products.js?v=20261017a"></script>
-<script src="js/34-course-filter-fix.js?v=20261017a"></script>
-<script src="js/35-welcome-fix.js?v=20261017a"></script>
-<script src="js/36-video-whiteboard.js?v=20261017a"></script>
-<script src="js/37-study-rooms.js?v=20261017a"></script>
-<script src="js/38-suggestions.js?v=20261017a"></script>
-<script src="js/40-admin-courses.js?v=20261017a"></script>
-<script src="js/41-ai-index.js?v=20261017a"></script>
-<script src="js/42-certificates.js?v=20261017a"></script>
-<script src="js/43-xp.js?v=20261017a"></script>
-<script src="js/44-cart.js?v=20261017a"></script>
-<script src="js/45-study-mode.js?v=20261017a"></script>
-<script src="js/46-study-tools.js?v=20261017a"></script>
-<script src="js/47-monthly-awards.js?v=20261017a"></script>
-<script src="js/48-room-schedule.js?v=20261017a"></script>
-<script src="js/49-community.js?v=20261017a"></script>
-<script src="js/50-announcements.js?v=20261017a"></script>
-<script src="js/51-payment.js?v=20261017a"></script>
+<script src="js/01-config.js?v=20261105a"></script>
+<script src="js/02-utils.js?v=20261105a"></script>
+<script src="js/03-state.js?v=20261105a"></script>
+<script src="js/04-theme.js?v=20261105a"></script>
+<script src="js/05-nav.js?v=20261105a"></script>
+<script src="js/06-stats.js?v=20261105a"></script>
+<script src="js/07-files.js?v=20261105a"></script>
+<script src="js/08-home.js?v=20261105a"></script>
+<script src="js/09-features.js?v=20261105a"></script>
+<script src="js/10-tasks.js?v=20261105a"></script>
+<script src="js/11-timer.js?v=20261105a"></script>
+<script src="js/12-settings.js?v=20261105a"></script>
+<script src="js/13-reader.js?v=20261105a"></script>
+<script src="js/14-draw.js?v=20261105a"></script>
+<script src="js/15-auth.js?v=20261105a"></script>
+<script src="js/16-user.js?v=20261105a"></script>
+<script src="js/17-leaderboard.js?v=20261105a"></script>
+<script src="js/18-admin.js?v=20261105a"></script>
+<script src="js/19-realtime.js?v=20261105a"></script>
+<script src="js/20-protection.js?v=20261105a"></script>
+<script src="js/21-app.js?v=20261105a"></script>
+<script src="js/22-videos.js?v=20261105a"></script>
+<script src="js/23-store.js?v=20261105a"></script>
+<script src="js/24-ai.js?v=20261105a"></script>
+<script src="js/25-studyplan.js?v=20261105a"></script>
+<script src="js/26-adhkar.js?v=20261105a"></script>
+<script src="js/27-testimonials.js?v=20261105a"></script>
+<script src="js/28-prayer-times.js?v=20261105a"></script>
+<script src="js/29-quiz.js?v=20261105a"></script>
+<script src="js/30-owner-features.js?v=20261105a"></script>
+<script src="js/31-course-system.js?v=20261105a"></script>
+<script src="js/32-notifications.js?v=20261105a"></script>
+<script src="js/33-admin-products.js?v=20261105a"></script>
+<script src="js/34-course-filter-fix.js?v=20261105a"></script>
+<script src="js/35-welcome-fix.js?v=20261105a"></script>
+<script src="js/36-video-whiteboard.js?v=20261105a"></script>
+<script src="js/37-study-rooms.js?v=20261105a"></script>
+<script src="js/38-suggestions.js?v=20261105a"></script>
+<script src="js/40-admin-courses.js?v=20261105a"></script>
+<script src="js/41-ai-index.js?v=20261105a"></script>
+<script src="js/42-certificates.js?v=20261105a"></script>
+<script src="js/43-xp.js?v=20261105a"></script>
+<script src="js/44-cart.js?v=20261105a"></script>
+<script src="js/45-study-mode.js?v=20261105a"></script>
+<script src="js/46-study-tools.js?v=20261105a"></script>
+<script src="js/47-monthly-awards.js?v=20261105a"></script>
+<script src="js/48-room-schedule.js?v=20261105a"></script>
+<script src="js/49-community.js?v=20261105a"></script>
+<script src="js/50-announcements.js?v=20261105a"></script>
+<script src="js/51-payment.js?v=20261105a"></script>
 <!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
 
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
