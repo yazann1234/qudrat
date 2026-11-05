@@ -12,9 +12,7 @@ const XP_RULES = {
   fileDone: 100,    /* إكمال ملف (بعد قراءة 90% من صفحاته) */
   minute: 1,        /* كل دقيقة تركيز حقيقية */
   video: 50,        /* مشاهدة فيديو كامل */
-  quizPlay: 20,     /* المشاركة في لعبة العباقرة */
-  quizCorrect: 10,  /* كل إجابة صحيحة */
-  quizWin: 100      /* الفوز */
+  quiz: { 10: 50, 15: 100, 20: 150, 30: 200 }   /* لعبة العباقرة حسب عدد الأسئلة */
 };
 window.XP_RULES = XP_RULES;
 
@@ -250,7 +248,7 @@ function renderLbToolbar(count){
   bar.innerHTML = `
     <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
     <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
-    ${typeof isOwner === 'function' && isOwner() ? '<button class="btn btn-primary btn-sm" onclick="openMonthlyAwards()"><i class="fas fa-award"></i> إرسال شهادات الشهر</button>' : ''}
+    ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-primary btn-sm" onclick="openMonthlyAwards()"><i class="fas fa-award"></i> إرسال شهادات الشهر</button>' : ''}
     <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>
     ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-danger btn-sm" onclick="resetAllPoints()"><i class="fas fa-trash-can"></i> تصفير كل النقاط</button>' : ''}`;
   try{ if(typeof renderHallOfFame === 'function') renderHallOfFame(); }catch(e){}
@@ -275,8 +273,8 @@ function renderXpRulesCard(){
       <div><i class="fas fa-book"></i><b>+${XP_RULES.fileDone}</b><small>إكمال ملف</small></div>
       <div><i class="fas fa-stopwatch"></i><b>+${XP_RULES.minute}</b><small>لكل دقيقة تركيز</small></div>
       <div><i class="fas fa-video"></i><b>+${XP_RULES.video}</b><small>مشاهدة فيديو كامل</small></div>
-      <div><i class="fas fa-gamepad"></i><b>+${XP_RULES.quizCorrect}</b><small>كل إجابة صحيحة باللعبة</small></div>
-      <div><i class="fas fa-trophy"></i><b>+${XP_RULES.quizWin}</b><small>الفوز باللعبة</small></div>
+      <div><i class="fas fa-gamepad"></i><b>+50 → +200</b><small>لعبة العباقرة: 10 أسئلة 50 • 15 = 100 • 20 = 150 • 30 = 200</small></div>
+      <div><i class="fas fa-ticket"></i><b>3</b><small>محاولات لعب يومياً</small></div>
     </div>
     ${s ? `<div class="xp-rules-mine">نقاطك: <b>${s.xp.toLocaleString('en')} XP</b> = ${s.pages} صفحة × ${XP_RULES.page} + ${s.completed} ملف × ${XP_RULES.fileDone} + ${s.sessions} دقيقة تركيز + الفيديوهات واللعبة</div>` : ''}
   `;
