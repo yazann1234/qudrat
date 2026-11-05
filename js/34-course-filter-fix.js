@@ -10,9 +10,8 @@ function getUserCourseFiles(){
   if(!currentUserObj) return [];
   if(typeof isPrivileged === 'function' && isPrivileged()) return DB.files.slice();
   if(typeof isSubscribed === 'function' && !isSubscribed()) return [];
-  const myCourseId = currentUserObj.course_id;
-  if(!myCourseId) return DB.files.filter(f => !f.course_id);
-  return DB.files.filter(f => !f.course_id || f.course_id === myCourseId);
+  /* ⭐ كل دورات الطالب (course_ids) وليس الدورة الأساسية فقط */
+  return DB.files.filter(f => !f.course_id || userHasCourse(f.course_id));
 }
 window.getUserCourseFiles = getUserCourseFiles;
 
@@ -21,10 +20,8 @@ function getUserCourseVideos(){
   if(!currentUserObj) return [];
   if(typeof isPrivileged === 'function' && isPrivileged()) return (DB.videos || []).slice();
   if(typeof isSubscribed === 'function' && !isSubscribed()) return [];
-  const myCourseId = currentUserObj.course_id;
   const list = DB.videos || [];
-  if(!myCourseId) return list.filter(v => !v.course_id);
-  return list.filter(v => !v.course_id || v.course_id === myCourseId);
+  return list.filter(v => !v.course_id || userHasCourse(v.course_id));
 }
 window.getUserCourseVideos = getUserCourseVideos;
 
@@ -154,9 +151,9 @@ function patchStudyPlanData(){
    3) عند تغيير دورة المستخدم — أعِد الرندر
 ============================================================ */
 (function watchCourseChange(){
-  let lastCourseId = currentUserObj ? currentUserObj.course_id : null;
+  let lastCourseId = currentUserObj ? getUserCourseIds().join(',') : null;
   setInterval(() => {
-    const cur = currentUserObj ? currentUserObj.course_id : null;
+    const cur = currentUserObj ? getUserCourseIds().join(',') : null;
     if(cur !== lastCourseId){
       lastCourseId = cur;
       try{ fixNavCounts(); }catch(e){}
