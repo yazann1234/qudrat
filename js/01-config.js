@@ -54,7 +54,12 @@ window.__AUTH_RECOVERY = (function(){
     const q = new URLSearchParams(location.search || '');
     const isReset = q.get('reset') === '1' || h.get('type') === 'recovery';
     let r = null;
-    if(h.get('access_token') && h.get('type') === 'recovery'){
+    /* ⭐ الأضمن: رابط الإيميل يجي مباشرة للموقع بـ token_hash (ما يمر على سيرفر Supabase،
+       وما ينحرق لو برنامج الإيميل فتح الرابط للفحص) — يتحقق منه الموقع بـ verifyOtp */
+    const th = q.get('token_hash') || h.get('token_hash');
+    if(th && (q.get('type') || h.get('type') || 'recovery') === 'recovery'){
+      r = { token_hash: th };
+    } else if(h.get('access_token') && h.get('type') === 'recovery'){
       r = { access_token: h.get('access_token'), refresh_token: h.get('refresh_token') || '' };
     } else if(isReset && (h.get('error') || h.get('error_code') || q.get('error'))){
       r = { error: h.get('error_code') || h.get('error') || q.get('error'), desc: h.get('error_description') || q.get('error_description') || '' };
