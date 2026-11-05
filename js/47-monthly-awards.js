@@ -1,251 +1,253 @@
 /* ============================================================
-   42) CERTIFICATES — شهادة شكر وتقدير لأول 3 في الصدارة فقط
-   - التصميم الرسمي للمنصة (assets/cert/template.jpg) + توقيع تركي الظفيري
-   - الأول: وسام ذهبي • الثاني: فضي • الثالث: برونزي
-   - الاسم والمركز يُكتبان تلقائياً — معاينة + تحميل PNG + مشاركة
+   47) MONTHLY AWARDS — شهادات أبطال الشهر 🏆
+   - نهاية كل شهر: رئيس المنصة يضغط «إرسال شهادات الشهر»
+     → أول 3 يوصلهم هدية فيها شهادتهم (ذهبي / فضي / برونزي)
+   - تنبيه تلقائي لرئيس المنصة آخر الشهر لو ما أرسلها
+   - «أبطال الشهور» في صفحة المتصدرين: كل الشهادات السابقة محفوظة
+   - خيار تصفير النقاط بعد الإرسال لبدء منافسة شهر جديد
 ============================================================ */
 
-const CERT_BASE_W = 1536, CERT_BASE_H = 1024, CERT_SCALE = 1.5;
-const CERT_NAVY = '#14234d';
+const MA = { list: [], loaded: false };
+const AR_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
-function certTier(rank){
-  if(rank === 1) return { key: 'gold',   word: 'الأول',  accent: '#b8860b', ink: '#4a3010', ramp: null };
-  if(rank === 2) return { key: 'silver', word: 'الثاني', accent: '#6b7584', ink: '#262c36', ramp: [[0,[40,44,52]],[.35,[105,112,124]],[.6,[178,186,198]],[.8,[222,228,236]],[1,[255,255,255]]] };
-  if(rank === 3) return { key: 'bronze', word: 'الثالث', accent: '#a0522d', ink: '#3d1c09', ramp: [[0,[45,20,8]],[.35,[120,62,30]],[.6,[184,110,62]],[.8,[226,160,112]],[1,[255,226,196]]] };
-  return null;
+function maMonthKey(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function maMonthLabel(d){ return AR_MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+function maKeyToLabel(k){
+  const [y, m] = String(k).split('-').map(Number);
+  return (AR_MONTHS[(m || 1) - 1] || '') + ' ' + y;
 }
 
-function loadImg(src){
-  /* صورة عادية، ولو فشلت نجرب fetch + ImageBitmap (أضمن على بعض المتصفحات) */
-  return new Promise(res => {
-    const i = new Image();
-    i.onload = () => res(i);
-    i.onerror = async () => {
-      try{
-        const r = await fetch(src, { cache: 'force-cache' });
-        if(!r.ok) return res(null);
-        res(await createImageBitmap(await r.blob()));
-      }catch(e){ res(null); }
+/* الشهر المستهدف: أول 5 أيام من الشهر = الشهر الماضي، غير كذا = الشهر الحالي */
+function maTargetMonth(){
+  const now = new Date();
+  if(now.getDate() <= 5) return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+function maIsAwardWindow(){
+  const now = new Date();
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return now.getDate() >= last - 2 || now.getDate() <= 5;
+}
+
+async function maLoad(){
+  const { data, error } = await sb.from('monthly_awards').select('*')
+    .order('month', { ascending: false }).order('rank', { ascending: true }).limit(60);
+  if(error){ console.warn('[awards]', error.message); MA.list = []; return []; }
+  MA.list = data || [];
+  MA.loaded = true;
+  return MA.list;
+}
+
+/* ================== 🏛️ أبطال الشهور (صفحة المتصدرين) ================== */
+async function renderHallOfFame(){
+  let box = document.getElementById('lbHall');
+  const podium = document.getElementById('lbPodium');
+  if(!box && podium){
+    box = document.createElement('div');
+    box.id = 'lbHall';
+    const title = podium.previousElementSibling;
+    podium.parentNode.insertBefore(box, title && title.classList.contains('sec-title') ? title : podium);
+  }
+  if(!box) return;
+  await maLoad();
+
+  const owner = typeof isPrivileged === 'function' && isPrivileged();
+  const target = maMonthKey(maTargetMonth());
+  const sentTarget = MA.list.some(a => a.month === target);
+  const reminder = owner && maIsAwardWindow() && !sentTarget
+    ? `<div class="ma-reminder"><i class="fas fa-bell"></i> حان وقت إرسال شهادات <b>${maKeyToLabel(target)}</b> لأول 3 🏆
+         <button class="btn btn-primary btn-sm" onclick="openMonthlyAwards()"><i class="fas fa-gift"></i> أرسلها الآن</button></div>` : '';
+
+  if(!MA.list.length){
+    box.innerHTML = reminder + (owner ? '' : `
+      <div class="ma-empty"><i class="fas fa-award"></i> نهاية كل شهر يحصل أول 3 في الصدارة على <b>شهادة شكر وتقدير</b> من رئيس المنصة — نافس الحين! 🔥</div>`);
+    return;
+  }
+
+  /* نجمّع حسب الشهر (آخر 6 شهور) */
+  const months = [];
+  MA.list.forEach(a => {
+    let g = months.find(x => x.month === a.month);
+    if(!g){ g = { month: a.month, label: a.month_label || maKeyToLabel(a.month), items: [] }; months.push(g); }
+    g.items.push(a);
+  });
+  const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : '🥉';
+  box.innerHTML = reminder + `
+    <div class="sec-title"><i class="fas fa-crown" style="color:#f59e0b"></i> أبطال الشهور <span class="sub">شهادات الشكر والتقدير</span></div>
+    <div class="ma-months">
+      ${months.slice(0, 6).map(g => `
+        <div class="ma-month">
+          <div class="ma-month-head"><i class="fas fa-calendar"></i> ${escapeHtml(g.label)}
+            ${owner ? `<button class="ma-del" onclick="deleteMonthlyAwards('${g.month}')" title="حذف شهادات هذا الشهر"><i class="fas fa-trash-can"></i></button>` : ''}
+          </div>
+          ${g.items.sort((a, b) => a.rank - b.rank).map(a => {
+            const me = currentUserObj && a.user_id === currentUserObj.id;
+            return `<button class="ma-winner r${a.rank} ${me ? 'me' : ''}" onclick="openAwardCertificate('${a.id}')">
+              <span class="ma-medal">${medal(a.rank)}</span>
+              <span class="ma-name">${escapeHtml(a.name || 'طالب')}${me ? ' <small>(أنت)</small>' : ''}</span>
+              <span class="ma-xp">${Number(a.xp || 0).toLocaleString('en')} XP</span>
+              <i class="fas fa-award"></i>
+            </button>`;
+          }).join('')}
+        </div>`).join('')}
+    </div>`;
+}
+window.renderHallOfFame = renderHallOfFame;
+
+window.openAwardCertificate = async (awardId) => {
+  let a = MA.list.find(x => x.id === awardId);
+  if(!a){
+    const { data } = await sb.from('monthly_awards').select('*').eq('id', awardId).maybeSingle();
+    a = data;
+  }
+  if(!a){ toast('الشهادة غير موجودة', 'warn'); return; }
+  if(typeof showCertificateModal !== 'function') return;
+  showCertificateModal({ id: a.user_id, name: a.name || 'طالب', rank: a.rank, xp: a.xp, monthLabel: a.month_label || maKeyToLabel(a.month) });
+};
+
+/* ================== 🎁 إرسال شهادات الشهر (رئيس المنصة) ================== */
+window.openMonthlyAwards = async () => {
+  if(!(typeof isPrivileged === 'function' && isPrivileged())){ toast('هذه الصلاحية للإدارة فقط', 'err'); return; }
+  if(!(window._lbUsers || []).length && typeof renderLeaderboard === 'function') await renderLeaderboard();
+  const top = (window._lbUsers || []).filter(u => u.xp > 0).slice(0, 3);
+  if(!top.length){ toast('ما فيه طلاب عندهم نقاط بعد', 'warn'); return; }
+
+  const now = new Date();
+  const cur = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const tgt = maTargetMonth();
+  const medal = r => r === 1 ? '🥇 الأول' : r === 2 ? '🥈 الثاني' : '🥉 الثالث';
+  const IN = 'width:100%;font-family:inherit;font-size:.88rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text)';
+
+  openModal({
+    title: '🏆 إرسال شهادات الشهر',
+    text: 'كل طالب من أول 3 يوصله <b>هدية</b> فيها شهادته (ذهبي / فضي / برونزي) + إشعار.',
+    bodyHTML: `
+      <div class="form-group" style="margin-bottom:12px"><label>الشهر</label>
+        <select id="maMonth" style="${IN}">
+          ${[cur, prev].map(d => `<option value="${maMonthKey(d)}" data-label="${maMonthLabel(d)}" ${maMonthKey(d) === maMonthKey(tgt) ? 'selected' : ''}>${maMonthLabel(d)}</option>`).join('')}
+        </select></div>
+      <div class="ma-preview">
+        ${top.map((u, i) => `<div class="ma-prev-row r${i + 1}"><b>${medal(i + 1)}</b><span>${escapeHtml(u.name)}</span><small>${u.xp.toLocaleString('en')} XP</small></div>`).join('')}
+      </div>
+      <div class="form-group" style="margin:12px 0"><label>رسالة الهدية</label>
+        <textarea id="maMsg" style="${IN};min-height:80px">مبروك! 🎉 تميّزك هذا الشهر يستاهل التقدير — هذه شهادتك، واصل وخلك قدوة لزملائك 💙</textarea></div>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:.84rem;cursor:pointer">
+        <input type="checkbox" id="maReset"> تصفير نقاط الجميع بعد الإرسال (بداية منافسة شهر جديد)
+      </label>`,
+    okText: '🎁 إرسال الشهادات',
+    onOk: async () => {
+      const sel = document.getElementById('maMonth');
+      const month = sel.value;
+      const label = sel.selectedOptions[0].dataset.label;
+      const msg = (document.getElementById('maMsg').value || '').trim();
+      const reset = document.getElementById('maReset').checked;
+      await maSend(month, label, top, msg, reset);
+    }
+  });
+};
+
+async function maSend(month, label, top, msg, reset){
+  const { data: exist } = await sb.from('monthly_awards').select('id').eq('month', month).limit(1);
+  if(exist && exist.length){ toast(`شهادات ${label} مرسلة مسبقاً — احذفها من «أبطال الشهور» لو تبي تعيد`, 'warn'); return; }
+
+  const rows = top.map((u, i) => ({
+    month, month_label: label, user_id: u.id, rank: i + 1, name: u.name, xp: u.xp, created_by: currentUserObj.id
+  }));
+  const { data: awards, error } = await sb.from('monthly_awards').insert(rows).select();
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+
+  const word = r => r === 1 ? 'الأول' : r === 2 ? 'الثاني' : 'الثالث';
+  let sent = 0;
+  const failed = [];
+  for(const a of awards){
+    const payload = {
+      user_id: a.user_id,
+      sender_id: currentUserObj.id,
+      sender_name: currentUserObj.name || 'رئيس المنصة',
+      title: `🏆 شهادة المركز ${word(a.rank)} — ${label}`,
+      message: msg || 'مبروك! هذه شهادتك 🎉',
+      gift_type: 'prize',
+      gift_action: 'show',
+      gift_extra_months: 0,
+      award_id: a.id
     };
-    i.src = src;
-  });
-}
-
-/* ⭐ تحميل القالب مسبقاً (يكون جاهز لحظة فتح الشهادة) */
-const _certImgs = {};
-function certImg(src){
-  if(!_certImgs[src]) _certImgs[src] = loadImg(src + '?v=2');
-  return _certImgs[src];
-}
-setTimeout(() => certImg('assets/cert/template.jpg'), 2000);
-
-const FONT_SANS = "Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif";
-const FONT_NASKH = "'Noto Naskh Arabic', Tajawal, 'Traditional Arabic', serif";
-
-/* يصغّر الخط لو السطر أعرض من المساحة */
-const CERT_MAX_LINE = 880;
-function fitFont(font, width){
-  if(width <= CERT_MAX_LINE) return font;
-  return font.replace(/(\d+)px/, (m, n) => Math.floor(Number(n) * CERT_MAX_LINE / width) + 'px');
-}
-function fitText(ctx, font, text, x, y){
-  ctx.font = font;
-  ctx.font = fitFont(font, ctx.measureText(text).width);
-  ctx.fillText(text, x, y);
-}
-
-/* سطر بأجزاء ملونة (من اليمين لليسار) */
-function drawRichLine(ctx, parts, cx, y){
-  let widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
-  const sum = widths.reduce((a, b) => a + b, 0);
-  if(sum > CERT_MAX_LINE){
-    parts = parts.map(p => Object.assign({}, p, { font: fitFont(p.font, sum) }));
-    widths = parts.map(p => { ctx.font = p.font; return ctx.measureText(p.text).width; });
-  }
-  const total = widths.reduce((a, b) => a + b, 0);
-  let x = cx + total / 2;
-  ctx.textAlign = 'right';
-  parts.forEach((p, i) => {
-    ctx.font = p.font; ctx.fillStyle = p.color;
-    ctx.fillText(p.text, x, y);
-    x -= widths[i];
-  });
-  ctx.textAlign = 'center';
-}
-
-/* يلوّن بكسلات الوسام الذهبية فقط (داخل دائرة الوسام) بتدرّج فضي أو برونزي */
-function recolorSeal(ctx, ramp){
-  const S = CERT_SCALE, x0 = Math.round(1200 * S), y0 = Math.round(90 * S), w = Math.round(300 * S), h = w;
-  const cx = 150 * S, cy = 150 * S, rOut = 145 * S, rIn = 118 * S;
-  const img = ctx.getImageData(x0, y0, w, h), d = img.data;
-  const lut = new Uint8ClampedArray(256 * 3);
-  for(let v = 0; v < 256; v++){
-    const L = v / 255;
-    let k = 0; while(k < ramp.length - 2 && L > ramp[k + 1][0]) k++;
-    const [a, ca] = ramp[k], [b, cb] = ramp[k + 1];
-    const f = Math.max(0, Math.min(1, (L - a) / (b - a)));
-    for(let c = 0; c < 3; c++) lut[v * 3 + c] = ca[c] + (cb[c] - ca[c]) * f;
-  }
-  for(let y = 0; y < h; y++){
-    for(let x = 0; x < w; x++){
-      const dist = Math.hypot(x - cx, y - cy);
-      if(dist > rOut) continue;
-      const i = (y * w + x) * 4, r = d[i], g = d[i + 1], b = d[i + 2];
-      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-      if(dist > rIn){
-        /* الحافة: فقط الألوان الذهبية/البنية (نتجاهل الشريط الكحلي والخلفية) */
-        if(mx === 0 || (mx - mn) / mx < 0.2) continue;
-        let hue = mx === r ? 60 * (((g - b) / (mx - mn)) % 6) : mx === g ? 60 * ((b - r) / (mx - mn) + 2) : 60 * ((r - g) / (mx - mn) + 4);
-        if(hue < 0) hue += 360;
-        if(hue < 10 || hue > 70) continue;
-      }
-      const L = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-      d[i] = lut[L * 3]; d[i + 1] = lut[L * 3 + 1]; d[i + 2] = lut[L * 3 + 2];
+    const r = await sbSafeWrite(p => sb.from('student_gifts').insert(p), payload);
+    if(r && !r.error) sent++;
+    else failed.push((a.name || 'طالب') + ': ' + ((r && r.error && r.error.message) || 'خطأ'));
+    if(typeof sendNotification === 'function'){
+      try{ await sendNotification('gift', '🏆 وصلتك شهادة الشهر!', `حققت المركز ${word(a.rank)} في ${label} — افتح هداياك`, null, null, 'fa-award', '#f59e0b', a.user_id); }catch(e){}
     }
   }
-  ctx.putImageData(img, x0, y0);
-}
+  if(typeof logAdminAction === 'function') logAdminAction('send_gift', null, `إرسال شهادات ${label}`, { month, winners: awards.map(a => a.name) });
 
-async function drawCertificate(u){
-  const t = certTier(u.rank);
-  if(!t) throw new Error('not top 3');
-  const timeout = ms => new Promise(r => setTimeout(r, ms));
-  try{
-    await Promise.race([
-      Promise.all([
-        document.fonts.load('800 46px Tajawal'), document.fonts.load('800 40px Tajawal'),
-        document.fonts.load('500 24px "Noto Naskh Arabic"'), document.fonts.load('700 24px "Noto Naskh Arabic"')
-      ]),
-      timeout(3000)
-    ]);
-  }catch(e){}
-  const tpl = await Promise.race([certImg('assets/cert/template.jpg'), timeout(20000).then(() => null)]);
-  if(!tpl) throw new Error('template');
-
-  const c = document.createElement('canvas');
-  c.width = CERT_BASE_W * CERT_SCALE; c.height = CERT_BASE_H * CERT_SCALE;
-  const ctx = c.getContext('2d');
-  ctx.scale(CERT_SCALE, CERT_SCALE);
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(tpl, 0, 0, CERT_BASE_W, CERT_BASE_H);
-
-  /* ---- الوسام: نحوّل الذهبي إلى فضي / برونزي ---- */
-  if(t.ramp) recolorSeal(ctx, t.ramp);
-
-  ctx.direction = 'rtl';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  /* نص الوسام */
-  ctx.fillStyle = t.ink;
-  ctx.font = `800 31px ${FONT_SANS}`;
-  ctx.fillText('المركز', 1350, 214);
-  let ws = 46;
-  ctx.font = `900 ${ws}px ${FONT_SANS}`;
-  while(ctx.measureText(t.word).width > 118 && ws > 30){ ws -= 2; ctx.font = `900 ${ws}px ${FONT_SANS}`; }
-  ctx.fillText(t.word, 1350, 258);
-
-  /* ---- اسم الطالب ---- */
-  let ns = 50;
-  const name = String(u.name || '').trim();
-  ctx.font = `800 ${ns}px ${FONT_SANS}`;
-  while(ctx.measureText(name).width > 560 && ns > 26){ ns -= 2; ctx.font = `800 ${ns}px ${FONT_SANS}`; }
-  ctx.fillStyle = CERT_NAVY;
-  ctx.fillText(name, 768, 536);
-
-  /* ---- نص الشهادة ---- */
-  const cx = 706;
-  const F = `700 27px ${FONT_NASKH}`, FB = `800 28px ${FONT_NASKH}`;
-  if(u.monthLabel){
-    /* ⭐ شهادة الشهر */
-    drawRichLine(ctx, [
-      { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
-      { text: 'المركز ' + t.word, font: FB, color: t.accent },
-      { text: ' في صدارة ', font: F, color: CERT_NAVY },
-      { text: 'شهر ' + u.monthLabel, font: FB, color: t.accent },
-      { text: '،', font: F, color: CERT_NAVY }
-    ], cx, 624);
-    ctx.fillStyle = CERT_NAVY;
-    fitText(ctx, F, 'تقديرًا لتميّزه الاستثنائي واجتهاده المستمر، وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
-  } else {
-    drawRichLine(ctx, [
-      { text: 'وذلك بمناسبة تحقيقه ', font: F, color: CERT_NAVY },
-      { text: 'المركز ' + t.word, font: FB, color: t.accent },
-      { text: '، تقديرًا لتميّزه الاستثنائي واجتهاده المستمر،', font: F, color: CERT_NAVY }
-    ], cx, 624);
-    ctx.fillStyle = CERT_NAVY;
-    fitText(ctx, F, 'وما أظهره من عزيمة وإصرار على بلوغ القمة.', cx, 665);
+  if(reset){
+    const { error: e2 } = await sb.rpc('reset_all_points');
+    if(e2) toast('تم الإرسال لكن فشل التصفير: ' + e2.message, 'warn');
+    else toast('🔄 تم تصفير النقاط — بدأت منافسة الشهر الجديد', 'ok');
   }
-  ctx.fillStyle = CERT_NAVY;
-  fitText(ctx, F, 'وإننا في منصة عباقرة القدرات، إذ نبارك له هذا الإنجاز المستحق، لنتمنى له دوام التوفيق', cx, 713);
-  fitText(ctx, F, 'ومزيدًا من النجاحات والإنجازات في مسيرته العلمية، سائلين الله أن يجعل هذا التفوق', cx, 751);
-  fitText(ctx, F, 'بدايةً لمستقبل حافل بالتميّز والعطاء.', cx, 790);
-
-  return c;
+  if(failed.length){
+    console.warn('[awards] gift insert failed', failed);
+    toast(`⚠️ تم حفظ الشهادات لكن ${failed.length} هدية ما وصلت — شغّل ملف supabase-update-10.sql (${failed[0]})`, 'err');
+  } else toast(`🎁 تم إرسال ${sent} شهادة لأبطال ${label}`, 'ok');
+  if(typeof renderLeaderboard === 'function') renderLeaderboard();
 }
 
-/* ================== النافذة ================== */
-async function openCertificate(userId){
-  const list = window._lbUsers || [];
-  const u = list.find(x => x.id === userId);
-  if(!u){ toast('افتح قائمة المتصدرين أولاً', 'warn'); return; }
-  if(!certTier(u.rank) || !(u.xp > 0)){ toast('الشهادة لأول 3 في الصدارة فقط 🏆', 'warn'); return; }
-  return showCertificateModal(u);
-}
-window.openCertificate = openCertificate;
+window.deleteMonthlyAwards = (month) => {
+  confirmBox('حذف شهادات الشهر', `حذف شهادات ${maKeyToLabel(month)} من «أبطال الشهور»؟ (الهدايا المرسلة تبقى عند الطلاب)`, async () => {
+    const { error } = await sb.from('monthly_awards').delete().eq('month', month);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    toast('تم الحذف', 'warn');
+    renderHallOfFame();
+  }, true);
+};
 
-/* ⭐ شهادة محفوظة (شهادات الشهر): { id, name, rank, xp, monthLabel } */
-async function showCertificateModal(u){
+/* ================== زر «عرض شهادتك» داخل الهدية ================== */
+(function hookGift(){
+  const wrap = () => {
+    if(typeof window.showGiftCelebration !== 'function' || window._maHooked) return;
+    window._maHooked = true;
+    const orig = window.showGiftCelebration;
+    window.showGiftCelebration = function(g){
+      orig.apply(this, arguments);
+      const actions = document.querySelector('#giftCelebrationModal .gift-celeb-actions');
+      if(!actions) return;
+      const old = document.getElementById('giftCertBtn'); if(old) old.remove();
+      if(g && g.award_id){
+        const b = document.createElement('button');
+        b.id = 'giftCertBtn';
+        b.className = 'btn gift-cert-btn';
+        b.innerHTML = '<i class="fas fa-award"></i> عرض شهادتك 🏆';
+        b.onclick = () => {
+          try{ if(typeof closeGiftCelebration === 'function') closeGiftCelebration(); }catch(e){}
+          openAwardCertificate(g.award_id);
+        };
+        actions.insertBefore(b, actions.firstChild);
+      }
+    };
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wrap); else wrap();
+})();
 
-  let m = document.getElementById('certModal');
-  if(!m){
-    m = document.createElement('div');
-    m.id = 'certModal';
-    m.className = 'cert-overlay';
-    m.addEventListener('click', e => { if(e.target === m) closeCertificate(); });
-    document.body.appendChild(m);
-  }
-  m.innerHTML = `<div class="cert-box"><div class="cert-loading"><i class="fas fa-spinner fa-spin"></i> نجهّز الشهادة...</div></div>`;
-  m.classList.add('open');
-
-  try{
-    const canvas = await drawCertificate(u);
-    const url = canvas.toDataURL('image/png');
-    const isMe = currentUserObj && currentUserObj.id === u.id;
-    const fileName = `شهادة-عباقرة-القدرات-${u.monthLabel ? String(u.monthLabel).replace(/\s+/g, '-') + '-' : ''}${String(u.name).replace(/\s+/g, '-')}.png`;
-    m.innerHTML = `
-      <div class="cert-box">
-        <div class="cert-head">
-          <b><i class="fas fa-award"></i> ${isMe ? 'شهادتك' : 'شهادة ' + escapeHtml(u.name)} — المركز ${u.rank}${u.monthLabel ? ' • ' + escapeHtml(u.monthLabel) : ''}</b>
-          <button class="cert-x" onclick="closeCertificate()"><i class="fas fa-xmark"></i></button>
-        </div>
-        <img class="cert-img" src="${url}" alt="شهادة ${escapeHtml(u.name)}">
-        <div class="cert-actions">
-          <a class="btn btn-primary" href="${url}" download="${escapeHtml(fileName)}"><i class="fas fa-download"></i> تحميل الشهادة</a>
-          ${navigator.share ? '<button class="btn btn-ghost" id="certShareBtn"><i class="fas fa-share-nodes"></i> مشاركة</button>' : ''}
-          <button class="btn btn-ghost" onclick="closeCertificate()">إغلاق</button>
-        </div>
-        ${isMe ? '<p class="cert-tip"><i class="fas fa-lightbulb"></i> مبروك! 🎉 شهادتك محفوظة في «أبطال الشهر» بصفحة المتصدرين — تقدر ترجع لها أي وقت.</p>' : ''}
-      </div>`;
-    const sh = document.getElementById('certShareBtn');
-    if(sh) sh.addEventListener('click', async () => {
-      try{
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const file = new File([blob], fileName, { type: 'image/png' });
-        if(navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'شهادة عباقرة القدرات' });
-        else await navigator.share({ title: 'شهادة عباقرة القدرات', text: `حصلت على المركز ${u.rank} في منصة عباقرة القدرات 🏆` });
-      }catch(e){}
-    });
-  }catch(e){
-    m.innerHTML = `<div class="cert-box"><div class="cert-loading">تعذّر تجهيز الشهادة</div><div class="cert-actions"><button class="btn btn-ghost" onclick="closeCertificate()">إغلاق</button></div></div>`;
-  }
-}
-window.showCertificateModal = showCertificateModal;
-
-function closeCertificate(){
-  const m = document.getElementById('certModal');
-  if(m) m.classList.remove('open');
-}
-window.closeCertificate = closeCertificate;
-
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closeCertificate(); });
+/* ================== تنبيه رئيس المنصة آخر الشهر ================== */
+document.addEventListener('DOMContentLoaded', () => {
+  let tries = 0;
+  const t = setInterval(async () => {
+    tries++;
+    if(!currentUserObj){ if(tries > 60) clearInterval(t); return; }
+    clearInterval(t);
+    if(!(typeof isPrivileged === 'function' && isPrivileged()) || !maIsAwardWindow()) return;
+    const key = 'ma_remind_' + maMonthKey(maTargetMonth()) + '_' + new Date().getDate();
+    try{ if(localStorage.getItem(key)) return; localStorage.setItem(key, '1'); }catch(e){}
+    const { data } = await sb.from('monthly_awards').select('id').eq('month', maMonthKey(maTargetMonth())).limit(1);
+    if(data && data.length) return;
+    setTimeout(() => {
+      openModal({
+        title: '🏆 نهاية الشهر',
+        text: `حان وقت إرسال شهادات <b>${maKeyToLabel(maMonthKey(maTargetMonth()))}</b> لأول 3 في الصدارة.`,
+        okText: 'افتح الإرسال',
+        onOk: () => openMonthlyAwards()
+      });
+    }, 4000);
+  }, 1000);
+});
