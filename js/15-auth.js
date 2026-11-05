@@ -337,7 +337,8 @@ async function handlePasswordRecovery(){
   try{
     if(r.error) throw new Error(r.error === 'no_token' ? 'invalid' : (r.desc || r.error));
     let res;
-    if(r.access_token) res = await sb.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+    if(r.token_hash) res = await sb.auth.verifyOtp({ token_hash: r.token_hash, type: 'recovery' });
+    else if(r.access_token) res = await sb.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
     else if(r.code) res = await sb.auth.exchangeCodeForSession(r.code);
     if(!res || res.error || !res.data || !res.data.session) throw new Error((res && res.error && res.error.message) || 'invalid');
     session = res.data.session;
