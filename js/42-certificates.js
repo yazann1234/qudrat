@@ -34,7 +34,10 @@ function loadImg(src){
 /* ⭐ تحميل القالب مسبقاً (يكون جاهز لحظة فتح الشهادة) */
 const _certImgs = {};
 function certImg(src){
-  if(!_certImgs[src]) _certImgs[src] = loadImg(src + '?v=2');
+  if(!_certImgs[src]){
+    /* لو فشل التحميل (نت ضعيف) لا نحفظ الفشل — المحاولة الجاية تعيد التحميل */
+    _certImgs[src] = loadImg(src + '?v=2').then(img => { if(!img) delete _certImgs[src]; return img; });
+  }
   return _certImgs[src];
 }
 setTimeout(() => certImg('assets/cert/template.jpg'), 2000);
@@ -155,7 +158,7 @@ async function drawCertificate(u){
 
   /* ---- نص الشهادة ---- */
   const cx = 706;
-  const F = `700 27px ${FONT_NASKH}`, FB = `800 28px ${FONT_NASKH}`;
+  const F = `700 26px ${FONT_SANS}`, FB = `900 27px ${FONT_SANS}`;
   if(u.monthLabel){
     /* ⭐ شهادة الشهر */
     drawRichLine(ctx, [
