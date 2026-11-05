@@ -11,7 +11,7 @@ function fileCard(f){
 
   /* ⭐ 3 مستويات: مشترك + نفس الدورة = unlock / مشترك بدورة ثانية = locked / غير مشترك = locked */
   const isSub = typeof isSubscribed === 'function' ? isSubscribed() : false;
-  const hasCourseAccess = isPrivileged() || !f.course_id || (currentUserObj && f.course_id === currentUserObj.course_id);
+  const hasCourseAccess = isPrivileged() || !f.course_id || (currentUserObj && userHasCourse(f.course_id));
   const locked = !isPrivileged() && (!isSub || !hasCourseAccess);
   const lockedReason = !isSub ? 'subscribe' : 'course'; // للتلميح
 
@@ -22,7 +22,7 @@ function fileCard(f){
   const hasExplanation = f.explanation_video_id && (DB.videos || []).some(v => v.id === f.explanation_video_id);
 
   /* ⭐ هل هذا الملف من دورة أخرى؟ */
-  const fromOtherCourse = !isPrivileged() && f.course_id && currentUserObj && f.course_id !== currentUserObj.course_id;
+  const fromOtherCourse = !isPrivileged() && f.course_id && currentUserObj && !userHasCourse(f.course_id);
   const course = f.course_id && typeof getCourseById === 'function' ? getCourseById(f.course_id) : null;
   /* ⭐ شارة «جديد» للملفات المضافة خلال آخر 4 أيام ولم يفتحها الطالب */
   const isNew = !locked && f.created_at && (Date.now() - new Date(f.created_at).getTime()) < 4 * 86400000 && !userData.opened.includes(f.id);
@@ -63,9 +63,8 @@ function getVisibleFiles(){
   if(isPrivileged()) return list;
   if(!currentUserObj) return [];
   if(typeof isSubscribed === 'function' && !isSubscribed()) return [];
-  /* ⭐ مشترك: فقط ملفات دورته + الملفات العامة */
-  const myCourseId = currentUserObj.course_id;
-  list = list.filter(f => !f.course_id || f.course_id === myCourseId);
+  /* ⭐ مشترك: ملفات كل دوراته + الملفات العامة */
+  list = list.filter(f => !f.course_id || userHasCourse(f.course_id));
   return list;
 }
 
