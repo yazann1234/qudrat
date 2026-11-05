@@ -16,7 +16,8 @@ const VWB = {
   key: null,
   panel: null,
   canvas: null,
-  ro: null
+  ro: null,
+  raf: 0
 };
 
 const VWB_SIZES = { s: [300, 220], m: [440, 320], l: [640, 460] };
@@ -195,16 +196,13 @@ function vwbStrokes(){
 
 function vwbRedraw(){
   const c = VWB.canvas; if(!c || !VWB.open) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const rect = c.getBoundingClientRect();
-  const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
-  if(c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)){ c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
-  const ctx = c.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-  const list = vwbStrokes().slice();
-  if(VWB.current) list.push(VWB.current);
-  list.forEach(s => { try{ drawStrokeOnCtx(ctx, s, w, h); }catch(e){} });
+  if(typeof paintCanvas === 'function') paintCanvas(c, userData.drawings && userData.drawings[VWB.key], VWB.current);
+}
+
+/* ⭐ رسم واحد لكل إطار شاشة أثناء تحريك القلم */
+function vwbRedrawSoon(){
+  if(VWB.raf) return;
+  VWB.raf = requestAnimationFrame(() => { VWB.raf = 0; vwbRedraw(); });
 }
 
 function vwbPoint(e){
@@ -232,7 +230,7 @@ function vwbBindDraw(){
     const last = VWB.current.points[VWB.current.points.length - 1];
     if(last && Math.abs(last.x - p.x) < 0.002 && Math.abs(last.y - p.y) < 0.002) return;
     VWB.current.points.push(p);
-    vwbRedraw();
+    vwbRedrawSoon();
   });
   const end = () => {
     if(!VWB.drawing || !VWB.current) return;
@@ -243,6 +241,7 @@ function vwbBindDraw(){
     if(arr.length > 400) arr.shift();
     arr.push(VWB.current);
     VWB.current = null;
+    if(VWB.raf){ cancelAnimationFrame(VWB.raf); VWB.raf = 0; }
     try{ saveDrawings(); }catch(e){}
     vwbRedraw();
   };
