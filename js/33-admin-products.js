@@ -18,7 +18,7 @@ const PRODUCT_COLORS = [
   '#f59e0b','#f7b32b','#22c55e','#16a34a','#14b8a6','#06b6d4','#0ea5e9'
 ];
 
-const PF_DURATIONS = [1, 3, 6, 12];
+const PF_DURATIONS = [1, 2, 3, 6, 12];
 
 /* ⭐ قراءة/تعبئة حقول الأسعار (سعر مستقل لكل مدة) */
 function readPriceInputs(){
