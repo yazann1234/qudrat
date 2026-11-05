@@ -6,7 +6,7 @@
 ============================================================ */
 
 const ACS = { list: [] };
-const ACS_DURS = [1, 3, 6, 12];
+const ACS_DURS = [1, 2, 3, 6, 12];
 
 async function loadAdminCourses(){
   const { data, error } = await sb.from('courses').select('*').order('sort_order', { ascending: true });
@@ -59,6 +59,7 @@ function acsField(id, label, value, type, extra){
 window.editAdminCourse = (id) => {
   const c = id ? ACS.list.find(x => x.id === id) : null;
   const prices = (c && c.prices) || {};
+  const was = (c && c.compare_prices) || {};
   openModal({
     title: c ? 'تعديل الدورة: ' + c.name : 'دورة جديدة',
     text: 'اترك سعر المدة فارغاً لإخفائها من المتجر.',
@@ -76,6 +77,13 @@ window.editAdminCourse = (id) => {
             <div class="pf-input"><input type="number" min="0" step="1" id="acsP${m}" value="${Number(prices[String(m)]) > 0 ? Number(prices[String(m)]) : ''}"><i class="sar"></i></div>
           </label>`).join('')}
       </div>
+      <label style="font-weight:800;font-size:.84rem">السعر قبل الخصم <small style="color:var(--muted);font-weight:600">(اختياري — يظهر مشطوب مع «وفّر ٪»)</small></label>
+      <div class="price-grid" style="margin:8px 0 12px">
+        ${ACS_DURS.filter(m => m > 1).map(m => `
+          <label class="price-field"><span>${monthsLabel(m)}</span>
+            <div class="pf-input"><input type="number" min="0" step="1" id="acsW${m}" value="${Number(was[String(m)]) > 0 ? Number(was[String(m)]) : ''}"><i class="sar"></i></div>
+          </label>`).join('')}
+      </div>
       ${acsField('acsEnd', 'تاريخ نهاية ثابت (اختياري — يُستخدم أقل سعر)', c && c.subscription_end_date ? String(c.subscription_end_date).slice(0, 10) : '', 'date')}
       ${acsField('acsColor', 'اللون', c ? (c.color || '#5b6cff') : '#5b6cff', 'color', 'style="height:44px"')}
       <label class="checkbox-row" style="display:flex;gap:8px;align-items:center;font-weight:700;font-size:.86rem;margin-top:6px">
@@ -88,11 +96,14 @@ window.editAdminCourse = (id) => {
       const newPrices = {};
       ACS_DURS.forEach(m => { const v = parseFloat(document.getElementById('acsP' + m).value); if(v > 0) newPrices[String(m)] = v; });
       if(!Object.keys(newPrices).length){ toast('أدخل سعراً لمدة واحدة على الأقل', 'warn'); return; }
+      const comparePrices = {};
+      ACS_DURS.filter(m => m > 1).forEach(m => { const v = parseFloat(document.getElementById('acsW' + m).value); if(v > 0 && v > (newPrices[String(m)] || 0)) comparePrices[String(m)] = v; });
       const payload = {
         name,
         description: (document.getElementById('acsDesc').value || '').trim(),
         about: (document.getElementById('acsAbout').value || '').trim(),
         prices: newPrices,
+        compare_prices: comparePrices,
         subscription_end_date: document.getElementById('acsEnd').value || null,
         color: document.getElementById('acsColor').value || '#5b6cff',
         active: document.getElementById('acsActive').checked
