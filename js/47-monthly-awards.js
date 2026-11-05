@@ -147,6 +147,22 @@ window.openMonthlyAwards = async () => {
   });
 };
 
+/* ⭐ نرسم الشهادة (القالب + الاسم + النص + المركز ذهبي/فضي/برونزي) ونرفعها صورة
+   → توصل للطالب داخل الهدية نفسها كصورة جاهزة */
+async function maCertificateImage(a, label){
+  if(typeof drawCertificate !== 'function') return null;
+  try{
+    const canvas = await drawCertificate({ id: a.user_id, name: a.name || 'طالب', rank: a.rank, xp: a.xp, monthLabel: label });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+    if(!blob) return null;
+    const path = '_certificates/' + a.month + '/' + a.rank + '_' + a.user_id + '_' + Date.now() + '.jpg';
+    const { error } = await sb.storage.from('avatars').upload(path, blob, { cacheControl: '31536000', upsert: true, contentType: 'image/jpeg' });
+    if(error){ console.warn('[awards] cert upload', error.message); return null; }
+    const { data } = sb.storage.from('avatars').getPublicUrl(path);
+    return data ? data.publicUrl : null;
+  }catch(e){ console.warn('[awards] cert image', e); return null; }
+}
+
 async function maSend(month, label, top, msg, reset){
   const { data: exist } = await sb.from('monthly_awards').select('id').eq('month', month).limit(1);
   if(exist && exist.length){ toast(`شهادات ${label} مرسلة مسبقاً — احذفها من «أبطال الشهور» لو تبي تعيد`, 'warn'); return; }
@@ -160,7 +176,9 @@ async function maSend(month, label, top, msg, reset){
   const word = r => r === 1 ? 'الأول' : r === 2 ? 'الثاني' : 'الثالث';
   let sent = 0;
   const failed = [];
+  toast('⏳ نجهّز صور الشهادات...', 'ok');
   for(const a of awards){
+    const imageUrl = await maCertificateImage(a, label);
     const payload = {
       user_id: a.user_id,
       sender_id: currentUserObj.id,
@@ -172,6 +190,7 @@ async function maSend(month, label, top, msg, reset){
       gift_extra_months: 0,
       award_id: a.id
     };
+    if(imageUrl) payload.image_url = imageUrl;
     const r = await sbSafeWrite(p => sb.from('student_gifts').insert(p), payload);
     if(r && !r.error) sent++;
     else failed.push((a.name || 'طالب') + ': ' + ((r && r.error && r.error.message) || 'خطأ'));
@@ -213,11 +232,16 @@ window.deleteMonthlyAwards = (month) => {
       const actions = document.querySelector('#giftCelebrationModal .gift-celeb-actions');
       if(!actions) return;
       const old = document.getElementById('giftCertBtn'); if(old) old.remove();
+      const img = document.getElementById('giftCelebImage');
+      if(img){
+        img.style.cursor = g && g.award_id ? 'zoom-in' : '';
+        img.onclick = g && g.award_id ? () => { try{ closeGiftCelebration(); }catch(e){} openAwardCertificate(g.award_id); } : null;
+      }
       if(g && g.award_id){
         const b = document.createElement('button');
         b.id = 'giftCertBtn';
         b.className = 'btn gift-cert-btn';
-        b.innerHTML = '<i class="fas fa-award"></i> عرض شهادتك 🏆';
+        b.innerHTML = '<i class="fas fa-download"></i> عرض وتحميل شهادتك 🏆';
         b.onclick = () => {
           try{ if(typeof closeGiftCelebration === 'function') closeGiftCelebration(); }catch(e){}
           openAwardCertificate(g.award_id);
