@@ -22,9 +22,16 @@ function isSubscribed(){
   return currentUserObj && (
     currentUserObj.role === 'admin' ||
     currentUserObj.role === 'owner' ||
-    currentUserObj.status === 'approved'
+    (currentUserObj.status === 'approved' && !isFrozen())
   );
 }
+/* ❄️ الحساب مجمّد حالياً؟ (أثناء التجميد المحتوى مقفل والاشتراك متمدد) */
+function isFrozen(){
+  if(!currentUserObj || currentUserObj.role === 'admin' || currentUserObj.role === 'owner') return false;
+  const t = currentUserObj.freeze_until ? Date.parse(currentUserObj.freeze_until) : 0;
+  return !!t && t > Date.now();
+}
+window.isFrozen = isFrozen;
 function isPending(){ return currentUserObj && currentUserObj.role !== 'admin' && currentUserObj.status === 'pending'; }
 
 function todayLog(){
