@@ -50,7 +50,9 @@ function pickLocalFields(ud){
 const PROFILE_LIST_COLS = 'id,name,email,phone,role,status,avatar_url,created_at,course_id,course_ids,subscription_start,subscription_end,subscription_months,purchase_submitted,purchase_product,purchase_course_id,purchase_months,purchase_price,purchase_submitted_at,purchase_receipt_url,purchase_receipt_path,password_hint,xp_points';
 async function fetchAdminUsers(){
   try{
-    let r = await sb.from('profiles').select(PROFILE_LIST_COLS).order('created_at', { ascending: false });
+    /* ❄️ مع حقول التجميد (لو ملف supabase-update-11 ما انشغّل → نرجع للأعمدة الأساسية) */
+    let r = await sb.from('profiles').select(PROFILE_LIST_COLS + ',freeze_until,freeze_days_used').order('created_at', { ascending: false });
+    if(r.error) r = await sb.from('profiles').select(PROFILE_LIST_COLS).order('created_at', { ascending: false });
     if(r.error){
       /* بعض الأعمدة غير موجودة بعد → نجلب الكل (احتياط) */
       r = await sb.from('profiles').select('*').order('created_at', { ascending: false });
