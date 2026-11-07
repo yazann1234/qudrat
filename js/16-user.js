@@ -128,7 +128,7 @@ function renderProfile(){
     const ss = document.getElementById('pStatSessions'); if(ss) ss.textContent = s.sessions || 0;
     const b = document.getElementById('pStatBadges'); if(b) b.textContent = s.badges || 0;
 
-    const xp = document.getElementById('pXp'); if(xp) xp.textContent = s.xp || 0;
+    const xp = document.getElementById('pXp'); if(xp) xp.textContent = (s.xp || 0).toLocaleString('en');
     const xpP = document.getElementById('pXpPages'); if(xpP) xpP.textContent = s.pages || 0;
     const xpF = document.getElementById('pXpFiles'); if(xpF) xpF.textContent = s.completed || 0;
     const xpS = document.getElementById('pXpSessions'); if(xpS) xpS.textContent = s.sessions || 0;
@@ -144,6 +144,8 @@ function renderProfile(){
     if(typeof renderBadges === 'function') renderBadges();
     /* ⭐ تفاصيل الاشتراك (المدة + تاريخ البداية والنهاية + الأيام المتبقية) */
     if(typeof renderSubscriptionInfo === 'function') renderSubscriptionInfo();
+    /* ⭐ الملف الشخصي الجديد: المستوى + الترتيب + النشاط + الشهادات + التجميد */
+    if(typeof renderProfile2 === 'function') renderProfile2();
   }catch(e){ console.warn('renderProfile error:', e); }
 }
 window.renderProfile = renderProfile;
