@@ -124,6 +124,11 @@ function renderUsersTable(){
             ${price ? `<span style="color:var(--primary);font-weight:900">${priceHTML(price)}</span> • ` : ''}${monthsLabel(months)}
             ${daysLeft !== null ? `<br><span style="color:${daysColor};font-weight:900">${isExpired ? '⛔ منتهي' : `⏳ متبقي ${daysLeft} يوم`}</span>` : ''}
           </div>
+          ${u.freeze_until && new Date(u.freeze_until) > new Date() ? `
+          <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:.7rem;font-weight:900;color:#0284c7;background:rgba(2,132,199,.1);padding:3px 8px;border-radius:8px"><i class="fas fa-snowflake"></i> مجمّد حتى ${new Date(u.freeze_until).toLocaleDateString('ar-SA')}</span>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:.68rem" onclick="adminUnfreezeUser('${u.id}','${escapeHtml(u.name || '').replace(/'/g, '')}')"><i class="fas fa-fire"></i> فك</button>
+          </div>` : ''}
         `;
       } else if(course){
         subCell = `
