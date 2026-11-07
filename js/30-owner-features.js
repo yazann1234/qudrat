@@ -843,7 +843,7 @@ function renderSubscriptionInfo(){
           <small>اشتراكك الحالي</small>
           <b>${course ? escapeHtml(course.name) : 'اشتراك المنصة'}</b>
         </div>
-        <span class="sdc-badge">${isExpired ? '⛔ منتهي' : isWarning ? '⚠️ قارب على الانتهاء' : '✓ فعّال'}</span>
+        <span class="sdc-badge">${isExpired ? '⛔ منتهي' : (typeof isFrozen === 'function' && isFrozen()) ? '❄️ مجمّد' : isWarning ? '⚠️ قارب على الانتهاء' : '✓ فعّال'}</span>
       </div>
 
       <div class="sdc-count">
