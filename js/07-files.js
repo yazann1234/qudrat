@@ -102,6 +102,10 @@ function renderRecent(){
 
 function renderSubBanners(){
   const bannerHTML = !isSubscribed() ? (() => {
+    if(typeof isFrozen === 'function' && isFrozen()){
+      const until = new Date(currentUserObj.freeze_until);
+      return `<div class="subscribe-wall frozen"><div class="sw-icon"><i class="fas fa-snowflake"></i></div><h3>حسابك مجمّد ❄️</h3><p>اشتراكك متوقف مؤقتاً ويرجع تلقائياً يوم <b>${until.toLocaleDateString('ar-SA', { weekday: 'long', day: 'numeric', month: 'long' })}</b> — وأيام التجميد انضافت لنهاية اشتراكك.</p><button class="btn btn-primary" onclick="go('profile')"><i class="fas fa-fire"></i> فك التجميد من ملفي الشخصي</button></div>`;
+    }
     if(isPending()){
       return `<div class="subscribe-wall"><div class="sw-icon"><i class="fas fa-hourglass-half"></i></div><h3>طلبك قيد المراجعة</h3><p>تم إرسال طلب اشتراكك بنجاح. سيتم تفعيل حسابك من قبل الأدمن قريباً.</p><div class="sw-status"><i class="fas fa-clock"></i> بانتظار الموافقة</div></div>`;
     }
@@ -112,7 +116,8 @@ function renderSubBanners(){
 }
 
 window.showLockMessage = () => {
-  if(isPending()) toast('طلبك قيد المراجعة من قبل الأدمن', 'warn');
+  if(typeof isFrozen === 'function' && isFrozen()) toast('❄️ حسابك مجمّد — تقدر تفك التجميد من ملفك الشخصي', 'warn');
+  else if(isPending()) toast('طلبك قيد المراجعة من قبل الأدمن', 'warn');
   else toast('تحتاج اشتراكاً مفعّلاً للوصول للملفات', 'warn');
 };
 
