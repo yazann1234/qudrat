@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Noto+Naskh+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/styles.css?v=20261105a">
+<link rel="stylesheet" href="css/styles.css?v=20261107a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -843,70 +843,115 @@
          الملف الشخصي
     ============================================================ -->
     <section class="view" id="view-profile">
-      <div class="sec-title"><i class="fas fa-user-circle" style="color:var(--primary)"></i> ملفي الشخصي</div>
-      <div class="profile-grid">
-        <div class="profile-card">
-          <div class="profile-avatar-wrap">
-            <div class="profile-avatar" id="profileAvatar">
-              <span id="profileAvatarText">؟</span>
-              <div class="profile-avatar-overlay"><i class="fas fa-camera"></i></div>
+      <div class="pf2">
+
+        <!-- ===== الغلاف + الصورة + الاسم + المستوى ===== -->
+        <div class="pf2-hero">
+          <div class="pf2-cover"></div>
+          <div class="pf2-hero-body">
+            <div class="pf2-avatar-wrap">
+              <div class="profile-avatar pf2-avatar" id="profileAvatar">
+                <span id="profileAvatarText">؟</span>
+                <div class="profile-avatar-overlay"><i class="fas fa-camera"></i></div>
+              </div>
+              <button class="profile-cam" id="profileCamBtn" title="تغيير الصورة"><i class="fas fa-camera"></i></button>
+              <input type="file" id="avatarInput" accept="image/*" hidden>
             </div>
-            <button class="profile-cam" id="profileCamBtn" title="تغيير الصورة"><i class="fas fa-camera"></i></button>
-            <input type="file" id="avatarInput" accept="image/*" hidden>
-          </div>
-          <div class="profile-name-big" id="profileNameBig">—</div>
-          <div class="profile-email-small" id="profileEmailSmall">—</div>
-          <div class="profile-badges-row" id="profileBadgesRow"></div>
-          <div class="profile-stats-row">
-            <div class="profile-stat"><b id="pStatFiles">0</b><small>ملف مكتمل</small></div>
-            <div class="profile-stat"><b id="pStatSessions">0</b><small>دقيقة تركيز</small></div>
-            <div class="profile-stat"><b id="pStatBadges">0</b><small>شارة</small></div>
-          </div>
-          <div class="profile-form">
-            <div>
-              <label><i class="fas fa-user" style="color:var(--primary);margin-left:4px"></i> الاسم الكامل</label>
-              <input type="text" id="profileNameInput" placeholder="اكتب اسمك" maxlength="40">
+            <div class="pf2-id">
+              <h2 id="profileNameBig">—</h2>
+              <div class="pf2-email" id="profileEmailSmall">—</div>
+              <div class="pf2-chips" id="pf2Chips"></div>
             </div>
-            <div>
-              <label><i class="fas fa-envelope" style="color:var(--primary);margin-left:4px"></i> البريد الإلكتروني</label>
-              <input type="email" id="profileEmailInput" disabled>
-            </div>
-            <div class="profile-actions">
-              <button class="btn btn-primary" id="profileSaveBtn" style="flex:1"><i class="fas fa-floppy-disk"></i> حفظ التعديلات</button>
-              <button class="btn btn-ghost" id="profileRemoveAvatar"><i class="fas fa-trash"></i> حذف الصورة</button>
-            </div>
+            <div class="pf2-level" id="pf2Level"></div>
           </div>
         </div>
 
-        <div>
-          <div class="profile-xp-card">
-            <div style="font-size:2.4rem;margin-bottom:6px"><i class="fas fa-star"></i></div>
-            <div class="xp-num" id="pXp">0</div>
-            <small>مجموع نقاط XP</small>
-            <div class="xp-breakdown">
-              <span><i class="fas fa-file-lines"></i> <b id="pXpPages">0</b> صفحة</span>
-              <span><i class="fas fa-book"></i> <b id="pXpFiles">0</b> ملف</span>
-              <span><i class="fas fa-stopwatch"></i> <b id="pXpSessions">0</b> دقيقة تركيز</span>
+        <!-- ===== أرقامي ===== -->
+        <div class="pf2-stats">
+          <div class="pf2-stat xp"><i class="fas fa-star"></i><b id="pXp">0</b><small>نقاط XP</small></div>
+          <div class="pf2-stat rank"><i class="fas fa-trophy"></i><b id="pf2Rank">—</b><small>ترتيبي</small></div>
+          <div class="pf2-stat"><i class="fas fa-file-lines"></i><b id="pXpPages">0</b><small>صفحة مقروءة</small></div>
+          <div class="pf2-stat"><i class="fas fa-book"></i><b id="pXpFiles">0</b><small>ملف مكتمل</small></div>
+          <div class="pf2-stat"><i class="fas fa-stopwatch"></i><b id="pXpSessions">0</b><small>دقيقة تركيز</small></div>
+          <div class="pf2-stat fire"><i class="fas fa-fire"></i><b id="pf2Streak">0</b><small>يوم متواصل</small></div>
+        </div>
+
+        <div class="pf2-grid">
+          <div class="pf2-col">
+            <!-- الاشتراك -->
+            <div id="subscriptionInfoBox"></div>
+            <!-- ❄️ التجميد -->
+            <div id="freezeBox"></div>
+            <!-- نشاط الأسبوع -->
+            <div class="card-basic pf2-card">
+              <h3><i class="fas fa-chart-column" style="color:var(--primary)"></i> نشاطي آخر 7 أيام</h3>
+              <div class="pf2-week" id="pf2Week"></div>
+            </div>
+            <!-- الشارات -->
+            <div class="card-basic pf2-card">
+              <h3><i class="fas fa-award" style="color:var(--accent)"></i> شاراتي <small class="pf2-muted" id="pf2BadgeCount"></small></h3>
+              <div class="badges-row" id="profileBadgesList"></div>
             </div>
           </div>
 
-          <div id="subscriptionInfoBox"></div>
-
-          <div class="card-basic">
-            <h3><i class="fas fa-award" style="color:var(--accent)"></i> شاراتك</h3>
-            <div class="badges-row" id="profileBadgesList"></div>
-          </div>
-
-          <div class="card-basic" style="margin-top:14px">
-            <h3><i class="fas fa-lightbulb" style="color:var(--accent)"></i> كيف أزيد نقاطي؟</h3>
-            <div style="display:flex;flex-direction:column;gap:10px;font-size:.84rem;color:var(--muted);line-height:1.9;font-weight:600">
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> اقرأ صفحة (تبقى عليها ٨ ثوانٍ على الأقل) = <b style="color:var(--primary)">+٢ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> أنهِ ملفاً كاملاً (بعد قراءة ٩٠٪ من صفحاته) = <b style="color:var(--primary)">+١٠٠ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> كل دقيقة تركيز حقيقية (المؤقت أو المذاكرة الجماعية) = <b style="color:var(--primary)">+١ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> شاهد فيديو كاملاً = <b style="color:var(--primary)">+٥٠ نقطة</b></div>
-              <div><i class="fas fa-plus-circle" style="color:var(--primary);margin-left:6px"></i> لعبة العباقرة = <b style="color:var(--primary)">١٠ أسئلة +٥٠ • ١٥ سؤال +١٠٠ • ٢٠ سؤال +١٥٠ • ٣٠ سؤال +٢٠٠</b> (٣ محاولات يومياً)</div>
-              <div style="font-size:.76rem;opacity:.85"><i class="fas fa-shield-halved" style="margin-left:6px"></i> النقاط يحسبها السيرفر مباشرة — ما يمكن التلاعب فيها.</div>
+          <div class="pf2-col">
+            <!-- اختصارات -->
+            <div class="card-basic pf2-card">
+              <h3><i class="fas fa-bolt" style="color:var(--accent)"></i> اختصارات</h3>
+              <div class="pf2-actions">
+                <button onclick="go('progress')"><i class="fas fa-chart-line"></i><span>إنجازي</span></button>
+                <button onclick="go('leaderboard')"><i class="fas fa-ranking-star"></i><span>المتصدرين</span></button>
+                <button onclick="go('gifts')"><i class="fas fa-gift"></i><span>هداياي</span></button>
+                <button onclick="go('studyplan')"><i class="fas fa-calendar-check"></i><span>جدولي</span></button>
+                <button onclick="go('quiz')"><i class="fas fa-gamepad"></i><span>اللعبة</span></button>
+                <button onclick="go('settings')"><i class="fas fa-gear"></i><span>الإعدادات</span></button>
+              </div>
             </div>
+            <!-- شهاداتي -->
+            <div id="pf2Certs"></div>
+            <!-- البيانات -->
+            <div class="card-basic pf2-card">
+              <h3><i class="fas fa-id-card" style="color:var(--primary)"></i> بياناتي</h3>
+              <div class="profile-form">
+                <div>
+                  <label><i class="fas fa-user"></i> الاسم الكامل <small class="pf2-muted">(يظهر في الشهادات والصدارة)</small></label>
+                  <input type="text" id="profileNameInput" placeholder="اكتب اسمك" maxlength="40">
+                </div>
+                <div>
+                  <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
+                  <input type="email" id="profileEmailInput" disabled>
+                </div>
+                <div>
+                  <label><i class="fas fa-phone"></i> رقم الجوال</label>
+                  <input type="text" id="profilePhoneInput" dir="ltr" disabled>
+                </div>
+                <div class="profile-actions">
+                  <button class="btn btn-primary" id="profileSaveBtn" style="flex:1"><i class="fas fa-floppy-disk"></i> حفظ التعديلات</button>
+                  <button class="btn btn-ghost" id="profileRemoveAvatar"><i class="fas fa-trash"></i> حذف الصورة</button>
+                </div>
+              </div>
+            </div>
+            <!-- الأمان -->
+            <div class="card-basic pf2-card">
+              <h3><i class="fas fa-shield-halved" style="color:var(--success)"></i> الحساب والأمان</h3>
+              <div class="pf2-rows">
+                <button class="pf2-row" id="pf2ChangePw"><i class="fas fa-key"></i><span><b>تغيير كلمة المرور</b><small>نرسل لك رابط على إيميلك</small></span><i class="fas fa-chevron-left"></i></button>
+                <div class="pf2-row static"><i class="fas fa-calendar-plus"></i><span><b>عضو منذ</b><small id="pf2Joined">—</small></span></div>
+                <button class="pf2-row danger" onclick="performLogout()"><i class="fas fa-right-from-bracket"></i><span><b>تسجيل الخروج</b><small>من هذا الجهاز</small></span><i class="fas fa-chevron-left"></i></button>
+              </div>
+            </div>
+            <!-- كيف أزيد نقاطي -->
+            <details class="card-basic pf2-card pf2-howto">
+              <summary><i class="fas fa-lightbulb" style="color:var(--accent)"></i> كيف أزيد نقاطي؟ <i class="fas fa-chevron-down pf2-arrow"></i></summary>
+              <div class="pf2-howto-list">
+                <div><i class="fas fa-file-lines"></i> اقرأ صفحة (8 ثوانٍ على الأقل) <b>+2</b></div>
+                <div><i class="fas fa-book"></i> أكمل ملف (90% من صفحاته) <b>+100</b></div>
+                <div><i class="fas fa-stopwatch"></i> كل دقيقة تركيز حقيقية <b>+1</b></div>
+                <div><i class="fas fa-video"></i> شاهد فيديو كامل <b>+50</b></div>
+                <div><i class="fas fa-gamepad"></i> لعبة العباقرة: 10 أسئلة <b>+50</b> • 15 <b>+100</b> • 20 <b>+150</b> • 30 <b>+200</b> (3 محاولات يومياً)</div>
+                <small><i class="fas fa-shield-halved"></i> النقاط يحسبها السيرفر — ما يمكن التلاعب فيها.</small>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -2322,56 +2367,57 @@ function closeTerms(){ var m = document.getElementById('termsModal'); if(m) m.cl
 function acceptTerms(){ var c = document.getElementById('regTerms'); if(c) c.checked = true; closeTerms(); }
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTerms(); });
 </script>
-<script src="js/01-config.js?v=20261105a"></script>
-<script src="js/02-utils.js?v=20261105a"></script>
-<script src="js/03-state.js?v=20261105a"></script>
-<script src="js/04-theme.js?v=20261105a"></script>
-<script src="js/05-nav.js?v=20261105a"></script>
-<script src="js/06-stats.js?v=20261105a"></script>
-<script src="js/07-files.js?v=20261105a"></script>
-<script src="js/08-home.js?v=20261105a"></script>
-<script src="js/09-features.js?v=20261105a"></script>
-<script src="js/10-tasks.js?v=20261105a"></script>
-<script src="js/11-timer.js?v=20261105a"></script>
-<script src="js/12-settings.js?v=20261105a"></script>
-<script src="js/13-reader.js?v=20261105a"></script>
-<script src="js/14-draw.js?v=20261105a"></script>
-<script src="js/15-auth.js?v=20261105a"></script>
-<script src="js/16-user.js?v=20261105a"></script>
-<script src="js/17-leaderboard.js?v=20261105a"></script>
-<script src="js/18-admin.js?v=20261105a"></script>
-<script src="js/19-realtime.js?v=20261105a"></script>
-<script src="js/20-protection.js?v=20261105a"></script>
-<script src="js/21-app.js?v=20261105a"></script>
-<script src="js/22-videos.js?v=20261105a"></script>
-<script src="js/23-store.js?v=20261105a"></script>
-<script src="js/24-ai.js?v=20261105a"></script>
-<script src="js/25-studyplan.js?v=20261105a"></script>
-<script src="js/26-adhkar.js?v=20261105a"></script>
-<script src="js/27-testimonials.js?v=20261105a"></script>
-<script src="js/28-prayer-times.js?v=20261105a"></script>
-<script src="js/29-quiz.js?v=20261105a"></script>
-<script src="js/30-owner-features.js?v=20261105a"></script>
-<script src="js/31-course-system.js?v=20261105a"></script>
-<script src="js/32-notifications.js?v=20261105a"></script>
-<script src="js/33-admin-products.js?v=20261105a"></script>
-<script src="js/34-course-filter-fix.js?v=20261105a"></script>
-<script src="js/35-welcome-fix.js?v=20261105a"></script>
-<script src="js/36-video-whiteboard.js?v=20261105a"></script>
-<script src="js/37-study-rooms.js?v=20261105a"></script>
-<script src="js/38-suggestions.js?v=20261105a"></script>
-<script src="js/40-admin-courses.js?v=20261105a"></script>
-<script src="js/41-ai-index.js?v=20261105a"></script>
-<script src="js/42-certificates.js?v=20261105a"></script>
-<script src="js/43-xp.js?v=20261105a"></script>
-<script src="js/44-cart.js?v=20261105a"></script>
-<script src="js/45-study-mode.js?v=20261105a"></script>
-<script src="js/46-study-tools.js?v=20261105a"></script>
-<script src="js/47-monthly-awards.js?v=20261105a"></script>
-<script src="js/48-room-schedule.js?v=20261105a"></script>
-<script src="js/49-community.js?v=20261105a"></script>
-<script src="js/50-announcements.js?v=20261105a"></script>
-<script src="js/51-payment.js?v=20261105a"></script>
+<script src="js/01-config.js?v=20261107a"></script>
+<script src="js/02-utils.js?v=20261107a"></script>
+<script src="js/03-state.js?v=20261107a"></script>
+<script src="js/04-theme.js?v=20261107a"></script>
+<script src="js/05-nav.js?v=20261107a"></script>
+<script src="js/06-stats.js?v=20261107a"></script>
+<script src="js/07-files.js?v=20261107a"></script>
+<script src="js/08-home.js?v=20261107a"></script>
+<script src="js/09-features.js?v=20261107a"></script>
+<script src="js/10-tasks.js?v=20261107a"></script>
+<script src="js/11-timer.js?v=20261107a"></script>
+<script src="js/12-settings.js?v=20261107a"></script>
+<script src="js/13-reader.js?v=20261107a"></script>
+<script src="js/14-draw.js?v=20261107a"></script>
+<script src="js/15-auth.js?v=20261107a"></script>
+<script src="js/16-user.js?v=20261107a"></script>
+<script src="js/17-leaderboard.js?v=20261107a"></script>
+<script src="js/18-admin.js?v=20261107a"></script>
+<script src="js/19-realtime.js?v=20261107a"></script>
+<script src="js/20-protection.js?v=20261107a"></script>
+<script src="js/21-app.js?v=20261107a"></script>
+<script src="js/22-videos.js?v=20261107a"></script>
+<script src="js/23-store.js?v=20261107a"></script>
+<script src="js/24-ai.js?v=20261107a"></script>
+<script src="js/25-studyplan.js?v=20261107a"></script>
+<script src="js/26-adhkar.js?v=20261107a"></script>
+<script src="js/27-testimonials.js?v=20261107a"></script>
+<script src="js/28-prayer-times.js?v=20261107a"></script>
+<script src="js/29-quiz.js?v=20261107a"></script>
+<script src="js/30-owner-features.js?v=20261107a"></script>
+<script src="js/31-course-system.js?v=20261107a"></script>
+<script src="js/32-notifications.js?v=20261107a"></script>
+<script src="js/33-admin-products.js?v=20261107a"></script>
+<script src="js/34-course-filter-fix.js?v=20261107a"></script>
+<script src="js/35-welcome-fix.js?v=20261107a"></script>
+<script src="js/36-video-whiteboard.js?v=20261107a"></script>
+<script src="js/37-study-rooms.js?v=20261107a"></script>
+<script src="js/38-suggestions.js?v=20261107a"></script>
+<script src="js/40-admin-courses.js?v=20261107a"></script>
+<script src="js/41-ai-index.js?v=20261107a"></script>
+<script src="js/42-certificates.js?v=20261107a"></script>
+<script src="js/43-xp.js?v=20261107a"></script>
+<script src="js/44-cart.js?v=20261107a"></script>
+<script src="js/45-study-mode.js?v=20261107a"></script>
+<script src="js/46-study-tools.js?v=20261107a"></script>
+<script src="js/47-monthly-awards.js?v=20261107a"></script>
+<script src="js/48-room-schedule.js?v=20261107a"></script>
+<script src="js/49-community.js?v=20261107a"></script>
+<script src="js/50-announcements.js?v=20261107a"></script>
+<script src="js/51-payment.js?v=20261107a"></script>
+<script src="js/52-profile.js?v=20261107a"></script>
 <!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
 
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
