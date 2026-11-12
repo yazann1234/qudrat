@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Noto+Naskh+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<link rel="stylesheet" href="css/styles.css?v=20261107a">
+<link rel="stylesheet" href="css/styles.css?v=20261112a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -282,10 +282,16 @@
     <!-- ============================================================
          الصفحة الرئيسية
     ============================================================ -->
-    <section class="view active" id="view-home">
+    <section class="view active home2" id="view-home">
       <div id="homeSubBanner"></div>
 
-      <!-- ⭐ زر الإشعارات -->
+      <!-- ===== الترحيب + الإشعارات ===== -->
+      <div class="h2-top">
+        <div class="h2-greet">
+          <small id="h2Date">—</small>
+          <h1 id="h2Hello">أهلاً بك 👋</h1>
+          <div class="h2-chips" id="h2Chips"></div>
+        </div>
       <div class="notif-bell-wrap">
         <button class="notif-bell-btn" id="notifBtn" title="الإشعارات">
           <i class="fas fa-bell"></i>
@@ -301,24 +307,9 @@
         </div>
         <div class="notif-list" id="notifList"></div>
       </div>
-
-      <!-- العد التنازلي للاختبار -->
-      <div id="examCountdownCard" class="exam-countdown-card" style="display:none">
-        <div class="exam-countdown-inner">
-          <div class="exam-countdown-icon"><i class="fas fa-hourglass-half"></i></div>
-          <div class="exam-countdown-info">
-            <div class="exam-countdown-label">العد التنازلي لاختبارك</div>
-            <div class="exam-countdown-date" id="examDateLabel">—</div>
-          </div>
-          <div class="exam-countdown-nums" id="examCountdownNums"></div>
-        </div>
-        <div class="exam-countdown-progress">
-          <div class="exam-countdown-progress-bar"><i id="examProgressFill"></i></div>
-          <div class="exam-countdown-progress-label" id="examProgressLabel">—</div>
-        </div>
       </div>
 
-      <div class="hero-big">
+      <div class="hero-big h2-hero">
         <div class="hero-bg"></div>
         <div class="hero-big-in">
           <div class="hero-left">
@@ -326,7 +317,7 @@
             <h2 id="heroTitle">المادة 34 :<br>الدفاع عن العقيدة الإسلامية والمجتمع ، والوطن واجب على كل مواطن</h2>
             <p>افتح أي ملف PDF وسيتابع النظام تقدمك تلقائياً مع كل صفحة تمرّ عليها.</p>
             <div class="hero-cta">
-              <button class="btn-hero primary" onclick="go('files')"><i class="fas fa-book-open"></i> ابدأ المذاكرة</button>
+              <button class="btn-hero primary" id="h2ContinueBtn" onclick="h2Continue()"><i class="fas fa-book-open"></i> <span>ابدأ المذاكرة</span></button>
               <button class="btn-hero ghost" onclick="go('videos')"><i class="fas fa-video"></i> شاهد الفيديوهات</button>
             </div>
           </div>
@@ -355,6 +346,35 @@
         </div>
       </div>
 
+      <!-- ===== وصول سريع ===== -->
+      <div class="h2-quick">
+        <button onclick="go('files')" style="--qc:#5b6cff"><i class="fas fa-folder-open"></i><b>الملفات</b><small id="h2qFiles">مكتبتك</small></button>
+        <button onclick="go('videos')" style="--qc:#ef4444"><i class="fas fa-circle-play"></i><b>الفيديوهات</b><small id="h2qVideos">الشروحات</small></button>
+        <button onclick="go('quiz')" style="--qc:#8b5cf6"><i class="fas fa-gamepad"></i><b>لعبة العباقرة</b><small>تحدَّ أصدقاءك</small></button>
+        <button onclick="go('studyplan')" style="--qc:#0ea5e9"><i class="fas fa-calendar-check"></i><b>الجدول الذكي</b><small>خطة مذاكرتك</small></button>
+        <button onclick="go('community')" style="--qc:#22c55e"><i class="fas fa-comments"></i><b>المجتمع</b><small>اسأل وشارك</small></button>
+        <button onclick="go('leaderboard')" style="--qc:#f59e0b"><i class="fas fa-ranking-star"></i><b>المتصدرين</b><small id="h2qRank">نافس زملاءك</small></button>
+      </div>
+
+      <!-- العد التنازلي للاختبار -->
+      <div id="examCountdownCard" class="exam-countdown-card" style="display:none">
+        <div class="exam-countdown-inner">
+          <div class="exam-countdown-icon"><i class="fas fa-hourglass-half"></i></div>
+          <div class="exam-countdown-info">
+            <div class="exam-countdown-label">العد التنازلي لاختبارك</div>
+            <div class="exam-countdown-date" id="examDateLabel">—</div>
+          </div>
+          <div class="exam-countdown-nums" id="examCountdownNums"></div>
+        </div>
+        <div class="exam-countdown-progress">
+          <div class="exam-countdown-progress-bar"><i id="examProgressFill"></i></div>
+          <div class="exam-countdown-progress-label" id="examProgressLabel">—</div>
+        </div>
+      </div>
+
+      <div class="sec-title"><i class="fas fa-clock-rotate-left" style="color:var(--primary)"></i> أكمل من حيث توقفت <span class="sub">آخر ملفاتك</span></div>
+      <div class="files-grid" id="recentFiles"></div>
+
       <div class="sec-title"><i class="fas fa-crosshairs" style="color:var(--primary)"></i> هدف اليوم وسلسلة المذاكرة</div>
       <div class="two-col">
         <div class="card-basic">
@@ -379,6 +399,7 @@
         </div>
       </div>
 
+      <div class="h2-focus">
       <div class="sec-title"><i class="fas fa-stopwatch" style="color:var(--primary)"></i> المؤقت الدراسي <span class="sub">تقنية بومودورو</span></div>
       <div class="timer-card">
         <div class="timer-dial" id="timerDial">
@@ -446,8 +467,7 @@
         <div id="srRoom" style="display:none"></div>
       </div>
 
-      <div class="sec-title"><i class="fas fa-clock-rotate-left" style="color:var(--primary)"></i> أكمل من حيث توقفت <span class="sub">آخر ملفاتك</span></div>
-      <div class="files-grid" id="recentFiles"></div>
+      </div>
 
       <div class="sec-title"><i class="fas fa-medal" style="color:var(--accent)"></i> شاراتك</div>
       <div class="badges-row" id="badgesHome"></div>
@@ -1967,12 +1987,23 @@
         <button class="dtool" data-tool="eraser" title="ممحاة"><i class="fas fa-eraser"></i></button>
       </div>
       <span class="tsep"></span>
+      <div class="draw-tools" title="أشكال">
+        <button class="dtool" data-tool="line" title="خط مستقيم"><i class="fas fa-minus"></i></button>
+        <button class="dtool" data-tool="arrow" title="سهم"><i class="fas fa-arrow-right-long"></i></button>
+        <button class="dtool" data-tool="rect" title="مستطيل"><i class="far fa-square"></i></button>
+        <button class="dtool" data-tool="ellipse" title="دائرة"><i class="far fa-circle"></i></button>
+      </div>
+      <span class="tsep"></span>
       <div class="color-dots" id="drawColors"></div>
       <span class="tsep"></span>
       <div class="size-dots" id="drawSizes"></div>
       <span class="tsep"></span>
-      <button class="tbtn" id="drawUndo" title="تراجع"><i class="fas fa-rotate-left"></i> تراجع</button>
+      <button class="tbtn" id="drawUndo" title="تراجع (Ctrl+Z)"><i class="fas fa-rotate-left"></i> تراجع</button>
+      <button class="tbtn" id="drawRedo" title="إعادة (Ctrl+Y)"><i class="fas fa-rotate-right"></i> إعادة</button>
       <button class="tbtn" id="drawClear" title="مسح"><i class="fas fa-trash"></i> مسح</button>
+      <span class="tsep"></span>
+      <button class="tbtn dtoggle" id="drawPenMode" title="وضع القلم: القلم يكتب والإصبع يمرّر الصفحة"><i class="fas fa-pen-nib"></i> وضع القلم</button>
+      <button class="tbtn dtoggle" id="drawHide" title="إخفاء/إظهار كتابتك على الصفحات"><i class="fas fa-eye-slash"></i> إخفاء</button>
     </div>
 
     <div class="reader-progress-bar"><i id="rdBarTop"></i></div>
@@ -1991,6 +2022,8 @@
       <aside class="wb-panel" id="wbPanel">
         <div class="wb-head">
           <b><i class="fas fa-chalkboard"></i> السبورة البيضاء</b>
+          <button class="rh-btn" id="wbBgBtn" title="خلفية السبورة: سادة / مربعات / سطور"><i class="fas fa-border-all"></i></button>
+          <button class="rh-btn" id="wbSaveBtn" title="حفظ السبورة كصورة"><i class="fas fa-download"></i></button>
           <button class="rh-btn" id="wbClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="wb-stage">
@@ -2367,57 +2400,57 @@ function closeTerms(){ var m = document.getElementById('termsModal'); if(m) m.cl
 function acceptTerms(){ var c = document.getElementById('regTerms'); if(c) c.checked = true; closeTerms(); }
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTerms(); });
 </script>
-<script src="js/01-config.js?v=20261107a"></script>
-<script src="js/02-utils.js?v=20261107a"></script>
-<script src="js/03-state.js?v=20261107a"></script>
-<script src="js/04-theme.js?v=20261107a"></script>
-<script src="js/05-nav.js?v=20261107a"></script>
-<script src="js/06-stats.js?v=20261107a"></script>
-<script src="js/07-files.js?v=20261107a"></script>
-<script src="js/08-home.js?v=20261107a"></script>
-<script src="js/09-features.js?v=20261107a"></script>
-<script src="js/10-tasks.js?v=20261107a"></script>
-<script src="js/11-timer.js?v=20261107a"></script>
-<script src="js/12-settings.js?v=20261107a"></script>
-<script src="js/13-reader.js?v=20261107a"></script>
-<script src="js/14-draw.js?v=20261107a"></script>
-<script src="js/15-auth.js?v=20261107a"></script>
-<script src="js/16-user.js?v=20261107a"></script>
-<script src="js/17-leaderboard.js?v=20261107a"></script>
-<script src="js/18-admin.js?v=20261107a"></script>
-<script src="js/19-realtime.js?v=20261107a"></script>
-<script src="js/20-protection.js?v=20261107a"></script>
-<script src="js/21-app.js?v=20261107a"></script>
-<script src="js/22-videos.js?v=20261107a"></script>
-<script src="js/23-store.js?v=20261107a"></script>
-<script src="js/24-ai.js?v=20261107a"></script>
-<script src="js/25-studyplan.js?v=20261107a"></script>
-<script src="js/26-adhkar.js?v=20261107a"></script>
-<script src="js/27-testimonials.js?v=20261107a"></script>
-<script src="js/28-prayer-times.js?v=20261107a"></script>
-<script src="js/29-quiz.js?v=20261107a"></script>
-<script src="js/30-owner-features.js?v=20261107a"></script>
-<script src="js/31-course-system.js?v=20261107a"></script>
-<script src="js/32-notifications.js?v=20261107a"></script>
-<script src="js/33-admin-products.js?v=20261107a"></script>
-<script src="js/34-course-filter-fix.js?v=20261107a"></script>
-<script src="js/35-welcome-fix.js?v=20261107a"></script>
-<script src="js/36-video-whiteboard.js?v=20261107a"></script>
-<script src="js/37-study-rooms.js?v=20261107a"></script>
-<script src="js/38-suggestions.js?v=20261107a"></script>
-<script src="js/40-admin-courses.js?v=20261107a"></script>
-<script src="js/41-ai-index.js?v=20261107a"></script>
-<script src="js/42-certificates.js?v=20261107a"></script>
-<script src="js/43-xp.js?v=20261107a"></script>
-<script src="js/44-cart.js?v=20261107a"></script>
-<script src="js/45-study-mode.js?v=20261107a"></script>
-<script src="js/46-study-tools.js?v=20261107a"></script>
-<script src="js/47-monthly-awards.js?v=20261107a"></script>
-<script src="js/48-room-schedule.js?v=20261107a"></script>
-<script src="js/49-community.js?v=20261107a"></script>
-<script src="js/50-announcements.js?v=20261107a"></script>
-<script src="js/51-payment.js?v=20261107a"></script>
-<script src="js/52-profile.js?v=20261107a"></script>
+<script src="js/01-config.js?v=20261112a"></script>
+<script src="js/02-utils.js?v=20261112a"></script>
+<script src="js/03-state.js?v=20261112a"></script>
+<script src="js/04-theme.js?v=20261112a"></script>
+<script src="js/05-nav.js?v=20261112a"></script>
+<script src="js/06-stats.js?v=20261112a"></script>
+<script src="js/07-files.js?v=20261112a"></script>
+<script src="js/08-home.js?v=20261112a"></script>
+<script src="js/09-features.js?v=20261112a"></script>
+<script src="js/10-tasks.js?v=20261112a"></script>
+<script src="js/11-timer.js?v=20261112a"></script>
+<script src="js/12-settings.js?v=20261112a"></script>
+<script src="js/13-reader.js?v=20261112a"></script>
+<script src="js/14-draw.js?v=20261112a"></script>
+<script src="js/15-auth.js?v=20261112a"></script>
+<script src="js/16-user.js?v=20261112a"></script>
+<script src="js/17-leaderboard.js?v=20261112a"></script>
+<script src="js/18-admin.js?v=20261112a"></script>
+<script src="js/19-realtime.js?v=20261112a"></script>
+<script src="js/20-protection.js?v=20261112a"></script>
+<script src="js/21-app.js?v=20261112a"></script>
+<script src="js/22-videos.js?v=20261112a"></script>
+<script src="js/23-store.js?v=20261112a"></script>
+<script src="js/24-ai.js?v=20261112a"></script>
+<script src="js/25-studyplan.js?v=20261112a"></script>
+<script src="js/26-adhkar.js?v=20261112a"></script>
+<script src="js/27-testimonials.js?v=20261112a"></script>
+<script src="js/28-prayer-times.js?v=20261112a"></script>
+<script src="js/29-quiz.js?v=20261112a"></script>
+<script src="js/30-owner-features.js?v=20261112a"></script>
+<script src="js/31-course-system.js?v=20261112a"></script>
+<script src="js/32-notifications.js?v=20261112a"></script>
+<script src="js/33-admin-products.js?v=20261112a"></script>
+<script src="js/34-course-filter-fix.js?v=20261112a"></script>
+<script src="js/35-welcome-fix.js?v=20261112a"></script>
+<script src="js/36-video-whiteboard.js?v=20261112a"></script>
+<script src="js/37-study-rooms.js?v=20261112a"></script>
+<script src="js/38-suggestions.js?v=20261112a"></script>
+<script src="js/40-admin-courses.js?v=20261112a"></script>
+<script src="js/41-ai-index.js?v=20261112a"></script>
+<script src="js/42-certificates.js?v=20261112a"></script>
+<script src="js/43-xp.js?v=20261112a"></script>
+<script src="js/44-cart.js?v=20261112a"></script>
+<script src="js/45-study-mode.js?v=20261112a"></script>
+<script src="js/46-study-tools.js?v=20261112a"></script>
+<script src="js/47-monthly-awards.js?v=20261112a"></script>
+<script src="js/48-room-schedule.js?v=20261112a"></script>
+<script src="js/49-community.js?v=20261112a"></script>
+<script src="js/50-announcements.js?v=20261112a"></script>
+<script src="js/51-payment.js?v=20261112a"></script>
+<script src="js/52-profile.js?v=20261112a"></script>
 <!-- ⭐ فحص للأدمن: هل كل ملفات الموقع على السيرفر محدّثة؟ -->
 
 <!-- ⭐ ضمان عمل صفحة الاقتراحات حتى لو ملف التنقل قديم/من الكاش -->
