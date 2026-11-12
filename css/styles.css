@@ -5061,3 +5061,86 @@ img{-webkit-user-drag:none;user-drag:none}
   .pf2-stat b{font-size:1.05rem}
   .pf2-week-bars{height:130px;gap:5px}
 }
+
+/* ============================================================
+   ✍️ محرك الحبر v2
+============================================================ */
+.ink-live{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;display:block}
+.reader-body.ink-hidden .pg-draw,.reader-body.ink-hidden .ink-live{visibility:hidden}
+.reader-body.draw-on{overscroll-behavior:contain}
+.tbtn.dtoggle.on{background:linear-gradient(100deg,var(--primary),var(--primary-2));color:#fff;border-color:transparent}
+.wb-stage.bg-grid,.wb-stage.bg-lines{background-color:#fff}
+.wb-stage.bg-grid .wb-canvas,.wb-stage.bg-lines .wb-canvas{background:transparent}
+.wb-stage.bg-grid{background-image:linear-gradient(#e6eaf3 1px,transparent 1px),linear-gradient(90deg,#e6eaf3 1px,transparent 1px);background-size:24px 24px}
+.wb-stage.bg-lines{background-image:linear-gradient(#dfe5f2 1px,transparent 1px);background-size:100% 30px}
+[data-theme="dark"] .wb-stage.bg-grid,[data-theme="dark"] .wb-stage.bg-lines{background-color:#161a24}
+[data-theme="dark"] .wb-stage.bg-grid{background-image:linear-gradient(#262c3b 1px,transparent 1px),linear-gradient(90deg,#262c3b 1px,transparent 1px)}
+[data-theme="dark"] .wb-stage.bg-lines{background-image:linear-gradient(#262c3b 1px,transparent 1px)}
+
+/* ============================================================
+   🏠 الرئيسية v2 — ترتيب أوضح وتصميم أنظف
+============================================================ */
+.home2 .h2-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;position:relative}
+.home2 .h2-greet{min-width:0}
+.home2 .h2-greet small{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:2px}
+.home2 .h2-greet h1{font-size:clamp(1.25rem,2.6vw,1.75rem);font-weight:900;letter-spacing:-.5px;line-height:1.35;margin:0 0 10px;color:var(--text)}
+.home2 .h2-chips{display:flex;flex-wrap:wrap;gap:6px}
+.home2 .h2-chips span{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--muted);box-shadow:var(--shadow-sm)}
+.home2 .h2-chips span i{color:var(--primary)}
+.home2 .h2-chips span.fire{color:#ea580c;border-color:rgba(234,88,12,.3);background:rgba(234,88,12,.07)}
+.home2 .h2-chips span.fire i{color:#ea580c}
+.home2 .h2-chips span.ok{color:#16a34a;border-color:rgba(22,163,74,.3);background:rgba(22,163,74,.08)}
+.home2 .h2-chips span.ok i{color:#16a34a}
+.home2 .notif-bell-wrap{margin-bottom:0;flex-shrink:0}
+.home2 .notifications-panel{top:58px;right:auto;left:0}
+
+.home2 .h2-hero{min-height:270px;border-radius:28px}
+.home2 .h2-hero .hero-big-in{padding:30px 36px;grid-template-columns:1.25fr .85fr}
+.home2 .h2-hero .hero-illustration{max-width:270px}
+.home2 .h2-hero .hero-left p{margin-bottom:16px}
+.home2 #h2ContinueBtn span{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.home2 .stats-row{grid-template-columns:repeat(4,1fr);margin-top:-28px}
+.home2 .stat-card{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;padding:16px 18px;border-radius:20px}
+.home2 .stat-card .si{grid-row:span 2;margin-bottom:0;width:48px;height:48px;border-radius:15px}
+.home2 .stat-card h3{font-size:1.45rem}
+.home2 .stat-card p{margin-top:2px}
+
+.home2 .h2-quick{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:18px}
+.home2 .h2-quick button{--qc:var(--primary);display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit;cursor:pointer;box-shadow:var(--shadow-sm);transition:.22s;position:relative;overflow:hidden}
+.home2 .h2-quick button::before{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--qc);opacity:0;transition:.22s}
+.home2 .h2-quick button i{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:1.15rem;color:var(--qc);background:color-mix(in srgb,var(--qc) 13%,transparent);margin-bottom:4px;transition:.22s}
+.home2 .h2-quick button b{font-size:.84rem;font-weight:900}
+.home2 .h2-quick button small{font-size:.68rem;font-weight:700;color:var(--muted)}
+.home2 .h2-quick button:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--qc) 45%,var(--border));box-shadow:var(--shadow)}
+.home2 .h2-quick button:hover::before{opacity:1}
+.home2 .h2-quick button:hover i{background:var(--qc);color:#fff}
+
+.home2 .exam-countdown-card,.home2 .home-review-card{margin-top:18px}
+.home2 .sec-title{margin:30px 0 14px}
+.home2 .h2-focus .study-room-card{margin-top:16px}
+.home2 .card-basic,.home2 .timer-card,.home2 .study-room-card{border-radius:22px}
+
+@media (max-width:1100px){
+  .home2 .h2-quick{grid-template-columns:repeat(3,1fr)}
+  .home2 .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:900px){
+  .home2 .h2-hero .hero-big-in{grid-template-columns:1fr;padding:26px 24px}
+  .home2 .stats-row{margin-top:16px}
+}
+@media (max-width:560px){
+  .home2 .h2-top{margin-bottom:12px}
+  .home2 .h2-chips span{font-size:.7rem;padding:5px 10px}
+  .home2 .notifications-panel{left:0;right:0;width:auto;max-width:none}
+  .home2 .h2-hero .hero-big-in{padding:22px 18px}
+  .home2 .h2-quick{gap:8px;margin-top:14px}
+  .home2 .h2-quick button{padding:12px 4px 10px;border-radius:16px}
+  .home2 .h2-quick button i{width:40px;height:40px;font-size:1rem;border-radius:13px}
+  .home2 .h2-quick button b{font-size:.76rem}
+  .home2 .h2-quick button small{font-size:.62rem}
+  .home2 .stat-card{padding:12px;column-gap:9px}
+  .home2 .stat-card .si{width:40px;height:40px;font-size:1rem}
+  .home2 .stat-card h3{font-size:1.2rem}
+  .home2 #h2ContinueBtn span{max-width:190px}
+}
