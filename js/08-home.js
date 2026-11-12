@@ -31,7 +31,68 @@ function renderHomeStats(){
   renderWeekChart('#weekChartBig', 150);
   setTxt('tmSessions', t.sessions || 0);
   setTxt('tmMinutes', Math.round(t.min));
+  try{ renderHome2(t, st, goal); }catch(e){}
 }
+
+/* ⭐ الرئيسية v2: ترحيب باسم الطالب + ملخص اليوم + زر «كمّل» ذكي + أرقام الوصول السريع */
+function renderHome2(t, streak, goal){
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  const now = new Date(), h = now.getHours();
+  const hello = h < 5 ? 'مساء الخير' : h < 12 ? 'صباح الخير' : h < 17 ? 'طاب يومك' : 'مساء الخير';
+  const first = (typeof currentUserObj !== 'undefined' && currentUserObj && currentUserObj.name) ? String(currentUserObj.name).trim().split(/\s+/)[0] : '';
+  setTxt('h2Hello', hello + (first ? '، ' + first : '') + ' 👋');
+  try{ setTxt('h2Date', now.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })); }catch(e){}
+
+  const chips = document.getElementById('h2Chips');
+  if(chips){
+    const left = Math.max(0, goal - t.pages);
+    chips.innerHTML = `
+      <span class="${streak > 0 ? 'fire' : ''}"><i class="fas fa-fire"></i> ${streak} ${streak === 1 ? 'يوم متواصل' : 'أيام متواصلة'}</span>
+      <span><i class="fas fa-file-lines"></i> ${t.pages} صفحة اليوم</span>
+      <span><i class="fas fa-clock"></i> ${Math.round(t.min)} دقيقة اليوم</span>
+      <span class="${left === 0 ? 'ok' : ''}"><i class="fas fa-bullseye"></i> ${left === 0 ? 'حققت هدف اليوم 🎉' : 'باقي ' + left + ' صفحة للهدف'}</span>`;
+  }
+
+  /* زر «كمّل من حيث توقفت» */
+  const btn = document.getElementById('h2ContinueBtn');
+  if(btn){
+    const f = h2LastFile();
+    const span = btn.querySelector('span');
+    if(span){
+      if(f){
+        const page = typeof getMaxPage === 'function' ? getMaxPage(f.id) : 0;
+        const title = String(f.title || '').length > 22 ? String(f.title).slice(0, 22) + '…' : f.title;
+        span.textContent = 'كمّل: ' + title + (page > 1 ? ' (ص ' + page + ')' : '');
+      } else span.textContent = 'ابدأ المذاكرة';
+    }
+  }
+
+  try{
+    const files = typeof getUserCourseFiles === 'function' ? getUserCourseFiles() : [];
+    const vids = typeof getUserCourseVideos === 'function' ? getUserCourseVideos() : [];
+    if(files.length) setTxt('h2qFiles', files.length + ' ملف');
+    if(vids.length) setTxt('h2qVideos', vids.length + ' فيديو');
+  }catch(e){}
+}
+
+/* آخر ملف فتحه الطالب وما كمّله (ومسموح له) */
+function h2LastFile(){
+  try{
+    if(typeof isSubscribed === 'function' && !isSubscribed()) return null;
+    const visible = typeof getVisibleFiles === 'function' ? getVisibleFiles() : [];
+    const opened = (userData && userData.opened) || [];
+    for(const id of opened){
+      const f = visible.find(x => x.id === id);
+      if(f && getPct(f.id) < 100) return f;
+    }
+  }catch(e){}
+  return null;
+}
+window.h2Continue = () => {
+  const f = h2LastFile();
+  if(f && typeof openFile === 'function') openFile(f.id);
+  else if(typeof go === 'function') go('files');
+};
 
 function renderWeekChart(sel, height){
   const box = document.querySelector(sel); if(!box) return;
