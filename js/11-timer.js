@@ -18,7 +18,7 @@ function drawTimerDial(){
   const old = holder.querySelector('svg'); if(old) old.remove();
   const colA = TIMER.mode === 'focus' ? 'var(--primary)' : '#22c55e';
   const colB = TIMER.mode === 'focus' ? 'var(--primary-2)' : '#4ade80';
-  holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 150, 12, colA, colB));
+  holder.insertAdjacentHTML('afterbegin', ringSVG(pct, 190, 14, colA, colB, 'color-mix(in srgb,var(--border) 70%,transparent)'));
 }
 
 function updateTimerUI(){
@@ -34,6 +34,26 @@ function updateTimerUI(){
   const tm = $('#timerMode');
   if(tm) tm.innerHTML = TIMER.mode === 'focus' ? `<i class="fas fa-mug-hot"></i> راحة ${userData.brk || 5}د` : `<i class="fas fa-bullseye"></i> تركيز ${userData.focus || 25}د`;
   drawTimerDial();
+  /* ⭐ شكل المؤقت: لون حسب الوضع + نقاط الجولة (4 جلسات ثم راحة طويلة) */
+  const card = document.querySelector('.timer-card');
+  if(card){
+    card.classList.toggle('is-break', TIMER.mode !== 'focus');
+    card.classList.toggle('is-running', TIMER.running);
+  }
+  const side = document.querySelector('.timer-side');
+  if(side){
+    let dots = document.getElementById('timerDots');
+    if(!dots){
+      dots = document.createElement('div');
+      dots.id = 'timerDots';
+      dots.className = 'timer-dots';
+      side.insertBefore(dots, side.firstChild);
+    }
+    const done = TIMER.doneCount % 4;
+    const modes = [['focus', 'تركيز', 'fa-bullseye'], ['break', 'راحة', 'fa-mug-hot'], ['long', 'راحة طويلة', 'fa-couch']];
+    dots.innerHTML = `<div class="tm-modes">${modes.map(m => `<span class="${TIMER.mode === m[0] ? 'on' : ''}"><i class="fas ${m[2]}"></i> ${m[1]}</span>`).join('')}</div>
+      <div class="tm-cycle" title="كل 4 جلسات تركيز = راحة طويلة">${[0,1,2,3].map(i => `<i class="${i < done ? 'done' : ''} ${i === done && TIMER.mode === 'focus' ? 'cur' : ''}"></i>`).join('')}<small>${done} / 4</small></div>`;
+  }
 }
 
 function startTimer(){
