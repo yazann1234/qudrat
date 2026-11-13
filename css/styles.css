@@ -5317,3 +5317,61 @@ img{-webkit-user-drag:none;user-drag:none}
   .home2 .timer-btns #timerStart{min-width:0;flex:1}
   .home2 .sr-time{font-size:2.6rem}
 }
+
+/* ============================================================
+   🔴 البث v2 — أداء + مميزات
+============================================================ */
+/* بدون تمويه خلفية (كان يثقل الأجهزة أثناء تشغيل الفيديو) + الموقع ورا البث ما يترسم */
+.live-modal{backdrop-filter:none;-webkit-backdrop-filter:none;background:#070b16}
+body.live-open #app,body.live-open .ai-fab-btn,body.live-open .cart-fab,body.live-open #liveFab{visibility:hidden}
+.live-hbtn{font-size:.9rem}
+.live-player-wrap{position:relative;background:#000;min-height:0;overflow:hidden;contain:strict}
+.live-player-wrap .live-player{position:absolute;inset:0}
+.live-player #liveYT,.live-player iframe{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
+.live-edge{position:absolute;top:12px;right:12px;z-index:4;display:none;align-items:center;gap:7px;border:none;border-radius:100px;padding:8px 14px;background:#ef4444;color:#fff;font-family:inherit;font-weight:900;font-size:.8rem;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.live-edge.show{display:inline-flex}
+.live-tap{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:none;background:rgba(0,0,0,.55);color:#fff;font-family:inherit;cursor:pointer}
+.live-tap.show{display:flex}
+.live-tap i{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:1.8rem;background:#ef4444;box-shadow:0 0 0 0 rgba(239,68,68,.7);animation:livePulse 1.6s infinite}
+.live-tap b{font-size:1rem;font-weight:900}
+.live-err{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0b0f1c;color:#fff;text-align:center;padding:20px}
+.live-err i{font-size:2rem;color:#fbbf24}
+/* تفاعلات طايرة */
+.live-reacts{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.lr{position:absolute;bottom:10px;font-size:1.9rem;animation:lrUp 3s ease-out forwards;will-change:transform,opacity}
+@keyframes lrUp{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:1;transform:translateY(-30px) scale(1.1)}100%{transform:translateY(-320px) translateX(-30px) scale(.9);opacity:0}}
+.live-react-bar{display:flex;justify-content:space-between;gap:4px;padding:6px 10px 0;flex-shrink:0}
+.live-react-bar button{flex:1;border:none;background:rgba(255,255,255,.06);border-radius:10px;padding:6px 0;font-size:1.15rem;cursor:pointer;transition:transform .15s,background .15s}
+.live-react-bar button:hover{background:rgba(255,255,255,.14);transform:translateY(-2px)}
+.live-react-bar button:active{transform:scale(.9)}
+/* رسالة مثبتة */
+.live-pinned{display:none;align-items:flex-start;gap:10px;margin:8px 10px 0;padding:10px 12px;border-radius:14px;background:linear-gradient(120deg,rgba(245,158,11,.18),rgba(245,158,11,.06));border:1px solid rgba(245,158,11,.35);flex-shrink:0}
+.live-pinned.show{display:flex}
+.live-pinned>i{color:#fbbf24;margin-top:3px}
+.live-pinned div{flex:1;min-width:0;display:flex;flex-direction:column}
+.live-pinned b{font-size:.72rem;color:#fbbf24;font-weight:900}
+.live-pinned span{font-size:.86rem;font-weight:700;line-height:1.7;word-wrap:break-word;overflow-wrap:anywhere}
+.live-pinned button{border:none;background:none;color:rgba(255,255,255,.5);cursor:pointer}
+/* وضع المسرح: الفيديو بكامل العرض */
+.live-modal.theater .live-main{grid-template-columns:1fr}
+.live-modal.theater .live-chat{display:none}
+.live-modal.theater #liveTheater{background:var(--primary)}
+.live-box:fullscreen{max-width:none;height:100vh;border-radius:0}
+@media (max-width:900px){
+  .live-player-wrap{aspect-ratio:16/9}
+  .live-hbtn#liveTheater{display:none}
+  .live-modal.presenter .live-player-wrap{aspect-ratio:auto;min-height:60px}
+}
+
+/* ============================================================
+   📶 حالة الاتصال + ⌨️ الكيبورد
+============================================================ */
+.net-bar{position:fixed;top:0;left:50%;z-index:100010;transform:translate(-50%,-110%);display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:0 0 16px 16px;font-size:.84rem;font-weight:800;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .35s ease;max-width:calc(100vw - 24px)}
+.net-bar.show{transform:translate(-50%,0)}
+.net-bar.off{background:#b91c1c}
+.net-bar.on{background:#15803d}
+body.kb-nav :focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){
+  .lr,.lf-dot,.live-tap i,.timer-card.is-running .timer-dial{animation:none!important}
+}
+.live-err .btn{flex:0 0 auto!important;height:auto!important;width:auto!important}
