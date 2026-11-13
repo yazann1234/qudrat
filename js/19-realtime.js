@@ -11,6 +11,7 @@ function cleanupChannels(){
   try{ if(window._giftsChannel) sb.removeChannel(window._giftsChannel); }catch(e){}
   try{ if(typeof resetNotifications === 'function') resetNotifications(); }catch(e){}
   try{ if(typeof stopDeviceWatch === 'function') stopDeviceWatch(); }catch(e){}
+  try{ if(typeof liveReset === 'function') liveReset(); }catch(e){}
   try{ if(typeof srCleanup === 'function' && typeof SR !== 'undefined' && SR.room) srCleanup(); }catch(e){}
   clearInterval(_myProfilePoll); clearInterval(_adminPollTimer);
   myProfileChannel = filesChannel = profilesChannel = null;
