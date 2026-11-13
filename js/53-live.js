@@ -22,8 +22,17 @@ const LIVE = {
   sending: false,
   stickBottom: true,
   unread: 0,
-  announced: null
+  announced: null,
+  room: null,          /* قناة واحدة للبث: رسائل فورية + تفاعلات + عدد المشاهدين */
+  yt: null,            /* مشغّل يوتيوب */
+  edgeTimer: null,
+  staffIds: null,      /* حسابات الإدارة (لشارة «إدارة» الموثوقة) */
+  lastReact: 0,
+  reactCount: 0,
+  started: false
 };
+
+const LIVE_REACTS = ['❤️', '🔥', '👏', '😂', '💯', '🤯'];
 
 /* ================== أدوات ================== */
 function liveParseYouTube(url){
@@ -148,17 +157,28 @@ function liveModal(){
         <span class="live-pill"><span class="lf-dot"></span> مباشر</span>
         <div class="live-title"><b id="liveTitle">—</b><small id="liveSince">—</small></div>
         <span class="live-viewers" title="عدد المشاهدين الآن"><i class="fas fa-eye"></i> <b id="liveViewers">0</b></span>
+        <button class="live-x live-hbtn" id="liveTheater" title="إخفاء/إظهار الشات"><i class="fas fa-comment-slash"></i></button>
+        <button class="live-x live-hbtn" id="liveFull" title="ملء الشاشة"><i class="fas fa-expand"></i></button>
         <button class="live-x" id="liveClose" title="إغلاق"><i class="fas fa-xmark"></i></button>
       </div>
       <div class="live-main">
-        <div class="live-player" id="livePlayer"></div>
+        <div class="live-player-wrap">
+          <div class="live-player" id="livePlayer"></div>
+          <div class="live-reacts" id="liveReacts"></div>
+          <button class="live-edge" id="liveEdge" title="ارجع للحظة المباشرة"><span class="lf-dot"></span> ارجع للمباشر</button>
+          <button class="live-tap" id="liveTap"><i class="fas fa-volume-high"></i><b>اضغط لتشغيل البث بالصوت</b></button>
+        </div>
         <div class="live-chat">
           <div class="live-chat-head">
             <b><i class="fas fa-comments"></i> الشات المباشر</b>
             <span id="liveChatTools"></span>
           </div>
+          <div class="live-pinned" id="livePinned"></div>
           <div class="live-msgs" id="liveMsgs"></div>
           <button class="live-newpill" id="liveNewPill"><i class="fas fa-arrow-down"></i> <span>رسائل جديدة</span></button>
+          <div class="live-react-bar" id="liveReactBar">
+            ${LIVE_REACTS.map(e => `<button type="button" data-e="${e}" title="تفاعل">${e}</button>`).join('')}
+          </div>
           <div class="live-send" id="liveSend">
             <input type="text" id="liveInput" maxlength="300" placeholder="اكتب رسالتك..." autocomplete="off">
             <button class="btn btn-primary" id="liveSendBtn" title="إرسال"><i class="fas fa-paper-plane"></i></button>
@@ -184,6 +204,26 @@ function liveModal(){
     if(LIVE.stickBottom){ LIVE.unread = 0; livePill(); }
   });
   document.getElementById('liveNewPill').onclick = () => { liveScrollBottom(true); };
+  document.getElementById('liveReactBar').addEventListener('click', e => {
+    const b = e.target.closest('button[data-e]'); if(b) liveReact(b.dataset.e);
+  });
+  document.getElementById('liveTheater').onclick = () => {
+    const on = m.classList.toggle('theater');
+    document.querySelector('#liveTheater i').className = 'fas ' + (on ? 'fa-comment' : 'fa-comment-slash');
+  };
+  document.getElementById('liveFull').onclick = () => {
+    const box = m.querySelector('.live-box');
+    try{
+      if(document.fullscreenElement) document.exitFullscreen();
+      else if(box.requestFullscreen) box.requestFullscreen();
+      else if(box.webkitRequestFullscreen) box.webkitRequestFullscreen();
+    }catch(x){}
+  };
+  document.getElementById('liveEdge').onclick = () => liveGoLive(true);
+  document.getElementById('liveTap').onclick = () => {
+    try{ if(LIVE.yt){ LIVE.yt.unMute(); LIVE.yt.setVolume(100); LIVE.yt.playVideo(); liveGoLive(); } }catch(x){}
+    document.getElementById('liveTap').classList.remove('show');
+  };
   return m;
 }
 
@@ -203,7 +243,9 @@ async function openLive(opts){
   m.classList.remove('ended');
   m.classList.add('open');
   document.body.style.overflow = 'hidden';
+  document.body.classList.add('live-open');   /* الموقع ورا البث ما يترسم = أداء أعلى */
   liveRenderFab();
+  liveLoadStaff();
 
   /* المشغّل: نفتحه بعد ضغطة المستخدم → الصوت يشتغل مباشرة */
   const player = document.getElementById('livePlayer');
@@ -211,18 +253,14 @@ async function openLive(opts){
     player.innerHTML = `<div class="live-presenter-note"><i class="fas fa-microphone-lines"></i><b>وضع المقدّم</b><small>الفيديو مخفي هنا عشان ما يصير صدى للصوت — تابع الشات وردّ على الطلاب.</small></div>`;
   } else if(player.dataset.vid !== LIVE.stream.youtube_id){
     player.dataset.vid = LIVE.stream.youtube_id;
-    const origin = encodeURIComponent(location.origin);
-    player.innerHTML = `<iframe src="https://www.youtube.com/embed/${LIVE.stream.youtube_id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=${origin}"
-      title="البث المباشر" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      <div class="live-sound-hint"><i class="fas fa-volume-high"></i> ما يطلع صوت؟ اضغط على الفيديو أو زر الصوت 🔊</div>`;
-    setTimeout(() => { const h = player.querySelector('.live-sound-hint'); if(h) h.classList.add('hide'); }, 8000);
+    liveMountPlayer(LIVE.stream.youtube_id);
   }
 
   liveRenderHead();
   liveRenderChatTools();
+  liveRenderPinned();
+  liveJoinRoom();          /* نشترك أولاً عشان ما تفوتنا رسالة أثناء التحميل */
   await liveLoadChat();
-  liveSubscribeChat();
-  liveJoinPresence();
   setTimeout(() => { const i = document.getElementById('liveInput'); if(i && window.innerWidth > 720) i.focus(); }, 200);
 }
 window.openLive = openLive;
@@ -231,11 +269,12 @@ function closeLive(){
   const m = document.getElementById('liveModal');
   if(m){
     m.classList.remove('open');
-    const player = document.getElementById('livePlayer');
-    if(player){ player.innerHTML = ''; player.dataset.vid = ''; }   /* يوقف الصوت */
+    liveDestroyPlayer();   /* يوقف الصوت */
+    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
   }
   LIVE.open = false;
   document.body.style.overflow = '';
+  document.body.classList.remove('live-open');
   liveLeave();
   liveRenderFab();
 }
@@ -245,8 +284,7 @@ function liveShowEnded(){
   const m = document.getElementById('liveModal');
   if(!m) return;
   m.classList.add('ended');
-  const player = document.getElementById('livePlayer');
-  if(player){ player.innerHTML = ''; player.dataset.vid = ''; }
+  liveDestroyPlayer();
   liveLeave();
 }
 
@@ -298,6 +336,8 @@ function liveAddMsg(m, silent){
 }
 
 function liveMsgHTML(m){
+  /* شارة الإدارة تظهر فقط لحسابات الإدارة الحقيقية */
+  if(LIVE.staffIds) m = Object.assign({}, m, { author_role: LIVE.staffIds[m.user_id] || 'user' });
   const me = currentUserObj && m.user_id === currentUserObj.id;
   const staff = typeof isPrivileged === 'function' && isPrivileged();
   const role = m.author_role === 'owner' ? '<span class="lm-role owner">رئيس المنصة</span>'
@@ -308,6 +348,7 @@ function liveMsgHTML(m){
     <div class="lm-av" ${av}>${m.author_avatar ? '' : initial}</div>
     <div class="lm-body">
       <div class="lm-top"><b>${escapeHtml(m.author_name || 'طالب')}</b>${role}<small>${liveTime(m.created_at)}</small>
+        ${staff ? `<button class="lm-del" onclick="livePin(${m.id})" title="تثبيت الرسالة للجميع"><i class="fas fa-thumbtack"></i></button>` : ''}
         ${staff || me ? `<button class="lm-del" onclick="liveDeleteMsg(${m.id})" title="حذف"><i class="fas fa-trash"></i></button>` : ''}</div>
       <div class="lm-txt">${escapeHtml(m.body)}</div>
     </div>
@@ -343,22 +384,52 @@ function livePill(){
   const s = p.querySelector('span'); if(s) s.textContent = LIVE.unread > 1 ? `${LIVE.unread} رسائل جديدة` : 'رسالة جديدة';
 }
 
-function liveSubscribeChat(){
-  liveUnsubChat();
-  if(!LIVE.stream) return;
+/* ⚡ قناة البث الواحدة: الرسائل تنتقل مباشرة بين المتصفحات (Broadcast)
+   بدون انتظار قاعدة البيانات ← فورية. الحفظ في القاعدة للسجل فقط. */
+function liveJoinRoom(){
+  liveLeave();
+  if(!LIVE.stream || !currentUserObj) return;
   const sid = LIVE.stream.id;
-  LIVE.chatCh = sb.channel('live-chat-' + sid + '-' + Date.now())
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_chat', filter: 'stream_id=eq.' + sid }, p => liveAppend(p.new))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'live_chat' }, p => {
-      const id = p.old && p.old.id; if(!id) return;
-      LIVE.msgs = LIVE.msgs.filter(x => x.id !== id);
-      const el = document.querySelector(`#liveMsgs .lm[data-id="${id}"]`); if(el) el.remove();
+  const ch = sb.channel('live-room-' + sid, { config: { broadcast: { self: false, ack: false }, presence: { key: currentUserObj.id } } });
+  LIVE.room = ch;
+  ch.on('broadcast', { event: 'msg' }, ({ payload }) => { if(payload && payload.stream_id === sid) liveAppend(payload); })
+    .on('broadcast', { event: 'del' }, ({ payload }) => { if(payload) liveRemoveMsg(payload.id); })
+    .on('broadcast', { event: 'react' }, ({ payload }) => { if(payload) liveShowReact(payload.e); })
+    .on('broadcast', { event: 'stream' }, ({ payload }) => {
+      if(payload && LIVE.stream && payload.id === LIVE.stream.id){
+        if(payload.status === 'ended'){ liveSetStream(null); return; }
+        Object.assign(LIVE.stream, payload);
+        liveRenderHead(); liveRenderChatTools(); liveRenderPinned();
+      }
     })
-    .subscribe(status => {
-      /* Realtime ما اشتغل → نجيب الرسائل الجديدة كل 5 ثواني */
-      clearInterval(LIVE.chatPoll);
-      if(status !== 'SUBSCRIBED') LIVE.chatPoll = setInterval(liveFetchNew, 5000);
+    .on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState ? ch.presenceState() : {};
+      LIVE.viewers = Object.keys(state).length;
+      const v = document.getElementById('liveViewers'); if(v) v.textContent = LIVE.viewers.toLocaleString('en');
+      const ad = document.getElementById('admLiveViewers'); if(ad) ad.textContent = LIVE.viewers.toLocaleString('en');
+      clearTimeout(LIVE._peakT);
+      LIVE._peakT = setTimeout(() => { try{ sb.rpc('live_report_viewers', { p_stream: sid, p_count: LIVE.viewers }); }catch(e){} }, 5000);
+    })
+    .subscribe(async status => {
+      clearInterval(LIVE.chatPoll); LIVE.chatPoll = null;
+      if(status === 'SUBSCRIBED'){
+        try{ await ch.track({ at: Date.now() }); }catch(e){}
+        liveFetchNew();   /* أي رسالة فاتت أثناء الاتصال */
+      } else {
+        /* الاتصال اللحظي ما اشتغل → نجيب الجديد كل 4 ثواني لين يرجع */
+        LIVE.chatPoll = setInterval(liveFetchNew, 4000);
+      }
     });
+}
+
+function liveBroadcast(event, payload){
+  try{ if(LIVE.room) LIVE.room.send({ type: 'broadcast', event, payload }); }catch(e){}
+}
+
+function liveRemoveMsg(id){
+  LIVE.msgs = LIVE.msgs.filter(x => x.id !== id);
+  const el = document.querySelector(`#liveMsgs .lm[data-id="${id}"]`); if(el) el.remove();
+  if(LIVE.stream && LIVE.stream.pinned && LIVE.stream.pinned.id === id){ LIVE.stream.pinned = null; liveRenderPinned(); }
 }
 
 async function liveFetchNew(){
@@ -372,7 +443,7 @@ async function liveFetchNew(){
 
 function liveUnsubChat(){
   clearInterval(LIVE.chatPoll); LIVE.chatPoll = null;
-  if(LIVE.chatCh){ try{ sb.removeChannel(LIVE.chatCh); }catch(e){} LIVE.chatCh = null; }
+  if(LIVE.room){ try{ LIVE.room.untrack(); sb.removeChannel(LIVE.room); }catch(e){} LIVE.room = null; }
 }
 
 async function liveSend(){
@@ -387,6 +458,7 @@ async function liveSend(){
     if(error) throw error;
     inp.value = '';
     liveAppend(data);
+    liveBroadcast('msg', data);   /* يوصل للكل فوراً */
   }catch(e){
     const msg = String((e && e.message) || '');
     const why = /slow_down/.test(msg) ? 'على راحتك 😄 — رسالة كل 3 ثواني'
@@ -408,35 +480,11 @@ async function liveSend(){
 window.liveDeleteMsg = async (id) => {
   const { error } = await sb.from('live_chat').delete().eq('id', id);
   if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
-  LIVE.msgs = LIVE.msgs.filter(x => x.id !== id);
-  const el = document.querySelector(`#liveMsgs .lm[data-id="${id}"]`); if(el) el.remove();
+  liveRemoveMsg(id);
+  liveBroadcast('del', { id });
 };
 
-/* ================== عدد المشاهدين (Presence) ================== */
-function liveJoinPresence(){
-  liveLeavePresence();
-  if(!LIVE.stream || !currentUserObj) return;
-  const sid = LIVE.stream.id;
-  LIVE.presCh = sb.channel('live-presence-' + sid, { config: { presence: { key: currentUserObj.id } } });
-  LIVE.presCh
-    .on('presence', { event: 'sync' }, () => {
-      const state = LIVE.presCh ? LIVE.presCh.presenceState() : {};
-      LIVE.viewers = Object.keys(state).length;
-      const v = document.getElementById('liveViewers'); if(v) v.textContent = LIVE.viewers.toLocaleString('en');
-      const a = document.getElementById('admLiveViewers'); if(a) a.textContent = LIVE.viewers.toLocaleString('en');
-      clearTimeout(LIVE._peakT);
-      LIVE._peakT = setTimeout(() => { try{ sb.rpc('live_report_viewers', { p_stream: sid, p_count: LIVE.viewers }); }catch(e){} }, 4000);
-    })
-    .subscribe(async status => {
-      if(status === 'SUBSCRIBED' && LIVE.presCh){
-        try{ await LIVE.presCh.track({ name: currentUserObj.name || '', at: Date.now() }); }catch(e){}
-      }
-    });
-}
-function liveLeavePresence(){
-  if(LIVE.presCh){ try{ LIVE.presCh.untrack(); sb.removeChannel(LIVE.presCh); }catch(e){} LIVE.presCh = null; }
-}
-function liveLeave(){ liveUnsubChat(); liveLeavePresence(); }
+function liveLeave(){ liveUnsubChat(); }
 
 /* ================== تحكم الإدارة ================== */
 window.liveToggleChat = async () => {
@@ -445,6 +493,7 @@ window.liveToggleChat = async () => {
   const { error } = await sb.from('live_streams').update({ chat_open: next }).eq('id', LIVE.stream.id);
   if(error){ toast('فشل: ' + error.message, 'err'); return; }
   LIVE.stream.chat_open = next;
+  liveBroadcast('stream', { id: LIVE.stream.id, chat_open: next });
   liveRenderHead(); liveRenderChatTools();
   try{ renderAdminLive(); }catch(e){}
   toast(next ? '🔓 الشات مفتوح للجميع' : '🔒 تم قفل الشات (الإدارة فقط تكتب)', 'ok');
@@ -456,6 +505,7 @@ window.liveEnd = () => {
     const { error } = await sb.from('live_streams').update({ status: 'ended', ended_at: new Date().toISOString() }).eq('id', LIVE.stream.id);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     if(typeof logAdminAction === 'function') logAdminAction('update_settings', null, 'إنهاء بث مباشر', { title: LIVE.stream.title });
+    liveBroadcast('stream', { id: LIVE.stream.id, status: 'ended' });   /* يوصل للمشاهدين فوراً */
     toast('⏹️ تم إنهاء البث', 'ok');
     const wasOpen = LIVE.open;
     liveSetStream(null);
@@ -542,6 +592,142 @@ function renderAdminLive(){
     </div>`;
 }
 window.renderAdminLive = renderAdminLive;
+
+/* ================== 🎬 مشغّل يوتيوب (API) ================== */
+function liveMountPlayer(vid){
+  const player = document.getElementById('livePlayer');
+  liveDestroyPlayer(true);
+  player.innerHTML = '<div id="liveYT"></div>';
+  const tap = document.getElementById('liveTap'); if(tap) tap.classList.remove('show');
+  const init = () => {
+    if(LIVE.yt || !document.getElementById('liveYT')) return;
+    try{
+      LIVE.yt = new YT.Player('liveYT', {
+        videoId: vid,
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3, hl: 'ar', origin: location.origin },
+        events: {
+          onReady: e => {
+            try{ e.target.unMute(); e.target.setVolume(100); e.target.playVideo(); }catch(x){}
+            /* المتصفح منع التشغيل بالصوت؟ → زر كبير «اضغط للتشغيل» */
+            setTimeout(() => {
+              try{
+                const st = LIVE.yt && LIVE.yt.getPlayerState ? LIVE.yt.getPlayerState() : -1;
+                const muted = LIVE.yt && LIVE.yt.isMuted ? LIVE.yt.isMuted() : false;
+                if(st !== 1 || muted){ const t = document.getElementById('liveTap'); if(t) t.classList.add('show'); }
+              }catch(x){}
+            }, 2500);
+            liveWatchEdge();
+          },
+          onStateChange: e => {
+            if(e.data === 1){ const t = document.getElementById('liveTap'); if(t) t.classList.remove('show'); }
+          },
+          onError: () => {
+            const p = document.getElementById('livePlayer');
+            if(p && !p.querySelector('.live-err')) p.insertAdjacentHTML('beforeend', `<div class="live-err"><i class="fas fa-triangle-exclamation"></i><b>تعذّر تشغيل البث هنا</b>
+              <a class="btn btn-primary btn-sm" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> افتحه في يوتيوب</a></div>`);
+          }
+        }
+      });
+    }catch(x){
+      player.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    }
+  };
+  if(window.YT && window.YT.Player) init();
+  else {
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function(){ try{ if(prev) prev(); }catch(x){} init(); };
+    setTimeout(init, 4000);
+  }
+}
+
+function liveDestroyPlayer(keepEl){
+  clearInterval(LIVE.edgeTimer); LIVE.edgeTimer = null;
+  try{ if(LIVE.yt && LIVE.yt.destroy) LIVE.yt.destroy(); }catch(e){}
+  LIVE.yt = null;
+  if(!keepEl){
+    const player = document.getElementById('livePlayer');
+    if(player){ player.innerHTML = ''; player.dataset.vid = ''; }
+  }
+  const edge = document.getElementById('liveEdge'); if(edge) edge.classList.remove('show');
+  const tap = document.getElementById('liveTap'); if(tap) tap.classList.remove('show');
+}
+
+/* ⚡ لو تأخر الطالب عن اللحظة المباشرة (تقطيع نت) → زر «ارجع للمباشر» + رجوع تلقائي */
+function liveWatchEdge(){
+  clearInterval(LIVE.edgeTimer);
+  LIVE.edgeTimer = setInterval(() => {
+    const y = LIVE.yt; if(!y || !y.getDuration || document.hidden) return;
+    try{
+      const behind = (y.getDuration() || 0) - (y.getCurrentTime() || 0);
+      const st = y.getPlayerState();
+      const edge = document.getElementById('liveEdge');
+      if(edge) edge.classList.toggle('show', behind > 12 && st !== 3);
+      if(behind > 45 && st === 1) liveGoLive();        /* تأخر كبير → نرجعه لحاله */
+    }catch(e){}
+  }, 3000);
+}
+function liveGoLive(manual){
+  const y = LIVE.yt; if(!y) return;
+  try{ y.seekTo(Math.max(0, (y.getDuration() || 0) - 1), true); y.playVideo(); }catch(e){}
+  const edge = document.getElementById('liveEdge'); if(edge) edge.classList.remove('show');
+  if(manual) toast('⚡ رجعت للحظة المباشرة', 'ok');
+}
+
+/* ================== 👑 حسابات الإدارة (شارة موثوقة) ================== */
+async function liveLoadStaff(){
+  if(LIVE.staffIds) return;
+  try{
+    const { data, error } = await sb.from('profiles').select('id,role').in('role', ['admin', 'owner']);
+    if(error) return;
+    const map = {}; (data || []).forEach(p => { map[p.id] = p.role; });
+    LIVE.staffIds = map;
+    if(LIVE.open) liveRenderMsgs();
+  }catch(e){}
+}
+
+/* ================== ❤️ التفاعلات (فورية — ما تنحفظ) ================== */
+function liveReact(e){
+  const now = Date.now();
+  if(now - LIVE.lastReact < 600) return;
+  LIVE.lastReact = now;
+  liveShowReact(e);
+  liveBroadcast('react', { e });
+}
+function liveShowReact(e){
+  if(!LIVE_REACTS.includes(e)) return;
+  const box = document.getElementById('liveReacts');
+  if(!box || LIVE.reactCount > 24 || document.hidden) return;   /* حد أعلى عشان ما يثقل الجهاز */
+  const el = document.createElement('span');
+  el.className = 'lr';
+  el.textContent = e;
+  el.style.right = (6 + Math.random() * 14) + '%';
+  el.style.animationDuration = (2.4 + Math.random() * 1.2) + 's';
+  LIVE.reactCount++;
+  el.addEventListener('animationend', () => { el.remove(); LIVE.reactCount--; });
+  box.appendChild(el);
+}
+
+/* ================== 📌 تثبيت رسالة (الإدارة) ================== */
+function liveRenderPinned(){
+  const box = document.getElementById('livePinned'); if(!box) return;
+  const p = LIVE.stream && LIVE.stream.pinned;
+  const staff = typeof isPrivileged === 'function' && isPrivileged();
+  if(!p || !p.body){ box.innerHTML = ''; box.classList.remove('show'); return; }
+  box.innerHTML = `<i class="fas fa-thumbtack"></i><div><b>${escapeHtml(p.name || 'الإدارة')}</b><span>${escapeHtml(p.body)}</span></div>
+    ${staff ? `<button onclick="livePin(null)" title="إلغاء التثبيت"><i class="fas fa-xmark"></i></button>` : ''}`;
+  box.classList.add('show');
+}
+window.livePin = async (id) => {
+  if(!LIVE.stream) return;
+  const m = id ? LIVE.msgs.find(x => x.id === id) : null;
+  const pinned = m ? { id: m.id, name: m.author_name, body: m.body } : null;
+  const { error } = await sb.from('live_streams').update({ pinned }).eq('id', LIVE.stream.id);
+  if(error){ toast(/pinned/.test(error.message) ? 'شغّل ملف supabase-update-13.sql أولاً' : 'فشل: ' + error.message, 'err'); return; }
+  LIVE.stream.pinned = pinned;
+  liveRenderPinned();
+  liveBroadcast('stream', { id: LIVE.stream.id, pinned });
+  toast(pinned ? '📌 تم تثبيت الرسالة للجميع' : 'تم إلغاء التثبيت', 'ok');
+};
 
 /* تسجيل خروج → نقفل كل شي */
 function liveReset(){
