@@ -251,7 +251,8 @@ function renderNotificationsPanel(){
     product: { i: 'fa-shopping-bag', c: '#22c55e' },
     gift: { i: 'fa-gift', c: '#f7b32b' },
     general: { i: 'fa-bell', c: '#5b6cff' },
-    announcement: { i: 'fa-bullhorn', c: '#8b5cf6' }
+    announcement: { i: 'fa-bullhorn', c: '#8b5cf6' },
+    live: { i: 'fa-tower-broadcast', c: '#ef4444' }
   };
   const lastSeen = getNotifLastSeen();
 
@@ -262,7 +263,7 @@ function renderNotificationsPanel(){
     const date = new Date(n.created_at);
     const isPersonal = !!n.target_user_id;
     const unread = Date.parse(n.created_at || 0) > lastSeen;
-    const clickable = n.type === 'file' || n.type === 'video' || n.type === 'gift';
+    const clickable = n.type === 'file' || n.type === 'video' || n.type === 'gift' || n.type === 'live';
 
     return `
       <div class="notif-item ${isPersonal ? 'personal' : ''} ${unread ? 'unread' : ''} ${clickable ? 'clickable' : ''}"
@@ -295,6 +296,8 @@ function openNotification(id){
       setTimeout(() => { if(typeof openVideo === 'function') openVideo(n.target_id); }, 250);
     } else if(n.type === 'gift'){
       if(typeof go === 'function') go('gifts');
+    } else if(n.type === 'live'){
+      if(typeof openLive === 'function') openLive();
     }
   }catch(e){}
 }
