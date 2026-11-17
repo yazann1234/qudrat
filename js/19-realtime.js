@@ -41,7 +41,7 @@ function startMyProfilePoll(){
       const changed = keys.some(k => JSON.stringify(currentUserObj[k]) !== JSON.stringify(data[k]));
       if(changed && typeof window._applyMyProfileUpdate === 'function') window._applyMyProfileUpdate(data);
     }catch(e){}
-  }, 60000);
+  }, 90000);
 }
 
 function subscribeMyProfile(){
@@ -52,14 +52,9 @@ function subscribeMyProfile(){
     const uid = session.user.id;
     const chName = 'my-prof-' + uid + '-' + Date.now();
 
-    myProfileChannel = sb.channel(chName)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: 'id=eq.' + uid
-      }, payload => { window._applyMyProfileUpdate(payload.new || {}); })
-      .subscribe();
+    /* ⚡ جدول profiles مو تحت المراقبة اللحظية أصلاً — الاشتراك كان يكلّف الخادم بدون فايدة.
+       الفحص الدوري (كل 90 ثانية) هو اللي يجيب التحديثات */
+    void uid; void chName;
   }catch(e){ console.warn('subscribeMyProfile error:', e); }
 }
 
@@ -126,6 +121,7 @@ window._applyMyProfileUpdate = function(newRow){
 const _reloadFilesSoon = debounce(() => safeCall('loadProfilesAndFiles'), 500);
 const _reloadVideosSoon = debounce(() => safeCall('loadVideos'), 500);
 
+let _filesRetry = 0;
 function subscribeFiles(){
   try{ if(filesChannel){ sb.removeChannel(filesChannel); filesChannel = null; } }catch(e){}
   const chName = 'files-live-' + (session ? session.user.id.slice(0,8) : 'g') + '-' + Date.now();
@@ -133,25 +129,46 @@ function subscribeFiles(){
     .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, () => {
       _reloadFilesSoon();
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'videos' }, () => {
+      _reloadVideosSoon();
+    })
     .subscribe(status => {
+      if(status === 'SUBSCRIBED') _filesRetry = 0;
       if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
-        setTimeout(() => { try{ if(currentUserObj) subscribeFiles(); }catch(e){} }, 5000);
+        _filesRetry = Math.min(_filesRetry + 1, 6);
+        const wait = Math.min(120000, 5000 * Math.pow(2, _filesRetry - 1)) + Math.random() * 10000;
+        setTimeout(() => { try{ if(currentUserObj) subscribeFiles(); }catch(e){} }, wait);
       }
     });
 }
 
+/* الفيديوهات صارت ضمن قناة الملفات (قناة وحدة بدل قناتين) */
 function subscribeVideos(){
   try{ if(window._videosChannel) sb.removeChannel(window._videosChannel); }catch(e){}
-  const chName = 'videos-live-' + (session ? session.user.id.slice(0,8) : 'g') + '-' + Date.now();
-  window._videosChannel = sb.channel(chName)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'videos' }, () => {
-      _reloadVideosSoon();
-    })
-    .subscribe();
+  window._videosChannel = null;
 }
+
+/* المنتجات والدورات وإعدادات المتجر تتغير نادراً جداً → تحديث كل 15 دقيقة وعند الرجوع للتبويب
+   (بدل 3 مراقبات لحظية لكل طالب) */
+let _storeRefreshAt = Date.now();
+async function _refreshStoreData(){
+  _storeRefreshAt = Date.now();
+  safeCall('loadProducts');
+  try{ await loadCourses(); }catch(e){}
+  safeCall('renderCoursesGrid');
+  safeCall('loadStoreSettings');
+}
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && currentUserObj && Date.now() - _storeRefreshAt > 15 * 60000) _refreshStoreData();
+});
+setInterval(() => { if(!document.hidden && currentUserObj && Date.now() - _storeRefreshAt > 15 * 60000) _refreshStoreData(); }, 60000);
 
 function subscribeProductsAndSettings(){
   try{ if(window._productsChannel) sb.removeChannel(window._productsChannel); }catch(e){}
+  window._productsChannel = null;
+  _storeRefreshAt = Date.now();
+}
+function _oldSubscribeProductsAndSettings(){
   const chName = 'products-live-' + (session ? session.user.id.slice(0,8) : 'g') + '-' + Date.now();
   window._productsChannel = sb.channel(chName)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, debounce(() => {
