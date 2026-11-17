@@ -52,7 +52,7 @@ async function loadDrawingsForFile(fileId){
 function saveDrawings(){
   if(!currentUserObj || currentUserObj.role === 'admin') return;
   clearTimeout(drawingsSaveTimer);
-  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 2500);
+  drawingsSaveTimer = setTimeout(pushDrawingsToDB, 20000);
 }
 /* لو قفل الصفحة قبل الحفظ → احفظ فوراً */
 document.addEventListener('visibilitychange', () => {
@@ -211,6 +211,25 @@ function inkFlush(k){
   ctx.stroke();
   ctx.restore();
   k.drawn = pts.length - 1;
+}
+
+/* Ramer–Douglas–Peucker: تبسيط الخط مع الحفاظ على شكله */
+function inkSimplify(pts, eps){
+  if(pts.length < 3) return pts;
+  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+  const stack = [[0, pts.length - 1]];
+  while(stack.length){
+    const [a, b] = stack.pop();
+    const A = pts[a], B = pts[b];
+    const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1e-9;
+    let maxD = 0, idx = -1;
+    for(let i = a + 1; i < b; i++){
+      const d = Math.abs(dy * pts[i].x - dx * pts[i].y + B.x * A.y - B.y * A.x) / len;
+      if(d > maxD){ maxD = d; idx = i; }
+    }
+    if(maxD > eps && idx > 0){ keep[idx] = 1; stack.push([a, idx], [idx, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
 }
 
 function inkPanStop(st){ if(st.inertia){ cancelAnimationFrame(st.inertia); st.inertia = 0; } }
@@ -373,6 +392,8 @@ function inkBind(el, o){
       }
     } else drawStrokeOnCtx(ctx, s, k.w, k.h);
 
+    /* تبسيط النقاط: نشيل النقاط اللي ما تغيّر شكل الخط (أقل من نص بكسل تقريباً) → حفظ أخف */
+    if(!k.shape && s.points.length > 6) s.points = inkSimplify(s.points, 0.0006);
     if(!userData.drawings) userData.drawings = {};
     if(!userData.drawings[k.key]) userData.drawings[k.key] = [];
     const arr = userData.drawings[k.key];
