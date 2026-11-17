@@ -23,7 +23,17 @@ function defaultUD(){
 function resetUD(){ userData = defaultUD(); }
 function prefsKey(){ if(!session) return 'abdq_prefs_guest'; return 'abdq_prefs_' + session.user.id; }
 
+/* سجل المذاكرة اليومي يكبر للأبد → نحتفظ بآخر 120 يوم فقط (الإحصائيات تستخدم آخر أسبوع وسلسلة الأيام) */
+function trimLog(log){
+  if(!log || typeof log !== 'object') return log;
+  const keys = Object.keys(log);
+  if(keys.length <= 120) return log;
+  const cutoff = Date.now() - 120 * 86400000;
+  keys.forEach(k => { const t = Date.parse(k); if(t && t < cutoff) delete log[k]; });
+  return log;
+}
 function pickLocalFields(ud){
+  try{ trimLog(ud.log); }catch(e){}
   return {
     favs: ud.favs, tasks: ud.tasks, notes: ud.notes,
     theme: ud.theme, darkMode: ud.darkMode, font: ud.font,
@@ -69,7 +79,7 @@ let _dbDirty = false;
 let _dbLastPush = 0;
 let _dbPushTimer = null;
 let _dbLastPayload = '';
-const DB_PUSH_INTERVAL = 30000; /* ⭐ حفظ في السيرفر كل 30 ثانية كحد أقصى (كان كل ثانية → يضغط القاعدة) */
+const DB_PUSH_INTERVAL = 120000; /* ⭐ حفظ في السيرفر كل 30 ثانية كحد أقصى (كان كل ثانية → يضغط القاعدة) */
 
 function savePrefs(){
   if(!session) return;
