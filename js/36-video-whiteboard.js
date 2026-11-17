@@ -215,38 +215,13 @@ function vwbPoint(e){
 
 function vwbBindDraw(){
   const c = VWB.canvas;
-  c.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    try{ c.setPointerCapture(e.pointerId); }catch(x){}
-    VWB.drawing = true;
-    VWB.key = vwbKey();
-    VWB.current = { tool: VWB.tool, color: VWB.color, size: VWB.size, points: [vwbPoint(e)] };
-    vwbRedraw();
+  /* ⭐ نفس محرك الحبر السلس المستخدم في الملفات */
+  inkBind(c, {
+    enabled: () => VWB.open,
+    track: false,
+    style: () => ({ tool: VWB.tool, color: VWB.color, size: VWB.size }),
+    resolve: () => { VWB.key = vwbKey(); return { canvas: c, key: VWB.key }; }
   });
-  c.addEventListener('pointermove', e => {
-    if(!VWB.drawing || !VWB.current) return;
-    e.preventDefault();
-    const p = vwbPoint(e);
-    const last = VWB.current.points[VWB.current.points.length - 1];
-    if(last && Math.abs(last.x - p.x) < 0.002 && Math.abs(last.y - p.y) < 0.002) return;
-    VWB.current.points.push(p);
-    vwbRedrawSoon();
-  });
-  const end = () => {
-    if(!VWB.drawing || !VWB.current) return;
-    VWB.drawing = false;
-    if(!userData.drawings) userData.drawings = {};
-    if(!userData.drawings[VWB.key]) userData.drawings[VWB.key] = [];
-    const arr = userData.drawings[VWB.key];
-    if(arr.length > 400) arr.shift();
-    arr.push(VWB.current);
-    VWB.current = null;
-    if(VWB.raf){ cancelAnimationFrame(VWB.raf); VWB.raf = 0; }
-    try{ saveDrawings(); }catch(e){}
-    vwbRedraw();
-  };
-  c.addEventListener('pointerup', end);
-  c.addEventListener('pointercancel', end);
 }
 
 function vwbUndo(){
