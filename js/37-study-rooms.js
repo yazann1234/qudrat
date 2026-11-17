@@ -158,28 +158,37 @@ function srSubscribe(){
   if(SR.channel){ try{ sb.removeChannel(SR.channel); }catch(e){} SR.channel = null; }
   if(!SR.room) return;
   const id = SR.room.id;
-  SR.channel = sb.channel('sr-' + id + '-' + Date.now())
+  /* ⚡ قناة واحدة مشتركة للغرفة:
+     - تغيّر الغرفة (بدء/إيقاف) من قاعدة البيانات
+     - دخول/خروج الأعضاء بإشارة مباشرة بين الأجهزة (Broadcast)
+       (سابقاً كل «نبضة حضور» من أي عضو كانت تخلّي كل الأعضاء يعيدون تحميل القائمة
+        ← طلبات تتضاعف مع عدد الأعضاء وتضغط الخادم) */
+  SR.channel = sb.channel('sr-room-' + id, { config: { broadcast: { self: false, ack: false } } })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'study_rooms', filter: 'id=eq.' + id },
       p => srApplyRoom(p.new))
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'study_rooms', filter: 'id=eq.' + id },
       () => { toast('أُغلقت الغرفة', 'warn'); srCleanup(); })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'study_room_members', filter: 'room_id=eq.' + id },
-      debounce(() => srLoadMembers().then(srRenderMembers), 300))
-    .subscribe();
+    .on('broadcast', { event: 'members' }, debounce(() => srLoadMembers().then(srRenderMembers), 400 + Math.random() * 600))
+    .subscribe(status => { if(status === 'SUBSCRIBED') srPingMembers(); });
+}
+
+/* أخبر باقي الأعضاء إن القائمة تغيّرت (دخول/خروج/إخراج) */
+function srPingMembers(){
+  try{ if(SR.channel) SR.channel.send({ type: 'broadcast', event: 'members', payload: { at: Date.now() } }); }catch(e){}
 }
 
 function srStartLoops(){
   srStopLoops();
-  /* فحص احتياطي كل 3 ثواني */
+  /* فحص احتياطي كل 8 ثواني (التحديث اللحظي هو الأساس) — يتوقف لو التبويب مخفي */
   SR.pollTimer = setInterval(async () => {
-    if(!SR.room) return;
+    if(!SR.room || document.hidden) return;
     const { data, error } = await sb.from('study_rooms').select('*').eq('id', SR.room.id).maybeSingle();
     if(error) return;
     if(!data || data.status === 'closed'){ toast('أُغلقت الغرفة', 'warn'); srCleanup(); return; }
     srApplyRoom(data);
-  }, 3000);
+  }, 8000);
   /* نبضة حضور كل 25 ثانية */
-  SR.beatTimer = setInterval(srHeartbeat, 25000);
+  SR.beatTimer = setInterval(srHeartbeat, 40000);
   /* عداد الشاشة */
   SR.lastTickAt = Date.now();
   SR.tickTimer = setInterval(srTick, 1000);
@@ -191,6 +200,7 @@ function srStopLoops(){
 
 async function srHeartbeat(){
   if(!SR.room || !currentUserObj) return;
+  if(document.hidden && SR.room.status !== 'running') return;   /* تبويب مخفي والغرفة واقفة → ما يحتاج */
   try{
     await sb.from('study_room_members').update({ last_seen: new Date().toISOString() })
       .eq('room_id', SR.room.id).eq('user_id', currentUserObj.id);
@@ -429,6 +439,7 @@ window.srKick = (userId) => {
   confirmBox('إخراج عضو', `إخراج ${escapeHtml(m ? m.name : 'العضو')} من الغرفة؟`, async () => {
     const { error } = await sb.from('study_room_members').delete().eq('room_id', SR.room.id).eq('user_id', userId);
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    srPingMembers();
     await srLoadMembers(); srRenderMembers();
     toast('تم إخراج العضو', 'ok');
   });
@@ -455,6 +466,7 @@ async function srDoLeave(){
       }
     }
     await sb.from('study_room_members').delete().eq('room_id', room.id).eq('user_id', currentUserObj.id);
+    srPingMembers();
   }catch(e){}
   srCleanup();
   toast('خرجت من الغرفة', 'ok');
@@ -481,6 +493,7 @@ window.addEventListener('pagehide', () => {
     if(SR.room && currentUserObj){
       if(SR.room.status === 'running') srCredit();
       sb.from('study_room_members').delete().eq('room_id', SR.room.id).eq('user_id', currentUserObj.id).then(() => {});
+      srPingMembers();
     }
   }catch(e){}
 });
