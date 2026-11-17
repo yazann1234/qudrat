@@ -1,0 +1,884 @@
+/* ============================================================
+   30) OWNER FEATURES — اشتراكات + هدايا متقدمة + logs + إشعارات
+============================================================ */
+
+function isOwnerUser(){ return currentUserObj && currentUserObj.role === 'owner'; }
+window.isOwnerUser = isOwnerUser;
+
+function isSubscriptionExpired(){
+  if(!currentUserObj) return false;
+  if(currentUserObj.role === 'owner' || currentUserObj.role === 'admin') return false;
+  if(currentUserObj.status !== 'approved') return false;
+  if(!currentUserObj.subscription_end) return false;
+  return new Date(currentUserObj.subscription_end) < new Date();
+}
+
+function getSubscriptionDaysLeft(){
+  if(!currentUserObj || !currentUserObj.subscription_end) return null;
+  const end = new Date(currentUserObj.subscription_end);
+  const now = new Date();
+  return Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+}
+window.getSubscriptionDaysLeft = getSubscriptionDaysLeft;
+
+async function checkSubscriptionOnLogin(){
+  if(!currentUserObj) return false;
+  if(currentUserObj.role === 'owner' || currentUserObj.role === 'admin') return false;
+  if(currentUserObj.status !== 'approved') return false;
+
+  if(isSubscriptionExpired()){
+    try{
+      /* ⭐ السيرفر هو اللي ينهي الاشتراك (الطالب ما يقدر يغيّر حالته بنفسه) */
+      let done = false;
+      try{ const rr = await sb.rpc('expire_my_subscription'); if(!rr.error) done = true; }catch(e){}
+      if(!done) await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', currentUserObj.id), {
+        status: 'pending',
+        subscription_end: null,
+        subscription_start: null,
+        subscription_months: 0,
+        course_id: null,
+        course_ids: []
+      });
+
+      currentUserObj.status = 'pending';
+      currentUserObj.subscription_end = null;
+      currentUserObj.subscription_start = null;
+      currentUserObj.course_id = null;
+      currentUserObj.course_ids = [];
+
+      toast('⏰ انتهى اشتراكك — يرجى التجديد', 'warn');
+      return true;
+    }catch(e){}
+  }
+  return false;
+}
+window.checkSubscriptionOnLogin = checkSubscriptionOnLogin;
+
+/* ================== حساب نهاية الاشتراك (يدعم التاريخ الثابت للدورة) ================== */
+function calculateSubscriptionEnd(months, courseId){
+  const course = courseId && typeof getCourseById === 'function' ? getCourseById(courseId) : null;
+  if(course && course.subscription_end_date){
+    const d = new Date(course.subscription_end_date);
+    if(!isNaN(d.getTime())){
+      d.setHours(23, 59, 59, 999);
+      if(d > new Date()) return d;
+    }
+  }
+  const end = new Date();
+  end.setMonth(end.getMonth() + (months || 1));
+  return end;
+}
+window.calculateSubscriptionEnd = calculateSubscriptionEnd;
+
+/* ============================================================
+   ⭐ مدة مخصصة: بالأيام / بالأشهر / تاريخ انتهاء محدد (يوم + شهر)
+   تُستخدم في: مودال التفعيل + تعديل المستخدم + إنشاء مستخدم
+============================================================ */
+function fmtArDate(d){
+  try{ return new Date(d).toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }
+  catch(e){ return ''; }
+}
+window.fmtArDate = fmtArDate;
+
+function todayInputValue(offsetDays){
+  const d = new Date(); d.setDate(d.getDate() + (offsetDays || 0));
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+/* HTML حقول المدة المخصصة — prefix لتمييز الحقول (approve / eu / nu) */
+function customDurationHTML(prefix, hidden){
+  const fieldStyle = 'width:100%;font-family:inherit;font-size:.9rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
+  return `
+    <div class="custom-dur" id="${prefix}CustomWrap" style="${hidden ? 'display:none' : ''}">
+      <div class="custom-dur-tabs" id="${prefix}CustomTabs">
+        <button type="button" class="on" data-t="days"><i class="fas fa-calendar-day"></i> بالأيام</button>
+        <button type="button" data-t="months"><i class="fas fa-calendar-week"></i> بالأشهر</button>
+        <button type="button" data-t="date"><i class="fas fa-calendar-check"></i> تاريخ محدد</button>
+      </div>
+      <input type="hidden" id="${prefix}CustomType" value="days">
+      <div class="custom-dur-row" id="${prefix}CustomNumRow">
+        <input type="number" id="${prefix}CustomNum" min="1" max="1825" value="30" style="${fieldStyle}">
+        <span id="${prefix}CustomUnit">يوم</span>
+      </div>
+      <div class="custom-dur-row" id="${prefix}CustomDateRow" style="display:none">
+        <input type="date" id="${prefix}CustomDate" min="${todayInputValue(1)}" value="${todayInputValue(30)}" style="${fieldStyle}">
+      </div>
+      <div class="custom-dur-quick" id="${prefix}CustomQuick">
+        ${[7, 14, 30, 45, 60, 90].map(n => `<button type="button" data-d="${n}">${n} يوم</button>`).join('')}
+      </div>
+      <div class="custom-dur-preview" id="${prefix}CustomPreview"></div>
+    </div>`;
+}
+window.customDurationHTML = customDurationHTML;
+
+/* يقرأ الحقول ويرجع { endDate, months, days, label } أو { error } */
+function readCustomDuration(prefix){
+  const type = (document.getElementById(prefix + 'CustomType') || {}).value || 'days';
+  let end = null;
+  if(type === 'date'){
+    const v = (document.getElementById(prefix + 'CustomDate') || {}).value;
+    if(!v) return { error: 'اختر تاريخ الانتهاء' };
+    const [y, m, d] = v.split('-').map(Number);
+    end = new Date(y, m - 1, d, 23, 59, 59, 999);
+  } else {
+    const n = parseInt((document.getElementById(prefix + 'CustomNum') || {}).value, 10);
+    if(!n || n < 1) return { error: 'أدخل مدة صحيحة' };
+    if(type === 'months' && n > 60) return { error: 'الحد الأقصى 60 شهر' };
+    if(type === 'days' && n > 1825) return { error: 'الحد الأقصى 1825 يوم' };
+    end = new Date();
+    if(type === 'months') end.setMonth(end.getMonth() + n);
+    else end.setDate(end.getDate() + n);
+    end.setHours(23, 59, 59, 999);
+  }
+  if(isNaN(end.getTime()) || end <= new Date()) return { error: 'تاريخ الانتهاء يجب أن يكون بعد اليوم' };
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const e0 = new Date(end); e0.setHours(0, 0, 0, 0);
+  const days = Math.round((e0 - t0) / 86400000);
+  let months = Math.max(1, Math.round(days / 30));
+  let label = formatDurationDays(days);
+  if(type === 'months'){
+    months = parseInt((document.getElementById(prefix + 'CustomNum') || {}).value, 10) || months;
+    label = (typeof monthsLabel === 'function' ? monthsLabel(months) : months + ' شهر') + ` (${days} يوم)`;
+  }
+  return { endDate: end, days, months, label };
+}
+window.readCustomDuration = readCustomDuration;
+
+/* «45 يوم» → «شهر و 15 يوم» */
+function formatDurationDays(days){
+  days = Math.max(0, Math.round(days));
+  if(days < 30) return days + ' يوم';
+  const m = Math.floor(days / 30), d = days % 30;
+  const mTxt = typeof monthsLabel === 'function' ? monthsLabel(m) : m + ' شهر';
+  return d ? `${mTxt} و ${d} يوم` : mTxt;
+}
+window.formatDurationDays = formatDurationDays;
+
+function bindCustomDuration(prefix){
+  const wrap = document.getElementById(prefix + 'CustomWrap');
+  if(!wrap || wrap.dataset.bound) return;
+  wrap.dataset.bound = '1';
+  const typeEl = document.getElementById(prefix + 'CustomType');
+  const numRow = document.getElementById(prefix + 'CustomNumRow');
+  const dateRow = document.getElementById(prefix + 'CustomDateRow');
+  const quick = document.getElementById(prefix + 'CustomQuick');
+  const unit = document.getElementById(prefix + 'CustomUnit');
+  const num = document.getElementById(prefix + 'CustomNum');
+  const preview = document.getElementById(prefix + 'CustomPreview');
+
+  const update = () => {
+    const r = readCustomDuration(prefix);
+    if(!preview) return;
+    if(r.error){ preview.className = 'custom-dur-preview err'; preview.innerHTML = `<i class="fas fa-circle-exclamation"></i> ${r.error}`; return; }
+    preview.className = 'custom-dur-preview';
+    preview.innerHTML = `<i class="fas fa-hourglass-half"></i> المدة: <b>${r.label}</b><br><i class="fas fa-calendar-xmark"></i> ينتهي: <b>${fmtArDate(r.endDate)}</b>`;
+  };
+
+  wrap.querySelectorAll('.custom-dur-tabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      wrap.querySelectorAll('.custom-dur-tabs button').forEach(x => x.classList.toggle('on', x === b));
+      const t = b.dataset.t;
+      typeEl.value = t;
+      numRow.style.display = t === 'date' ? 'none' : 'flex';
+      dateRow.style.display = t === 'date' ? 'flex' : 'none';
+      quick.style.display = t === 'days' ? 'flex' : 'none';
+      if(unit) unit.textContent = t === 'months' ? 'شهر' : 'يوم';
+      if(t === 'months' && num && parseInt(num.value, 10) > 60) num.value = 2;
+      update();
+    });
+  });
+  quick.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => { num.value = b.dataset.d; update(); });
+  });
+  wrap.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  update();
+}
+window.bindCustomDuration = bindCustomDuration;
+
+/* ================== تفعيل اشتراك ==================
+   activateSubscription(userId, months, courseId, opts) → true عند النجاح
+   opts.endDate: تاريخ انتهاء مخصص (يتجاوز المدة وتاريخ الدورة الثابت)
+=================================================== */
+async function activateSubscription(userId, months, courseId, opts){
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return false; }
+  opts = opts || {};
+
+  /* ⭐ دورة واحدة أو أكثر: courseId ممكن يكون مصفوفة */
+  const target = (DB.users || []).find(x => x.id === userId) || null;
+  let courseIds = Array.isArray(courseId) ? courseId.filter(Boolean).map(String) : (courseId ? [String(courseId)] : []);
+  if(opts.addToExisting && target && target.status === 'approved'){
+    courseIds = [...new Set([...getUserCourseIds(target), ...courseIds])];
+  }
+  courseId = courseIds[0] || null;
+
+  const start = new Date();
+  let end;
+  if(opts.endDate){
+    end = new Date(opts.endDate);
+    if(isNaN(end.getTime()) || end <= start){ toast('تاريخ الانتهاء يجب أن يكون بعد اليوم', 'warn'); return false; }
+    months = Math.max(1, Math.round((end - start) / (86400000 * 30)));
+  } else {
+    months = parseInt(months, 10);
+    if(!months || months < 1 || months > 60){ toast('المدة بين 1 و 60 شهر', 'warn'); return false; }
+    end = calculateSubscriptionEnd(months, courseId);
+  }
+  const durTxt = formatDurationDays((end - start) / 86400000);
+
+  const payload = {
+    status: 'approved',
+    subscription_start: start.toISOString(),
+    subscription_end: end.toISOString(),
+    subscription_months: months,
+    /* ⭐ الطلب تمت معالجته — لو انتهى الاشتراك لاحقاً يقدر يشتري من جديد */
+    purchase_submitted: false
+  };
+  if(courseIds.length){ payload.course_id = courseIds[0]; payload.course_ids = courseIds; }
+
+  /* إضافة دورة لمشترك حالي: لا نقصّر اشتراكه */
+  if(opts.addToExisting && target && target.status === 'approved' && target.subscription_end){
+    const curEnd = new Date(target.subscription_end);
+    if(curEnd > end){ payload.subscription_end = curEnd.toISOString(); }
+    if(target.subscription_start) payload.subscription_start = target.subscription_start;
+  }
+
+  const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), payload);
+  if(error){ toast('فشل: ' + error.message, 'err'); return false; }
+
+  /* حدّث النسخة المحلية فوراً */
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(u) Object.assign(u, payload);
+
+  const courseNames = courseIds.map(id => getCourseById(id)).filter(Boolean).map(c => c.name);
+  const course = courseNames.length ? { name: courseNames.join(' + ') } : null;
+
+  /* ⭐ السجل والإشعار في الخلفية — التفعيل يخلص فوراً بدون انتظار */
+  if(typeof logAdminAction === 'function'){
+    logAdminAction('activate_subscription', userId,
+      `تفعيل اشتراك ${course ? course.name + ' ' : ''}لمدة ${durTxt} (حتى ${end.toLocaleDateString('ar-SA')})`,
+      { months, course_id: courseId, end: end.toISOString(), custom: !!opts.endDate });
+  }
+
+  /* ⭐ إشعار موجّه للطالب نفسه فقط (كان يصل لكل الطلاب بالخطأ) */
+  if(typeof sendNotification === 'function'){
+    sendNotification('general', '✓ تم تفعيل اشتراكك',
+      `تم تفعيل اشتراكك في ${course ? course.name : 'المنصة'} حتى ${end.toLocaleDateString('ar-SA')}. استمتع بالتعلم!`,
+      null, null, 'fa-check-circle', '#22c55e', userId);
+  }
+
+  toast(`✓ تم التفعيل${course ? ' — ' + course.name : ''} لمدة ${durTxt}`, 'ok');
+  return true;
+}
+window.activateSubscription = activateSubscription;
+
+/* ================== اللوقز ================== */
+async function logAdminAction(action, targetId, label, details){
+  if(!currentUserObj) return;
+  if(currentUserObj.role !== 'admin' && currentUserObj.role !== 'owner') return;
+
+  try{
+    let targetName = null;
+    if(targetId){
+      const known = (DB.users || []).find(x => x.id === targetId);
+      if(known) targetName = known.name || known.email || null;
+      else{
+        const { data: t } = await sb.from('profiles').select('name').eq('id', targetId).maybeSingle();
+        targetName = t ? t.name : null;
+      }
+    }
+
+    await sb.from('admin_logs').insert({
+      admin_id: currentUserObj.id,
+      admin_name: currentUserObj.name || 'أدمن',
+      admin_role: currentUserObj.role,
+      action: action,
+      action_label: label || action,
+      target_id: targetId || null,
+      target_name: targetName,
+      details: details || {}
+    });
+  }catch(e){}
+}
+window.logAdminAction = logAdminAction;
+
+async function renderAdminLogs(){
+  if(!isOwnerUser()) return;
+  const box = document.getElementById('ownerLogsList');
+  if(!box) return;
+
+  box.innerHTML = '<div style="text-align:center;padding:40px"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary)"></i></div>';
+
+  try{
+    const { data, error } = await sb.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(200);
+    if(error) throw error;
+
+    if(!data || !data.length){
+      box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-scroll"></i></div><h3>لا توجد سجلات بعد</h3></div>';
+      return;
+    }
+
+    const actionIcons = {
+      activate_subscription: 'fa-crown',
+      approve_user: 'fa-user-check',
+      reject_user: 'fa-user-xmark',
+      edit_user: 'fa-user-pen',
+      delete_user: 'fa-user-minus',
+      create_user: 'fa-user-plus',
+      upload_file: 'fa-file-arrow-up',
+      delete_file: 'fa-file-circle-xmark',
+      add_video: 'fa-video',
+      delete_video: 'fa-video-slash',
+      add_product: 'fa-cart-plus',
+      edit_product: 'fa-pen-to-square',
+      delete_product: 'fa-trash-can',
+      update_settings: 'fa-gear',
+      send_gift: 'fa-gift',
+      promote_admin: 'fa-user-shield',
+      demote_admin: 'fa-user-slash'
+    };
+
+    box.innerHTML = data.map(log => {
+      const icon = actionIcons[log.action] || 'fa-circle-info';
+      const color = log.admin_role === 'owner' ? '#f7b32b' : '#ef4444';
+      const date = new Date(log.created_at);
+      const dateStr = date.toLocaleDateString('ar-SA');
+      const timeStr = date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+      return `
+        <div class="log-row">
+          <div class="log-icon" style="background:color-mix(in srgb,${color} 15%,transparent);color:${color}">
+            <i class="fas ${icon}"></i>
+          </div>
+          <div class="log-content">
+            <div class="log-top">
+              <b>${escapeHtml(log.admin_name || 'أدمن')}</b>
+              <span class="log-role-badge" style="background:${color}">${log.admin_role === 'owner' ? '👑 رئيس' : '🛡️ أدمن'}</span>
+            </div>
+            <div class="log-action">${escapeHtml(log.action_label || log.action)}</div>
+            ${log.target_name ? `<div class="log-target"><i class="fas fa-user"></i> ${escapeHtml(log.target_name)}</div>` : ''}
+            <div class="log-time"><i class="fas fa-clock"></i> ${dateStr} — ${timeStr}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }catch(e){
+    box.innerHTML = `<div class="admin-empty"><h3>فشل التحميل</h3><p>${escapeHtml(e.message)}</p></div>`;
+  }
+}
+window.renderAdminLogs = renderAdminLogs;
+
+/* ============================================================
+   صندوق الطالب
+============================================================ */
+async function renderMyGifts(){
+  if(!currentUserObj) return;
+
+  const box = document.getElementById('myGiftsBox');
+  if(!box) return;
+
+  try{
+    const { data, error } = await sb.from('student_gifts')
+      .select('*').eq('user_id', currentUserObj.id).order('created_at', { ascending: false });
+    if(error) throw error;
+
+    const unopened = (data || []).filter(g => !g.opened);
+    updateGiftBadge(unopened.length);
+
+    if(!data || !data.length){
+      box.innerHTML = `
+        <div class="gifts-empty">
+          <i class="fas fa-gift"></i>
+          <h3>لا توجد هدايا حالياً</h3>
+          <p>ستظهر هداياك هنا عندما يحصل عليها من رئيس المنصة</p>
+        </div>`;
+      return;
+    }
+
+    box.innerHTML = data.map(g => {
+      const date = new Date(g.created_at).toLocaleDateString('ar-SA');
+      return `
+        <div class="gift-card ${g.opened ? 'opened' : 'unopened'}" onclick="openGiftBox('${g.id}')">
+          <div class="gift-box-icon">
+            <i class="fas ${g.opened ? 'fa-box-open' : 'fa-gift'}"></i>
+          </div>
+          <div class="gift-info">
+            <b>${escapeHtml(g.title)}</b>
+            <small>${date}</small>
+          </div>
+          ${!g.opened ? '<div class="gift-new-badge">جديد!</div>' : ''}
+        </div>
+      `;
+    }).join('');
+  }catch(e){}
+}
+window.renderMyGifts = renderMyGifts;
+
+/* ⭐ فحص الهدايا غير المفتوحة عند الدخول */
+async function checkAndShowUnopenedGifts(){
+  if(!currentUserObj) return;
+  try{
+    const { data } = await sb.from('student_gifts')
+      .select('*').eq('user_id', currentUserObj.id).eq('opened', false)
+      .order('created_at', { ascending: false }).limit(1);
+
+    if(data && data.length){
+      const g = data[0];
+      setTimeout(() => { showGiftCelebration(g); }, 800);
+    }
+  }catch(e){}
+}
+window.checkAndShowUnopenedGifts = checkAndShowUnopenedGifts;
+
+/* ================== فتح الهدية ================== */
+async function openGiftBox(giftId){
+  try{
+    const { data: g, error } = await sb.from('student_gifts').select('*').eq('id', giftId).maybeSingle();
+    if(error || !g) return;
+
+    let serverDone = false;
+    if(!g.opened){
+      /* ⭐ السيرفر ينفّذ إجراء الهدية بأمان (مرة واحدة) */
+      try{ const rr = await sb.rpc('open_gift', { p_gift: giftId }); if(!rr.error) serverDone = true; }catch(e){}
+    }
+    if(!g.opened && serverDone){
+      if(g.gift_action === 'extend' && g.gift_extra_months) toast(`🎁 تم تمديد اشتراكك ${g.gift_extra_months} شهر`, 'ok');
+      else if(g.gift_action === 'course' && g.gift_course_id){ const c = getCourseById(g.gift_course_id); toast(`🎁 تم تحويلك إلى ${c ? c.name : 'دورة جديدة'}`, 'ok'); }
+      else if(g.gift_action === 'cancel') toast('تم إلغاء اشتراكك', 'warn');
+    }
+    if(!g.opened && !serverDone){
+      await sb.from('student_gifts').update({
+        opened: true, opened_at: new Date().toISOString()
+      }).eq('id', giftId);
+
+      /* ⭐ نفّذ إجراء الهدية */
+      if(g.gift_action === 'extend' && g.gift_extra_months){
+        await extendUserSubscription(currentUserObj.id, g.gift_extra_months);
+      } else if(g.gift_action === 'course' && g.gift_course_id){
+        await switchUserCourse(currentUserObj.id, g.gift_course_id, g.gift_extra_months || 1);
+      } else if(g.gift_action === 'cancel'){
+        await cancelUserSubscription(currentUserObj.id);
+      }
+    }
+
+    showGiftCelebration(g);
+    renderMyGifts();
+
+    /* أعد جلب البيانات */
+    const r = await sb.from('profiles').select('*').eq('id', currentUserObj.id).single();
+    if(r.data){ currentUserObj = r.data; applyUserUI(); }
+  }catch(e){}
+}
+window.openGiftBox = openGiftBox;
+
+/* ================== إجراءات الهدايا ================== */
+async function extendUserSubscription(userId, months){
+  try{
+    const { data: prof } = await sb.from('profiles').select('*').eq('id', userId).single();
+    if(!prof) return;
+    const currentEnd = prof.subscription_end ? new Date(prof.subscription_end) : new Date();
+    const baseDate = currentEnd > new Date() ? currentEnd : new Date();
+    baseDate.setMonth(baseDate.getMonth() + months);
+
+    await sb.from('profiles').update({
+      subscription_end: baseDate.toISOString(),
+      status: 'approved'
+    }).eq('id', userId);
+
+    toast(`🎁 تم تمديد اشتراكك ${months} شهر`, 'ok');
+  }catch(e){}
+}
+
+async function switchUserCourse(userId, courseId, months){
+  try{
+    const start = new Date();
+    const end = new Date();
+    end.setMonth(end.getMonth() + months);
+
+    await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), {
+      course_id: courseId,
+      course_ids: [courseId],
+      status: 'approved',
+      subscription_start: start.toISOString(),
+      subscription_end: end.toISOString(),
+      subscription_months: months
+    });
+
+    const c = getCourseById(courseId);
+    toast(`🎁 تم تحويلك إلى ${c ? c.name : 'دورة جديدة'}`, 'ok');
+  }catch(e){}
+}
+
+async function cancelUserSubscription(userId){
+  try{
+    await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), {
+      status: 'pending',
+      subscription_end: null,
+      subscription_start: null,
+      course_id: null,
+      course_ids: []
+    });
+    toast('تم إلغاء اشتراكك', 'warn');
+  }catch(e){}
+}
+
+/* ================== مودال الاحتفال ================== */
+function showGiftCelebration(g){
+  const modal = document.getElementById('giftCelebrationModal');
+  if(!modal) return;
+
+  document.getElementById('giftCelebTitle').textContent = g.title || 'هدية لك! 🎁';
+  document.getElementById('giftCelebMessage').textContent = g.message || '';
+  document.getElementById('giftCelebSender').textContent = 'من: ' + (g.sender_name || 'رئيس المنصة');
+
+  const imgEl = document.getElementById('giftCelebImage');
+  if(g.image_url){ imgEl.src = g.image_url; imgEl.style.display = 'block'; }
+  else imgEl.style.display = 'none';
+
+  modal.classList.add('open');
+  startGiftConfetti();
+}
+
+function startGiftConfetti(){
+  const container = document.getElementById('giftConfetti');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const colors = ['#f7b32b','#5b6cff','#8b5cf6','#22c55e','#ef4444','#ec4899','#0ea5e9'];
+  const shapes = ['🎉','🎊','✨','⭐','🎁','🌟'];
+
+  for(let i = 0; i < 60; i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    if(Math.random() > 0.5){
+      piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+      piece.style.fontSize = (14 + Math.random() * 20) + 'px';
+    } else {
+      piece.style.width = (6 + Math.random() * 10) + 'px';
+      piece.style.height = (6 + Math.random() * 14) + 'px';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    }
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    container.appendChild(piece);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+
+function closeGiftCelebration(){
+  const modal = document.getElementById('giftCelebrationModal');
+  if(modal) modal.classList.remove('open');
+  const c = document.getElementById('giftConfetti');
+  if(c) c.innerHTML = '';
+}
+window.closeGiftCelebration = closeGiftCelebration;
+
+function updateGiftBadge(count){
+  const badge = document.getElementById('giftBadgeNav');
+  if(!badge) return;
+  if(count > 0){ badge.textContent = count; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+}
+
+/* ================== إرسال هدية ================== */
+async function sendStudentGift(){
+  if(!isOwnerUser()){ toast('هذه الميزة لرئيس المنصة فقط', 'err'); return; }
+
+  const userId = document.getElementById('giftUserId').value;
+  const title = document.getElementById('giftTitle').value.trim();
+  const message = document.getElementById('giftMessage').value.trim();
+  const giftType = document.getElementById('giftType').value;
+  const giftAction = document.getElementById('giftAction') ? document.getElementById('giftAction').value : 'show';
+  const giftCourseId = document.getElementById('giftCourseSelect') ? document.getElementById('giftCourseSelect').value : null;
+  const extraMonths = document.getElementById('giftExtraMonths') ? parseInt(document.getElementById('giftExtraMonths').value, 10) || 0 : 0;
+  const imgInput = document.getElementById('giftImageInput');
+  const imgFile = imgInput && imgInput.files[0];
+
+  if(!userId){ toast('اختر المستخدم', 'warn'); return; }
+  if(!title){ toast('أدخل عنوان الهدية', 'warn'); return; }
+  if(!message){ toast('أدخل رسالة الهدية', 'warn'); return; }
+
+  const btn = document.getElementById('sendGiftBtn');
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+  let imageUrl = null;
+
+  if(imgFile){
+    try{
+      const blob = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const ratio = Math.min(800 / img.width, 800 / img.height, 1);
+            const w = Math.round(img.width * ratio);
+            const h = Math.round(img.height * ratio);
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            c.toBlob(b => b ? res(b) : rej(new Error('فشل')), 'image/jpeg', 0.85);
+          };
+          img.onerror = rej;
+          img.src = reader.result;
+        };
+        reader.onerror = rej;
+        reader.readAsDataURL(imgFile);
+      });
+
+      const path = '_gifts/' + userId + '/' + Date.now() + '.jpg';
+      const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, {
+        cacheControl: '3600', upsert: true, contentType: 'image/jpeg'
+      });
+      if(upErr) throw upErr;
+
+      const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
+      imageUrl = urlData ? urlData.publicUrl : null;
+    }catch(e){}
+  }
+
+  const payload = {
+    user_id: userId,
+    sender_id: currentUserObj.id,
+    sender_name: currentUserObj.name || 'رئيس المنصة',
+    title, message,
+    image_url: imageUrl,
+    gift_type: giftType,
+    gift_action: giftAction,
+    gift_course_id: giftCourseId || null,
+    gift_extra_months: extraMonths || 0
+  };
+
+  const { error } = await sb.from('student_gifts').insert(payload);
+
+  btn.disabled = false;
+  btn.innerHTML = orig;
+
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+
+  if(typeof logAdminAction === 'function'){
+    await logAdminAction('send_gift', userId, 'إرسال هدية: ' + title, { action: giftAction });
+  }
+
+  /* أرسل إشعاراً أيضاً */
+  if(typeof sendNotification === 'function'){
+    await sendNotification('gift', '🎁 وصلك هدية جديدة!', title, null, null, 'fa-gift', '#f7b32b', userId);
+  }
+
+  toast('🎁 تم الإرسال', 'ok');
+
+  document.getElementById('giftUserId').value = '';
+  document.getElementById('giftTitle').value = '';
+  document.getElementById('giftMessage').value = '';
+  if(imgInput) imgInput.value = '';
+  const prev = document.getElementById('giftImagePreview');
+  if(prev) prev.innerHTML = '';
+}
+window.sendStudentGift = sendStudentGift;
+
+function previewGiftImage(input){
+  const prev = document.getElementById('giftImagePreview');
+  if(!prev) return;
+  const f = input.files[0];
+  if(!f){ prev.innerHTML = ''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    prev.innerHTML = `
+      <div style="position:relative;display:inline-block">
+        <img src="${e.target.result}" style="max-width:200px;max-height:150px;border-radius:10px;border:1px solid var(--border)">
+        <button type="button" onclick="clearGiftImage()" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;display:grid;place-items:center">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+  };
+  reader.readAsDataURL(f);
+}
+window.previewGiftImage = previewGiftImage;
+
+function clearGiftImage(){
+  const inp = document.getElementById('giftImageInput');
+  if(inp) inp.value = '';
+  const prev = document.getElementById('giftImagePreview');
+  if(prev) prev.innerHTML = '';
+}
+window.clearGiftImage = clearGiftImage;
+
+async function loadGiftUsersList(){
+  const sel = document.getElementById('giftUserId');
+  if(!sel) return;
+
+  try{
+    const { data } = await sb.from('profiles')
+      .select('id, name, email').neq('role', 'owner').order('name', { ascending: true });
+
+    if(!data || !data.length){ sel.innerHTML = '<option value="">لا يوجد مستخدمون</option>'; return; }
+
+    sel.innerHTML = '<option value="">— اختر مستخدماً —</option>' +
+      data.map(u => `<option value="${u.id}">${escapeHtml(u.name || u.email)}</option>`).join('');
+  }catch(e){}
+}
+window.loadGiftUsersList = loadGiftUsersList;
+
+async function loadGiftCoursesList(){
+  const sel = document.getElementById('giftCourseSelect');
+  if(!sel) return;
+
+  const courses = typeof CS !== 'undefined' ? CS.courses : [];
+  if(!courses || !courses.length){
+    if(typeof loadCourses === 'function') await loadCourses();
+  }
+
+  const list = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  sel.innerHTML = '<option value="">— اختر دورة —</option>' +
+    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+}
+window.loadGiftCoursesList = loadGiftCoursesList;
+
+/* ================== تهيئة ================== */
+async function initOwnerFeatures(){
+  if(!currentUserObj) return;
+
+  /* ⭐ اطلب فتح الهدايا غير المفتوحة فور الدخول */
+  try{ await checkAndShowUnopenedGifts(); }catch(e){}
+
+  try{ await renderMyGifts(); }catch(e){}
+  subscribeGifts();
+  renderSubscriptionInfo();
+  if(typeof renderGiftsSection === 'function') renderGiftsSection();
+}
+window.initOwnerFeatures = initOwnerFeatures;
+
+function subscribeGifts(){
+  if(!currentUserObj) return;
+  try{
+    if(window._giftsChannel){ sb.removeChannel(window._giftsChannel); }
+    window._giftsChannel = sb.channel('gifts-' + currentUserObj.id + '-' + Date.now())
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'student_gifts',
+        filter: 'user_id=eq.' + currentUserObj.id
+      }, payload => {
+        renderMyGifts();
+        if(payload.new && !payload.new.opened){
+          showGiftCelebration(payload.new);
+        }
+      })
+      .subscribe();
+  }catch(e){}
+}
+
+function renderGiftsSection(){
+  const box = document.getElementById('myGiftsBox');
+  if(box) renderMyGifts();
+}
+
+/* ================== معلومات الاشتراك (تظهر للطالب في ملفه الشخصي) ================== */
+function renderSubscriptionInfo(){
+  const box = document.getElementById('subscriptionInfoBox');
+  if(!box) return;
+  if(!currentUserObj) return;
+
+  if(currentUserObj.role === 'owner' || currentUserObj.role === 'admin'){
+    box.innerHTML = `
+      <div class="sub-info-card owner">
+        <i class="fas fa-crown"></i>
+        <div>
+          <b>${currentUserObj.role === 'owner' ? 'رئيس المنصة' : 'أدمن'}</b>
+          <small>صلاحيات كاملة</small>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if(currentUserObj.status !== 'approved'){
+    const pending = currentUserObj.purchase_submitted;
+    box.innerHTML = `
+      <div class="sub-info-card warning">
+        <i class="fas ${pending ? 'fa-hourglass-half' : 'fa-lock'}"></i>
+        <div>
+          <b>${pending ? 'طلب اشتراكك قيد المراجعة' : 'لا يوجد اشتراك فعّال'}</b>
+          <small>${pending ? 'سيتم التفعيل من الإدارة قريباً' : 'اشترك من المتجر لتفتح الملفات والفيديوهات'}</small>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const myCourses = getMyCourses();
+  const course = myCourses.length ? Object.assign({}, myCourses[0], { name: myCourses.map(c => c.name).join(' + ') }) : null;
+  const startD = currentUserObj.subscription_start ? new Date(currentUserObj.subscription_start) : null;
+  const endD = currentUserObj.subscription_end ? new Date(currentUserObj.subscription_end) : null;
+
+  if(!endD){
+    box.innerHTML = `
+      <div class="sub-detail-card active">
+        <div class="sdc-head">
+          <div class="sdc-ic"><i class="fas fa-infinity"></i></div>
+          <div><b>اشتراك دائم</b><small>${course ? escapeHtml(course.name) : ''}</small></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const now = new Date();
+  const msLeft = endD - now;
+  const days = Math.ceil(msLeft / 86400000);
+  const isExpired = days <= 0;
+  const isWarning = !isExpired && days <= 7;
+  const cls = isExpired ? 'expired' : (isWarning ? 'warning' : 'active');
+  const totalMs = startD ? Math.max(1, endD - startD) : null;
+  const usedPct = totalMs ? Math.min(100, Math.max(0, Math.round(((now - startD) / totalMs) * 100))) : 0;
+  const leftPct = 100 - usedPct;
+  const hoursLeft = Math.max(0, Math.floor((msLeft % 86400000) / 3600000));
+
+  box.innerHTML = `
+    <div class="sub-detail-card ${cls}" style="--cc:${course ? (course.color || '#5b6cff') : '#5b6cff'}">
+      <div class="sdc-head">
+        <div class="sdc-ic"><i class="fas ${course ? (course.icon || 'fa-graduation-cap') : 'fa-crown'}"></i></div>
+        <div style="flex:1;min-width:0">
+          <small>اشتراكك الحالي</small>
+          <b>${course ? escapeHtml(course.name) : 'اشتراك المنصة'}</b>
+        </div>
+        <span class="sdc-badge">${isExpired ? '⛔ منتهي' : (typeof isFrozen === 'function' && isFrozen()) ? '❄️ مجمّد' : isWarning ? '⚠️ قارب على الانتهاء' : '✓ فعّال'}</span>
+      </div>
+
+      <div class="sdc-count">
+        ${isExpired
+          ? '<b>انتهى</b><small>جدّد اشتراكك من المتجر</small>'
+          : `<b>${days}</b><small>${days === 1 ? `يوم متبقي (${hoursLeft} ساعة)` : 'يوم متبقي'} • ${formatDurationDays(days)}</small>`}
+      </div>
+
+      ${totalMs ? `<div class="sdc-bar"><i style="width:${leftPct}%"></i></div>` : ''}
+
+      <div class="sdc-dates">
+        ${startD ? `<div><small><i class="fas fa-play"></i> بداية الاشتراك</small><b>${fmtArDate(startD)}</b></div>` : ''}
+        <div><small><i class="fas fa-flag-checkered"></i> نهاية الاشتراك</small><b>${fmtArDate(endD)}</b></div>
+      </div>
+    </div>`;
+}
+window.renderSubscriptionInfo = renderSubscriptionInfo;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sendBtn = document.getElementById('sendGiftBtn');
+  if(sendBtn && !sendBtn.dataset.bound){
+    sendBtn.dataset.bound = '1';
+    sendBtn.addEventListener('click', sendStudentGift);
+  }
+
+  /* إظهار/إخفاء حقول الهدية حسب النوع */
+  const actionSel = document.getElementById('giftAction');
+  if(actionSel && !actionSel.dataset.bound){
+    actionSel.dataset.bound = '1';
+    actionSel.addEventListener('change', e => {
+      const v = e.target.value;
+      const cWrap = document.getElementById('giftCourseWrap');
+      const mWrap = document.getElementById('giftMonthsWrap');
+      if(cWrap) cWrap.style.display = (v === 'course') ? 'block' : 'none';
+      if(mWrap) mWrap.style.display = (v === 'extend' || v === 'course') ? 'block' : 'none';
+    });
+  }
+});
