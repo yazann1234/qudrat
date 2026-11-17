@@ -241,7 +241,7 @@ window.resetAllPoints = () => {
       if(error){ toast('فشل: ' + error.message, 'err'); return; }
       if(typeof logAdminAction === 'function') logAdminAction('update_settings', null, 'تصفير كل النقاط', { users: data });
       toast(`✓ تم تصفير نقاط الجميع (${data || 0} طالب كان عنده نقاط)`, 'ok');
-      if(typeof renderLeaderboard === 'function') renderLeaderboard();
+      try{ _lbCacheAt = 0; }catch(e){} if(typeof renderLeaderboard === 'function') renderLeaderboard();
     }
   });
 };
@@ -252,6 +252,7 @@ window.resetUserPoints = (userId, name) => {
     const { error } = await sb.rpc('reset_user_points', { p_user: userId });
     if(error){ toast('فشل: ' + error.message, 'err'); return; }
     toast('✓ تم تصفير نقاطه', 'ok');
+    try{ _lbCacheAt = 0; }catch(e){}
     if(typeof renderLeaderboard === 'function') renderLeaderboard();
   }, true);
 };
@@ -264,5 +265,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if(currentUserObj){ clearInterval(t); xpRefreshMine(); }
     else if(tries > 60) clearInterval(t);
   }, 1000);
-  XP.refreshTimer = setInterval(() => { if(currentUserObj && !document.hidden) xpRefreshMine(); }, 120000);
+  XP.refreshTimer = setInterval(() => { if(currentUserObj && !document.hidden) xpRefreshMine(); }, 300000);
 });
