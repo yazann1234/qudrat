@@ -79,7 +79,20 @@ function avatarInitialFor(p){
 let _lbLoading = false;
 let _lbAutoTimer = null;
 
-async function fetchLeaderboardRows(){
+/* ⭐ كاش مشترك: الصدارة + ترتيبي في الملف الشخصي + الشهادات يستخدمون نفس النتيجة
+   (بدل ما كل واحد يطلبها من الخادم لحاله) */
+let _lbCache = null, _lbCacheAt = 0, _lbInflight = null;
+async function fetchLeaderboardRows(force){
+  if(!force && _lbCache && Date.now() - _lbCacheAt < 60000) return _lbCache;
+  if(_lbInflight) return _lbInflight;
+  _lbInflight = _fetchLeaderboardRowsNow()
+    .then(rows => { _lbCache = rows; _lbCacheAt = Date.now(); return rows; })
+    .finally(() => { _lbInflight = null; });
+  return _lbInflight;
+}
+window.fetchLeaderboardRows = fetchLeaderboardRows;
+
+async function _fetchLeaderboardRowsNow(){
   /* ⭐ الأفضل: حساب موحّد في السيرفر (نفس النتيجة لكل الطلاب) */
   try{
     const rr = await sb.rpc('get_leaderboard');
@@ -216,7 +229,7 @@ async function renderLeaderboard(){
   _lbAutoTimer = setTimeout(() => {
     const v = document.getElementById('view-leaderboard');
     if(v && v.classList.contains('active') && !document.hidden) renderLeaderboard();
-  }, 60000);
+  }, 180000);
 }
 window.renderLeaderboard = renderLeaderboard;
 
@@ -249,7 +262,7 @@ function renderLbToolbar(count){
     <span><i class="fas fa-users"></i> ${count} طالب في الترتيب</span>
     <span class="lb-updated"><i class="fas fa-clock"></i> آخر تحديث: ${new Date(_lbUpdatedAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</span>
     ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-primary btn-sm" onclick="openMonthlyAwards()"><i class="fas fa-award"></i> إرسال شهادات الشهر</button>' : ''}
-    <button class="btn btn-ghost btn-sm" onclick="renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>
+    <button class="btn btn-ghost btn-sm" onclick="_lbCacheAt = 0; renderLeaderboard()"><i class="fas fa-rotate"></i> تحديث</button>
     ${typeof isPrivileged === 'function' && isPrivileged() ? '<button class="btn btn-danger btn-sm" onclick="resetAllPoints()"><i class="fas fa-trash-can"></i> تصفير كل النقاط</button>' : ''}`;
   try{ if(typeof renderHallOfFame === 'function') renderHallOfFame(); }catch(e){}
 }
