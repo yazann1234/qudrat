@@ -1,0 +1,390 @@
+/* ============================================================
+   23) STORE — المتجر + الشراء
+   - يحفظ الدورة + المدة + السعر اللي اختارها الطالب
+     (الأدمن يفعّل بضغطة واحدة بدون ما يختار شيء)
+   - رمز الريال السعودي بدل «ر.س»
+   - إزالة معالج الشراء القديم المكرر
+============================================================ */
+
+const STORE_DEFAULTS = {
+  ibanNumber: 'SA0000000000000000000000',
+  ibanImage: '',
+  ibanHolder: '',
+  supportPhone: '0538524983',
+  supportWhatsApp: '966538524983'
+};
+
+let receiptFile = null;
+let currentPurchaseData = null;
+
+function getActiveProducts(){
+  return (DB.products || []).filter(p => p.active !== false);
+}
+
+/* ⭐ توحيد رقم الواتساب لصيغة دولية صحيحة: 05xxxxxxxx → 9665xxxxxxxx */
+function normalizeWhatsApp(num){
+  let d = String(num || '').replace(/\D/g, '');
+  if(d.startsWith('00')) d = d.slice(2);
+  if(d.startsWith('05') && d.length === 10) d = '966' + d.slice(1);
+  else if(d.startsWith('5') && d.length === 9) d = '966' + d;
+  return d;
+}
+window.normalizeWhatsApp = normalizeWhatsApp;
+
+function getStoreConfig(){
+  const s = DB.storeSettings || {};
+  const cfgRaw = {
+    ibanNumber: s.iban_number || STORE_DEFAULTS.ibanNumber,
+    ibanImage: s.iban_image || STORE_DEFAULTS.ibanImage,
+    ibanHolder: s.iban_holder || STORE_DEFAULTS.ibanHolder,
+    supportPhone: s.support_phone || STORE_DEFAULTS.supportPhone,
+    supportWhatsApp: s.support_whatsapp || STORE_DEFAULTS.supportWhatsApp
+  };
+  cfgRaw.supportWhatsApp = normalizeWhatsApp(cfgRaw.supportWhatsApp) || STORE_DEFAULTS.supportWhatsApp;
+  return cfgRaw;
+}
+
+function getActualPassword(){
+  if(currentUserObj && currentUserObj.password_hint) return currentUserObj.password_hint;
+  if(currentUserObj){
+    try{ const p = sessionStorage.getItem('pending_pass_' + currentUserObj.id); if(p) return p; }catch(e){}
+    try{ const p = localStorage.getItem('pending_pass_' + currentUserObj.id); if(p) return p; }catch(e){}
+  }
+  return '';
+}
+
+/* ⭐ IBAN اختياري — لا يُظهر 404 */
+function applyStoreSettings(){
+  const cfg = getStoreConfig();
+  const ibanCode = document.getElementById('ibanCode');
+  if(ibanCode) ibanCode.textContent = cfg.ibanNumber || '—';
+
+  const ibanImg = document.getElementById('ibanImage');
+  const ibanWrap = document.getElementById('ibanImageWrap');
+  if(ibanImg && ibanWrap){
+    if(cfg.ibanImage && cfg.ibanImage.trim() && !cfg.ibanImage.includes('assets/iban.png')){
+      ibanImg.onerror = () => { ibanWrap.style.display = 'none'; };
+      ibanImg.onload = () => { ibanWrap.style.display = 'block'; };
+      ibanImg.src = cfg.ibanImage;
+    } else {
+      ibanWrap.style.display = 'none';
+      ibanImg.removeAttribute('src');
+    }
+  }
+}
+window.applyStoreSettings = applyStoreSettings;
+
+/* المتجر يعرض الدورات (courses) — المنتجات تُزامَن معها تلقائياً */
+function renderProducts(){
+  if(typeof renderCoursesGrid === 'function') renderCoursesGrid();
+}
+window.renderProducts = renderProducts;
+
+/* توافق قديم: شراء منتج → حوّله للدورة المرتبطة */
+window.startPurchase = function(productId){
+  const p = (DB.products || []).find(x => x.id === productId);
+  const code = p ? (p.course_code || ('auto_' + p.id)) : null;
+  const c = code ? (CS.courses || []).find(x => x.code === code) : null;
+  if(c) startCourseSubscription(c.id);
+  else toast('هذه الدورة غير متاحة حالياً', 'warn');
+};
+
+/* ============================================================
+   نافذة الشراء
+============================================================ */
+/* توافق قديم: أي شراء مباشر يمر الحين عبر السلة */
+function openPurchaseModalInline(course, months, price){
+  if(!currentUserObj){ toast('سجّل الدخول أولاً', 'warn'); return; }
+  if(!course) return;
+  cartAdd(course.id, months);
+  openCart();
+}
+window.openPurchaseModalInline = openPurchaseModalInline;
+
+function renderPurchaseModal(){
+  const d = currentPurchaseData;
+  if(!d || !d.cart) return;
+
+  /* ⭐ محتويات السلة + الخصم + الإجمالي */
+  const pp = document.getElementById('purchaseProduct');
+  if(pp){
+    pp.classList.add('pp-cart');
+    pp.innerHTML = `
+      <div class="pp-lines">
+        ${d.lines.map(l => {
+          const durTxt = l.fixed_end ? 'اشتراك حتى ' + formatEndDate(l.fixed_end) : 'اشتراك ' + monthsLabel(l.months);
+          const col = l.course.color || '#5b6cff';
+          return `<div class="pp-line">
+            <div class="pp-icon" style="background:color-mix(in srgb,${col} 15%,transparent);color:${col}"><i class="fas ${l.course.icon || 'fa-graduation-cap'}"></i></div>
+            <div class="pp-info"><b>${escapeHtml(l.course.name)}</b><small>${escapeHtml(durTxt)}</small></div>
+            <div class="pp-price"><b>${l.price}</b> <span>${sarIcon()}</span></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="pp-totals">
+        ${d.discount > 0 ? `<div><span>المجموع</span><b>${d.subtotal} ${sarIcon()}</b></div>
+        <div class="disc"><span>خصم (${escapeHtml(d.coupon || '')})</span><b>− ${d.discount} ${sarIcon()}</b></div>` : ''}
+        <div class="total"><span>المبلغ المطلوب تحويله</span><b>${d.total} ${sarIcon()}</b></div>
+      </div>
+    `;
+  }
+
+  /* ⭐ التراخيص الموثوقة داخل صفحة الشراء */
+  const box = document.querySelector('#purchaseModal .purchase-box');
+  if(box && !document.getElementById('purchaseTrust') && typeof trustBadgeHTML === 'function'){
+    const w = document.createElement('div');
+    w.id = 'purchaseTrust';
+    w.innerHTML = trustBadgeHTML();
+    box.appendChild(w);
+  }
+
+  const nameEl = document.getElementById('puName'); if(nameEl) nameEl.textContent = currentUserObj.name || '—';
+  const emailEl = document.getElementById('puEmail'); if(emailEl) emailEl.textContent = currentUserObj.email || '—';
+
+  const actualPass = getActualPassword();
+  const passEl = document.getElementById('puPass');
+  if(passEl){
+    if(actualPass){
+      passEl.textContent = actualPass;
+      passEl.style.color = 'var(--success)';
+      passEl.style.fontStyle = 'normal';
+    } else {
+      passEl.textContent = 'غير متاحة';
+      passEl.style.color = 'var(--danger)';
+      passEl.style.fontStyle = 'italic';
+    }
+  }
+
+  applyStoreSettings();
+
+  /* ⭐ وضّح للطالب رقم الواتساب اللي بينرسل له الطلب */
+  const cfgW = getStoreConfig();
+  let waNote = document.getElementById('purchaseWaNote');
+  const subBtn = document.getElementById('purchaseSubmit');
+  if(!waNote && subBtn){
+    waNote = document.createElement('div');
+    waNote.id = 'purchaseWaNote';
+    waNote.className = 'purchase-wa-note';
+    subBtn.parentNode.insertBefore(waNote, subBtn);
+  }
+  if(waNote){
+    const local = '0' + String(cfgW.supportWhatsApp).replace(/^966/, '');
+    waNote.innerHTML = `<i class="fab fa-whatsapp"></i> سيُرسل طلبك لواتساب الدعم: <b dir="ltr">${escapeHtml(local)}</b>`;
+  }
+
+  receiptFile = null;
+  const prev = document.getElementById('receiptPreview'); if(prev) prev.style.display = 'none';
+  const up = document.getElementById('receiptUpload'); if(up) up.style.display = 'block';
+  const inp = document.getElementById('receiptInput'); if(inp) inp.value = '';
+  const btn = document.getElementById('purchaseSubmit');
+  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم'; }
+}
+
+function closePurchase(){
+  const modal = document.getElementById('purchaseModal');
+  if(modal) modal.classList.remove('open');
+  receiptFile = null;
+}
+window.closePurchase = closePurchase;
+
+async function uploadReceipt(file){
+  if(!currentUserObj) throw new Error('غير مسجل');
+  if(!file) throw new Error('لا يوجد ملف');
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const safeExt = ['jpg','jpeg','png','webp','pdf'].includes(ext) ? ext : 'jpg';
+  const path = currentUserObj.id + '/receipt_' + Date.now() + '.' + safeExt;
+
+  const { error: upErr } = await sb.storage
+    .from('receipts')
+    .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg' });
+
+  if(upErr) throw new Error('فشل رفع الإيصال: ' + upErr.message);
+
+  const { data: signed, error: sErr } = await sb.storage
+    .from('receipts')
+    .createSignedUrl(path, 60 * 60 * 24 * 30);
+
+  if(sErr || !signed || !signed.signedUrl) throw new Error('فشل إنشاء رابط الإيصال');
+
+  return { url: signed.signedUrl, path: path };
+}
+
+function openWhatsApp(url){
+  let opened = false;
+  try{
+    const link = document.createElement('a');
+    link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
+    document.body.appendChild(link); link.click();
+    setTimeout(() => { try{ document.body.removeChild(link); }catch(e){} }, 100);
+    opened = true;
+  }catch(e){}
+  if(!opened){ try{ window.open(url, '_blank'); opened = true; }catch(e){} }
+  if(!opened){ try{ window.location.href = url; }catch(e){} }
+}
+
+/* ⭐ إرسال طلب الشراء */
+async function submitPurchase(){
+  const btn = document.getElementById('purchaseSubmit');
+  if(!currentPurchaseData){ toast('اختر الدورة والمدة أولاً', 'warn'); return; }
+  if(!receiptFile){ toast('أرفق الإيصال أولاً', 'warn'); return; }
+  if(!currentUserObj){ toast('سجل الدخول', 'err'); return; }
+  if(btn && btn.disabled) return;
+
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري رفع الإيصال...'; }
+
+  let uploaded = null;
+  try{ uploaded = await uploadReceipt(receiptFile); }
+  catch(e){
+    toast(e.message || 'فشل رفع الإيصال', 'err');
+    if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم'; }
+    return;
+  }
+
+  const cfg = getStoreConfig();
+  const pass = getActualPassword() || '(غير متاحة)';
+  const d = currentPurchaseData;
+
+  /* ⭐ السيرفر يعيد حساب الأسعار + يستهلك كود الخصم + يحفظ الطلب */
+  let res;
+  try{
+    const { data, error } = await sb.rpc('submit_cart', {
+      p_items: d.items, p_coupon: d.coupon || null,
+      p_receipt_url: uploaded.url, p_receipt_path: uploaded.path
+    });
+    if(error) throw error;
+    res = data;
+  }catch(e){
+    const msg = String(e.message || '');
+    const nice = /coupon_used_up/.test(msg) ? 'كود الخصم انتهى عدد استخداماته — أزله من السلة'
+      : /coupon_already_used/.test(msg) ? 'استخدمت كود الخصم هذا من قبل'
+      : /coupon_expired/.test(msg) ? 'كود الخصم منتهي الصلاحية'
+      : /coupon_invalid/.test(msg) ? 'كود الخصم غير صحيح'
+      : /course_not_found|price_not_found/.test(msg) ? 'إحدى الدورات لم تعد متاحة — حدّث السلة'
+      : 'تعذّر إرسال الطلب: ' + msg;
+    toast(nice, 'err');
+    if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> إتمام الدفع وإرسال للدعم'; }
+    return;
+  }
+
+  const lines = (res.lines || []).map(l => {
+    const dur = l.fixed_end ? 'حتى ' + formatEndDate(l.fixed_end) : monthsLabel(l.months);
+    return `• *${l.name}* — ${dur} (${Number(l.price)} ريال)`;
+  }).join('\n');
+
+  /* رسالة واتساب نصية — لا تدعم الصور، لذلك نكتب «ريال» */
+  const msg =
+    `السلام عليكم 🌹\n` +
+    `طلب اشتراك:\n${lines}\n` +
+    (Number(res.discount) > 0 ? `🎟️ كود الخصم: ${res.coupon} (− ${Number(res.discount)} ريال)\n` : '') +
+    `💰 الإجمالي: *${Number(res.total)} ريال*
+\n` +
+    `👤 ${currentUserObj.name || '—'}\n` +
+    `📧 ${currentUserObj.email || '—'}\n` +
+    `🔑 ${pass}
+\n` +
+    `🧾 الإيصال: ${uploaded.url}`;
+
+  try{
+    const nowIso = new Date().toISOString();
+    localStorage.setItem('purchase_submitted_' + currentUserObj.id, nowIso);
+    Object.assign(currentUserObj, {
+      purchase_submitted: true, purchase_items: res.lines, purchase_price: res.total,
+      purchase_subtotal: res.subtotal, purchase_discount: res.discount, purchase_coupon: res.coupon,
+      purchase_course_id: res.lines[0] && res.lines[0].course_id, purchase_months: res.lines[0] && res.lines[0].months,
+      purchase_submitted_at: nowIso, purchase_receipt_url: uploaded.url, purchase_receipt_path: uploaded.path
+    });
+  }catch(e){}
+  try{ if(typeof cartClearAfterSubmit === 'function') cartClearAfterSubmit(); }catch(e){}
+
+  openWhatsApp('https://wa.me/' + cfg.supportWhatsApp + '?text=' + encodeURIComponent(msg));
+
+  if(btn) btn.innerHTML = '<i class="fas fa-check"></i> تم الإرسال';
+  toast('✅ تم فتح واتساب — أرسل الرسالة', 'ok');
+
+  setTimeout(() => {
+    closePurchase();
+    const appEl = document.getElementById('app');
+    if(appEl) appEl.classList.remove('store-only');
+    try{ if(typeof renderSubBanners === 'function') renderSubBanners(); }catch(e){}
+    try{ if(typeof renderCoursesGrid === 'function') renderCoursesGrid(); }catch(e){}
+    try{ if(typeof go === 'function') go('home'); }catch(e){}
+    setTimeout(() => { try{ toast('✅ تم استلام طلبك — حسابك قيد المراجعة', 'ok'); }catch(e){} }, 400);
+  }, 1500);
+}
+window.submitPurchase = submitPurchase;
+
+/* ============================================================
+   الأحداث
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('receiptInput');
+  const uploadLabel = document.getElementById('receiptUpload');
+  const preview = document.getElementById('receiptPreview');
+  const previewImg = document.getElementById('receiptPreviewImg');
+  const fileName = document.getElementById('receiptFileName');
+  const removeBtn = document.getElementById('receiptRemove');
+  const cancelBtn = document.getElementById('purchaseCancel');
+  const copyBtn = document.getElementById('ibanCopyBtn');
+  const modal = document.getElementById('purchaseModal');
+
+  /* ⭐ ربط زر الإرسال مرة واحدة فقط (كان مربوطاً بمعالجين) */
+  const submitBtn = document.getElementById('purchaseSubmit');
+  if(submitBtn && !submitBtn.dataset.bound){
+    const clean = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(clean, submitBtn);
+    clean.dataset.bound = '1';
+    clean.addEventListener('click', submitPurchase);
+  }
+
+  if(input){
+    input.addEventListener('change', e => {
+      const f = e.target.files[0]; if(!f) return;
+      const okTypes = ['image/jpeg','image/jpg','image/png','image/webp','application/pdf'];
+      if(!okTypes.includes(f.type) && !f.name.toLowerCase().endsWith('.pdf')){ toast('اختر صورة أو PDF', 'warn'); return; }
+      if(f.size > 5 * 1024 * 1024){ toast('حجم الملف كبير (5 ميجا)', 'warn'); return; }
+      receiptFile = f;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        if(previewImg){
+          if(f.type === 'application/pdf'){
+            previewImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2VmNDQ0NCI+UERGPC90ZXh0Pjwvc3ZnPg==';
+          } else { previewImg.src = ev.target.result; }
+        }
+        if(fileName) fileName.textContent = f.name;
+        if(uploadLabel) uploadLabel.style.display = 'none';
+        if(preview) preview.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+
+  if(removeBtn){
+    removeBtn.addEventListener('click', () => {
+      receiptFile = null;
+      if(input) input.value = '';
+      if(preview) preview.style.display = 'none';
+      if(uploadLabel) uploadLabel.style.display = 'block';
+    });
+  }
+
+  if(cancelBtn) cancelBtn.addEventListener('click', closePurchase);
+  if(modal) modal.addEventListener('click', e => { if(e.target === modal) closePurchase(); });
+
+  if(copyBtn){
+    copyBtn.addEventListener('click', () => {
+      const cfg = getStoreConfig();
+      try{
+        navigator.clipboard.writeText(cfg.ibanNumber);
+        toast('✓ تم نسخ الآيبان', 'ok');
+        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+      }catch(e){ toast('تعذّر النسخ', 'err'); }
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && modal && modal.classList.contains('open')) closePurchase();
+  });
+});

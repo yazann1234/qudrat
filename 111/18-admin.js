@@ -1,0 +1,1217 @@
+/* ============================================================
+   18) ADMIN — النسخة المُصلَّحة (بدون تكرار + رفع سريع)
+============================================================ */
+
+function renderAdmin(){
+  if(!isPrivileged()) return;
+  const nonAdmins = (DB.users || []).filter(u => u.role !== 'admin' && u.role !== 'owner');
+  const setTxt = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('adUsers', nonAdmins.length);
+  setTxt('adPending', nonAdmins.filter(u => u.status === 'pending').length);
+  setTxt('adSubscribed', nonAdmins.filter(u => u.status === 'approved').length);
+  setTxt('adFiles', (DB.files || []).length);
+  setTxt('adImportant', (DB.files || []).filter(f => f.important).length);
+  setTxt('adVideos', (DB.videos || []).length);
+  setTxt('adProducts', (DB.products || []).filter(p => p.active).length);
+  setTxt('adPurchases', nonAdmins.filter(u => u.purchase_submitted && u.status !== 'approved').length);
+
+  document.querySelectorAll('.owner-only-tab').forEach(t => {
+    t.style.display = (currentUserObj && currentUserObj.role === 'owner') ? '' : 'none';
+  });
+
+  renderUsersTable();
+  renderAdminFiles();
+  if(typeof renderAdminVideos === 'function') renderAdminVideos();
+  if(typeof renderAdminProducts === 'function') renderAdminProducts();
+  if(typeof renderStoreSettings === 'function') renderStoreSettings();
+  if(typeof renderAdminQuizQuestions === 'function') renderAdminQuizQuestions();
+
+  if(currentUserObj && currentUserObj.role === 'owner'){
+    try{ if(typeof loadGiftUsersList === 'function') loadGiftUsersList(); }catch(e){}
+    try{ if(typeof renderAdminLogs === 'function') renderAdminLogs(); }catch(e){}
+  }
+}
+window.renderAdmin = renderAdmin;
+
+/* ============================================================
+   جدول المستخدمين — مع الدورة والاشتراك
+============================================================ */
+function renderUsersTable(){
+  const box = document.getElementById('usersTable');
+  if(!box) return;
+
+  const q = (document.getElementById('userSearch') ? document.getElementById('userSearch').value : '').trim().toLowerCase();
+  const filter = document.getElementById('userFilter') ? document.getElementById('userFilter').value : 'all';
+  const isOwnerUser = typeof isOwner === 'function' && isOwner();
+
+  let list = DB.users || [];
+  if(q) list = list.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+
+  if(filter === 'pending') list = list.filter(u => u.status === 'pending' && u.role !== 'owner' && u.role !== 'admin');
+  else if(filter === 'purchase') list = list.filter(u => u.purchase_submitted && u.status !== 'approved' && u.role !== 'owner' && u.role !== 'admin');
+  else if(filter === 'sub') list = list.filter(u => u.status === 'approved');
+  else if(filter === 'off') list = list.filter(u => u.status !== 'approved');
+  else if(filter === 'admins') list = list.filter(u => u.role === 'admin' || u.role === 'owner');
+
+  list.sort((a,b) => {
+    /* ⭐ طلبات الشراء أولاً بعد الإدارة */
+    const rank = u => u.role === 'owner' ? 0 : u.role === 'admin' ? 1
+      : (u.purchase_submitted && u.status !== 'approved') ? 2
+      : u.status === 'pending' ? 3 : 4;
+    const ra = rank(a), rb = rank(b);
+    if(ra !== rb) return ra - rb;
+    return new Date(b.created_at||0) - new Date(a.created_at||0);
+  });
+
+  if(!list.length){
+    box.innerHTML = '<div class="admin-empty"><div class="em-ic"><i class="fas fa-users"></i></div><h3>لا يوجد مستخدمون مطابقون</h3><p>جرّب تغيير البحث أو التصفية</p></div>';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="thead">
+      <div>المستخدم</div>
+      <div>البريد الإلكتروني</div>
+      <div>الدورة والاشتراك</div>
+      <div>كلمة السر</div>
+      <div>الحالة</div>
+      <div style="text-align:left">إجراءات</div>
+    </div>
+    ${list.map(u => {
+      let statusBadge;
+      if(u.role === 'owner') statusBadge = '<span class="role-badge owner"><i class="fas fa-crown"></i> رئيس المنصة</span>';
+      else if(u.role === 'admin') statusBadge = '<span class="role-badge admin"><i class="fas fa-shield-halved"></i> أدمن</span>';
+      else if(u.status === 'approved') statusBadge = '<span class="status-badge on"><i class="fas fa-circle-check"></i> مشترك</span>';
+      else if(u.status === 'pending') statusBadge = '<span class="status-badge pending"><i class="fas fa-clock"></i> معلّق</span>';
+      else statusBadge = '<span class="status-badge off"><i class="fas fa-ban"></i> مرفوض</span>';
+
+      const avStyle = u.avatar_url ? `background-image:url('${u.avatar_url}')` : '';
+      const pwHtml = u.password_hint
+        ? `<code onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')" title="اضغط للنسخ" style="background:var(--bg);padding:3px 8px;border-radius:6px;font-size:.74rem;direction:ltr;display:inline-block;cursor:pointer;border:1px solid var(--border)">${escapeHtml(u.password_hint)}</code>`
+        : '<span style="font-size:.72rem;color:var(--muted)">—</span>';
+
+      /* ⭐ بيانات الدورة والاشتراك */
+      const uCourses = getUserCourseIds(u).map(id => getCourseById(id)).filter(Boolean);
+      const course = uCourses.length ? Object.assign({}, uCourses[0], { name: uCourses.map(c => c.name).join(' + ') }) : null;
+      const req = (u.purchase_submitted && typeof getPurchaseRequest === 'function') ? getPurchaseRequest(u) : null;
+      const reqKind = !req ? '' : (u.status !== 'approved' ? 'new' : (req.items.every(it => userHasCourse(it.course.id, u)) ? 'renew' : 'add'));
+      let subCell;
+      if(req){
+        /* ⭐ طلب شراء: يظهر للأدمن ماذا اختار الطالب بالضبط */
+        subCell = `
+          <div class="purchase-req-cell" style="--rc:${req.course.color || '#5b6cff'}">
+            <div class="prc-tag">${reqKind === 'renew' ? '<i class="fas fa-rotate"></i> طلب تجديد' : reqKind === 'add' ? '<i class="fas fa-plus"></i> إضافة دورة' : '<i class="fas fa-cart-shopping"></i> طلب شراء'}</div>
+            ${req.items.map(it => `<div class="prc-course"><i class="fas ${it.course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(it.course.name)} <small style="opacity:.75">— ${it.fixed_end ? 'حتى ' + formatEndDate(it.fixed_end) : monthsLabel(it.months)}</small></div>`).join('')}
+            <div class="prc-meta">${req.discount > 0 ? `<s style="opacity:.6">${priceHTML(req.subtotal)}</s> ` : ''}${priceHTML(req.total)}${req.coupon ? ` • <i class="fas fa-ticket"></i> ${escapeHtml(req.coupon)}` : ''}</div>
+            ${u.purchase_submitted_at ? `<small>${getTimeAgo(new Date(u.purchase_submitted_at))}</small>` : ''}
+          </div>`;
+      } else if(course && u.status === 'approved'){
+        const months = u.subscription_months || 0;
+        const price = (course.prices && months) ? (course.prices[String(months)] || 0) : 0;
+        let daysLeft = null;
+        if(u.subscription_end){
+          daysLeft = Math.ceil((new Date(u.subscription_end) - new Date()) / (1000*60*60*24));
+        }
+        const isExpired = daysLeft !== null && daysLeft <= 0;
+        const isWarning = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+        const daysColor = isExpired ? '#dc2626' : isWarning ? '#d97706' : '#16a34a';
+        subCell = `
+          <div style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:800;margin-bottom:3px">
+            <i class="fas ${course.icon || 'fa-graduation-cap'}" style="color:${course.color || '#5b6cff'};font-size:.9rem"></i>
+            <span>${escapeHtml(course.name)}</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);font-weight:700;line-height:1.6">
+            ${price ? `<span style="color:var(--primary);font-weight:900">${priceHTML(price)}</span> • ` : ''}${monthsLabel(months)}
+            ${daysLeft !== null ? `<br><span style="color:${daysColor};font-weight:900">${isExpired ? '⛔ منتهي' : `⏳ متبقي ${daysLeft} يوم`}</span>` : ''}
+          </div>
+          ${u.freeze_until && new Date(u.freeze_until) > new Date() ? `
+          <div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:.7rem;font-weight:900;color:#0284c7;background:rgba(2,132,199,.1);padding:3px 8px;border-radius:8px"><i class="fas fa-snowflake"></i> مجمّد حتى ${new Date(u.freeze_until).toLocaleDateString('ar-SA')}</span>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:.68rem" onclick="adminUnfreezeUser('${u.id}','${escapeHtml(u.name || '').replace(/'/g, '')}')"><i class="fas fa-fire"></i> فك</button>
+          </div>` : ''}
+        `;
+      } else if(course){
+        subCell = `
+          <div style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:700;opacity:.7">
+            <i class="fas ${course.icon || 'fa-graduation-cap'}" style="color:${course.color || '#5b6cff'}"></i>
+            <span>${escapeHtml(course.name)}</span>
+          </div>
+          <small style="font-size:.68rem;color:var(--accent);font-weight:800">لم يُفعّل بعد</small>
+        `;
+      } else {
+        subCell = '<span style="font-size:.72rem;color:var(--muted)">بدون دورة</span>';
+      }
+
+      const isTargetOwner = u.role === 'owner';
+      const isTargetAdmin = u.role === 'admin';
+      let actions = '';
+
+      if(!isTargetOwner){
+        if(req && u.role !== 'admin'){
+          actions += `<button class="btn btn-success btn-sm quick-activate" onclick="quickActivate('${u.id}', this)" title="${reqKind === 'renew' ? 'تجديد' : reqKind === 'add' ? 'إضافة' : 'تفعيل'} ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)}"><i class="fas fa-bolt"></i> ${reqKind === 'renew' ? 'تجديد' : reqKind === 'add' ? 'إضافة' : 'تفعيل'}</button>`;
+          actions += `<button class="btn btn-ghost btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل بدورة/مدة مختلفة"><i class="fas fa-sliders"></i></button>`;
+        } else if(u.status !== 'approved' && u.role !== 'admin'){
+          if(req){
+            /* ⭐ ضغطة واحدة: يفعّل الدورة والمدة اللي اشتراها الطالب */
+            actions += `<button class="btn btn-success btn-sm quick-activate" onclick="quickActivate('${u.id}', this)" title="تفعيل ${escapeHtml(req.course.name)} — ${monthsLabel(req.months)}"><i class="fas fa-bolt"></i> تفعيل</button>`;
+            actions += `<button class="btn btn-ghost btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل بدورة/مدة مختلفة"><i class="fas fa-sliders"></i></button>`;
+          } else {
+            actions += `<button class="btn btn-success btn-sm" onclick="openApproveModal('${u.id}')" title="تفعيل"><i class="fas fa-check"></i></button>`;
+          }
+        }
+        if(u.status !== 'rejected' && u.role !== 'admin'){
+          actions += `<button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="رفض"><i class="fas fa-ban"></i></button>`;
+        }
+        if(isOwnerUser || !isTargetAdmin){
+          actions += `<button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')" title="تعديل"><i class="fas fa-pen"></i></button>`;
+          actions += `<button class="btn btn-ghost btn-sm" onclick="resetUserPassword('${u.id}')" title="إعادة تعيين كلمة المرور"><i class="fas fa-key"></i></button>`;
+          if(!isTargetAdmin && u.status === 'approved') actions += `<button class="btn btn-ghost btn-sm" onclick="manageUserCourses('${u.id}')" title="دورات الطالب (أكثر من دورة)" style="background:rgba(91,108,255,.12);color:var(--primary)"><i class="fas fa-layer-group"></i> الدورات</button>`;
+          if(!isTargetAdmin) actions += `<button class="btn btn-ghost btn-sm" onclick="manageUserDevices('${u.id}')" title="أجهزة الطالب"><i class="fas fa-laptop-mobile"></i></button>`;
+        }
+        if(u.purchase_receipt_url){
+          actions += `<button class="btn btn-ghost btn-sm" onclick="viewReceipt('${escapeHtml(u.purchase_receipt_url)}')" title="عرض الإيصال" style="background:rgba(247,179,43,.15);color:#b45309;border-color:rgba(247,179,43,.3)"><i class="fas fa-receipt"></i></button>`;
+        }
+        if(isOwnerUser){
+          if(u.role === 'admin'){
+            actions += `<button class="btn btn-ghost btn-sm" onclick="demoteAdmin('${u.id}')" title="إزالة صلاحية الأدمن" style="background:rgba(247,179,43,.15);color:#d97706;border-color:rgba(247,179,43,.3)"><i class="fas fa-arrow-down"></i></button>`;
+          } else {
+            actions += `<button class="btn btn-ghost btn-sm" onclick="promoteToAdmin('${u.id}')" title="ترقية إلى أدمن" style="background:rgba(239,68,68,.12);color:#dc2626;border-color:rgba(239,68,68,.28)"><i class="fas fa-user-shield"></i></button>`;
+          }
+          actions += `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')" title="حذف نهائي"><i class="fas fa-trash"></i></button>`;
+        }
+      }
+
+      return `<div class="trow ${req ? 'has-purchase' : ''}">
+        <div class="user-cell">
+          <div class="av" style="${avStyle}">${avStyle ? '' : escapeHtml((u.name||'؟').trim().charAt(0) || '؟')}</div>
+          <div class="info">
+            <b>${escapeHtml(u.name || '—')}</b>
+            <small>${u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—'}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</small>
+          </div>
+        </div>
+        <div class="email-cell" style="direction:ltr;text-align:right">${escapeHtml(u.email)}</div>
+        <div class="sub-cell">${subCell}</div>
+        <div class="pw-cell">${pwHtml}</div>
+        <div class="status-cell">${statusBadge}</div>
+        <div class="actions-cell">${actions || '<span style="font-size:.72rem;color:var(--muted)">—</span>'}</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+window.renderUsersTable = renderUsersTable;
+
+/* ⭐ قائمة اختيار دورات متعددة (checkbox) */
+function courseChecklistHTML(name, selectedIds){
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const sel = new Set((selectedIds || []).map(String));
+  if(!courses.length) return '<div style="font-size:.8rem;color:var(--muted)">لا توجد دورات</div>';
+  return `<div class="course-checklist">${courses.map(c => `
+    <label class="cc-item" style="--cc:${c.color || '#5b6cff'}">
+      <input type="checkbox" name="${name}" value="${c.id}" ${sel.has(String(c.id)) ? 'checked' : ''}>
+      <span class="cc-box"><i class="fas fa-check"></i></span>
+      <i class="fas ${c.icon || 'fa-graduation-cap'} cc-ic"></i>
+      <span class="cc-name">${escapeHtml(c.name)}</span>
+    </label>`).join('')}</div>`;
+}
+function readCourseChecklist(name){
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+}
+window.courseChecklistHTML = courseChecklistHTML;
+window.readCourseChecklist = readCourseChecklist;
+
+/* ⭐ دورات الطالب: ورقي + محوسب (أو أي عدد) بدون تغيير مدة الاشتراك */
+window.manageUserCourses = (userId) => {
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(!u) return;
+  openModal({
+    title: 'دورات الطالب',
+    text: `اختر دورة أو أكثر لـ ${escapeHtml(u.name || u.email)} — مدة الاشتراك تبقى كما هي.`,
+    bodyHTML: courseChecklistHTML('mucCourses', getUserCourseIds(u)) +
+      `<div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-size:.76rem;font-weight:700"><i class="fas fa-info-circle"></i> الطالب يشوف ملفات وفيديوهات كل الدورات المختارة.</div>`,
+    okText: 'حفظ الدورات',
+    onOk: async () => {
+      const ids = readCourseChecklist('mucCourses');
+      if(!ids.length){ toast('اختر دورة واحدة على الأقل', 'warn'); return; }
+      const upd = { course_id: ids[0], course_ids: ids };
+      const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', userId), upd);
+      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      Object.assign(u, upd);
+      const names = ids.map(id => getCourseById(id)).filter(Boolean).map(c => c.name).join(' + ');
+      if(typeof logAdminAction === 'function') logAdminAction('edit_user', userId, 'تعديل الدورات: ' + names, upd);
+      if(typeof sendNotification === 'function') sendNotification('general', '📚 تم تحديث دوراتك', 'دوراتك الآن: ' + names, null, null, 'fa-layer-group', '#5b6cff', userId);
+      renderUsersTable();
+      toast('✓ تم حفظ الدورات: ' + names, 'ok');
+    }
+  });
+};
+
+window.copyTxt = t => { try{ navigator.clipboard.writeText(t); toast('نُسخت', 'ok'); }catch(e){} };
+
+/* ============================================================
+   ⭐ تفعيل بضغطة واحدة — بالدورة والمدة اللي اختارها الطالب
+============================================================ */
+window.quickActivate = async (userId, btn) => {
+  const u = (DB.users || []).find(x => x.id === userId);
+  if(!u) return;
+  const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
+  if(!req){ openApproveModal(userId); return; }
+
+  let orig = '';
+  if(btn){ if(btn.disabled) return; orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+  /* ⭐ كل دورات السلة: نهاية الاشتراك = أبعد تاريخ بين البنود
+     (التجديد يُضاف على المدة المتبقية) */
+  const now = new Date();
+  const base = (u.status === 'approved' && u.subscription_end && new Date(u.subscription_end) > now) ? new Date(u.subscription_end) : now;
+  let end = null;
+  req.items.forEach(it => {
+    let e;
+    if(it.fixed_end || it.course.subscription_end_date){
+      e = new Date(it.fixed_end || it.course.subscription_end_date);
+    } else {
+      e = new Date(userHasCourse(it.course.id, u) && u.status === 'approved' ? base : now);
+      e.setMonth(e.getMonth() + (it.months || 1));
+    }
+    if(!isNaN(e.getTime()) && (!end || e > end)) end = e;
+  });
+  const ids = req.items.map(it => it.course.id);
+  const ok = await activateSubscription(userId, req.months, ids, { endDate: end, addToExisting: u.status === 'approved' });
+  if(ok){
+    renderUsersTable();
+    try{ renderAdmin(); }catch(e){}
+  } else if(btn){
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+};
+
+/* ============================================================
+   مودال التفعيل اليدوي — مع الدورة والمدة (مُعبّأ مسبقاً بطلب الطالب)
+============================================================ */
+window.openApproveModal = (userId) => {
+  const u = DB.users.find(x => x.id === userId);
+  if(!u) return;
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const req = typeof getPurchaseRequest === 'function' ? getPurchaseRequest(u) : null;
+  const selIds = u.status === 'approved' ? getUserCourseIds(u) : [];
+  if(req) req.items.forEach(it => { if(!selIds.includes(String(it.course.id))) selIds.push(String(it.course.id)); });
+  if(!selIds.length && u.course_id) selIds.push(String(u.course_id));
+  const selMonths = req ? req.months : (u.subscription_months || 1);
+  const monthOpts = [1, 3, 6, 12];
+  if(!monthOpts.includes(selMonths)) monthOpts.push(selMonths);
+  monthOpts.sort((a, b) => a - b);
+
+  const selectStyle = 'width:100%;font-family:inherit;font-size:.9rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
+
+  openModal({
+    title: 'تفعيل اشتراك الطالب',
+    text: `اختر الدورة ومدة الاشتراك لـ: ${escapeHtml(u.name || u.email)}`,
+    bodyHTML: `
+      ${req ? `<div style="padding:11px 13px;margin-bottom:14px;border-radius:12px;background:rgba(34,197,94,.12);color:#15803d;font-size:.8rem;font-weight:800;line-height:1.7">
+        <i class="fas fa-cart-shopping"></i> الطالب طلب: ${req.items.map(it => escapeHtml(it.course.name) + ' (' + (it.fixed_end ? 'حتى ' + formatEndDate(it.fixed_end) : monthsLabel(it.months)) + ')').join(' + ')} — ${priceHTML(req.total)}${req.coupon ? ' — كود ' + escapeHtml(req.coupon) : ''}
+      </div>` : ''}
+      <div class="form-group" style="margin-bottom:14px">
+        <label>الدورات * <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة)</small></label>
+        ${courseChecklistHTML('approveCourses', selIds)}
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>مدة الاشتراك *</label>
+        <select id="approveDuration" style="${selectStyle}">
+          ${monthOpts.map(m => `<option value="${m}" ${m === selMonths ? 'selected' : ''}>${monthsLabel(m)}</option>`).join('')}
+          <option value="custom">✏️ مخصص (أيام / أشهر / تاريخ)</option>
+        </select>
+      </div>
+      ${customDurationHTML('approve', true)}
+      <div style="padding:12px;background:var(--primary-soft);border-radius:10px;font-size:.76rem;color:var(--primary);font-weight:700;line-height:1.7">
+        <i class="fas fa-info-circle"></i> الطالب سيرى ملفات وفيديوهات الدورات المختارة فقط.
+      </div>
+    `,
+    okText: 'تفعيل الآن',
+    onOk: async () => {
+      const courseId = readCourseChecklist('approveCourses');
+      const durVal = document.getElementById('approveDuration').value;
+      if(!courseId.length){ toast('اختر دورة واحدة على الأقل', 'warn'); return; }
+      let ok;
+      if(durVal === 'custom'){
+        const c = readCustomDuration('approve');
+        if(c.error){ toast(c.error, 'warn'); return; }
+        ok = await activateSubscription(userId, c.months, courseId, { endDate: c.endDate });
+      } else {
+        ok = await activateSubscription(userId, parseInt(durVal, 10), courseId);
+      }
+      if(ok){ renderUsersTable(); try{ renderAdmin(); }catch(e){} }
+    }
+  });
+
+  setTimeout(() => {
+    bindCustomDuration('approve');
+    const sel = document.getElementById('approveDuration');
+    if(sel) sel.addEventListener('change', () => {
+      const w = document.getElementById('approveCustomWrap');
+      if(w) w.style.display = sel.value === 'custom' ? 'block' : 'none';
+    });
+  }, 50);
+};
+
+window.approveUser = async id => openApproveModal(id);
+
+window.rejectUser = async id => {
+  const { error } = await sb.from('profiles').update({ status:'rejected' }).eq('id', id);
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  if(typeof logAdminAction === 'function') logAdminAction('reject_user', id, 'رفض طلب مستخدم');
+  const u = (DB.users || []).find(x => x.id === id); if(u) u.status = 'rejected';
+  renderUsersTable();
+  toast('تم رفض المستخدم', 'warn');
+};
+
+window.promoteToAdmin = (id) => {
+  if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('ترقية إلى أدمن', `ترقية «${escapeHtml(u.name)}» إلى صلاحيات أدمن كاملة؟`, async () => {
+    const { error } = await sb.from('profiles').update({ role: 'admin' }).eq('id', id);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    u.role = 'admin';
+    if(typeof logAdminAction === 'function') logAdminAction('promote_admin', id, 'ترقية إلى أدمن');
+    renderUsersTable();
+    toast('✓ تم الترقية', 'ok');
+  });
+};
+
+window.demoteAdmin = (id) => {
+  if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('إزالة صلاحية الأدمن', `إزالة صلاحيات الأدمن من «${escapeHtml(u.name)}»؟`, async () => {
+    const { error } = await sb.from('profiles').update({ role: 'user' }).eq('id', id);
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+    u.role = 'user';
+    if(typeof logAdminAction === 'function') logAdminAction('demote_admin', id, 'إزالة صلاحية الأدمن');
+    renderUsersTable();
+    toast('تمت الإزالة', 'warn');
+  }, true);
+};
+
+window.editUser = id => {
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  const isOwnerUser = isOwner();
+  const isTargetAdmin = u.role === 'admin';
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+
+  if(!isOwnerUser && isTargetAdmin){ toast('لا تملك صلاحية تعديل الأدمنز', 'err'); return; }
+
+  openModal({
+    title: 'تعديل المستخدم',
+    text: isOwnerUser ? 'رئيس المنصة يمكنه تعديل كل شيء.' : 'عدّل البيانات الأساسية.',
+    bodyHTML: `
+      <div class="form-group" style="margin-bottom:12px">
+        <label>الاسم</label>
+        <input type="text" id="euName" value="${escapeHtml(u.name||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="euEmail" value="${escapeHtml(u.email||'')}" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>رقم الجوال</label>
+        <input type="tel" id="euPhone" value="${escapeHtml(u.phone||'')}" maxlength="10" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+      </div>
+      ${!isTargetAdmin ? `
+      <div class="form-group" style="margin-bottom:12px">
+        <label>الدورات <small style="color:var(--muted);font-weight:600">(تقدر تختار أكثر من دورة)</small></label>
+        ${courseChecklistHTML('euCourses', getUserCourseIds(u))}
+        <input type="hidden" id="euCourse" value="1">
+      </div>
+      ` : ''}
+      <div class="form-group" style="margin-bottom:12px">
+        <label>كلمة المرور الجديدة ${u.password_hint ? `<span style="color:var(--muted);font-weight:600;font-size:.76rem">(الحالية: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;direction:ltr;display:inline-block;cursor:pointer" onclick="copyTxt('${escapeHtml(u.password_hint).replace(/'/g,'&#39;')}')">${escapeHtml(u.password_hint)}</code>)</span>` : ''}</label>
+        <div style="position:relative">
+          <input type="password" id="euPw" value="" placeholder="اتركها فارغة لعدم التغيير" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 44px 12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <button type="button" onclick="togglePassVis('euPw',this)" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      ${!isTargetAdmin ? `
+      <div class="form-group" style="margin-bottom:12px">
+        <label>حالة الحساب</label>
+        <select id="euStatus" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <option value="approved" ${u.status==='approved'?'selected':''}>✅ مشترك</option>
+          <option value="pending" ${u.status==='pending'?'selected':''}>⏳ معلّق</option>
+          <option value="rejected" ${u.status==='rejected'?'selected':''}>❌ مرفوض</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>مدة الاشتراك ${u.subscription_end ? `<span style="color:var(--muted);font-weight:600;font-size:.74rem">(ينتهي حالياً: ${new Date(u.subscription_end).toLocaleDateString('ar-SA')})</span>` : ''}</label>
+        <select id="euDuration" style="width:100%;font-family:inherit;font-size:.88rem;padding:12px 15px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          ${u.status === 'approved' && u.subscription_end ? '<option value="keep" selected>— بدون تغيير —</option>' : ''}
+          <option value="1">شهر</option>
+          <option value="3">3 أشهر</option>
+          <option value="6">6 أشهر</option>
+          <option value="12">سنة</option>
+          <option value="custom">✏️ مخصص (أيام / أشهر / تاريخ)</option>
+        </select>
+      </div>
+      ${customDurationHTML('eu', true)}
+      ` : ''}
+      <div id="euStatusBar" style="display:none;padding:10px 12px;border-radius:10px;font-size:.78rem;font-weight:700;text-align:center;margin-top:8px"></div>
+    `,
+    okText: 'حفظ',
+    onOk: async () => {
+      const newPw = document.getElementById('euPw').value.trim();
+      const newPhone = document.getElementById('euPhone').value.trim().replace(/\D/g, '');
+      const statusBar = document.getElementById('euStatusBar');
+      const showBar = (kind, html) => {
+        if(!statusBar) return;
+        statusBar.style.display = 'block';
+        statusBar.style.background = kind === 'ok' ? 'rgba(34,197,94,.14)' : kind === 'warn' ? 'rgba(247,179,43,.16)' : 'rgba(239,68,68,.14)';
+        statusBar.style.color = kind === 'ok' ? '#16a34a' : kind === 'warn' ? '#d97706' : '#dc2626';
+        statusBar.innerHTML = html;
+      };
+
+      const upd = {
+        name: document.getElementById('euName').value.trim() || u.name,
+        email: document.getElementById('euEmail').value.trim().toLowerCase() || u.email
+      };
+      if(newPhone && newPhone.length === 10) upd.phone = newPhone;
+
+      const statusEl = document.getElementById('euStatus');
+      if(statusEl) upd.status = statusEl.value;
+
+      const courseEl = document.getElementById('euCourse');
+      if(courseEl){
+        const ids = readCourseChecklist('euCourses');
+        upd.course_id = ids[0] || null;
+        upd.course_ids = ids;
+      }
+
+      const durEl = document.getElementById('euDuration');
+      const durVal = durEl ? durEl.value : 'keep';
+      if(statusEl && statusEl.value === 'approved' && durVal !== 'keep'){
+        let end, months;
+        if(durVal === 'custom'){
+          const c = readCustomDuration('eu');
+          if(c.error){ showBar('err', '<i class="fas fa-circle-xmark"></i> ' + c.error); return; }
+          end = c.endDate; months = c.months;
+        } else {
+          months = parseInt(durVal, 10) || 1;
+          end = calculateSubscriptionEnd(months, upd.course_id);
+        }
+        upd.subscription_end = end.toISOString();
+        upd.subscription_months = months;
+        upd.subscription_start = new Date().toISOString();
+        upd.purchase_submitted = false;
+      }
+
+      const { error } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', id), upd);
+      if(!error && statusEl && statusEl.value === 'approved' && u.status !== 'approved' && typeof sendNotification === 'function'){
+        sendNotification('general', '✓ تم تفعيل اشتراكك', 'تم تفعيل اشتراكك. استمتع بالتعلم!', null, null, 'fa-check-circle', '#22c55e', id);
+      }
+      if(error){ showBar('err', '<i class="fas fa-circle-xmark"></i> فشل: ' + error.message); return; }
+
+      if(typeof logAdminAction === 'function') logAdminAction('edit_user', id, 'تعديل بيانات المستخدم', upd);
+
+      if(newPw && newPw !== u.password_hint){
+        if(newPw.length < 8){ showBar('err', '<i class="fas fa-circle-xmark"></i> كلمة المرور 8 أحرف على الأقل'); return; }
+        showBar('warn', '<i class="fas fa-spinner fa-spin"></i> جاري تحديث كلمة المرور...');
+        let success = false;
+        try{
+          const r = await sb.auth.getSession();
+          const curSess = r.data.session;
+          const res = await fetch(CHANGE_PASS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (curSess ? curSess.access_token : '') },
+            body: JSON.stringify({ userId: id, newPassword: newPw })
+          });
+          if(res.ok){ const j = await res.json(); if(j && j.success) success = true; }
+        }catch(e){}
+        if(success){
+          try{ await sb.from('profiles').update({ password_hint: newPw }).eq('id', id); }catch(e){}
+          upd.password_hint = newPw;
+          Object.assign(u, upd);
+          renderUsersTable();
+          showBar('ok', '<i class="fas fa-circle-check"></i> ✅ تم التحديث');
+          setTimeout(() => { const m = document.getElementById('modal'); if(m) m.classList.remove('open'); }, 1500);
+          return;
+        }
+      }
+
+      Object.assign(u, upd);
+      renderUsersTable();
+      toast('✓ تم تحديث البيانات', 'ok');
+    }
+  });
+
+  setTimeout(() => {
+    bindCustomDuration('eu');
+    const sel = document.getElementById('euDuration');
+    if(sel) sel.addEventListener('change', () => {
+      const w = document.getElementById('euCustomWrap');
+      if(w) w.style.display = sel.value === 'custom' ? 'block' : 'none';
+    });
+  }, 50);
+};
+
+window.resetUserPassword = id => {
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('إعادة تعيين كلمة السر', `سيتم إرسال رابط إعادة تعيين كلمة السر إلى: ${escapeHtml(u.email)}`, async () => {
+    try{
+      const { error } = await sbRecovery.auth.resetPasswordForEmail(u.email, { redirectTo: RESET_REDIRECT });
+      if(error){ toast('فشل الإرسال: ' + error.message, 'err'); return; }
+      toast('✓ تم إرسال رابط إعادة التعيين', 'ok');
+    }catch(e){ toast('خطأ: ' + e.message, 'err'); }
+  });
+};
+
+window.deleteUser = id => {
+  if(!isOwner()){ toast('هذه الصلاحية لرئيس المنصة فقط', 'err'); return; }
+  const u = DB.users.find(x => x.id === id); if(!u) return;
+  confirmBox('حذف المستخدم', `سيتم حذف «${escapeHtml(u.name)}» نهائيًا؟`, async () => {
+    if(typeof logAdminAction === 'function') logAdminAction('delete_user', id, `حذف المستخدم: ${u.name}`, { email: u.email });
+    try{ await sb.from('user_progress').delete().eq('user_id', id); }catch(e){}
+    try{ await sb.from('user_drawings').delete().eq('user_id', id); }catch(e){}
+    try{ await sb.from('video_progress').delete().eq('user_id', id); }catch(e){}
+    const { error } = await sb.from('profiles').delete().eq('id', id);
+    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
+    DB.users = DB.users.filter(x => x.id !== id);
+    renderUsersTable(); renderAdmin();
+    toast('✓ تم حذف المستخدم', 'ok');
+  }, true);
+};
+
+window.viewReceipt = (url) => {
+  if(!url) return;
+  openModal({
+    title: '🧾 إيصال التحويل',
+    text: '',
+    bodyHTML: `<div style="text-align:center;margin-bottom:12px"><img src="${escapeHtml(url)}" alt="الإيصال" style="max-width:100%;max-height:60vh;border-radius:12px;border:1px solid var(--border);background:#fff" onerror="this.style.display='none'"></div>`,
+    okText: 'إغلاق',
+    onOk: () => {}
+  });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const searchEl = document.getElementById('userSearch');
+  if(searchEl && !searchEl.dataset.bound){ searchEl.dataset.bound = '1'; searchEl.addEventListener('input', debounce(renderUsersTable, 200)); }
+  const filterEl = document.getElementById('userFilter');
+  if(filterEl && !filterEl.dataset.bound){ filterEl.dataset.bound = '1'; filterEl.addEventListener('change', renderUsersTable); }
+});
+
+/* ============================================================
+   ملفات الأدمن
+============================================================ */
+/* ⭐ شارة الدورة في بطاقات الأدمن (تنبيه واضح لو المحتوى للجميع) */
+function adminCourseBadge(item){
+  const course = item.course_id && typeof getCourseById === 'function' ? getCourseById(item.course_id) : null;
+  return course
+    ? `<span class="adm-course-badge" style="--cc:${course.color || '#5b6cff'}"><i class="fas ${course.icon || 'fa-graduation-cap'}"></i> ${escapeHtml(course.name)}</span>`
+    : '<span class="adm-course-badge all"><i class="fas fa-globe"></i> للجميع (كل الدورات)</span>';
+}
+
+/* ⭐ تعديل ملف/فيديو بعد إضافته: العنوان + التصنيف + الوصف + الدورة (للجميع / ورقي / محوسب) */
+window.setItemCourse = (kind, id) => {
+  const list = kind === 'video' ? (DB.videos || []) : (DB.files || []);
+  const item = list.find(x => x.id === id);
+  if(!item) return;
+  const courses = (typeof CS !== 'undefined' ? CS.courses : []) || [];
+  const cats = ['كمي', 'لفظي', 'عام', 'مراجعة'];
+  const fs = 'width:100%;font-family:inherit;font-size:.88rem;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none';
+  openModal({
+    title: kind === 'video' ? 'تعديل الفيديو' : 'تعديل الملف',
+    text: '',
+    bodyHTML: `
+      <div class="form-group" style="margin-bottom:12px"><label>العنوان</label>
+        <input type="text" id="eiTitle" value="${escapeHtml(item.title || '')}" style="${fs}"></div>
+      <div class="form-group" style="margin-bottom:12px"><label>التصنيف</label>
+        <select id="eiCat" style="${fs}">${cats.map(c => `<option ${item.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group" style="margin-bottom:12px"><label>الوصف</label>
+        <textarea id="eiDesc" style="${fs};min-height:70px">${escapeHtml(item.description || '')}</textarea></div>
+      <div class="form-group"><label><b>الدورة</b> — مين يشوف ${kind === 'video' ? 'الفيديو' : 'الملف'}؟</label>
+        <div class="course-pick-list">
+          ${courses.map(c => `
+            <label class="cp-item" style="--cc:${c.color || '#5b6cff'}">
+              <input type="radio" name="setItemCourse" value="${c.id}" ${String(item.course_id) === String(c.id) ? 'checked' : ''}>
+              <i class="fas ${c.icon || 'fa-graduation-cap'}"></i><span>${escapeHtml(c.name)} فقط</span>
+            </label>`).join('')}
+          <label class="cp-item" style="--cc:#d97706">
+            <input type="radio" name="setItemCourse" value="" ${!item.course_id ? 'checked' : ''}>
+            <i class="fas fa-globe"></i><span>للجميع (كل الدورات)</span>
+          </label>
+        </div>
+      </div>`,
+    okText: 'حفظ التعديلات',
+    onOk: async () => {
+      const sel = document.querySelector('input[name="setItemCourse"]:checked');
+      const upd = {
+        title: (document.getElementById('eiTitle').value || '').trim() || item.title,
+        category: document.getElementById('eiCat').value,
+        description: (document.getElementById('eiDesc').value || '').trim(),
+        course_id: sel ? (sel.value || null) : null
+      };
+      const { error } = await sb.from(kind === 'video' ? 'videos' : 'files').update(upd).eq('id', id);
+      if(error){ toast('فشل: ' + error.message, 'err'); return; }
+      Object.assign(item, upd);
+      if(kind === 'video'){ renderAdminVideos(); if(typeof renderVideos === 'function') renderVideos(); }
+      else { renderAdminFiles(); if(typeof renderFiles === 'function') renderFiles(); }
+      const c = upd.course_id ? getCourseById(upd.course_id) : null;
+      toast('✓ تم الحفظ — ' + (c ? 'يظهر لطلاب ' + c.name + ' فقط' : 'يظهر للجميع'), 'ok');
+    }
+  });
+};
+
+function renderAdminFiles(){
+  const box = document.getElementById('adminFilesGrid'); if(!box) return;
+  if(!DB.files.length){
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-inbox"></i></div><h3>لا توجد ملفات</h3></div>';
+    return;
+  }
+  const noCourseF = DB.files.filter(f => !f.course_id).length;
+  const warnF = noCourseF ? `<div class="adm-course-warn" style="grid-column:1/-1"><i class="fas fa-triangle-exclamation"></i> ${noCourseF} ملف بدون دورة — تظهر لطلاب <b>كل</b> الدورات. اضغط «تعديل» لتحديد دورته.</div>` : '';
+  box.innerHTML = warnF + DB.files.map(f => {
+    return `
+    <div class="admin-file-card ${f.important ? 'important' : ''}" style="--fc:${f.color || '#5b6cff'}">
+      <div class="afc-head">
+        <div class="ic"><i class="fas ${f.icon || 'fa-book'}"></i></div>
+        <div style="flex:1;min-width:0">
+          <h4>${escapeHtml(f.title)} ${f.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
+          <small>${escapeHtml(f.category || '')} • ${f.page_count || '?'} صفحة</small>
+        </div>
+      </div>
+      <div class="afc-meta">${adminCourseBadge(f)}</div>
+      <div class="afc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="setItemCourse('file','${f.id}')" title="تعديل الملف والدورة"><i class="fas fa-pen"></i> تعديل</button>
+        <button class="btn btn-ghost btn-sm" onclick="replaceFile('${f.id}')" title="استبدال ملف الـ PDF بنسخة جديدة"><i class="fas fa-file-import"></i> استبدال</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleImportant('${f.id}')"><i class="fas fa-star"></i> ${f.important ? 'إلغاء' : 'تمييز'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFile('${f.id}','${escapeHtml(f.storage_path)}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.renderAdminFiles = renderAdminFiles;
+
+window.toggleImportant = async id => {
+  const f = DB.files.find(x => x.id === id); if(!f) return;
+  const { error } = await sb.from('files').update({ important: !f.important }).eq('id', id);
+  if(error){ toast('فشل: ' + error.message, 'err'); return; }
+  toast(f.important ? 'تم إزالة النجمة' : 'أصبح الملف مميزاً', 'ok');
+};
+
+window.deleteFile = (id, path) => {
+  const f = DB.files.find(x => x.id === id); if(!f) return;
+  confirmBox('حذف الملف', `حذف الملف «${escapeHtml(f.title)}»؟`, async () => {
+    try{ await sb.storage.from('pdfs').remove([path]); }catch(e){}
+    const { error } = await sb.from('files').delete().eq('id', id);
+    if(error){ toast('فشل الحذف: ' + error.message, 'err'); return; }
+    if(typeof logAdminAction === 'function') logAdminAction('delete_file', null, `حذف ملف: ${f.title}`);
+    toast('تم حذف الملف', 'ok');
+  }, true);
+};
+
+/* ⭐ استبدال ملف PDF بنسخة جديدة — نفس الملف (العنوان، الدورة، تقدّم الطلاب) بدون حذف وإعادة رفع */
+window.replaceFile = (id) => {
+  if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+  const f = DB.files.find(x => x.id === id); if(!f) return;
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'application/pdf,.pdf';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('PDF فقط', 'warn'); return; }
+    if(file.size > 100 * 1024 * 1024){ toast('الحد 100 ميجا', 'warn'); return; }
+    confirmBox('استبدال الملف', `استبدال ملف «${escapeHtml(f.title)}» بالملف الجديد «${escapeHtml(file.name)}»؟<br><small>العنوان والدورة وتقدّم الطلاب تبقى كما هي.</small>`, () => doReplaceFile(f, file));
+  };
+  inp.click();
+};
+
+async function doReplaceFile(f, file){
+  toast('⏳ جاري رفع الملف الجديد...', 'ok');
+  const safeName = file.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
+  const newPath = currentUserObj.id + '/' + f.id + '_' + Date.now() + '_' + safeName;
+  let pages = 0, uploadError = null;
+  await Promise.all([
+    (async () => {
+      const { error } = await sb.storage.from('pdfs').upload(newPath, file, {
+        cacheControl: '3600', upsert: false, contentType: 'application/pdf'
+      });
+      if(error) uploadError = error;
+    })(),
+    (async () => {
+      try{
+        const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+        pages = doc.numPages;
+        try{ doc.destroy(); }catch(e){}
+      }catch(e){ pages = 0; }
+    })()
+  ]);
+  if(uploadError){ toast('فشل الرفع: ' + uploadError.message, 'err'); return; }
+
+  const upd = { storage_path: newPath };
+  if(pages) upd.page_count = pages;
+  const { error } = await sb.from('files').update(upd).eq('id', f.id);
+  if(error){
+    try{ await sb.storage.from('pdfs').remove([newPath]); }catch(e){}
+    toast('فشل: ' + error.message, 'err');
+    return;
+  }
+  const oldPath = f.storage_path;
+  Object.assign(f, upd);
+  if(oldPath && oldPath !== newPath){ try{ await sb.storage.from('pdfs').remove([oldPath]); }catch(e){} }
+  if(typeof logAdminAction === 'function') logAdminAction('upload_file', null, `استبدال ملف: ${f.title}`);
+  /* المحتوى تغيّر → نعيد فهرسة البحث الذكي */
+  try{ if(typeof queueIndexFile === 'function') queueIndexFile(f.id, true); }catch(e){}
+  renderAdminFiles();
+  if(typeof renderFiles === 'function') renderFiles();
+  try{ if(typeof window.loadProfilesAndFiles === 'function') window.loadProfilesAndFiles(); }catch(e){}
+  toast('✓ تم استبدال الملف', 'ok');
+}
+
+/* ============================================================
+   ⭐ رفع ملف — نسخة نظيفة سريعة بدون تكرار
+============================================================ */
+let currentPdfBlob = null;
+
+(function bindUploadZone(){
+  const uploadZone = document.getElementById('uploadZone');
+  const afPdfInput = document.getElementById('afPdfInput');
+  if(!uploadZone || !afPdfInput || uploadZone.dataset.bound) return;
+  uploadZone.dataset.bound = '1';
+  uploadZone.addEventListener('click', () => afPdfInput.click());
+  ['dragenter','dragover'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); uploadZone.classList.remove('dragover'); }));
+  uploadZone.addEventListener('drop', e => { const file = e.dataTransfer && e.dataTransfer.files[0]; if(file) handlePdfFile(file); });
+  afPdfInput.addEventListener('change', e => { const file = e.target.files[0]; if(file) handlePdfFile(file); });
+})();
+
+async function handlePdfFile(file){
+  if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){ toast('PDF فقط', 'warn'); return; }
+  if(file.size > 100 * 1024 * 1024){ toast('الحد 100 ميجا', 'warn'); return; }
+  currentPdfBlob = file;
+  const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+  const info = document.getElementById('uzFileInfo');
+  if(info) info.innerHTML = `<div class="uz-file"><i class="fas fa-circle-check"></i> ${escapeHtml(file.name)} — ${sizeMB} ميجا</div>`;
+  const titleEl = document.getElementById('afTitle');
+  if(titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g,' ');
+}
+
+/* ⭐⭐⭐ حفظ ملف — نسخة موحّدة (تحل مشكلة التكرار + تسريع الرفع) */
+(function bindSaveFileOnce(){
+  const btn = document.getElementById('saveFileBtn');
+  if(!btn || btn.dataset.finalBound) return;
+  btn.dataset.finalBound = '1';
+  /* أزل أي listener قديم بتغيير الزر */
+  const clone = btn.cloneNode(true);
+  clone.dataset.finalBound = '1';
+  btn.parentNode.replaceChild(clone, btn);
+
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    if(clone.disabled) return;
+
+    const title = (document.getElementById('afTitle').value || '').trim();
+    const courseId = document.getElementById('afCourse') ? document.getElementById('afCourse').value : '';
+    const cat = document.getElementById('afCat').value;
+    const desc = (document.getElementById('afDesc').value || '').trim();
+    const important = document.getElementById('afImportant').checked;
+
+    if(!title){ toast('أدخل عنوان الملف', 'warn'); return; }
+    if(!currentPdfBlob){ toast('اختر ملف PDF أولاً', 'warn'); return; }
+    if(!courseId && !clone.dataset.allConfirmed){
+      confirmBox('بدون دورة؟', 'ما اخترت دورة — الملف بيظهر لطلاب <b>كل</b> الدورات (الورقي والمحوسب). متأكد؟', () => { clone.dataset.allConfirmed = '1'; clone.click(); });
+      return;
+    }
+    delete clone.dataset.allConfirmed;
+
+    clone.disabled = true;
+    const orig = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+
+    const id = typeof uuidv4 === 'function' ? uuidv4() : ('f_' + Date.now() + '_' + Math.random().toString(36).slice(2,9));
+    const safeName = currentPdfBlob.name.replace(/[^\w.\-]+/g,'_').slice(0,80);
+    const storagePath = currentUserObj.id + '/' + id + '_' + safeName;
+
+    /* ⭐ ارفع + اعد الصفحات بالتوازي = أسرع بكثير */
+    let pages = 0;
+    let uploadError = null;
+
+    await Promise.all([
+      /* الرفع */
+      (async () => {
+        const { error } = await sb.storage.from('pdfs').upload(storagePath, currentPdfBlob, {
+          cacheControl: '3600', upsert: false, contentType: 'application/pdf'
+        });
+        if(error) uploadError = error;
+      })(),
+      /* عدّ الصفحات (بالتوازي، ويستهلك arrayBuffer مؤقتاً) */
+      (async () => {
+        try{
+          const ab = await currentPdfBlob.arrayBuffer();
+          const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+          pages = doc.numPages;
+          try{ doc.destroy(); }catch(e){}
+        }catch(e){ pages = 0; }
+      })()
+    ]);
+
+    if(uploadError){
+      clone.disabled = false;
+      clone.innerHTML = orig;
+      toast('فشل الرفع: ' + uploadError.message, 'err');
+      return;
+    }
+
+    const choice = typeof pick === 'function' ? pick(ICONS) : { i: 'fa-book', c: '#5b6cff' };
+    const { error: dbErr } = await sb.from('files').insert({
+      id, title, category: cat, description: desc, important,
+      icon: choice.i, color: choice.c, page_count: pages,
+      storage_path: storagePath, created_by: currentUserObj.id,
+      course_id: courseId || null
+    });
+
+    if(dbErr){
+      try{ await sb.storage.from('pdfs').remove([storagePath]); }catch(e){}
+      clone.disabled = false;
+      clone.innerHTML = orig;
+      toast('فشل: ' + dbErr.message, 'err');
+      return;
+    }
+
+    if(typeof logAdminAction === 'function') logAdminAction('upload_file', null, `رفع ملف: ${title}`, { course_id: courseId });
+
+    /* إشعار */
+    try{
+      if(typeof sendNotification === 'function'){
+        const c = courseId ? getCourseById(courseId) : null;
+        await sendNotification('file', '📄 ملف جديد: ' + title,
+          c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
+          id, courseId || null, 'fa-file-pdf', '#ef4444');
+      }
+    }catch(e){}
+
+    /* نظّف */
+    clone.disabled = false;
+    clone.innerHTML = orig;
+    document.getElementById('afTitle').value = '';
+    if(document.getElementById('afCourse')) document.getElementById('afCourse').value = '';
+    document.getElementById('afDesc').value = '';
+    document.getElementById('afImportant').checked = false;
+    document.getElementById('uzFileInfo').innerHTML = '';
+    const inp = document.getElementById('afPdfInput'); if(inp) inp.value = '';
+    currentPdfBlob = null;
+
+    toast('✓ تم رفع الملف — وصل إشعار للطلاب', 'ok');
+    /* ⭐ فهرسة تلقائية للبحث الذكي (بعد ما يوصل الملف للقائمة) */
+    (function autoIndex(tries){
+      if((DB.files || []).some(x => x.id === id)){ if(typeof queueIndexFile === 'function') queueIndexFile(id); return; }
+      if(tries < 12) setTimeout(() => autoIndex(tries + 1), 1500);
+    })(0);
+    /* حدّث القائمة فوراً (بدون انتظار Realtime) */
+    try{ if(typeof window.loadProfilesAndFiles === 'function') window.loadProfilesAndFiles(); }catch(e){}
+
+    document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('on'));
+    const tab = document.querySelector('.admin-tabs button[data-panel="files"]');
+    if(tab) tab.classList.add('on');
+    const panel = document.getElementById('panel-files');
+    if(panel) panel.classList.add('on');
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const cf = document.getElementById('clearFileBtn');
+  if(cf && !cf.dataset.bound){
+    cf.dataset.bound = '1';
+    cf.addEventListener('click', () => {
+      const t = document.getElementById('afTitle'); if(t) t.value = '';
+      const c = document.getElementById('afCat'); if(c) c.value = 'كمي';
+      const d = document.getElementById('afDesc'); if(d) d.value = '';
+      const i = document.getElementById('afImportant'); if(i) i.checked = false;
+      const info = document.getElementById('uzFileInfo'); if(info) info.innerHTML = '';
+      const inp = document.getElementById('afPdfInput'); if(inp) inp.value = '';
+      currentPdfBlob = null;
+    });
+  }
+});
+
+/* تبويبات لوحة الأدمن */
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest('.admin-tabs button');
+  if(tabBtn){
+    document.querySelectorAll('.admin-tabs button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.admin-panel').forEach(x => x.classList.remove('on'));
+    tabBtn.classList.add('on');
+    const panel = document.getElementById('panel-' + tabBtn.dataset.panel);
+    if(panel) panel.classList.add('on');
+  }
+});
+
+/* ============================================================
+   الفيديوهات
+============================================================ */
+function renderAdminVideos(){
+  const box = document.getElementById('adminVideosGrid'); if(!box) return;
+  const list = DB.videos || [];
+  if(!list.length){
+    box.innerHTML = '<div class="admin-empty" style="grid-column:1/-1"><div class="em-ic"><i class="fas fa-video"></i></div><h3>لا توجد فيديوهات</h3></div>';
+    return;
+  }
+  const noCourse = list.filter(v => !v.course_id).length;
+  const warn = noCourse ? `<div class="adm-course-warn" style="grid-column:1/-1"><i class="fas fa-triangle-exclamation"></i> ${noCourse} فيديو بدون دورة — تظهر لطلاب <b>كل</b> الدورات. اضغط «تعديل» على كل فيديو لتحديد دورته.</div>` : '';
+  box.innerHTML = warn + list.map(v => {
+    return `
+    <div class="admin-video-card">
+      <div class="admin-video-thumb" style="background-image:url('${v.thumbnail || youtubeThumb(v.youtube_id)}')">
+        <img src="${v.thumbnail || youtubeThumb(v.youtube_id)}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+      </div>
+      <div class="admin-video-body">
+        <h4>${escapeHtml(v.title)} ${v.important ? '<i class="fas fa-star" style="color:var(--accent);font-size:.75rem"></i>' : ''}</h4>
+        <small>${escapeHtml(v.category || '')} • ${fmtDuration(v.duration || 0)}</small>
+        <div class="afc-meta" style="margin-top:8px">${adminCourseBadge(v)}</div>
+        <div class="admin-video-actions">
+          <button class="btn btn-ghost btn-sm" onclick="setItemCourse('video','${v.id}')" title="تعديل الفيديو والدورة"><i class="fas fa-pen"></i> تعديل</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleVideoImportant('${v.id}')"><i class="fas fa-star"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="linkVideoToFile('${v.id}')"><i class="fas fa-link"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.renderAdminVideos = renderAdminVideos;
+
+window.toggleVideoImportant = async id => {
+  const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
+  const { error } = await sb.from('videos').update({ important: !v.important }).eq('id', id);
+  if(error){ toast('فشل', 'err'); return; }
+  toast(v.important ? 'أُزيل التمييز' : 'أصبح مميزاً', 'ok');
+};
+
+window.deleteVideo = id => {
+  const v = (DB.videos || []).find(x => x.id === id); if(!v) return;
+  confirmBox('حذف الفيديو', `حذف «${escapeHtml(v.title)}»؟`, async () => {
+    const { error } = await sb.from('videos').delete().eq('id', id);
+    if(error){ toast('فشل', 'err'); return; }
+    if(typeof logAdminAction === 'function') logAdminAction('delete_video', null, `حذف فيديو: ${v.title}`);
+    toast('تم الحذف', 'ok');
+  }, true);
+};
+
+window.linkVideoToFile = (videoId) => {
+  const v = (DB.videos || []).find(x => x.id === videoId); if(!v) return;
+  const list = DB.files || [];
+  if(!list.length){ toast('لا توجد ملفات', 'warn'); return; }
+  openModal({
+    title: 'ربط الفيديو بملف كـ «شرح»',
+    text: 'اختر الملف.',
+    bodyHTML: `<div class="vp-pick-list">${list.map(f => `<div class="vp-pick-item" onclick="doLinkVideo('${videoId}','${f.id}')"><i class="fas ${f.icon || 'fa-book'}" style="font-size:1.4rem;color:${f.color || '#5b6cff'};margin:0 6px"></i><div style="flex:1;min-width:0"><b>${escapeHtml(f.title)}</b><small>${escapeHtml(f.category || 'عام')}</small></div></div>`).join('')}</div>`,
+    okText: 'إلغاء', onOk: () => {}
+  });
+};
+
+window.doLinkVideo = async (videoId, fileId) => {
+  const f = DB.files.find(x => x.id === fileId); if(!f) return;
+  const { error } = await sb.from('files').update({ explanation_video_id: videoId }).eq('id', fileId);
+  if(error){ toast('فشل', 'err'); return; }
+  f.explanation_video_id = videoId;
+  const m = document.getElementById('modal'); if(m) m.classList.remove('open');
+  toast('✓ تم الربط', 'ok');
+  if(typeof renderAdminFiles === 'function') renderAdminFiles();
+  if(typeof renderFiles === 'function') renderFiles();
+};
+
+/* ⭐ حفظ فيديو — نسخة نظيفة */
+(function bindSaveVideoOnce(){
+  const btn = document.getElementById('saveVideoBtn');
+  if(!btn || btn.dataset.finalBound) return;
+  const clone = btn.cloneNode(true);
+  clone.dataset.finalBound = '1';
+  btn.parentNode.replaceChild(clone, btn);
+
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    if(clone.disabled) return;
+
+    const url = (document.getElementById('avUrl').value || '').trim();
+    const title = (document.getElementById('avTitle').value || '').trim();
+    const courseId = document.getElementById('avCourse') ? document.getElementById('avCourse').value : '';
+    const cat = document.getElementById('avCat').value;
+    const desc = (document.getElementById('avDesc').value || '').trim();
+    const important = document.getElementById('avImportant').checked;
+    const ytId = extractYoutubeId(url);
+
+    if(!ytId){ toast('رابط يوتيوب غير صالح', 'err'); return; }
+    if(!courseId && !clone.dataset.allConfirmed){
+      confirmBox('بدون دورة؟', 'ما اخترت دورة — الفيديو بيظهر لطلاب <b>كل</b> الدورات (الورقي والمحوسب). متأكد؟', () => { clone.dataset.allConfirmed = '1'; clone.click(); });
+      return;
+    }
+    delete clone.dataset.allConfirmed;
+    if(!title){ toast('أدخل عنوان الفيديو', 'warn'); return; }
+
+    clone.disabled = true;
+    const orig = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+    const thumb = youtubeThumb(ytId);
+    const { data: vRow, error } = await sb.from('videos').insert({
+      title, description: desc, youtube_id: ytId, category: cat,
+      important, thumbnail: thumb, duration: 0,
+      created_by: currentUserObj.id, course_id: courseId || null
+    }).select('id').single();
+
+    clone.disabled = false;
+    clone.innerHTML = orig;
+    if(error){ toast('فشل: ' + error.message, 'err'); return; }
+
+    if(typeof logAdminAction === 'function') logAdminAction('add_video', null, `إضافة فيديو: ${title}`, { course_id: courseId });
+    try{
+      if(typeof sendNotification === 'function'){
+        const c = courseId ? getCourseById(courseId) : null;
+        await sendNotification('video', '🎬 فيديو جديد: ' + title,
+          c ? 'في دورة ' + c.name : 'متاح لجميع الطلاب',
+          vRow ? vRow.id : null, courseId || null, 'fa-video', '#dc2626');
+      }
+    }catch(e){}
+
+    document.getElementById('avUrl').value = '';
+    document.getElementById('avTitle').value = '';
+    if(document.getElementById('avCourse')) document.getElementById('avCourse').value = '';
+    document.getElementById('avDesc').value = '';
+    document.getElementById('avImportant').checked = false;
+    const p = document.getElementById('avUrlPreview'); if(p) p.style.display = 'none';
+
+    toast('✓ تم إضافة الفيديو', 'ok');
+    if(typeof loadVideos === 'function') loadVideos();
+  });
+
+  const cvb = document.getElementById('clearVideoBtn');
+  if(cvb && !cvb.dataset.bound){
+    cvb.dataset.bound = '1';
+    cvb.addEventListener('click', () => {
+      document.getElementById('avUrl').value = '';
+      document.getElementById('avTitle').value = '';
+      document.getElementById('avDesc').value = '';
+      document.getElementById('avImportant').checked = false;
+      const p = document.getElementById('avUrlPreview'); if(p) p.style.display = 'none';
+    });
+  }
+})();
+
+/* ============================================================
+   إنشاء مستخدم من الأدمن — نسخة موحّدة (بدون تكرار)
+============================================================ */
+(function bindAdminCreateUserFinal(){
+  const btn = document.getElementById('nuCreateBtn');
+  if(!btn || btn.dataset.finalBound) return;
+  const clone = btn.cloneNode(true);
+  clone.dataset.finalBound = '1';
+  btn.parentNode.replaceChild(clone, btn);
+
+  const courseSel = document.getElementById('nuCourse');
+  if(courseSel && typeof CS !== 'undefined'){
+    courseSel.innerHTML = '<option value="">— اختر دورة —</option>' +
+      (CS.courses || []).map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  const durationSel = document.getElementById('nuDuration');
+  const customWrap = document.getElementById('nuCustomMonthsWrap');
+  /* customDurationHTML معرّفة في 30-owner-features.js (تُحمّل بعد هذا الملف) */
+  const initNuCustom = () => {
+    if(!customWrap || typeof customDurationHTML !== 'function') return;
+    customWrap.innerHTML = '<label>المدة المخصصة *</label>' + customDurationHTML('nu', false);
+    bindCustomDuration('nu');
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initNuCustom);
+  else setTimeout(initNuCustom, 0);
+  if(durationSel && customWrap){
+    durationSel.addEventListener('change', e => {
+      customWrap.style.display = e.target.value === 'custom' ? 'block' : 'none';
+    });
+  }
+
+  clone.addEventListener('click', async () => {
+    if(!isPrivileged()){ toast('غير مصرح', 'err'); return; }
+    if(clone.disabled) return;
+
+    const name = (document.getElementById('nuName').value || '').trim();
+    const email = (document.getElementById('nuEmail').value || '').trim().toLowerCase();
+    const phone = (document.getElementById('nuPhone') ? document.getElementById('nuPhone').value : '').trim().replace(/\D/g, '');
+    const pass = document.getElementById('nuPass').value;
+    const nuIds = readCourseChecklist('nuCourses');
+    const courseId = nuIds[0] || (document.getElementById('nuCourse') ? document.getElementById('nuCourse').value : '');
+    const durationValue = document.getElementById('nuDuration') ? document.getElementById('nuDuration').value : '1';
+    const approve = document.getElementById('nuApprove').checked;
+
+    if(!name || name.length < 2){ toast('أدخل اسماً صحيحاً', 'warn'); return; }
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('بريد غير صحيح', 'warn'); return; }
+    if(!pass || pass.length < 8){ toast('كلمة المرور 8 أحرف على الأقل', 'warn'); return; }
+    if(approve && !courseId){ toast('اختر دورة للتفعيل', 'warn'); return; }
+
+    let months = 1, customEnd = null;
+    if(approve){
+      if(durationValue === 'custom'){
+        const c = readCustomDuration('nu');
+        if(c.error){ toast(c.error, 'warn'); return; }
+        months = c.months; customEnd = c.endDate;
+      } else {
+        months = parseInt(durationValue, 10) || 1;
+      }
+    }
+
+    clone.disabled = true;
+    const orig = clone.innerHTML;
+    clone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+    try{
+      const { data, error } = await sbTemp.auth.signUp({ email, password: pass, options: { data: { name, phone: phone || null } } });
+      if(error){ toast('فشل: ' + error.message, 'err'); clone.disabled = false; clone.innerHTML = orig; return; }
+
+      if(data && data.user){
+        await new Promise(r => setTimeout(r, 700));
+        const upd = { name, password_hint: pass };
+        if(phone && phone.length === 10) upd.phone = phone;
+        if(approve){
+          upd.status = 'approved';
+          upd.course_id = courseId;
+          upd.course_ids = nuIds.length ? nuIds : [courseId];
+          upd.subscription_start = new Date().toISOString();
+          const end = customEnd || calculateSubscriptionEnd(months, courseId);
+          upd.subscription_end = end.toISOString();
+          upd.subscription_months = months;
+        }
+        const { error: upErr } = await sbSafeWrite(p => sb.from('profiles').update(p).eq('id', data.user.id), upd);
+        if(upErr) console.warn('update failed', upErr);
+        if(typeof logAdminAction === 'function') logAdminAction('create_user', data.user.id, `إنشاء حساب: ${name}`, { course_id: courseId, months });
+      }
+
+      toast('✓ تم إنشاء الحساب', 'ok');
+      document.getElementById('nuName').value = '';
+      document.getElementById('nuEmail').value = '';
+      if(document.getElementById('nuPhone')) document.getElementById('nuPhone').value = '';
+
+      try{
+        const list = await fetchAdminUsers();
+        if(list) DB.users = list;
+        renderAdmin();
+      }catch(e){}
+    }catch(e){ toast('خطأ: ' + e.message, 'err'); }
+
+    clone.disabled = false;
+    clone.innerHTML = orig;
+  });
+
+  const clr = document.getElementById('nuClearBtn');
+  if(clr){
+    clr.addEventListener('click', () => {
+      document.getElementById('nuName').value = '';
+      document.getElementById('nuEmail').value = '';
+      if(document.getElementById('nuPhone')) document.getElementById('nuPhone').value = '';
+      document.getElementById('nuPass').value = '12345678';
+      document.getElementById('nuApprove').checked = true;
+    });
+  }
+})();
+
+/* ⭐ الضغط على إحصائية «طلبات الشراء» → يعرض الطلبات مباشرة */
+window.showPurchaseRequests = () => {
+  if(typeof switchAdminPanel === 'function') switchAdminPanel('users');
+  const f = document.getElementById('userFilter');
+  if(f){ f.value = 'purchase'; }
+  renderUsersTable();
+  const t = document.getElementById('usersTable');
+  if(t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
