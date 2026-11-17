@@ -230,7 +230,7 @@ window.annDelete = id => confirmBox('حذف الإعلان', 'حذف الإعل�
 async function annBoot(){
   await annLoad();
   annCheckPopups();
-  if(!ANN.channel){
+  if(false && !ANN.channel){   /* ⚡ موقوف: الفحص الدوري يكفي ويخفف الضغط على الخادم */
     try{
       ANN.channel = sb.channel('ann-live')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, async () => {
@@ -244,7 +244,7 @@ async function annBoot(){
   if(!ANN.poll) ANN.poll = setInterval(async () => {
     if(document.hidden || !currentUserObj) return;
     await annLoad(); annCheckPopups();
-  }, 60000);
+  }, 180000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
