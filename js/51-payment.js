@@ -17,13 +17,15 @@ const PAY = {
   poll: null,
   cd: null,
   current: null,
+  method: 'card',      /* card = طويق باي (مدى/فيزا) • tamara = تقسيط تمارا */
 };
 const PAY_FN = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '') + '/functions/v1/tuwaiqpay';
+const PAY_FN_TAMARA = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '') + '/functions/v1/tamara';
 const PAY_PENDING_KEY = 'abq_pay_pending';
 
 /* ================== أدوات مساعدة ================== */
 
-async function payCall(body, needAuth){
+async function payCall(body, needAuth, fnUrl){
   const headers = { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY };
   if(needAuth){
     const { data } = await sb.auth.getSession();
@@ -36,7 +38,7 @@ async function payCall(body, needAuth){
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 45000);
   try{
-    const r = await fetch(PAY_FN, { method: 'POST', headers, body: JSON.stringify(body), signal: ctrl.signal });
+    const r = await fetch(fnUrl || PAY_FN, { method: 'POST', headers, body: JSON.stringify(body), signal: ctrl.signal });
     const j = await r.json().catch(() => ({}));
     if(!r.ok) throw new Error(j.error || j.message || ('http_' + r.status));
     return j;
@@ -57,7 +59,8 @@ function payErrText(msg){
     not_authenticated: 'انتهت جلستك — سجّل الدخول مرة ثانية',
     gateway_not_configured: 'بوابة الدفع قيد التجهيز — تواصل مع الدعم',
     gateway_auth_failed: 'بوابة الدفع غير متاحة حالياً — حاول بعد دقائق',
-    aborted: 'الاتصال بطيء — حاول مرة ثانية'
+    aborted: 'الاتصال بطيء — حاول مرة ثانية',
+    tamara_failed: 'تمارا ما قبلت الطلب حالياً — جرّب الدفع بالبطاقة أو حاول لاحقاً'
   };
   for(const k in map) if(msg.includes(k)) return map[k];
   if(/abort|network|fetch/i.test(msg)) return 'تأكد من اتصالك بالإنترنت وحاول مرة ثانية';
@@ -116,7 +119,7 @@ function payCheckout(items, pv){
       <div class="pay-head">
         <div class="pay-lock"><i class="fas fa-lock"></i></div>
         <h2>الدفع الآمن</h2>
-        <p>ادفع ببطاقتك ويتفعل اشتراكك <b>فوراً</b> ⚡</p>
+        <p>ادفع ببطاقتك أو قسّطها مع تمارا — ويتفعل اشتراكك <b>فوراً</b> ⚡</p>
       </div>
       <div class="pay-lines">${lines}</div>
       <div class="pay-sum">
@@ -125,21 +128,47 @@ function payCheckout(items, pv){
         <div class="total"><span>الإجمالي</span><b>${payMoney(pv.total)}</b></div>
       </div>
       <div class="pay-acc"><i class="fas fa-user-circle"></i> يتفعل على حساب: <b>${escapeHtml(currentUserObj.name || '')}</b> <small dir="ltr">${escapeHtml(currentUserObj.email || '')}</small></div>
-      <div class="pay-brands">${PAY_BRANDS}</div>
-      <button class="pay-btn" id="payNowBtn" onclick="payStart()">
-        <i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}
+      <div class="pay-methods" role="radiogroup" aria-label="طريقة الدفع">
+        <button type="button" class="pay-method ${PAY.method === 'card' ? 'on' : ''}" data-m="card" onclick="paySetMethod('card')" role="radio" aria-checked="${PAY.method === 'card'}">
+          <span class="pm-radio"></span>
+          <span class="pm-txt"><b>بطاقة بنكية</b><small>مدى • فيزا • ماستركارد • أمريكان إكسبريس</small></span>
+          <span class="pay-brands mini">${PAY_BRANDS}</span>
+        </button>
+        <button type="button" class="pay-method tamara ${PAY.method === 'tamara' ? 'on' : ''}" data-m="tamara" onclick="paySetMethod('tamara')" role="radio" aria-checked="${PAY.method === 'tamara'}">
+          <span class="pm-radio"></span>
+          <span class="pm-txt"><b>قسّطها مع تمارا <em class="pm-new">جديد</em></b><small>قسّم اشتراكك على دفعات — بدون فوائد ولا رسوم إضافية</small></span>
+          <span class="tamara-logo">tamara</span>
+        </button>
+      </div>
+      <button class="pay-btn ${PAY.method === 'tamara' ? 'tamara' : ''}" id="payNowBtn" onclick="payStart()">
+        ${payBtnLabel(pv)}
       </button>
       <div class="pay-msg" id="payMsg"></div>
       <div class="pay-trust">
         <span><i class="fas fa-shield-halved"></i> تشفير SSL</span>
         <span><i class="fas fa-fingerprint"></i> حماية 3D Secure</span>
-        <span><i class="fas fa-building-columns"></i> مدعوم من طويق باي</span>
+        <span><i class="fas fa-building-columns"></i> طويق باي • تمارا</span>
       </div>
       <small class="pay-terms">بالدفع أنت توافق على <button type="button" onclick="openTerms()">الشروط والأحكام وسياسة الاسترجاع</button></small>
       ${typeof trustBadgeHTML === 'function' ? trustBadgeHTML() : ''}
     </div>`;
 }
 window.payCheckout = payCheckout;
+
+function payBtnLabel(pv){
+  return PAY.method === 'tamara'
+    ? `<i class="fas fa-calendar-check"></i> كمّل مع تمارا — ${payMoney(pv.total)}`
+    : `<i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}`;
+}
+window.paySetMethod = (m) => {
+  PAY.method = m === 'tamara' ? 'tamara' : 'card';
+  document.querySelectorAll('#payCheckout .pay-method').forEach(b => {
+    const on = b.dataset.m === PAY.method;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+  });
+  const btn = document.getElementById('payNowBtn');
+  if(btn && PAY.current){ btn.innerHTML = payBtnLabel(PAY.current.pv); btn.classList.toggle('tamara', PAY.method === 'tamara'); }
+};
 
 /* ================== 2) بدء الدفع ==================
    ⭐ المفتاح: نفتح التاب فوراً قبل أي await
@@ -153,6 +182,7 @@ async function payStart(){
   if(msg){ msg.className = 'pay-msg'; msg.textContent = ''; }
 
   /* ⭐⭐⭐ المفتاح: افتح التاب فوراً (قبل أي await) عشان المتصفح يعتبره ضغط مستخدم */
+  const isTamara = PAY.method === 'tamara';
   const popup = window.open('about:blank', 'tuwaiqpay_checkout_win',
     'width=520,height=780,scrollbars=yes,resizable=yes');
 
@@ -190,12 +220,13 @@ async function payStart(){
 
   try{
     const { items, pv } = PAY.current;
-    const res = await payCall({ action: 'create', items, coupon: pv.coupon && pv.coupon.ok ? pv.coupon.code : null }, true);
+    const res = await payCall({ action: 'create', items, coupon: pv.coupon && pv.coupon.ok ? pv.coupon.code : null,
+                                is_mobile: window.innerWidth < 768 }, true, isTamara ? PAY_FN_TAMARA : PAY_FN);
 
     /* نحفظ الطلب + الرابط في localStorage للرجوع */
     try{
       localStorage.setItem(PAY_PENDING_KEY, JSON.stringify({
-        id: res.id, t: res.token, link: res.link || null, at: Date.now()
+        id: res.id, t: res.token, link: res.link || null, at: Date.now(), g: isTamara ? 'tamara' : 'card'
       }));
     }catch(e){}
 
@@ -221,7 +252,7 @@ async function payStart(){
     } else {
       /* المتصفح منع الـ popup (نادراً) → نعرض زر يدوي + شاشة الانتظار */
       PAY.busy = false;
-      if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}`; }
+      if(btn){ btn.disabled = false; btn.innerHTML = payBtnLabel(pv); }
       if(msg){
         msg.className = 'pay-msg';
         msg.innerHTML = `
@@ -244,13 +275,13 @@ async function payStart(){
 
     /* نعرض شاشة الانتظار في موقعنا (التاب الحالي) بينما الطالب يدفع */
     PAY.busy = false;
-    if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(pv.total)}`; }
+    if(btn){ btn.disabled = false; btn.innerHTML = payBtnLabel(pv); }
     payShowPending(res.id, res.token);
 
   }catch(e){
     PAY.busy = false;
     if(popup && !popup.closed){ try{ popup.close(); }catch(x){} }
-    if(btn){ btn.disabled = false; btn.innerHTML = `<i class="fas fa-lock"></i> ادفع ${payMoney(PAY.current.pv.total)}`; }
+    if(btn){ btn.disabled = false; btn.innerHTML = payBtnLabel(PAY.current.pv); }
     if(msg){
       msg.className = 'pay-msg err';
       msg.innerHTML = '<i class="fas fa-circle-exclamation"></i> ' +
@@ -323,15 +354,16 @@ function payShowPending(id, token){
   };
   render();
 
-  /* ⭐ فاحص تلقائي كل 4 ثواني */
+  /* ⭐ فاحص تلقائي كل 5 ثواني — يقرأ من قاعدة بياناتنا فقط (تأكيد طويق باي يوصل بالـ Webhook)
+     سابقاً كان كل فحص يتصل بطويق باي نفسه = مئات الطلبات لكل عميل */
   clearInterval(PAY.poll);
   PAY.poll = setInterval(async () => {
-    secs += 4;
+    secs += 5;
     const cd = document.querySelector('#payResult .pay-cd');
     if(cd) cd.innerHTML = `<i class="fas fa-spinner fa-spin"></i> نتحقق تلقائياً… (${secs}ث)`;
 
     try{
-      const r = await payCall({ action: 'sync_status', id, t: token }, false)
+      const r = await payCall({ action: 'status', id, t: token }, false)
       const p = r && r.payment;
 
       if(p && p.status === 'paid'){
@@ -349,14 +381,16 @@ function payShowPending(id, token){
         if(cd2) cd2.innerHTML = '⏱️ ننتظرك… الاشتراك يتفعل تلقائياً بمجرد نجاح الدفع';
       }
     }catch(e){ /* نتجاهل الأخطاء المؤقتة */ }
-  }, 4000);
+  }, 5000);
 }
 
 /* ================== فحص يدوي أو من الخلفية ================== */
 async function checkPaymentNow(id, token, manual){
   if(manual) toast('نتحقق من الدفع...', 'ok');
   try{
-    const r = await payCall({ action: 'sync_status', id, t: token }, false)
+    const pend = getPending();
+    const tamara = pend && pend.id === id && pend.g === 'tamara';
+    const r = await payCall({ action: manual || tamara ? 'sync_status' : 'status', id, t: token }, false, tamara ? PAY_FN_TAMARA : PAY_FN)
     const p = r && r.payment;
 
     if(p && p.status === 'paid'){
@@ -466,6 +500,29 @@ async function payAfterSuccess(){
    - الفحص عند رجوع المستخدم للتبويب
 ============================================================ */
 (function payBoot(){
+  /* 🔙 الطالب رجع من صفحة تمارا */
+  try{
+    const q = new URLSearchParams(location.search);
+    if(q.get('pay') && q.get('t') && q.get('g') === 'tamara'){
+      const id = q.get('pay'), t = q.get('t'), res = q.get('r');
+      try{ history.replaceState(null, '', location.pathname + '#home'); }catch(e){}
+      try{
+        const prev = getPending();
+        localStorage.setItem(PAY_PENDING_KEY, JSON.stringify(Object.assign({}, prev || {}, { id, t, g: 'tamara', at: (prev && prev.at) || Date.now() })));
+      }catch(e){}
+      /* لو الصفحة هذي هي نافذة الدفع → نرجّع الطالب للتبويب الأصلي ونقفلها */
+      if(window.opener && !window.opener.closed){
+        try{ window.opener.focus(); }catch(e){}
+        setTimeout(() => { try{ window.close(); }catch(e){} }, 400);
+      }
+      if(res === 'cancel' || res === 'failure'){
+        setTimeout(() => toast(res === 'cancel' ? 'ألغيت الدفع مع تمارا — تقدر تكمل بالبطاقة' : 'تمارا ما أكملت الطلب — جرّب الدفع بالبطاقة', 'warn'), 1500);
+      } else {
+        setTimeout(() => { checkPaymentNow(id, t, false); }, 1500);
+      }
+    }
+  }catch(e){}
+
   /* فحص أول عند فتح الموقع */
   const bootCheck = () => {
     const p = getPending();
@@ -478,7 +535,7 @@ async function payAfterSuccess(){
     /* فحص خفيف بالخلفية بعد 3 ثواني */
     setTimeout(async () => {
       try{
-        const r = await payCall({ action: 'sync_status', id, t: token }, false)
+        const r = await payCall({ action: 'status', id: p.id, t: p.t }, false)
         const pm = r && r.payment;
 
         if(pm && pm.status === 'paid'){
