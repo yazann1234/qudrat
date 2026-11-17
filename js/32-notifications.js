@@ -356,6 +356,7 @@ function subscribeNotifications(){
       if(!n || n.type === 'file' || n.type === 'video') return; /* تُبنى من الملفات مباشرة */
       if(!canSeeNotif(n)) return;
       if(NOTIF.dbItems.some(x => x.id === n.id)) return;
+      if(n.type === 'live'){ try{ if(typeof liveLoadActive === 'function') liveLoadActive(); }catch(e){} }
       NOTIF.dbItems.unshift(n);
       rebuildNotifications();
     })
@@ -398,7 +399,7 @@ function startNotifPolling(){
   NOTIF.pollTimer = setInterval(() => {
     if(document.hidden && !('Notification' in window && Notification.permission === 'granted')) return;
     pollContentChanges();
-  }, 120000);
+  }, 300000);
 }
 function stopNotifPolling(){
   if(NOTIF.pollTimer){ clearInterval(NOTIF.pollTimer); NOTIF.pollTimer = null; }
