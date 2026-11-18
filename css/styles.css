@@ -5415,3 +5415,40 @@ body.kb-nav :focus-visible{outline:3px solid var(--primary);outline-offset:2px;b
   .feat-bar{padding:10px 12px 12px 40px}
   .fb-go{width:100%}
 }
+
+/* ============================================================
+   🌌 خلفية متحركة لطيفة
+   - كرات ألوان ناعمة تتحرك ببطء + نقاط خفيفة تطفو
+   - خفيفة على الجهاز: تتحرك بـ transform فقط (بدون blur ولا JS)
+   - تتوقف لو الطالب مفعّل «تقليل الحركة» أو الجهاز طالبها
+============================================================ */
+.bg-anim{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;contain:strict}
+.bg-anim .ba{position:absolute;display:block;border-radius:50%;will-change:transform;opacity:.85}
+.bg-anim .ba1{width:62vmax;height:62vmax;top:-22vmax;right:-18vmax;
+  background:radial-gradient(circle at center,rgba(var(--primary-rgb),.26),rgba(var(--primary-rgb),0) 65%);
+  animation:baDrift1 28s ease-in-out infinite alternate}
+.bg-anim .ba2{width:55vmax;height:55vmax;bottom:-24vmax;left:-16vmax;
+  background:radial-gradient(circle at center,rgba(139,92,246,.24),rgba(139,92,246,0) 65%);
+  animation:baDrift2 34s ease-in-out infinite alternate}
+.bg-anim .ba3{width:38vmax;height:38vmax;top:30%;left:35%;
+  background:radial-gradient(circle at center,rgba(56,189,248,.16),rgba(56,189,248,0) 65%);
+  animation:baDrift3 40s ease-in-out infinite alternate}
+.bg-anim .ba4{width:30vmax;height:30vmax;top:8%;left:6%;
+  background:radial-gradient(circle at center,rgba(244,114,182,.13),rgba(244,114,182,0) 65%);
+  animation:baDrift4 46s ease-in-out infinite alternate}
+.bg-anim .ba-dots{position:absolute;left:0;right:0;top:-360px;height:calc(100% + 360px);opacity:.3;
+  background-image:radial-gradient(rgba(var(--primary-rgb),.35) 1.2px,transparent 1.6px),radial-gradient(rgba(139,92,246,.28) 1px,transparent 1.4px);
+  background-size:120px 120px,180px 180px;background-position:0 0,60px 90px;
+  animation:baFloat 48s linear infinite;will-change:transform}
+[data-theme="dark"] .bg-anim .ba{opacity:.85}
+[data-theme="dark"] .bg-anim .ba-dots{opacity:.45}
+@keyframes baDrift1{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-8vmax,6vmax,0) scale(1.08)}100%{transform:translate3d(-3vmax,12vmax,0) scale(.95)}}
+@keyframes baDrift2{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(9vmax,-5vmax,0) scale(1.1)}100%{transform:translate3d(4vmax,-11vmax,0) scale(.96)}}
+@keyframes baDrift3{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-10vmax,-6vmax,0) scale(1.15)}100%{transform:translate3d(8vmax,5vmax,0) scale(.9)}}
+@keyframes baDrift4{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(12vmax,8vmax,0)}100%{transform:translate3d(4vmax,16vmax,0)}}
+@keyframes baFloat{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,360px,0)}}
+/* أثناء القراءة/البث الخلفية مغطاة — نوقفها عشان ما تستهلك */
+body.live-open .bg-anim .ba,body.live-open .bg-anim .ba-dots,
+body:has(#reader.open) .bg-anim .ba,body:has(#reader.open) .bg-anim .ba-dots{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){ .bg-anim .ba,.bg-anim .ba-dots{animation:none} }
+@media print{ .bg-anim{display:none} }
